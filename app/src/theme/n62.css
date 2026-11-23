@@ -40,6 +40,7 @@
   --on-key-alpha: #000000;
   --key-edge: #000000;
   --mark-faint: #061b1b;
+  --key-disc: #1b403e;
   color-scheme: dark;
 }
 :root[data-family="n62"][data-brightness="dark"][data-contrast="high"] {
@@ -80,8 +81,9 @@
   --on-alpha: #000000;
   --on-key-shift: #000000;
   --on-key-alpha: #000000;
-  --key-edge: #000000;
+  --key-edge: #293837;
   --mark-faint: #141f1e;
+  --key-disc: #192d2c;
   color-scheme: dark;
 }
 :root[data-family="n62"][data-brightness="dark"][data-contrast="high"][data-keys="plain"] {
@@ -122,8 +124,9 @@
   --on-alpha: #000000;
   --on-key-shift: #000000;
   --on-key-alpha: #000000;
-  --key-edge: #000000;
+  --key-edge: #293837;
   --mark-faint: #141f1e;
+  --key-disc: #192d2c;
   color-scheme: dark;
 }
 :root[data-family="n62"][data-brightness="light"][data-keys="plain"] {
@@ -167,6 +170,7 @@
   --on-key-alpha: #ffffff;
   --key-edge: #8da1a0;
   --mark-faint: #bcd8d7;
+  --key-disc: #c4dcdb;
   color-scheme: light;
 }
 :root[data-family="n62"][data-brightness="light"][data-contrast="high"] {
@@ -210,6 +214,7 @@
   --on-key-alpha: #ffffff;
   --key-edge: #a5acac;
   --mark-faint: #dce5e5;
+  --key-disc: #d6e0df;
   color-scheme: light;
 }
 :root[data-family="n62"][data-brightness="light"][data-contrast="high"][data-keys="plain"] {
@@ -253,5 +258,6 @@
   --on-key-alpha: #ffffff;
   --key-edge: #a5acac;
   --mark-faint: #dce5e5;
+  --key-disc: #d6e0df;
   color-scheme: light;
 }

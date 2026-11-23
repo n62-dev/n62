@@ -20,6 +20,8 @@ function oklab([r, g, b]: number[]): number[] {
   const s = Math.cbrt(0.0883024619 * r! + 0.2817188376 * g! + 0.6299787005 * b!);
   return [0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s, 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s, 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s];
 }
+/** OKLab of a #rrggbb colour (R873: the round pad's fill keeps --key-ctl's a and b, its hue and chroma). */
+export const oklabOf = (h: string): number[] => oklab(lin(h));
 const sim = (rgb: number[], m: Mat | null): number[] => (m === null ? rgb : m.map((row) => Math.min(1, Math.max(0, row[0]! * rgb[0]! + row[1]! * rgb[1]! + row[2]! * rgb[2]!))));
 /** OKLab distance of two #rrggbb colours as seen through a colour-vision matrix (null: normal vision). */
 export function apart(a: string, b: string, m: Mat | null = null): number {

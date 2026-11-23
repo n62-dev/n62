@@ -30,3 +30,7 @@ Moved here as they stood (links adjusted to this folder): decided entries of Opu
 ## Moved 2026-11-23 (Opus pass 233: decisions.md under 1 kB left)
 
 - **A ratio chip (G369, G782; pass 229):** a chip in one ratio unit (%, ‰, ppm, ppb) is its pure number wherever it goes: Home and CAS (G782); in the unit view its slot holds the ratio (`chip × 200 m` with 0.42 % is 0.84 m, not 84 m) and Store ▶ stores the pure number with its σ (G782f1). Built. A pure number in another unit (rev) keeps "unit dropped" in Home; Ans of a % or rev result is refused in the unit view (R259). Would change if: the owner wants the ratio dropped there.
+
+## Moved 2026-11-23 (R873 fix round 1: decisions.md at 39,998 B; its rule stands in docs/04 and `parse.ts` `markThen`)
+
+- **R376, a letter or bracket after a mark (pass 232, P5):** stays a product as Giac reads it (`5!x` = 120·x, `2%x`, `30°(1+2)`), as `2x` and `2(1+2)` do; only a digit, which runs into the mark, is refused (`parse.ts` `markThen`), or a result chip, which draws its digits (R376f1). Would change if: a user reads `30°(15)` as minutes.

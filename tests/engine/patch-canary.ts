@@ -248,6 +248,9 @@ const CANARIES: [string, string, RegExp, string][] = [
   // G554 (F305), patch 0063: numeric_matrix_exp's loop reads linfnorm(term)._DOUBLE_val, a double from an MPFR norm above Digits 14,
   // so exp of a float matrix was the identity (exp(evalf([[1,2],[3,4]])) at Digits 40)
   ["0063-matrix-exp-working-precision.patch", "giac-2.1.0/src/usual.cc", /for \(double j=2;j<max_numexp && linfnorm\(eee,contextptr\)\._DOUBLE_val>eps;\+\+j\)\{/, "static gen numeric_matrix_exp(const gen & e,double eps,GIAC_CONTEXT){"],
+  // G790 (F475), patch 0064: mmult_atranb's sparse loop skips a left entry with is_zero(acur,context0), an absolute 1e-12 at any Digits
+  // (and matrix_density counts zeros the same way), so a left factor of floats below 1e-12 gave the zero matrix at Digits 40
+  ["0064-mmult-tiny-float-factor.patch", "giac-2.1.0/src/vecteur.cc", /const gen & acur=\*it;\s*if \(is_zero\(acur,context0\)\)\{\s*int p=1;\s*\+\+it;\s*for \(; \(it!=itend\) && is_zero\(\*it,context0\);/, "double a_density=matrix_density(a),b_density=matrix_density(btran);"],
 ];
 
 const tar = tarball(SOURCES.giac);

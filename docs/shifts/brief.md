@@ -61,7 +61,6 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 888d | [R873](packages/R873.md) round pad and key line stand out | ron, Opus | `p1/ron-padline` | R872 |
 | 888e | [R874](packages/R874.md) empty-history mark in the hint colour | ron, Opus | `p1/ron-markhint` | R860, R873 |
 | 888e1 | [R887](packages/R887.md) ⚙ over a sheet opens Settings | ron, Opus | `p1/ron-gearsheet` | – |
 | 888e2 | [R915](packages/R915.md) units follow the angle; their RAD tag | ron, Opus | `p1/ron-unitangle` | – |
@@ -150,7 +149,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| B6a | [G790](packages/G790.md) a matrix product whose left factor has only tiny floats is never the zero matrix | gorge, Opus | `p1/gorge-mmulttiny` | – |
+| B6a | G790 a matrix product whose left factor has only tiny floats is never the zero matrix | gorge, Opus | `p1/gorge-mmulttiny` | – |
 | B6b | [G622](packages/G622.md) float pivots relative to the matrix | gorge, Opus | `p1/gorge-floatrref` | G790 |
 | B6c | [G792](packages/G792.md) sin, cos of a float matrix | gorge, Opus | `p1/gorge-matsincos` | – |
 | B6d | [G793](packages/G793.md) lcm of integers is positive | gorge, Opus | `p1/gorge-lcmsign` | – |
