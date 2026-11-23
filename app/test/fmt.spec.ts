@@ -162,8 +162,8 @@ test("PFX: 2500 draws as 2.5 k with a thin space and an accented prefix, from Se
   await tap(page, ["d2", "d5", "d0", "d0", "enter"]);
   await expect(lastText(page)).toHaveAttribute("data-text", "2500");
   await expect(markOfLast(page)).toHaveText("=");
-  // std -> sci -> eng -> pfx
-  await tap(page, ["fmt", "fmt", "fmt"]);
+  // std -> sci -> pfx (G785: eng draws 2500 = 2.5×10^3 as sci does, so it is skipped)
+  await tap(page, ["fmt", "fmt"]);
   await expect(lastText(page)).toHaveAttribute("data-text", "2.5 k");
   await expect(lastText(page).locator(".pfx")).toHaveText("k");
   await expect(markOfLast(page)).toHaveText("=");
@@ -226,9 +226,10 @@ test("R775: Fmt on a picked older row changes that row, not the last", async ({ 
   await expect(texts(page).nth(0)).toHaveAttribute("data-text", "3.00000000000E0");
   await expect(texts(page).nth(1)).toHaveAttribute("data-text", "4");
   await expect(texts(page).nth(2)).toHaveAttribute("data-text", "50000");
-  // the pick stays, so a second press goes on round the cycle on the same row
+  // the pick stays, so a second press goes on round the cycle on the same row (G785: past eng, which draws 3 as sci does)
   await tap(page, ["fmt"]);
-  await expect(texts(page).nth(0)).toHaveAttribute("data-text", "3.00000000000E0");
+  await expect(texts(page).nth(0)).toHaveAttribute("data-text", "3");
+  await expect(texts(page).nth(1)).toHaveAttribute("data-text", "4");
   await expect(texts(page).nth(2)).toHaveAttribute("data-text", "50000");
 });
 
@@ -281,4 +282,73 @@ test("R775 control: Fmt on the last row, nothing picked, as before", async ({ pa
   await tap(page, ["fmt"]);
   await expect(texts(page).nth(1)).toHaveAttribute("data-text", "5.00000000000E4");
   await expect(texts(page).nth(0)).toHaveAttribute("data-text", "3");
+});
+
+// G785: Fmt skips a step that would draw what the row shows; a press that changes nothing (Fmt or a b/c) is a dead press.
+// Derived: 5 = 5×10^0, an exponent that is a multiple of 3, so ENG draws 5 as SCI does; STD draws 5 as the exact 5 and as PFX
+// (10^0 has no prefix).
+test("G785: the default cycle at 12 digits: 5, Fmt 5.00000000000E0, Fmt 5 again (ENG would draw what SCI does)", async ({ page }) => {
+  await open(page, "");
+  await ready(page);
+  await tap(page, ["d5", "enter"]);
+  await expect(lastText(page)).toHaveAttribute("data-text", "5");
+  await tap(page, ["fmt"]);
+  await expect(lastText(page)).toHaveAttribute("data-text", "5.00000000000E0");
+  await tap(page, ["fmt"]);
+  await expect(lastText(page)).toHaveAttribute("data-text", "5");
+});
+
+test("G785: CAS, cycle STD SCI, digits 6: the first Fmt on 5 shows 5.00000E0 (STD draws the exact 5)", async ({ page }) => {
+  await open(page, "");
+  await ready(page);
+  await page.evaluate(() => (window.n62.session.setDigits(6), window.n62.session.setFmtMode("eng", false)));
+  await tap(page, ["@cas"]);
+  await tap(page, ["d5", "enter"]);
+  await expect(lastText(page)).toHaveAttribute("data-text", "5");
+  await tap(page, ["fmt"]);
+  await expect(lastText(page)).toHaveAttribute("data-text", "5.00000E0");
+  await tap(page, ["fmt"]);
+  await expect(lastText(page)).toHaveAttribute("data-text", "5");
+});
+
+test("G785: Home, Format PFX, cycle STD SCI, digits 6: the first Fmt on 5 shows 5.00000E0 (STD draws 5 as PFX does)", async ({ page }) => {
+  await open(page, "");
+  await ready(page);
+  await page.evaluate(() => (window.n62.session.setDigits(6), window.n62.session.setFmtMode("eng", false), window.n62.session.setFormat("pfx")));
+  await tap(page, ["d5", "enter"]);
+  await expect(lastText(page)).toHaveAttribute("data-text", "5");
+  await tap(page, ["fmt"]);
+  await expect(lastText(page)).toHaveAttribute("data-text", "5.00000E0");
+});
+
+/** Home, key vibration on (10 ms), the Format key cycle `cycle`, `5` Enter; then `key`'s press, once the forms code is in
+ *  (main.ts loads it when idle) and says that press changes nothing. The pulses of the press, counted as onepulse.spec.ts does. */
+async function pressOnFive(page: Page, cycle: string[], key: "fmt" | "frac", form: "cycleFormat" | "cycleForm"): Promise<number> {
+  await recordVibrations(page);
+  await open(page, "");
+  await ready(page);
+  await page.evaluate((c) => {
+    const s = window.n62.session;
+    s.setHaptics({ on: true, ms: 10 });
+    for (const m of ["std", "sci", "eng"] as const) s.setFmtMode(m, c.includes(m));
+  }, cycle);
+  expect(await page.evaluate(() => window.n62.session.settings.fmtCycle)).toEqual(cycle);
+  await tap(page, ["d5", "enter"]);
+  await expect(lastText(page)).toHaveAttribute("data-text", "5");
+  await expect.poll(() => page.evaluate((k) => window.n62.session.formRow(k, null) === undefined, form)).toBe(true);
+  const before = (await vibrations(page)).length;
+  await tap(page, [key]);
+  await page.waitForTimeout(300); // a dead key's second pulse comes ~80 ms after the first
+  return (await vibrations(page)).length - before;
+}
+
+test("G785: Home, cycle STD only: Fmt on 5 is a dead press, the double pulse alone, and the row stays 5", async ({ page }) => {
+  expect(await pressOnFive(page, ["std"], "fmt", "cycleFormat")).toBe(2); // the dead pulse alone (R777, docs/05 3.7)
+  await expect(lastText(page)).toHaveAttribute("data-text", "5");
+});
+
+test("G785: Home, a b/c on 5 (no other form) is a dead press, the double pulse alone; the row stays 5, the line empty", async ({ page }) => {
+  expect(await pressOnFive(page, ["std", "sci", "eng"], "frac", "cycleForm")).toBe(2);
+  await expect(lastText(page)).toHaveAttribute("data-text", "5");
+  expect(await page.evaluate(() => window.n62.entry.empty)).toBe(true);
 });

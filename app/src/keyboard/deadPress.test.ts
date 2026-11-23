@@ -37,7 +37,7 @@ function ctx(opts: { statuses?: string[]; app?: boolean; showsEntry?: boolean; f
     hasResult: () => items.some((i) => i.status === "done"),
     formKey: (k: string) => (log.push(`formKey ${k}`), Promise.resolve(true)),
     // Session.formRow: the row Fmt or a b/c takes; `formsDead` (G785): the forms code is in and says the press changes nothing
-    formRow: (_k: string, at: number | null) => (opts.formsDead ? undefined : targetRow(items, items[at ?? -1])),
+    formRow: (_k: string, at: number | null) => (opts.formsDead ? undefined : targetRow(items as never[], items[at ?? -1] as never)),
   };
   const level = {
     filter: opts.filter ?? "",
