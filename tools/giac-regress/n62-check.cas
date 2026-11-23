@@ -241,6 +241,8 @@ Digits:=40:; pc("g553-keep-ceil-5-pi-1e-12",'(ceil(5+pi*10^-12))',6,5/10^12);
 Digits:=40:; pc("g553-keep-ceil-sqrt4",'(ceil(sqrt(4)))',2,5/10^12);
 // g553-keep-floor-neg-pythagoras (home.yaml, derived)
 Digits:=40:; pc("g553-keep-floor-neg-pythagoras",'(floor(-(sin(1)^2+cos(1)^2)))',-1,5/10^12);
+// g553-keep-floor-pythagoras (home.yaml, derived)
+Digits:=40:; pc("g553-keep-floor-pythagoras",'(floor(sin(1)^2+cos(1)^2))',1,5/10^12);
 // g553-keep-floor-neg-7/2 (home.yaml, derived)
 Digits:=40:; pc("g553-keep-floor-neg-7/2",'(floor(-7/2))',-4,5/10^12);
 // g553-keep-round-2.5 (home.yaml, derived)
@@ -1203,4 +1205,6 @@ Digits:=40:; pc("g399-keep-angle-acos-5/4-squared",'(angle(acos(5/4)^2))',(31415
 Digits:=40:; pc("g399-keep-arg-near-neg-pi",'(arg(-1-10^-20*i))',-(314159265359/10^11),5/10^12);
 // g149-cas-keep-forms (precision.yaml g149-cas-keep-acosh-neg2, g149-cas-keep-ln-neg-pi-pow-3/2, g149-cas-keep-sqrt-neg-pi-cubed, g149f1-cas-keep-*, derived)
 Digits:=40:; pc("g149-cas-keep-forms",'when(string(acosh(-2))=="ln(-2+sqrt(-2+1)*sqrt(-2-1))" and string(ln((-pi)^(3/2)))=="ln(-sqrt(-pi)*pi)" and string(sqrt((-pi)^3))=="sqrt((-pi)^3)" and string(sqrt(acosh(-1/2)^2))=="sqrt(ln(-1/2+sqrt(-1/2+1)*sqrt(-1/2-1))^2)" and string((-1-i/10^20)^(1/2))=="sqrt((-100000000000000000000-i)/100000000000000000000)" and string(asinh(-10^300))=="-ln(1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000+sqrt((-1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)^2+1))",1,0)',1,1/10^30);
+// g553-keep-floor-3-pi-1e-36-40 (derived: 2 < 3-pi*10^-36 < 3)
+Digits:=40:; pc("g553-keep-floor-3-pi-1e-36-40",'floor(3-pi*10^-36)',2,1/10^30);
 print("n62-check: "+pasfail+" of "+pasn+" failed");

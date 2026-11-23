@@ -1556,6 +1556,12 @@ Digits:=12:; pc("g553-ceil-log10-1e12+1-12",'ceil(log10(10^12+1))',13,1/10^30);
 // patch 0061-floor-mpfr-working-precision.patch
 // g553-ceil-sqrt-1e24+1-12 (derived: sqrt(10^24+1) = 10^12+5E-13)
 Digits:=12:; pc("g553-ceil-sqrt-1e24+1-12",'ceil(sqrt(10^24+1))',1000000000001,1/10^30);
+// patch 0061-floor-mpfr-working-precision.patch
+// g553-floor-pythagoras-40 (derived: exactly 1; its float at Digits 40 is 1-9.2E-41, which stock floored to 0)
+Digits:=40:; pc("g553-floor-pythagoras-40",'floor(sin(1)^2+cos(1)^2)',1,1/10^30);
+// patch 0061-floor-mpfr-working-precision.patch
+// g553-ceil-neg-pythagoras-40 (derived: exactly -1; stock gave 0 at Digits 40)
+Digits:=40:; pc("g553-ceil-neg-pythagoras-40",'ceil(-(sin(1)^2+cos(1)^2))',-1,1/10^30);
 // patch 0019-atan-exact-cut.patch
 // g135-deg-atan-2i (DEG, oracle)
 angle_radian:=0:; Digits:=40:; pc("g135-deg-atan-2i",'atan(2*i)',90+(3147292373094538001977241539068588825237/10^38)*i,1/10^35);
