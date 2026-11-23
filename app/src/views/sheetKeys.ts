@@ -18,9 +18,10 @@ export type SheetKey =
   /** A tap on a key that is not a digit types its letter into the filter (no Alpha press needed). */
   | { kind: "letter"; ch: string }
   | { kind: "backspace" }
-  /** The key keeps its own job: Shift and Alpha (their state is kept as it is), and the controls that change place
-   *  (the status line's ☰ and place name, and Tmpl, toggle their sheet; its view tabs and a user key that holds Home,
-   *  CAS, Apps, Menu or a view close it and go there). A user key that holds anything else does nothing in a sheet. */
+  /** The key keeps its own job: Shift and Alpha (their state is kept as it is), the ⚙ key (Settings as the sheet's next
+   *  level, R887), and the controls that change place (the status line's ☰ and place name, and Tmpl, toggle their sheet;
+   *  its view tabs and a user key that holds Home, CAS, Apps, Menu or a view close it and go there). A user key that
+   *  holds anything else does nothing in a sheet. */
   | { kind: "pass" }
   /** Does nothing in a sheet. */
   | { kind: "none" }
@@ -38,7 +39,13 @@ const BY_ID: Readonly<Record<string, SheetKey>> = {
   esc: { kind: "back" },
   bksp: { kind: "backspace" },
 };
-const PASS: readonly string[] = ["shift", "alpha", "menu", "apps", "slot", "tmpl", "home", "cas", "switch", "symb", "plot", "num"];
+/** A key that keeps its own job in a sheet: its primary is one of `list`; `settings` only on the ⚙ key itself (R887; a free key that
+ *  holds Settings does nothing in a sheet, R15b). */
+const passes = (key: Key, list: readonly string[]): boolean => {
+  const p = key.actions.primary;
+  return p?.kind === "special" && list.includes(p.name) && (p.name !== "settings" || !key.user);
+};
+const PASS: readonly string[] = ["shift", "alpha", "settings", "menu", "apps", "slot", "tmpl", "home", "cas", "switch", "symb", "plot", "num"];
 
 /** The key's letter: its Alpha layer when that types one letter (A on Vars … Z on 2). A free key has none: its Alpha
  *  slot is the user's own (R15c3), and the letters of the sheet's filter stay where they are. */
@@ -63,8 +70,7 @@ export function sheetKey(key: Key, filter: boolean, numbered = 10): SheetKey {
   if (more) return more;
   const fixed = BY_ID[key.id];
   if (fixed) return fixed;
-  const p = key.actions.primary;
-  if (p?.kind === "special" && PASS.includes(p.name)) return { kind: "pass" };
+  if (passes(key, PASS)) return { kind: "pass" };
   const ch = filter ? letterOf(key) : undefined;
   return ch ? { kind: "letter", ch } : { kind: "none" };
 }
@@ -77,7 +83,7 @@ export function sheetFlick(key: Key, down: boolean, filter: boolean): SheetKey {
 }
 
 /** The status line's controls keep their job in Find: they close it and go there, or toggle their sheet. */
-const FIND_PASS: readonly string[] = ["menu", "apps", "slot", "home", "cas", "switch", "symb", "plot", "num"];
+const FIND_PASS: readonly string[] = ["settings", "menu", "apps", "slot", "home", "cas", "switch", "symb", "plot", "num"];
 
 /**
  * A key in Find (R4a, docs/04 3.7, decisions.md S2 rule M1). Every key types its letter in lower case, Tmpl and Math
@@ -92,8 +98,8 @@ export function findKey(key: Key, layer: Layer | undefined, shift: boolean, empt
   if (fixed) return fixed;
   const more = empty && layer !== "alpha" && layer !== "shift" && !(layer === undefined && shift) ? afterZero(key, numbered) : undefined; // R780: `.` and the space bar pick rows 11 and 12 of the empty query's list
   if (more) return more;
+  if (passes(key, FIND_PASS)) return { kind: "pass" };
   const p = key.actions.primary;
-  if (p?.kind === "special" && FIND_PASS.includes(p.name)) return { kind: "pass" };
   const own = p?.kind === "type" && [...p.text].length === 1 ? p.text : undefined;
   const letter = letterOf(key)?.toLowerCase();
   if (layer === "alpha") return letter ? { kind: "letter", ch: letter } : { kind: "none" };
@@ -124,6 +130,8 @@ export function storeKey(key: Key, shift: boolean, alpha: boolean, cas: boolean,
   const d = DIGIT.exec(key.id);
   if (d && !layered) return empty ? { kind: "none" } : { kind: "letter", ch: d[1] as string };
   const k = layered ? undefined : sheetKey(key, true);
+  const p = key.actions.primary;
+  if (p?.kind === "special" && p.name === "settings") return { kind: "line" }; // the ⚙ key: Settings from the line, as before R887
   return k && k.kind !== "none" ? k : { kind: "line" };
 }
 
@@ -138,8 +146,10 @@ export type SheetCtx = { kind: "find" | "store" | "other"; filter: boolean; numb
 export function sheetJob(key: Key, s: SheetCtx, mods: Mods, layer: Layer | undefined): SheetKey {
   const p = key.actions.primary;
   if (p?.kind === "special" && (p.name === "shift" || p.name === "alpha")) return { kind: "pass" };
-  if (s.kind === "find") return findKey(key, layer, mods.shift, s.empty, s.numbered);
   if (s.kind === "store") return storeKey(key, mods.shift, mods.alpha, s.cas, s.empty);
+  // R887: the ⚙ key's tap opens Settings on the sheet; Shift + it is Help, which stays dead in a sheet (R863)
+  if (p?.kind === "special" && p.name === "settings" && !key.user && (mods.shift || layer === "shift")) return { kind: "none" };
+  if (s.kind === "find") return findKey(key, layer, mods.shift, s.empty, s.numbered);
   return layer === "alpha" || layer === "shift" ? sheetFlick(key, layer === "alpha", s.filter) : sheetKey(key, s.filter, s.numbered);
 }
 
@@ -214,9 +224,27 @@ export function sheetAct(c: RouteCtx, key: Key, layer: Layer | undefined, mods?:
       // changes place (a view tab, a user key that holds Home or CAS) closes it and goes there
       const p = key.actions.primary;
       if (p?.kind !== "special" || isSelect(p)) return true; // (R279: Select and Deselect act on the line only)
+      if (p.name === "settings") {
+        // R887: as the head's ⚙ (R145): Settings as the next level of the open sheet, on any level, so Esc goes back to it;
+        // with Settings already open in the sheet there is nothing to open
+        if (sheet.settingsOpen) c.dead();
+        else settingsOnSheet(shell);
+        return true;
+      }
       if (p.name !== "menu" && p.name !== "apps" && p.name !== "slot" && p.name !== "tmpl") shell.closeSheet();
       special(c, p.name);
       return true;
     }
   }
+}
+
+/** R887: the ⚙ key over the open sheet: Settings as its next level on whatever level is open, as the head's ⚙ (R145), so Esc goes
+ *  back to it. Before the Mode code is in it loads first (Shell.withModeCode); a sheet closed or changed meanwhile gets nothing. */
+function settingsOnSheet(shell: RouteCtx["shell"]): void {
+  const s = shell.sheet;
+  const push = (): void => {
+    if (s && shell.sheet === s && !s.settingsOpen) shell.picked(s.openSettings(shell.toSettings()));
+  };
+  if (shell.settingsMenu?.() || !shell.withModeCode) push();
+  else shell.withModeCode(push);
 }
