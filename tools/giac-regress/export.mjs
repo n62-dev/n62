@@ -981,6 +981,19 @@ export function build(cases) {
     patched.push("// patch 0062-bitops-signed-small-integer.patch", `// g551-sweep-${op} (derived: Python's int ${op === "bitand" ? "&" : op === "bitor" ? "|" : "^"} on all pairs of 24 values; the count of pairs that differ)`, `Digits:=40:; ${tables} pc("g551-sweep-${op}",'${count}',0,1/10^30);`);
     nPatched++;
   }
+  // Patch 0063 (G554, F305), written lines: exp of a float matrix (usual.cc numeric_matrix_exp; the golden g554-* rows are matrices,
+  // which the export leaves out). Stock gave the identity above Digits 14, and at Digits 12 its 100-term series did not converge for a
+  // larger norm (-155.95 for cos 40, 0.0024 for exp(-30)). Expected values: mpmath at 45 digits (expm, sin, cos, exp; oracle), rounded
+  // to 38 digits at Digits 40 (G554's canary), to 12 at Digits 12.
+  for (const [id, digits, input, value, tol] of [
+    ["g554-exp-evalf-1234-00-40", 40, "exp(evalf([[1,2],[3,4]]))[0][0]", "51968956198705003658124484242647420628/10^36", "5/10^37"],
+    ["g554-exp-evalf-rotation-01-40", 40, "exp(evalf([[0,1],[-1,0]]))[0][1]", "84147098480789650665250232163029899962/10^38", "5/10^39"],
+    ["g554-exp-evalf-rotation40-00-12", 12, "exp(evalf([[0,40],[-40,0]]))[0][0]", "-666938061652/10^12", "1/10^11"],
+    ["g554-exp-evalf-neg30-00-12", 12, "exp(evalf([[-30,0],[0,-30]]))[0][0]", "935762296884/10^25", "1/10^24"],
+  ]) {
+    patched.push("// patch 0063-matrix-exp-working-precision.patch", `// ${id} (oracle: mpmath)`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
+    nPatched++;
+  }
   for (const [mode, n, tag, value] of [
     ["DEG", 0, "deg", "90+(3147292373094538001977241539068588825237/10^38)*i"],
     ["GRAD", 2, "grad", "100+(3496991525660597779974712821187320916930/10^38)*i"],
