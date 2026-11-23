@@ -6,6 +6,7 @@
 // out of the entry (R294).
 import type { Chip } from "../input/chips.ts";
 import { t } from "../i18n/index.ts";
+import { shellText } from "../i18n/enShell.ts";
 import type { AppShell } from "./shell.svelte.ts";
 import { appEntry } from "./registry.ts";
 import type { AppHost, AppId, AppInstance, LoadedApp, MenuItem, ViewId } from "./types.ts";
@@ -108,7 +109,7 @@ export function pointer(s: AppShell): MenuItem[] {
     return [
       {
         id: `in-${v}`,
-        label: t("menu.inView", { labels, view: t(`view.${v}`) }),
+        label: shellText("menu.inView", { labels, view: t(`view.${v}`) }),
         run: () => void s.setView(v).then(() => s.toggleMenu({ at: x?.id })),
       },
     ];
