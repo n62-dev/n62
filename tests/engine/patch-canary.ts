@@ -239,6 +239,9 @@ const CANARIES: [string, string, RegExp, string][] = [
   // so the arg of a negative real reached that way was -pi (arg((i*pi)^2) = 2*pi/2-2*pi, arg(i*pi*i) = pi/2+pi/2-2*pi)
   ["0059-arg-negative-real-pi.patch", "giac-2.1.0/src/gen.cc", /gen res=im\(ln\(af\._VECTptr->front\(\),contextptr\)\*af\._VECTptr->back\(\),contextptr\);\s*return _smod\(makesequence\(res,cst_two_pi\),contextptr\);/, "gen arg(const gen & a,GIAC_CONTEXT){"],
   ["0059-arg-negative-real-pi.patch", "giac-2.1.0/src/gen.cc", /if \(nonzero>1\)\s*return _smod\(makesequence\(res,cst_two_pi\),contextptr\);/, "gen arg(const gen & a,GIAC_CONTEXT){"],
+  // G553, patch 0061: _floor's MPFR branch takes a negative value as its truncation when is_zero(res-tmp), an absolute 1e-12 at any
+  // Digits, so ceil(pi*10^-13) = 0 and floor(-pi*10^-13) = 0 (ceil is -floor(-x), round floor(x+1/2))
+  ["0061-floor-mpfr-working-precision.patch", "giac-2.1.0/src/usual.cc", /gen res=real2int\(tmp,contextptr\);\s*if \(is_strictly_positive\(-tmp,contextptr\) && !is_zero\(res-tmp,contextptr\)\)\s*return res-1;/, "static bool warnfloor=true;"],
 ];
 
 const tar = tarball(SOURCES.giac);
