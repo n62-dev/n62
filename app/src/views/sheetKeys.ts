@@ -146,8 +146,10 @@ export type SheetCtx = { kind: "find" | "store" | "other"; filter: boolean; numb
 export function sheetJob(key: Key, s: SheetCtx, mods: Mods, layer: Layer | undefined): SheetKey {
   const p = key.actions.primary;
   if (p?.kind === "special" && (p.name === "shift" || p.name === "alpha")) return { kind: "pass" };
-  if (s.kind === "find") return findKey(key, layer, mods.shift, s.empty, s.numbered);
   if (s.kind === "store") return storeKey(key, mods.shift, mods.alpha, s.cas, s.empty);
+  // R887: the ⚙ key's tap opens Settings on the sheet; Shift + it is Help, which stays dead in a sheet (R863)
+  if (p?.kind === "special" && p.name === "settings" && !key.user && (mods.shift || layer === "shift")) return { kind: "none" };
+  if (s.kind === "find") return findKey(key, layer, mods.shift, s.empty, s.numbered);
   return layer === "alpha" || layer === "shift" ? sheetFlick(key, layer === "alpha", s.filter) : sheetKey(key, s.filter, s.numbered);
 }
 

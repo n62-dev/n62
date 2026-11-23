@@ -118,6 +118,13 @@ test.describe("by keys", () => {
       expect(await entryValue(page)).toBe(""); // no key reached the line
     });
   }
+  test("Shift + the ⚙ key (Help, R863) over ☰ stays a dead press: no Settings, the menu stays (R887)", async ({ page }) => {
+    await tap(page, ["@menu"]);
+    await expect(title(page)).toHaveText("Home menu");
+    await tap(page, ["shift", "help"]);
+    await expect(title(page)).toHaveText("Home menu");
+    await expect(page.locator('[data-key="help"]')).toHaveAttribute("data-dead", "true"); // drawn dead under Shift (a sheet keeps Shift)
+  });
   test("the ⚙ key with Settings open in the sheet adds no second Settings level (R887)", async ({ page }) => {
     await tap(page, ["@mode", "d6"]);
     await expect(title(page)).toHaveText("Mode › Settings");

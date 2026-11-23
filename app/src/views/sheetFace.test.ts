@@ -90,6 +90,10 @@ describe("R887: the ⚙ key keeps its job in Find, Vars, ☰ and Mode (Settings 
       expect(face("help", s), s.kind).toEqual({ dead: false });
     }
     expect(sheetJob(key("help"), ctx("store"), NO, undefined)).toEqual({ kind: "line" }); // R281: it opens Settings from the line, as before
+    for (const s of [ctx("find"), ctx("other")]) {
+      expect(sheetJob(key("help"), s, SHIFT, undefined), `${s.kind}: Shift + ⚙ is Help`).toEqual({ kind: "none" }); // R863: dead in a sheet
+      expect(sheetJob(key("help"), s, NO, "shift"), `${s.kind}: the flick up`).toEqual({ kind: "none" });
+    }
     const held: Key = { ...key("u2"), actions: { primary: { kind: "special", name: "settings" } } }; // R15b: a free key that holds Settings
     for (const s of [ctx("find"), ctx("other")]) expect(sheetJob(held, s, NO, undefined), s.kind).toEqual({ kind: "none" });
   });

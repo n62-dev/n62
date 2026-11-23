@@ -95,11 +95,10 @@ test.describe("a key drawn dead: no click, no look, the double pulse", () => {
   };
   const DEAD = { lit: 0, pop: 0, clicks: 0, pulses: 2 };
 
-  test("Find open: Help (Shift + the ⚙ key, R863) is drawn dead and is a dead press; so is Settings, the tap", async ({ page }) => {
+  test("Find open: Help (Shift + the ⚙ key, R863) is drawn dead and is a dead press; Settings, the tap, is lit (R887)", async ({ page }) => {
     await tap(page, ["math"]);
     await expect(page.getByTestId("find")).toBeVisible();
-    await expect(page.locator('[data-key="help"]')).toHaveAttribute("data-dead", "true");
-    expect(await press(page, "help"), "Settings").toEqual(DEAD);
+    await expect(page.locator('[data-key="help"]')).not.toHaveAttribute("data-dead", "true"); // R887: it opens Settings on Find (settings.spec.ts)
     await tap(page, ["shift"]);
     await expect(page.locator('[data-key="help"]')).toHaveAttribute("data-dead", "true");
     expect(await press(page, "help"), "Help").toEqual(DEAD);
