@@ -9,6 +9,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 - **R862, a digit on a disabled row:** in the unit view's ☰ (and every sheet) it runs nothing and the sheet stays, with no dead double haptic (`Sheet.activate`); R862's text called it a dead press. Recommended: one rule for every sheet, so either leave it, or give every disabled row's digit the dead feedback in a package of its own (sheet-wide, the controls of every sheet).
 - **R779, the drag after the arrow keys, on the Fairphone:** Chromium touch emulation could not reproduce "drag, arrow keys, drag" (linetouch.spec.ts, R779 cases, green on phase-1 too); lineTouch.ts now ends a stale touch (a new first finger, a lift off the line). Does the drag work on the Fairphone 6 after it? If not, record `adb` pointer events (down/move/up/cancel with ids) for the sequence.
+- **R376, a name after a mark:** R376 refuses a number right after °, ′, ″, %, ‰ or ! (`30°15`, `2%3`, `5!3`); a letter or a bracket there stays a product, as Giac reads it (`5!x` = 120·x, `2%x`, `30°(1+2)`): the line shows no ×, but no digit runs into a mark either. Recommended: leave it (a name cannot be read as minutes); else one more key per mark in `parse.markThen`.
 
 ## Decided proposals
 
