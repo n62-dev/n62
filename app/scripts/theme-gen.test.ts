@@ -237,9 +237,11 @@ describe("R843: N62 Light's Enter is the owner's orange", () => {
     expect(cr(t["on-enter"] as string, t["key-enter"] as string)).toBeGreaterThanOrEqual(7);
     expect(Math.abs(hue(t["key-enter"] as string) - hue("#c26a00"))).toBeLessThanOrEqual(2);
   });
-  it(`N62 Light's Enter stands at least ${R842_APART.normal} (High contrast ${R842_APART.high}) from --key-shift for normal vision and the three deficiencies`, () => {
+  it(`N62 Light's orange Enter stands at least ${R842_APART.normal} (High contrast ${R842_APART.high}) from --key-shift for normal vision and the three deficiencies`, () => {
     for (const high of [false, true]) {
       const t = n62("light", high);
+      const h = hue(t["key-enter"] as string);
+      expect(h >= 30 && h <= 70, `high ${high}: Enter hue ${h.toFixed(0)}° is an orange`).toBe(true);
       for (const m of [null, ...Object.values(CVD)]) expect(apart(t["key-enter"] as string, t["key-shift"] as string, m), `high ${high}`).toBeGreaterThanOrEqual(R842_APART[high ? "high" : "normal"]);
     }
   });
