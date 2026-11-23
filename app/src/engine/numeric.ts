@@ -31,7 +31,7 @@ import { binary64Of } from "./binary64.ts";
 import { isAlias } from "./decisionAlias.ts";
 import { ICDF_DIGITS, ICDF_FAILED, erfValueText, icdfCalls, icdfPolished } from "./icdf.ts";
 import type { GiacValue } from "./bridge.ts";
-import { callsOf, functionsIn, isError, KEYWORDS, LIST_TYPE, matrixTyped, type Quoting, RATIONAL, splitList, topLevelArgs, wholeCall, withoutStrings } from "./giacPrint.ts";
+import { callsOf, functionsIn, isError, isTimeout, KEYWORDS, LIST_TYPE, matrixTyped, type Quoting, RATIONAL, splitList, topLevelArgs, wholeCall, withoutStrings } from "./giacPrint.ts";
 import { complexReads, complexReplacedIn, complexSafe, forValue, nonReal, partsOf, purgeReads } from "./complex.ts";
 import { literalStart, uncheckedPastCap } from "./literalPrec.ts";
 import { noiseFreeStores, noisePart, withoutDoubleNoise, ZERO, zeroInDouble } from "./rootofNoise.ts";
@@ -805,6 +805,8 @@ function floatFactsOf(
   // G50: run with the functions Giac gets wrong on complex arguments replaced (forValue), and the names that hold them
   // read through their copies (G50f1, complexReads).
   const run = reads === null ? null : forValue(giac, reads.text, "typed");
+  // G783 fix round 1: a read Giac's interrupt stopped (its budget or its clock).
+  let stopped = false;
   // `asked`: the precision an evalf(e,n) in the input runs at in this evaluation (M4-6).
   // `text`: what is run (`run`, or G44's polished text).
   const at = (
@@ -813,7 +815,11 @@ function floatFactsOf(
     asked: (n: number) => number = (n) => Math.max(n, d),
     text: string | null = run,
   ): Parts[] | null =>
-    withDigits(giac, d, restoreDigits, () => valueAt(giac, text === null ? name : `${slot}:=(${withAskedPrecision(text, asked)})`, shape, d, P).parts);
+    withDigits(giac, d, restoreDigits, () => {
+      const r = valueAt(giac, text === null ? name : `${slot}:=(${withAskedPrecision(text, asked)})`, shape, d, P);
+      stopped ||= isTimeout(r.v.text);
+      return r.parts;
+    });
   // A non-real value that rests on a replaced function not read through our definitions (DEG, complexReads' hidden).
   const hidden = reads !== null && reads.hidden.length > 0 && nonReal(giac, name) ? reads.hidden : [];
   const unaudited = expr === null || !isAudited(expr, "typed") || hidden.length > 0;
@@ -872,8 +878,14 @@ function floatFactsOf(
     if (r && "facts" in r && !failed) return r.facts;
   }
   if (unaudited) {
-    const D = at(DOUBLE_DIGITS, "pasd", () => DOUBLE_DIGITS);
-    const M = at(P, "pasm");
+    let D = at(DOUBLE_DIGITS, "pasd", () => DOUBLE_DIGITS);
+    let M = at(P, "pasm");
+    // G783 fix round 1: a read Giac's interrupt stopped (its clock, a host stall under load) is read once more before the
+    // other is taken alone (min(digits, 14) below): student_icdf(i,0.5) showed 12 digits of noise. A budget stop stops again.
+    if (stopped && !D !== !M) {
+      D ??= at(DOUBLE_DIGITS, "pasd", () => DOUBLE_DIGITS);
+      M ??= at(P, "pasm");
+    }
     const fnWarn: PrecisionWarn = "unaudited";
     if (D && M) {
       // G324: a part 0 in the double and not at P is read once more at P + 20; G60's noise is shown as 0 (rootofNoise.ts)

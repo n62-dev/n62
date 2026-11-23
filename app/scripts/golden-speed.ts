@@ -82,6 +82,13 @@ export const SPEED_KNOWN: Record<string, string> = {
   // key-4361f213c1035daa, 2026-11-22); it keeps Underflow at a clock ×8 and stops (took too long, ≈) from ×10 on, so ×8
   // differs on a host only 1.25× slower than quiet, under the load of other runs' checks (runs 1475 and 1490)
   "precision/g331-simplify-f214-12": "HOME_CLOCK_S",
+  // Home's whole Enter, not one Giac call, against HOME_DEADLINE_MS (2 s): acos(sqrt(-2)/10^400-2) (G325f1) is 195-206 ms on a
+  // quiet host (3 fresh engines, 2026-11-23), its largest Giac call 75 ms (11,111 checks); sum(1/(k*(4*k+1)),k,1,inf) (G618) is
+  // 162-169 ms, its largest call 82 ms (131,000 checks, the same on phase-1's engine). The golden row keeps its answer up to a
+  // clock ×10 (acos) and ×12 (sum) and stops from ×12 and ×14 on, so ×8 differs on a host 1.25-1.5× slower than quiet, under
+  // the load of other runs' checks (run 1494, which also stopped G340's and G331's rows)
+  "home/g325f1-acos-sqrt-neg2-1e-400-minus-2": "HOME_DEADLINE_MS",
+  "home/g618-sum-k(4k+1)": "HOME_DEADLINE_MS",
 };
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
