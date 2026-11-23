@@ -34,6 +34,20 @@ function insertOf(n: UserName): string {
   return nameLatex(n.name);
 }
 
+/** Memory (R4b): purge these names from the engine and its definitions log. The list drops them at once, then reads
+ *  the log again (a purge that failed brings a name back). Here, not in Session, since G785 (the start chunk's room). */
+export async function forget(session: Session, names: readonly string[]): Promise<void> {
+  if (names.length === 0) return;
+  const gone = new Set(names);
+  session.userNames = session.userNames.filter((u) => !gone.has(u.name));
+  try {
+    await session.calc.home(`purge(${names.join(",")})`, session.settings);
+  } catch {
+    /* cancelled or the engine restarted: the names are read again below */
+  }
+  await session.refreshNames();
+}
+
 /** A variable's name as the line takes it (R258; the store sheet types it after ▶, R281). R337: a stand-in e_ or i_ (R67)
  *  as the letter the keys type, which the parser reads back as the stand-in (`e_` itself would be e with an empty subscript). */
 export function nameLatex(name: string): string {
@@ -146,7 +160,7 @@ export function showNames(shell: { sheet: Sheet | null }, entry: EntryController
   const run = (n: UserName): void => {
     if (memory) {
       ui.armed = false;
-      void session.forget([n.name]);
+      void forget(session, [n.name]);
       settle();
     } else entry.run({ kind: "insert", latex: insertOf(n) });
   };
@@ -179,7 +193,7 @@ export function showNames(shell: { sheet: Sheet | null }, entry: EntryController
       if (!ui.armed) ui.armed = true;
       else {
         ui.armed = false;
-        void session.forget(names().map((n) => n.name));
+        void forget(session, names().map((n) => n.name));
         settle();
       }
     },

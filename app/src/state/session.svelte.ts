@@ -43,6 +43,7 @@ import type { WordSetting } from "./wordSetting.ts";
 import { isBarSlot, type BarSlot } from "../apps/registry.ts";
 
 export type View = "home" | "cas";
+type FormKey = "cycleFormat" | "cycleForm";
 export type EntryMode = "textbook" | "line" | "rpn"; // R253: rpn is kept, no key reads it yet (R343)
 
 /** Key vibration (off by default). Strength 0..100 %, duration in ms; the web build can only set the duration. */
@@ -259,7 +260,8 @@ export class Session {
   userNames = $state<UserName[]>([]);
 
   private nextId = 1;
-  private readonly calc: Calc;
+  /** The engine port; Memory's purge (find/names.svelte.ts forget) runs through it too. */
+  readonly calc: Calc;
   /** Settles once the stored names were first read (or the engine failed): a parse waits for it, so a function from
    *  before a relaunch is a call from the first Enter on (R56). */
   private readonly namesRead: Promise<void>;
@@ -330,20 +332,6 @@ export class Session {
     } catch {
       /* the engine restarts on its own; the next job refreshes the list */
     }
-  }
-
-  /** Memory (R4b): purge these names from the engine and its definitions log. The list drops them at once, then reads
-   *  the log again (a purge that failed brings a name back). */
-  async forget(names: readonly string[]): Promise<void> {
-    if (names.length === 0) return;
-    const gone = new Set(names);
-    this.userNames = this.userNames.filter((u) => !gone.has(u.name));
-    try {
-      await this.calc.home(`purge(${names.join(",")})`, this.settings);
-    } catch {
-      /* cancelled or the engine restarted: the names are read again below */
-    }
-    await this.refreshNames();
   }
 
   /** A function the engine just took (`p(x):=…`) counts for the next parse at once; the names read after the job
@@ -655,16 +643,21 @@ export class Session {
     return { format: s.format, digits: s.digits, fixDecimals: s.fixDecimals, angle: s.angle, ...(this.decimalComma ? { decimalComma: true } : {}), groupSep: s.groupSep, mute: sigmaCode?.muter };
   }
 
-  /** The Format key (cycleFormat) or the a b/c key on an empty line (cycleForm, R10; cycleForms.ts) on the picked row `at`, else
-   *  the open view's newest finished result (R775, Copy's rule); `dead`: called when there is none. Taken at the press before
-   *  any await, and only when nothing runs: a later row must not take the act (R135f1). The code loaded: no await, the act is
-   *  done before the next key. True when the display changed. */
-  async formKey(key: "cycleFormat" | "cycleForm", at?: number | null, dead?: () => void): Promise<boolean> {
+  /** The row the Format key (cycleFormat) or the a b/c key on an empty line (cycleForm, R10; cycleForms.ts) takes: the picked
+   *  row `at`, else the open view's newest finished result (R775, Copy's rule). Undefined when the press would change nothing
+   *  (R777, G785; route.ts deadPress asks it): no such row, or, once the forms code is in, no step that draws otherwise. */
+  formRow(key: FormKey, at?: number | null): HistoryItem | undefined {
     const item = targetRow(this.items, this.items[at ?? -1]);
-    if (!item) return dead?.(), false;
-    if (this.busy) return false;
+    return item && !formsCode?.formDead(this, item, key) ? item : undefined;
+  }
+  /** The Format or the a b/c key on formRow's row, taken at the press before any await, and only when nothing runs: a later
+   *  row must not take the act (R135f1). The code loaded: no await, the act is done before the next key. True when the
+   *  display changed; `dead` is called when nothing did (G785: the code was not in at the press, so deadPress could not know). */
+  async formKey(key: FormKey, at?: number | null, dead?: () => void): Promise<boolean> {
+    const item = this.formRow(key, at);
+    if (!item || this.busy) return false; // (deadPress gave the dead press)
     const m = formsCode ?? (await loadForms());
-    return m ? m[key](this, this.calc, item) : false;
+    return (m && (await m[key](this, this.calc, item))) || (dead?.(), false);
   }
 
   /** Delete one row of the open view (R11). A running row is not deleted: Cancel stops it first. Undo brings it back (R98).

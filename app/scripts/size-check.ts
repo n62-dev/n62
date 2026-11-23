@@ -627,7 +627,10 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  G399 (fix round 2, a cut; the pin stays the budget): Giac patch 0059 adds no app source, but its new engine hash took the start
  *  chunk to 63,001 B gzip (176,880 B raw). The Menu's "in view" row and the view tabs' group name left the start table (en.ts)
  *  for i18n/enShell.ts, which only the shell's app-opening chunk reads (apps/shellOpen.ts, views/AppViews.svelte): 62,976 B
- *  (176,822 B raw). */
+ *  (176,822 B raw).
+ *  G785 (a cut; the pin stays the budget): Fmt skips a step that draws what the row shows (deadPress asks Session.formRow).
+ *  Phase-1 5c518933 measures 62,986 B gzip, the change 63,015 B; Memory's purge (Session.forget, read only by the lazy
+ *  find/names.svelte.ts) moved there: 62,967 B (176,789 B raw). Lazy-only en.ts strings to lazy tables gave −1 B only. */
 export const START_PIN_GZIP = 63_000;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look

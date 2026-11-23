@@ -16,7 +16,7 @@ const name = (n: string, preview: string, time: number): UserName => ({ name: n,
 function setup(memory: boolean) {
   const session = new Session(new FakeCalc(), kv());
   session.userNames = [name("A", "5", 1), name("B", "7", 2)];
-  const forget = vi.spyOn(session, "forget");
+  const forget = vi.spyOn(session.calc, "home"); // Memory's delete (names.svelte.ts forget) purges through the engine
   const shell: { sheet: Sheet | null } = { sheet: null };
   showNames(shell, { run: () => undefined } as unknown as EntryController, session, memory);
   return { session, forget, sheet: shell.sheet as Sheet };
@@ -47,7 +47,7 @@ describe("R800: Memory's digits highlight", () => {
     expect(forget).not.toHaveBeenCalled();
     sheet.enter();
     expect(forget).toHaveBeenCalledTimes(1);
-    expect(forget).toHaveBeenCalledWith(["B"]);
+    expect(forget).toHaveBeenCalledWith("purge(B)", expect.anything());
   });
   it("a digit past the last row does nothing", () => {
     const { sheet, forget } = setup(true);

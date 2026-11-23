@@ -231,6 +231,10 @@ const CANARIES: [string, string, RegExp, string][] = [
   // quartile3, quantile and quartiles (misc.cc) take ascsort's rows as they come, with no error
   ["0058-ascsort-mpfr-elements.patch", "giac-2.1.0/src/permu.cc", /tmp=evalf\(tmp,1,0\);\s*if \(tmp\.type!=_DOUBLE_\)\s*vv\[j\]=0;/, "matrice ascsort(const matrice & m,bool column){"],
   ["0058-ascsort-mpfr-elements.patch", "giac-2.1.0/src/misc.cc", /return mtran\(ascsort\(mtran\(vecteur\(1,v\)\),true\)\)\[int\(std::ceil\(v\.size\(\)\/4\.0\)\)-1\]\[0\];/, "gen _quartile1(const gen & g,GIAC_CONTEXT){"],
+  // G789, patch 0060: median, quartile1 (and quartile3, quantile, quartiles) sort a list that is not fully numeric with
+  // islesscomplexthanf_sort, by form: undef and a free name take a place, -inf comes last (median([3,1,-inf]) = 3, right 1)
+  ["0060-median-list-by-value.patch", "giac-2.1.0/src/misc.cc", /if \(!is_fully_numeric\(evalf\(v,1,contextptr\)\)\)\{\s*islesscomplexthanf_sort\(v\.begin\(\),v\.end\(\)\);\s*return v\[int\(std::ceil\(v\.size\(\)\/2\.0\)\)-1\];/, "gen _median(const gen & g,GIAC_CONTEXT){"],
+  ["0060-median-list-by-value.patch", "giac-2.1.0/src/misc.cc", /if \(!is_fully_numeric\(evalf\(v,1,contextptr\)\)\)\{\s*islesscomplexthanf_sort\(v\.begin\(\),v\.end\(\)\);\s*return v\[int\(std::ceil\(v\.size\(\)\/4\.0\)\)-1\];/, "gen _quartile1(const gen & g,GIAC_CONTEXT){"],
   // G399, patch 0059: arg of a power and of a product returns _smod(x,2*pi), whose range is [-pi,pi) (x-m*round(x/m), round(1/2) = 1),
   // so the arg of a negative real reached that way was -pi (arg((i*pi)^2) = 2*pi/2-2*pi, arg(i*pi*i) = pi/2+pi/2-2*pi)
   ["0059-arg-negative-real-pi.patch", "giac-2.1.0/src/gen.cc", /gen res=im\(ln\(af\._VECTptr->front\(\),contextptr\)\*af\._VECTptr->back\(\),contextptr\);\s*return _smod\(makesequence\(res,cst_two_pi\),contextptr\);/, "gen arg(const gen & a,GIAC_CONTEXT){"],

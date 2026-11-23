@@ -54,12 +54,12 @@ describe.skipIf(!giacAvailable())("Format key (real Giac)", () => {
     s.setFmtMode("fix", true);
     await s.submit("\\frac73");
     const seen: string[] = [];
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 3; i++) {
       await s.formKey("cycleFormat");
       seen.push(text(s));
     }
-    // from Standard: sci, eng, fix, std (derived: 7/3 = 2.3333…, exponent 0)
-    expect(seen).toEqual(["2.33333333333E0", "2.33333333333E0", "2.3333", "2.33333333333"]);
+    // from Standard: sci, fix, std (derived: 7/3 = 2.3333…, exponent 0, so eng draws as sci and is skipped, G785)
+    expect(seen).toEqual(["2.33333333333E0", "2.3333", "2.33333333333"]);
     const forms: string[] = [];
     for (let i = 0; i < 2; i++) {
       await s.formKey("cycleForm");

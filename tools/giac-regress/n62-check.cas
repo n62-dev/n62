@@ -1157,6 +1157,14 @@ Digits:=40:; pc("g398-keep-sqrt-prod-neg",'(sqrt((1-sqrt(2))*(1-sqrt(3))))',(550
 Digits:=40:; pc("g786-keep-median-exact-list",'(median([3,1,2]))',2,5/10^12);
 // g786f1-keep-median-frequency (precision.yaml, derived)
 Digits:=40:; pc("g786f1-keep-median-frequency",'(median([1,2,3],[1,1,1]))',2,5/10^12);
+// g789-keep-median-inf (precision.yaml, derived)
+Digits:=40:; pc("g789-keep-median-inf",'(median([3,1,inf]))',3,5/10^12);
+// g789-keep-median-exact-reals (precision.yaml, derived)
+Digits:=40:; pc("g789-keep-median-exact-reals",'(median([pi,1,sqrt(2)]))',(141421356237/10^11),5/10^12);
+// g789-keep-median-even (precision.yaml, derived)
+Digits:=40:; pc("g789-keep-median-even",'(median([1,2,3,4]))',2,5/10^12);
+// g789-keep-median-pi-inf (precision.yaml, derived)
+Digits:=40:; pc("g789-keep-median-pi-inf",'(median([pi,1,inf]))',(314159265359/10^11),5/10^12);
 // g399-keep-arg-neg-ln2-squared (precision.yaml, derived)
 Digits:=40:; pc("g399-keep-arg-neg-ln2-squared",'(arg(-ln(2)^2))',(314159265359/10^11),5/10^12);
 // g399-keep-arg-sqrt-neg2-squared (precision.yaml, derived)
