@@ -72,10 +72,12 @@ describe("giac-regress exporter", () => {
     // (G169: one element of a distribution's list x, 7 lines), patch 0040 (G186: simplify of a root of 10^330+7, an acosh of
     // 10^-300 in an abs), patch 0041 (G187: a double power past the int range, normal of such a power), patch 0042 (G170:
     // VARS() keeps its size after ilaplace), patch 0043 (G322: solve keeps the real root of a cubic, 6 lines; G364: only that root when two roots are close, 6 lines), patch 0047 (G331: simplify of an ln
-    // of a nested root, 3 lines), patch 0048 (G308: a power and a product of 1+eps*i, 5 lines), patch 0050 (G359: a cubic with a 10^-30 term, 5 lines; G364: the 10^-80 form at Digits 12 and 30, 2 lines), patch 0054 (G617: normal of an alternating sum from 2 less 1-pi^2/12), patch 0057 (G398: ln(1/y) of an assumed y < 0 at y = -2; G783: unapply of sqrt(1/x) and ln(1/x) at -2, 2 lines), patch 0058 (G786: quartiles, a float matrix's medians and a decimal beside integers at Digits 20, 3 lines; G786f1: a refusal from each caller, list and matrix forms, 14 lines); the check file gets G149's written line for the CAS view's exact forms
-    expect([r.nCheck, r.nPatched]).toEqual([1, 84]);
+    // of a nested root, 3 lines), patch 0048 (G308: a power and a product of 1+eps*i, 5 lines), patch 0050 (G359: a cubic with a 10^-30 term, 5 lines; G364: the 10^-80 form at Digits 12 and 30, 2 lines), patch 0054 (G617: normal of an alternating sum from 2 less 1-pi^2/12), patch 0057 (G398: ln(1/y) of an assumed y < 0 at y = -2; G783: unapply of sqrt(1/x) and ln(1/x) at -2, 2 lines), patch 0058 (G786: quartiles, a float matrix's medians and a decimal beside integers at Digits 20, 3 lines; G786f1: a refusal from each caller, list and matrix forms, 14 lines), patch 0060 (G789: undef, a name, a NaN and unsigned infinity refused by each caller, list and matrix forms, 23 lines, the name in a matrix on 0058; 4 infinite answers); the check file gets G149's written line for the CAS view's exact forms
+    expect([r.nCheck, r.nPatched]).toEqual([1, 111]);
     expect(r.patched.match(/\/\/ patch 0050-proot-huge-coefficients\.patch\n/g)).toHaveLength(17);
-    expect(r.patched.match(/\/\/ patch 0058-ascsort-mpfr-elements\.patch\n/g)).toHaveLength(17);
+    expect(r.patched.match(/\/\/ patch 0058-ascsort-mpfr-elements\.patch\n/g)).toHaveLength(22); // G786 3, G786f1 14, G789's name in a matrix 5
+    expect(r.patched.match(/\/\/ patch 0060-median-list-by-value\.patch\n/g)).toHaveLength(22);
+    expect(r.patched).toContain('Digits:=40:; pc("g789-quartile1-neg-inf",\'when((quartile1([5,-inf,3,1]))==-inf,1,0)\',1,1/10^30);');
     expect(r.patched).toContain('// g786f1-median-all-complex-refused (derived: no order on a value that is not real, decisions.md "A complex element in median and the quartiles")\nDigits:=40:; pasr:=0:; try { median([1+i,2+i,3+i]); } catch (err) { pasr:=1; }:;');
     expect(r.patched).toContain('// g359-rootof-1e400-error-or-right-20 (oracle: mpmath findroot, -10^-400; an error passes)\nDigits:=20:; pasr:=0:; try {');
     expect(r.patched.match(/\/\/ patch 0048-complex-is-one-exact\.patch\n/g)).toHaveLength(5);
