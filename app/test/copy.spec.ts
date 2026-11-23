@@ -280,3 +280,62 @@ test("a key right after Paste waits for the pasted number: ÷ with a slow clipbo
   await done(page, 1);
   await expect(lastResult(page)).toHaveAttribute("data-text", "0.5");
 });
+
+// G784: Copy writes the names the screen shows. The letters i and β are names the parser stores as the stand-ins i_ and
+// beta_ (engine/standIns.ts, R58b); Giac prints those, the screen draws the letters, and Copy writes the letters too.
+/** The line typed on the hardware keyboard (its i is the letter, a name), then Enter. */
+async function typed(page: Page, s: string, n: number): Promise<void> {
+  await page.locator("math-field").first().focus();
+  await page.keyboard.type(s);
+  await page.keyboard.press("Enter");
+  await done(page, n);
+}
+
+test("G784: 2i and rainbow (hardware i) copy as 2*i and r*a*i*n*b*o*w; β·2 (Chars) as β*2; As shown and Exact the same names", async ({ page }) => {
+  await typed(page, "2i", 1);
+  await tap(page, KEYCOPY);
+  await expect.poll(() => clipboard(page)).toBe("2*i");
+  await expect(page.getByTestId("notice")).toHaveText("Copied: 2*i");
+  await typed(page, "rainbow", 2);
+  await tap(page, KEYCOPY);
+  await expect.poll(() => clipboard(page)).toBe("r*a*i*n*b*o*w");
+  await tap(page, ["shift", "vars"]);
+  await page.getByTestId("menu").locator('[data-id="beta"]').tap();
+  await tap(page, ["mul", "d2", "enter"]);
+  await done(page, 3);
+  await tap(page, KEYCOPY);
+  await expect.poll(() => clipboard(page)).toMatch(/^(?:β\*2|2\*β)$/);
+  const full = await clipboard(page);
+  for (const what of ["As shown", "Exact"]) {
+    await setClipboard(page, "");
+    await pickCopyAs(page, what);
+    await expect.poll(() => clipboard(page)).toBe(full);
+  }
+});
+
+test("G784 controls: 2+3·i with Shift + 2 (the constant) and e² from the eˣ key copy as before", async ({ page }) => {
+  await tap(page, ["d2", "add", "d3", "mul", "shift", "d2", "enter"]);
+  await done(page, 1);
+  await tap(page, KEYCOPY);
+  await expect.poll(() => clipboard(page)).toBe("2+3*i");
+  await tap(page, ["shift", "ln", "d2", "enter"]);
+  await done(page, 2);
+  await tap(page, KEYCOPY);
+  // e² = 7.389056098930650227230427460575007813180|3… (oracle: mpmath, 50 digits): 40 digits, the trailing 0 dropped
+  await expect.poll(() => clipboard(page)).toBe("7.38905609893065022723042746057500781318");
+});
+
+// G784, not done (docs/decisions.md, Needs the user): Paste reads one number (docs/04 2.6), so the copies do not come back
+// as their rows. `2*i` is read as the constant (as Copy's `a+b*i` is), not the name i; a product of names is refused.
+test("G784: Paste of the copied names, as it stands: 2*i as the constant i, r*a*i*n*b*o*w and β*2 refused", async ({ page }) => {
+  await setClipboard(page, "2*i");
+  await tap(page, PASTE);
+  await expect.poll(() => entryValue(page)).toBe("2\\imaginaryI");
+  await tap(page, ["esc"]);
+  for (const s of ["r*a*i*n*b*o*w", "β*2"]) {
+    await setClipboard(page, s);
+    await tap(page, PASTE);
+    await expect(page.getByTestId("notice")).toHaveText("Paste: not a number");
+    expect(await entryValue(page)).toBe("");
+  }
+});
