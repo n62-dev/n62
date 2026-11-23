@@ -61,6 +61,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F310, F316, F317, F319, no package (T2, low).** linterp refuses an x inside the table when the end check needs > 40 digits; Ans and the last chip are two σ inputs; `floor(evalf(pi,3)*1000)` = 3139 with `=`; weights summing to 0 give `infinity` unmarked.
 - **F350–F365 (T4's sessions, 2026-11-16; evidence in each package).** F350 G575, F353 R576, F354 G577, F355 R577, F356 R578, F358 R579, F359 R580, F360 G578, F361 R581, F363 R583, F364 R584.
 - **F400–F414, F425–F442 (T6's hunts, 2026-11-16; evidence in each package and `../drafts/2026-11-16-ultra/t6a/`, `t6b/`).** T6a: G600–G608, R600; T6b: G613–G624; unpackaged: F409, F410, F413, F430, F438, F439, F442; F440 stays Giac's (owner).
+- **Copy wrote stand-ins (sofia, 2026-11-22), fixed by G784.** `2i` (hardware i) copied as `2*i_`, `rainbow` as `r*a*i_*n*b*o*w`; Copy, Copy as shown, Copy exact, Share and the CSV now write the letters. Left: Paste of a copied name (decisions, Needs the user). Family 9.
 - **F472 (G782's report; G782f1).** A % chip in the unit view counts as its number: `chip × 200 m` with 0.42 % is 84 m (right 0.84 m), the slot starts empty; Store ▶ on a ratio result is dead. Family 1.
 - **F357, no package (T4, S14).** Function Symb: Enter keeps the line on F1 (the owner's G2 check).
 
