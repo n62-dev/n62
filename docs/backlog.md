@@ -22,7 +22,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 7. **T1's hands-on items (2026-11-16):** A202 (the key click with the system touch sounds off, the Tab One); A210's feel after it merges (30 % against 90 % on the Fairphone); G9 waits on item 2.
 8. **Later:** the outside rounds (two 30-minute rounds after R4b and R24c, [r18](research/r18-outside-test.md)); at milestone 5, time ten tasks by hand (E-notation against units).
 9. **R779** (decisions.md): the line's drag on the Fairphone.
-10. **A266's device step:** start adb on Windows (`adb start-server` in a Windows session; A266's worker's `adb kill-server` stopped the server behind the WSL bridge), then A266f1 runs by day (the Tab One: does the WebView run under the bars, the five looks with shots); no gate compiles N62BarsPlugin.java until then.
+10. **A266's device step:** plug the Tab One (HA24BZ2Y) in; `adb devices` from WSL must list it (the adb server restarts itself after `adb kill-server`, a gap of about 6 s). Then A266f1 runs by day (does the WebView run under the bars, the five looks with shots); no gate compiles N62BarsPlugin.java until then.
 11. **G784** (decisions.md): should Paste read a copied name back? (G784f1 refuses one N62 copied; a product of names is refused).
 
 ### Upstream reports (owner; drafts in `../outreach/upstream-reports.md`)
