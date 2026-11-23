@@ -1,0 +1,42 @@
+# Upstream: giac 2.1.0 vecteur.cc mmult_atranb, under every product of two matrices (operator* of two _VECT, mmult, mmultck): when neither factor holds doubles only (mmult_double), the product of a sparse pair (matrix_density(a)*matrix_density(btran) <= 0.1) runs a loop over the left factor's entries that skips each entry with is_zero(acur,context0), and matrix_density counts zeros with is_zero too. is_zero of a float compares it with epsilon, an absolute 1e-12 at any Digits (gen.cc is_zero: an MPFR value's double), so above Digits 14 a left factor whose entries are all below 1e-12 counted as empty and every entry was skipped: approx([[10^-13,0],[0,10^-13]])*[[1,2],[3,4]] = [[0,0],[0,0]] at Digits 40 (right [[1E-13,2E-13],[3E-13,4E-13]]), approx([[10^-13,10^-13],[0,10^-13]])*approx([[1,2],[3,4]]) = [[0,0],[0,0]] (right [[4E-13,6E-13],[3E-13,4E-13]]), approx([[10^-13,0],[0,10^-13]])*approx([[10^-13,0],[0,10^-13]]) = [[0,0],[0,0]] (right [[1E-26,0],[0,1E-26]]), and evalf([[10^-19,0],[0,10^-19]])*evalf([[1,0],[0,1]]) (met by G554); a small right factor, one left entry above 1e-12 (dense loop) and doubles at Digits 12 (mmult_double) were right. Now both tests ask for an exact zero (is_exactly_zero): an exact 0, or a float whose value is 0. The sparse loop and the choice between the loops are otherwise unchanged; is_zero and epsilon are not changed.
+# Changed by Pascaline contributors, 2026-11-23
+--- a/src/vecteur.cc
++++ b/src/vecteur.cc
+@@ -4888,18 +4888,20 @@ namespace giac {
+     return true;
+   }
+ 
++  // N62 (G790): an entry counts as zero only when it is an exact zero (is_exactly_zero), never within is_zero's absolute
++  // epsilon (1e-12 at any Digits): a float matrix of tiny entries is as dense as any other.
+   double matrix_density(const matrice & a){
+     int z=0,c=0;
+     const_iterateur it=a.begin(),itend=a.end();
+     for (;it!=itend;++it){
+       if (it->type!=_VECT){
+-	if (is_zero(*it)) ++z;
++	if (is_exactly_zero(*it)) ++z;
+ 	++c;
+ 	continue;
+       }
+       const_iterateur jt=it->_VECTptr->begin(),jtend=it->_VECTptr->end();
+       for (;jt!=jtend;++jt){
+-	if (is_zero(*jt)) ++z;
++	if (is_exactly_zero(*jt)) ++z;
+ 	++c;
+       }
+     }
+@@ -5004,10 +5006,12 @@ namespace giac {
+ 	      itbb[i]=itb->_VECTptr->begin();
+ 	    for (;it!=itend;++it){
+ 	      const gen & acur=*it;
+-	      if (is_zero(acur,context0)){
++	      // N62 (G790): skip exact zeros only; is_zero's absolute epsilon (1e-12 at any Digits) skipped every float entry
++	      // below it, so a left factor of tiny floats gave the zero matrix (approx([[10^-13,0],[0,10^-13]])*[[1,2],[3,4]])
++	      if (is_exactly_zero(acur)){
+ 		int p=1;
+ 		++it;
+-		for (; (it!=itend) && is_zero(*it,context0);++it,++p){
++		for (; (it!=itend) && is_exactly_zero(*it);++it,++p){
+ 		}
+ 		if (it==itend)
+ 		  break;
