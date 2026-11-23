@@ -39,6 +39,12 @@ const BY_ID: Readonly<Record<string, SheetKey>> = {
   esc: { kind: "back" },
   bksp: { kind: "backspace" },
 };
+/** A key that keeps its own job in a sheet: its primary is one of `list`; `settings` only on the ⚙ key itself (R887; a free key that
+ *  holds Settings does nothing in a sheet, R15b). */
+const passes = (key: Key, list: readonly string[]): boolean => {
+  const p = key.actions.primary;
+  return p?.kind === "special" && list.includes(p.name) && (p.name !== "settings" || !key.user);
+};
 const PASS: readonly string[] = ["shift", "alpha", "settings", "menu", "apps", "slot", "tmpl", "home", "cas", "switch", "symb", "plot", "num"];
 
 /** The key's letter: its Alpha layer when that types one letter (A on Vars … Z on 2). A free key has none: its Alpha
@@ -64,8 +70,7 @@ export function sheetKey(key: Key, filter: boolean, numbered = 10): SheetKey {
   if (more) return more;
   const fixed = BY_ID[key.id];
   if (fixed) return fixed;
-  const p = key.actions.primary;
-  if (p?.kind === "special" && PASS.includes(p.name)) return { kind: "pass" };
+  if (passes(key, PASS)) return { kind: "pass" };
   const ch = filter ? letterOf(key) : undefined;
   return ch ? { kind: "letter", ch } : { kind: "none" };
 }
@@ -93,8 +98,8 @@ export function findKey(key: Key, layer: Layer | undefined, shift: boolean, empt
   if (fixed) return fixed;
   const more = empty && layer !== "alpha" && layer !== "shift" && !(layer === undefined && shift) ? afterZero(key, numbered) : undefined; // R780: `.` and the space bar pick rows 11 and 12 of the empty query's list
   if (more) return more;
+  if (passes(key, FIND_PASS)) return { kind: "pass" };
   const p = key.actions.primary;
-  if (p?.kind === "special" && FIND_PASS.includes(p.name)) return { kind: "pass" };
   const own = p?.kind === "type" && [...p.text].length === 1 ? p.text : undefined;
   const letter = letterOf(key)?.toLowerCase();
   if (layer === "alpha") return letter ? { kind: "letter", ch: letter } : { kind: "none" };
