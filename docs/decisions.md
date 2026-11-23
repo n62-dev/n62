@@ -181,7 +181,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R201, R353:** Made of is typed text; a unit is not renamed; Store ▶'s title keeps the mark. Archived. Would change if: the owner, after his try on the phone.
 - **G370's shape:** `T1 − T2` is the whole formula; a bracketed difference inside a longer one stays refused. Archived. Would change if: G385.
 
-- **A ratio chip (G369, G782; pass 229):** a chip in one ratio unit (%, ‰, ppm, ppb) is its pure number wherever it goes: Home and CAS (G782); in the unit view its slot holds the ratio (`chip × 200 m` with 0.42 % is 0.84 m, not 84 m) and Store ▶ stores the pure number with its σ (G782f1). Built. A pure number in another unit (rev) keeps "unit dropped" in Home; Ans of a % or rev result is refused in the unit view (R259). Would change if: the owner wants the ratio dropped there.
+- **A ratio chip (G369, G782; pass 229):** its pure number wherever it goes, the unit view's slot and Store ▶ too. Built, archived.
 - **The check of 2026-10-19:** a zero term keeps its dimension for the unit check (G35). Would change if: the per-term check costs more than the 5 ms p95 bar.
 
 

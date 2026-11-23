@@ -26,3 +26,7 @@ Moved here as they stood (links adjusted to this folder): decided entries of Opu
 ## Moved 2026-11-23 (Opus pass 231: decisions.md under 1 kB left)
 
 - **Home/CAS ☰ of four rows (owner, 2026-11-20, R830; R720 had seven):** 1 Delete, 2 Share session, 3 Clear history, 4 Export ›. Store, Copy and Paste left because each has a route of equal or lower cost (the picked row's bar, Shift + Select, Shift + Deselect, Ctrl + V); Delete is first because it is TalkBack's only route (a swipe needs a gesture TalkBack does not pass on). Insert and Recall went in R720 (Enter and ◀ on a pick do their jobs). Rule: docs/05 3.3, 3.5. Would change if: the counters show keys-only users missing Copy or Paste on ☰.
+
+## Moved 2026-11-23 (Opus pass 233: decisions.md under 1 kB left)
+
+- **A ratio chip (G369, G782; pass 229):** a chip in one ratio unit (%, ‰, ppm, ppb) is its pure number wherever it goes: Home and CAS (G782); in the unit view its slot holds the ratio (`chip × 200 m` with 0.42 % is 0.84 m, not 84 m) and Store ▶ stores the pure number with its σ (G782f1). Built. A pure number in another unit (rev) keeps "unit dropped" in Home; Ans of a % or rev result is refused in the unit view (R259). Would change if: the owner wants the ratio dropped there.

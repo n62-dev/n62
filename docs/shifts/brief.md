@@ -119,14 +119,11 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| B2b | G785 Fmt skips a step that draws the same; a press that changes nothing is dead | gorge, Opus | `p1/gorge-fmtskip` | – |
-| B2c | G789 median and the quartiles refuse undef and a name in a list; ±inf sorted by value | gorge, Opus | `p1/gorge-medianundef` | – |
-| B4 | G553 floor, ceil and round decide at the working precision | gorge, Opus | `p1/gorge-floorepsilon` | – |
-| B5 | G551 bitand, bitor and bitxor read a small negative integer as signed | gorge, Opus | `p1/gorge-bitsigned` | – |
-| B6 | G554 exp of a float matrix is its series, never the identity | gorge, Opus | `p1/gorge-matexpfloat` | – |
+| B6a | [G790](packages/G790.md) a matrix product whose left factor has only tiny floats is never the zero matrix | gorge, Opus | `p1/gorge-mmulttiny` | – |
 | B7 | [G405](packages/G405.md) solve keeps two real roots that are distinct but close | gorge, Opus | `p1/gorge-closeroots` | – |
 | B8 | [G404](packages/G404.md) G358's climb on every path; past its reach is never an overflow | gorge, Opus | `p1/gorge-climball` | – |
 | B9 | [G403](packages/G403.md) a tiny constant without an integer literal raises the check's start | gorge, Opus | `p1/gorge-tinyconst` | – |
+| B9a | [G791](packages/G791.md) hamdist reads a negative integer beside a big one as signed; opposite signs are refused | gorge, Opus | `p1/gorge-hamdistsigned` | – |
 | B10 | [G385](packages/G385.md) a temperature difference in brackets takes part in arithmetic | gorge, Opus | `p1/gorge-tempdiffarith` | – |
 | B11 | [G381](packages/G381.md) a stored float list reads back as a list, never a vector | gorge, Opus | `p1/gorge-storedlist` | – |
 | B12 | [G382](packages/G382.md) a decimal inside a string is never rounded | gorge, Opus | `p1/gorge-stringdigits` | – |
