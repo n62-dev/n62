@@ -74,7 +74,7 @@ export class UserKeys {
         actions[layer] = b.action;
       }
     }
-    // an emptied tap layer has the empty-slot face, as U1 ships (R705: a tap opens its row in Your keys, route.ts emptySlot)
+    // an emptied tap layer has the empty-slot face, as U1 ships (R705: a tap opens its row in Your keys, route.ts run)
     if (!actions.primary) {
       label.primary = "$key.user";
       actions.primary = { kind: "special", name: "none" };

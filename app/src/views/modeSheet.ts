@@ -24,6 +24,8 @@ import { BRIGHTNESS, validLook, type Look } from "../theme/look.ts";
 import { familyOf, FAMILIES, stepped } from "../theme/lookView.ts";
 import { yourKeysItems, yourKeysValue, type SettingsEnv } from "./yourKeys.ts";
 import { presetRow, switchedRow } from "./presetsView.svelte.ts";
+import type { Sheet } from "./sheet.svelte.ts";
+import type { Layer } from "../keyboard/keyboard.ts";
 import { wordStore } from "../state/cycleForms.ts";
 import type { WordStore } from "../state/wordStore.svelte.ts";
 import { DEFAULT_WORD, WORD_SIZES, type WordBits, type WordSetting } from "../state/wordSetting.ts";
@@ -111,6 +113,13 @@ export function modeItems(session: Session, env: SettingsEnv = {}): MenuItem[] {
     presetRow(session, env), // R89: row 5, the active preset; Settings is row 6
     { id: "settings", label: t("key.settings"), submenu: settingsMenu(session, env) },
   ];
+}
+
+/** R705: Settings open on top (App.svelte openSettings for an empty free key, `layer` the one it was pressed in): on into Your keys,
+ *  onto that key's slot row; Alpha is the tap's row (an empty Alpha slot is the tap, docs/04 5.1). In this chunk, not the start
+ *  chunk (its size pin). */
+export function toSlot(sheet: Sheet | null, slot: { id: string; layer: Layer }): void {
+  if (sheet?.enterAt("keys")) sheet.goKey(slot.id, slot.layer === "shift" ? "shift" : "primary");
 }
 
 /** Settings (R49, docs/05 3.4): the next level of the pick sheet, from Mode's last row and the ⚙ in every ☰

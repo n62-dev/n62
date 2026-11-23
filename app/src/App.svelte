@@ -258,9 +258,8 @@
     onModeSheet((m) => {
       picked = null;
       shell.showMenu(t("mode.title"), m.modeItems(session, settingsEnv), { remember: false, at: "settings" });
-      const s = shell.sheet;
-      s?.enter(); // its submenu: a level on top
-      if (slot && s?.enterAt("keys")) s.goKey(slot.id, slot.layer);
+      shell.sheet?.enter(); // its submenu: a level on top
+      if (slot) m.toSlot(shell.sheet, slot); // R705: on into Your keys
     });
   }
   // Android back is Esc for the open sheet (R21b, R49): it goes back one level, and the root closes. Each level it goes
