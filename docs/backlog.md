@@ -82,6 +82,7 @@ Its lines: [research/background-stream.md](research/background-stream.md) (moved
 - **Flaky (R255f2, pass 137; R339):** persist.spec.ts "R255: a kept 5, then + 3 Enter before the field" gave 3 in 1 of 64 runs at 16 workers; likely the kept-line read outlasts `EntryController.load`'s 1 s cap (`entry/controller.ts:80`).
 - **The pipeline (A201 takes red-first's ids and the audit model):** the size test skips CSS; red-first runs vitest on the branch's engine and counts a vitest file by its added test or assertion lines (A67).
 - **Load in the gates (pass 231; G782f1, G783):** the golden steps stage's ×8 clock rows `g331-simplify-f214-12`, `g325f1-acos-…`, `g618-sum-…` went into `SPEED_KNOWN` (golden-speed.ts) because other runs' checks loaded the host, so a real slowdown there is no longer seen; numeric.ts's other lone fallbacks (agreed's `once`, doubleFallback) still show a clock-stopped read's partner alone (G783 fix round 1 only retried floatFactsOf's). Family 4.
+- **Flaky (pass 231):** fold.spec.ts "folded: a tap picks, the second inserts and unfolds; …" has 3 FLAKE lines (R700 twice, G399) and failed in pass 231's e2e at load 24: its `rows` helper (fold.spec.ts:50) saw 2 of 3 rows done in 5 s; alone it passes (5.7 s). Ten fold.spec FLAKE lines since run 1260 share that helper.
 - **C3. CI** (needs your OK);
 
 ### MVP release (docs/02 section 8)
