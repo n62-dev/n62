@@ -125,10 +125,19 @@ test.describe("a key drawn dead: no click, no look, the double pulse", () => {
     expect(await press(page, "bksp")).toEqual(DEAD);
     await expect(page.getByTestId("menu")).toBeVisible();
   });
-  test("Fmt is live once Home has a result; in Plot a digit is a dead press", async ({ page }) => {
+  test("Fmt is live once Home has a number; in Plot a digit is a dead press", async ({ page }) => {
     await tap(page, ["d2", "enter"]);
     await expect(lastResult(page)).toBeVisible();
+    // G785: the fake engine's echo has no number, so no Fmt step changes it: a dead press
+    expect(await press(page, "fmt")).toEqual(DEAD);
+    // the real engine's 2 goes to 2.00000000000E0: live
+    await open(page, "");
+    await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
+    await clickOn(page);
+    await tap(page, ["d2", "enter"]);
+    await expect(lastResult(page)).toHaveAttribute("data-text", "2");
     expect(await press(page, "fmt")).toMatchObject({ lit: 1, clicks: 1, pulses: 1 });
+    await expect(lastResult(page)).toHaveAttribute("data-text", "2.00000000000E0");
     await tap(page, ["@plot"]);
     await page.waitForFunction(() => window.n62.shell.app !== null && window.n62.shell.current !== undefined);
     expect(await press(page, "d7")).toEqual(DEAD);
