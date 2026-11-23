@@ -7,6 +7,7 @@ Phase 0 (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md). This fil
 
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
+- **R862, a digit on a disabled row:** in the unit view's ☰ (and every sheet) it runs nothing and the sheet stays, with no dead double haptic (`Sheet.activate`); R862's text called it a dead press. Recommended: one rule for every sheet, so either leave it, or give every disabled row's digit the dead feedback in a package of its own (sheet-wide, the controls of every sheet).
 - **R779, the drag after the arrow keys, on the Fairphone:** Chromium touch emulation could not reproduce "drag, arrow keys, drag" (linetouch.spec.ts, R779 cases, green on phase-1 too); lineTouch.ts now ends a stale touch (a new first finger, a lift off the line). Does the drag work on the Fairphone 6 after it? If not, record `adb` pointer events (down/move/up/cancel with ids) for the sequence.
 
 ## Decided proposals
