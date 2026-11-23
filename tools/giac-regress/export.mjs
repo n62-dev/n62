@@ -1008,6 +1008,36 @@ export function build(cases) {
     patched.push("// patch 0063-matrix-exp-working-precision.patch", `// ${id} (oracle: mpmath)`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
   }
+  // Patch 0065 (G622, F436), written lines: the float row reduction under rank, rref, ker, det, inv and linsolve (vecteur.cc mrref,
+  // linear_combination, is_blockmatrix, in_doublerref, mker; solve.cc _linsolve; misc.cc _rank; the golden g622-* rows are matrices
+  // or Home's values at P). Stock at Digits 15 and up kept a cancelled pivot (rank 0, rref the identity, ker []) and took entries
+  // near 1e-13 for 0 at any Digits. Expected values: derived by hand (row 3 = 2*row 2 - row 1, rows 1 and 2 independent, so rank 2,
+  // rref [[1,0,-1],[0,1,2],[0,0,0]] and the kernel the line through [1,-2,1]; N = [[1,2],[3,4]]/10^13 has det -2/10^26 and inverse
+  // 10^13*[[-2,1],[3/2,-1/2]], so N.x = [1,1] at x = 10^13*[-1,1]); a size or a ratio where Giac's scale is its own.
+  const M3 = "evalf([[1,2,3],[4,5,6],[7,8,9]])";
+  const N2 = "evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]])";
+  for (const [id, digits, input, value, tol] of [
+    ["g622-rank-evalf-123-15", 15, `rank(${M3})`, "2", "0"],
+    ["g622-rank-evalf-123-40", 40, `rank(${M3})`, "2", "0"],
+    ["g622-rref-evalf-123-02-40", 40, `rref(${M3})[0][2]`, "-1", "1/10^30"],
+    ["g622-rref-evalf-123-12-40", 40, `rref(${M3})[1][2]`, "2", "1/10^30"],
+    ["g622-rref-evalf-123-22-40", 40, `rref(${M3})[2][2]`, "0", "1/10^30"],
+    ["g622-ker-evalf-123-size-40", 40, `size(ker(${M3}))`, "1", "0"],
+    ["g622-ker-evalf-123-ratio01-40", 40, `ker(${M3})[0][1]/ker(${M3})[0][0]`, "-2", "1/10^30"],
+    ["g622-ker-evalf-123-ratio21-40", 40, `ker(${M3})[0][2]/ker(${M3})[0][0]`, "1", "1/10^30"],
+    ["g622-rank-evalf-near-singular-40", 40, "rank(evalf([[1,1],[1,1+10^-20]]))", "2", "0"],
+    ["g622-rank-evalf-zero-line-40", 40, "rank(evalf([[0,0],[0,1]]))", "1", "0"],
+    ["g622-det-evalf-tiny-40", 40, `det(${N2})`, "-2/10^26", "1/10^60"],
+    ["g622-inv-evalf-tiny-01-40", 40, `inv(${N2})[0][1]`, "10^13", "1/10^20"],
+    ["g622-inv-evalf-tiny-10-40", 40, `inv(${N2})[1][0]`, "15*10^12", "1/10^20"],
+    ["g622-inv-evalf-tiny-01-12", 12, `inv(${N2})[0][1]`, "10^13", "10^3"],
+    ["g622-det-evalf-tiny-12", 12, `det(${N2})`, "-2/10^26", "1/10^36"],
+    ["g622-linsolve-evalf-tiny-0-40", 40, `linsolve(${N2},[1,1])[0]`, "-10^13", "1/10^20"],
+    ["g622-linsolve-evalf-tiny-0-12", 12, `linsolve(${N2},[1,1])[0]`, "-10^13", "10^3"],
+  ]) {
+    patched.push("// patch 0065-float-rref-cancelled-pivot.patch", `// ${id} (derived)`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
+    nPatched++;
+  }
   for (const [mode, n, tag, value] of [
     ["DEG", 0, "deg", "90+(3147292373094538001977241539068588825237/10^38)*i"],
     ["GRAD", 2, "grad", "100+(3496991525660597779974712821187320916930/10^38)*i"],

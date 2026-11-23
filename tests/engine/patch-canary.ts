@@ -251,6 +251,14 @@ const CANARIES: [string, string, RegExp, string][] = [
   // G790 (F475), patch 0064: mmult_atranb's sparse loop skips a left entry with is_zero(acur,context0), an absolute 1e-12 at any Digits
   // (and matrix_density counts zeros the same way), so a left factor of floats below 1e-12 gave the zero matrix at Digits 40
   ["0064-mmult-tiny-float-factor.patch", "giac-2.1.0/src/vecteur.cc", /const gen & acur=\*it;\s*if \(is_zero\(acur,context0\)\)\{\s*int p=1;\s*\+\+it;\s*for \(; \(it!=itend\) && is_zero\(\*it,context0\);/, "double a_density=matrix_density(a),b_density=matrix_density(btran);"],
+  // G622 (F436), patch 0065: linear_combination, the row operation of mrref at Digits > 14, keeps a cancelled MPFR entry (trim tests
+  // doubles only) and rref_reduce's pivot test is is_exactly_zero, so the cancelled pivot of a singular float matrix was a pivot
+  // (rank(evalf([[1,2,3],[4,5,6],[7,8,9]])) = 0 at Digits 15, rref the identity, ker [])
+  ["0065-float-rref-cancelled-pivot.patch", "giac-2.1.0/src/vecteur.cc", /if \(is_one\(c\)\)\{\s*for \(;jt1!=it1end;\+\+jt1,\+\+it2\)\{\s*\*jt1=trim\(c1\*\(\*jt1\)\+c2\*\(\*it2\),c1,eps\);/, "void linear_combination(const gen & c1,const vecteur & v1,const gen & c2,const vecteur & v2,const gen & c,const gen & cinv,vecteur & v,double eps,int cstart){"],
+  // ... is_blockmatrix (under det and inv) splits at entries is_zero takes for 0, 1e-12 at any scale (det(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]])) = 1e-13)
+  ["0065-float-rref-cancelled-pivot.patch", "giac-2.1.0/src/vecteur.cc", /if \(is_zero\(ai\[j\]\) && is_zero\(\(\*a\[j\]\._VECTptr\)\[i\]\)\)/, "bool is_blockmatrix(const matrice & a,vector<int> & p){"],
+  // ... and _rank counts the rows of mrref's result that are not is_zero (pivots below 1e-12: rank(evalf([[1,1],[1,1+10^-20]])) = 0 at Digits 40)
+  ["0065-float-rref-cancelled-pivot.patch", "giac-2.1.0/src/misc.cc", /mr=mrref\(mr,contextptr\);\s*int r=int\(mr\.size\(\)\);\s*for \(;r;--r\)\{\s*if \(!is_zero\(mr\[r-1\]\)\)/, "gen _rank(const gen & args,GIAC_CONTEXT){"],
 ];
 
 const tar = tarball(SOURCES.giac);
