@@ -630,6 +630,10 @@ export const PATCHED_IDS = new Map([
   // G786: permu.cc ascsort read an MPFR element as 0, so median, quartile1, quartile3 and quantile of a float list above 14 digits
   // were 0; the g786-keep-* row (an exact list) passes on stock and stays in the check file
   ...["quartile3-approx-list", "quartile1-approx-list-30", "median-approx-list-30", "quantile-approx-list-30", "quartile1-approx-list-12", "median-approx-list-12", "quantile-approx-list-12", "median-approx-third-30", "quartiles-approx-list-30", "median-approx-matrix-30"].map((k) => [`g786-${k}`, "0058-ascsort-mpfr-elements.patch"]),
+  // G789: misc.cc sorted a list that is not fully numeric by form (islesscomplexthanf_sort), so -inf came last, and 0058's ascsort
+  // refused +-inf in a matrix (stock wrote 0 for it); the g789-keep-* rows pass on stock and stay in the check file, the refusals,
+  // the infinite answers and the CAS rows are written lines below or left out
+  ...["median-neg-inf", "median-both-inf", "quantile-neg-inf", "quartile3-both-inf", "median-matrix-neg-inf", "quartile3-matrix-inf", "quantile-matrix-neg-inf", "quartiles-matrix-inf-q2"].map((k) => [`g789-${k}`, "0060-median-list-by-value.patch"]),
   // G399 (be-1): gen.cc arg took a power's, exp's and a product's argument through _smod(x,2*pi), whose range is [-pi,pi), so a
   // negative real gave -pi; the g399-keep-* rows pass on stock and stay in the check file, the DEG and CAS rows are left out
   ...["arg-i-pi-squared", "arg-i-pi-i", "arg-ln-neg1-squared", "arg-acos-5/4-squared", "arg-i-ln-i"].map((k) => [`g399-${k}`, "0059-arg-negative-real-pi.patch"]),
@@ -923,6 +927,25 @@ export function build(cases) {
   for (const f of ["median", "quartile1", "quartile3", "quantile", "quartiles"]) for (const [form, data] of [["list", "[1,2,3+i]"], ["matrix", "[[1,2],[3,i],[5,6]]"]]) g786f1.push([`${f}-complex-${form}`, `${f}(${data}${f === "quantile" ? ",1/2" : ""})`]);
   for (const [k, input] of g786f1) {
     patched.push("// patch 0058-ascsort-mpfr-elements.patch", `// g786f1-${k}-refused (derived: no order on a value that is not real, decisions.md "A complex element in median and the quartiles")`, `Digits:=${k.endsWith("-30") ? 30 : 40}:; pasr:=0:; try { ${input}; } catch (err) { pasr:=1; }:; pc("g786f1-${k}-refused",'pasr',1,1/10^30);`);
+    nPatched++;
+  }
+  // Patch 0060 (G789), written lines: undef, a NaN, a free name and unsigned infinity in a list that is not fully numeric (a matrix
+  // with undef is one: ckmatrix refuses it; a name in a matrix rests on 0058, which refuses it already) give each caller's error (stock sorted them by form: median([3,1,undef]) = 3,
+  // median([3,1,x]) = 3); a line passes when the input is an error (pasr 1). Then the answers that are an infinity, checked with
+  // == (pc's difference of two infinities is undef): stock sorted -inf last (quartile1([5,-inf,3,1]) = 1) or wrote 0 for it.
+  const g789 = [["median-nan", "median([3,1,0.0/0.0])"], ["median-unsigned-inf", "median([3,1,unsigned_inf])"], ["median-float-undef", "median([3.0,1.0,undef])"]];
+  for (const f of ["median", "quartile1", "quartile3", "quantile", "quartiles"]) for (const [what, list, matrix] of [["undef", "[1,2,3,undef,5]", "[[1,2],[3,undef],[5,6]]"], ["name", "[3,g789x,1,2]", "[[1,2],[3,g789x],[5,6]]"]]) for (const [form, data] of [["list", list], ["matrix", matrix]]) g789.push([`${f}-${what}-${form}`, `${f}(${data}${f === "quantile" ? ",1/2" : ""})`]);
+  for (const [k, input] of g789) {
+    patched.push(`// patch ${k.endsWith("name-matrix") ? "0058-ascsort-mpfr-elements" : "0060-median-list-by-value"}.patch`, `// g789-${k}-refused (derived: no order on a value that is not real, G786f1's rule on the other path; owner, 2026-11-23)`, `Digits:=40:; pasr:=0:; try { ${input}; } catch (err) { pasr:=1; }:; pc("g789-${k}-refused",'pasr',1,1/10^30);`);
+    nPatched++;
+  }
+  for (const [k, input, value, why] of [
+    ["quartile1-neg-inf", "quartile1([5,-inf,3,1])", "-inf", "-inf < 1 < 3 < 5: the first of four"],
+    ["quartiles-neg-inf-min", "quartiles([1,2,3,-inf,5,6])[0]", "-inf", "the minimum"],
+    ["quartile1-matrix-neg-inf", "quartile1([[5,1],[-inf,2],[3,3],[1,4]])[0]", "-inf", "the first column's first quartile"],
+    ["quartiles-matrix-inf-max", "quartiles([[1,6],[2,5],[3,4],[-inf,3],[5,inf],[6,1]])[4,1]", "inf", "the second column's maximum"],
+  ]) {
+    patched.push("// patch 0060-median-list-by-value.patch", `// g789-${k} (derived: ${why}; Giac's answer with -10^9 for -inf and 10^9 for inf, mapped back)`, `Digits:=40:; pc("g789-${k}",'when((${input})==${value},1,0)',1,1/10^30);`);
     nPatched++;
   }
   for (const [mode, n, tag, value] of [

@@ -1,0 +1,130 @@
+# Upstream: giac 2.1.0 misc.cc _median, _quartile1, _quartile3, _quantile, _quartiles: a list that is not fully numeric (one that holds undef, a free name or an infinity) is sorted with islesscomplexthanf_sort, by form, not by value, so undef, a name and -inf took a place by their form: median([3,1,undef]) = 3 but median([3.0,1.0,undef]) = 1.0 (the same data, two answers), median([1,2,undef,undef]) = 2, quartile1([1,2,3,undef,5]) = 2, quantile([1,2,undef,4],0.5) = 2, quartiles([1,2,3,undef,5,6]) = [1,2,3,6,undef]; median([3,1,x]) = 3 (for x = 0 the median is 1); -inf was sorted last: median([3,1,-inf]) = 3 (right 1), median([3,1,inf,-inf,2]) = 3 (right 2), quantile([1,-inf,3],0.5) = 3 (right 1), quartiles([1,2,3,-inf,5,6]) = [1,2,3,6,-infinity] (its minimum is -inf). Now that path sorts by value (a new permu.cc ascsort_list, beside patch 0058's ascsort, stable for equal values) and each element is written back as it is (an exact element stays exact); an element whose evalf is no real float and no +inf or -inf (undef, a NaN, a free name, a complex, unsigned infinity) gives patch 0058's error ("median: the data must be real numbers"). In the matrix forms (ascsort, after patch 0058), +inf and -inf are sorted by value too, where 0058 refused them (stock wrote 0 for them). The frequency forms (freq_quantile) are unchanged.
+# Changed by Pascaline contributors, 2026-11-23
+--- a/src/misc.cc
++++ b/src/misc.cc
+@@ -3117,7 +3117,8 @@
+       return freq_quantile(v,0.5,contextptr);
+     if (!ckmatrix(v)){
+       if (!is_fully_numeric(evalf(v,1,contextptr))){
+-	islesscomplexthanf_sort(v.begin(),v.end());
++	if (!ascsort_list(v,contextptr)) // G789: by value; undef, a name, a complex refused (stock: islesscomplexthanf_sort, by form)
++	  return ascsort_nonreal_err("median");
+ 	return v[int(std::ceil(v.size()/2.0))-1]; // v[(v.size()-1)/4];
+       }
+       bool nonreal;
+@@ -3151,7 +3152,8 @@
+       return freq_quantile(v,0.25,contextptr);
+     if (!ckmatrix(v)){
+       if (!is_fully_numeric(evalf(v,1,contextptr))){
+-	islesscomplexthanf_sort(v.begin(),v.end());
++	if (!ascsort_list(v,contextptr)) // G789: by value; undef, a name, a complex refused (stock: islesscomplexthanf_sort, by form)
++	  return ascsort_nonreal_err("quartile1");
+ 	return v[int(std::ceil(v.size()/4.0))-1]; // v[(v.size()-1)/4];
+       }
+       bool nonreal;
+@@ -3181,7 +3183,8 @@
+       return freq_quantile(v,0.75,contextptr);
+     if (!ckmatrix(v)){
+       if (!is_fully_numeric(evalf(v,1,contextptr))){
+-	islesscomplexthanf_sort(v.begin(),v.end());
++	if (!ascsort_list(v,contextptr)) // G789: by value; undef, a name, a complex refused (stock: islesscomplexthanf_sort, by form)
++	  return ascsort_nonreal_err("quartile3");
+ 	return v[int(std::ceil(3*v.size()/4.0))-1]; // v[(v.size()-1)/4];
+       }
+       bool nonreal;
+@@ -3227,7 +3230,8 @@
+     if (!ckmatrix(v)){
+       matrix=false;
+       if (!is_fully_numeric(evalf(v,1,contextptr))){
+-	islesscomplexthanf_sort(v.begin(),v.end());
++	if (!ascsort_list(v,contextptr)) // G789: by value; undef, a name, a complex refused (stock: islesscomplexthanf_sort, by form)
++	  return ascsort_nonreal_err("quantile");
+ 	for (unsigned j=0;j<w.size();++j){
+ 	  gen tmp=evalf_double(w[j],1,contextptr);
+ 	  if (tmp.type!=_DOUBLE_ || tmp._DOUBLE_val<=0 || tmp._DOUBLE_val>=1)
+@@ -3269,7 +3273,8 @@
+     bool nonreal;
+     if (!ckmatrix(v)){
+       if (!is_fully_numeric(evalf(v,1,contextptr))){
+-	islesscomplexthanf_sort(v.begin(),v.end());
++	if (!ascsort_list(v,contextptr)) // G789: by value; undef, a name, a complex refused (stock: islesscomplexthanf_sort, by form)
++	  return ascsort_nonreal_err("quartiles");
+ 	int s=int(v.size());
+ 	return makevecteur(v[0],v[int(std::ceil(s/4.))-1],v[int(std::ceil(s/2.))-1],v[int(std::ceil(3*s/4.))-1],v[s-1]);
+       }
+--- a/src/permu.cc
++++ b/src/permu.cc
+@@ -1584,13 +1584,22 @@
+ #endif
+     return a._DOUBLE_val<b._DOUBLE_val;
+   }
++  // G789: +inf and -inf take their place in the order (a double infinity as the key; stock sorted -inf last, by form)
++  static bool ascsort_inf(const gen & t){
++    return t==plus_inf || t==minus_inf;
++  }
++  static gen ascsort_key(const gen & t){
++    if (ascsort_inf(t))
++      return gen(t==plus_inf?HUGE_VAL:-HUGE_VAL);
++    return t.type==_FLOAT_?evalf_double(t,1,context0):t;
++  }
+   static void ascsort_floats(vecteur & v,const vector<gen> & vf){
+     int n=int(vf.size());
+     vector<ascsort_elem> w(n);
+     for (int j=0;j<n;++j){
+-      const gen & t=vf[j]; // a real float: ascsort_real held for it (G786f1)
++      const gen & t=vf[j]; // a real float or +-inf: ascsort_real or ascsort_inf held for it (G786f1, G789)
+       w[j].val=t;
+-      w[j].key=t.type==_FLOAT_?evalf_double(t,1,context0):t;
++      w[j].key=ascsort_key(t);
+     }
+     std::stable_sort(w.begin(),w.end(),ascsort_less);
+     for (int j=0;j<n;++j)
+@@ -1646,7 +1655,9 @@
+ 	else
+ 	  tmp=*jt;
+ 	tmp=evalf(tmp,1,0);
+-	if (!ascsort_real(tmp)){
++	if (ascsort_inf(tmp))
++	  hasfloat=true; // G789: +-inf, sorted by value with the others (stock wrote 0 for it; G786f1 refused it)
++	else if (!ascsort_real(tmp)){
+ 	  nonreal=true;
+ 	  return matrice();
+ 	}
+@@ -1673,6 +1684,26 @@
+     return mt;
+   }
+ 
++  // G789: the sort under median, quartile1, quartile3, quantile and quartiles for a list that is not fully numeric (stock:
++  // islesscomplexthanf_sort, by form: median([3,1,undef]) = 3, median([3,1,x]) = 3, median([3,1,-inf]) = 3). Each element's
++  // evalf must be a real float or +-inf, else false (the caller's error); the elements are sorted by value (stable) and
++  // written back as they are, so an exact element stays exact.
++  bool ascsort_list(vecteur & v,GIAC_CONTEXT){
++    int n=int(v.size());
++    vector<ascsort_elem> w(n);
++    for (int j=0;j<n;++j){
++      gen t=evalf(v[j],1,contextptr);
++      if (!ascsort_inf(t) && !ascsort_real(t))
++	return false;
++      w[j].val=v[j];
++      w[j].key=ascsort_key(t);
++    }
++    std::stable_sort(w.begin(),w.end(),ascsort_less);
++    for (int j=0;j<n;++j)
++      v[j]=w[j].val;
++    return true;
++  }
++
+   gen _permu2mat(const gen & args,GIAC_CONTEXT){
+     if ( args.type==_STRNG && args.subtype==-1) return  args;
+     //transforme une permutation en une matrice obtenue en permutant les lignes de la matrice identite  
+--- a/src/permu.h
++++ b/src/permu.h
+@@ -131,6 +131,8 @@
+   matrice ascsort(const matrice & m,bool column=true);
+   // G786f1: nonreal is set (and an empty matrix returned) when an element's evalf is no real float
+   matrice ascsort(const matrice & m,bool column,bool & nonreal);
++  // G789: sorts a list by value (an exact element kept as it is); false when an element's evalf is no real float or +-inf
++  bool ascsort_list(vecteur & v,GIAC_CONTEXT);
+ 
+   vecteur hermite(int n);
+   gen _divergence(const gen &,GIAC_CONTEXT);  

@@ -1169,6 +1169,30 @@ Digits:=40:; pc("g786-median-approx-third-30",'(median(approx([2,1/3,1/7])))',(3
 // patch 0058-ascsort-mpfr-elements.patch
 // g786-median-approx-matrix-30 (precision.yaml, derived)
 Digits:=40:; pc("g786-median-approx-matrix-30",'(median(approx([[1,5],[3,2],[2,8]]))[1])',5,5/10^30);
+// patch 0060-median-list-by-value.patch
+// g789-median-neg-inf (precision.yaml, derived)
+Digits:=40:; pc("g789-median-neg-inf",'(median([3,1,-inf]))',1,5/10^12);
+// patch 0060-median-list-by-value.patch
+// g789-median-both-inf (precision.yaml, derived)
+Digits:=40:; pc("g789-median-both-inf",'(median([3,1,inf,-inf,2]))',2,5/10^12);
+// patch 0060-median-list-by-value.patch
+// g789-quantile-neg-inf (precision.yaml, derived)
+Digits:=40:; pc("g789-quantile-neg-inf",'(quantile([1,-inf,3],1/2))',1,5/10^12);
+// patch 0060-median-list-by-value.patch
+// g789-quartile3-both-inf (precision.yaml, derived)
+Digits:=40:; pc("g789-quartile3-both-inf",'(quartile3([1,2,3,inf,-inf]))',3,5/10^12);
+// patch 0060-median-list-by-value.patch
+// g789-median-matrix-neg-inf (precision.yaml, derived)
+Digits:=40:; pc("g789-median-matrix-neg-inf",'(median([[3,1],[-1,2],[-inf,3]])[0])',-1,5/10^12);
+// patch 0060-median-list-by-value.patch
+// g789-quartile3-matrix-inf (precision.yaml, derived)
+Digits:=40:; pc("g789-quartile3-matrix-inf",'(quartile3([[5,1],[inf,2],[3,3],[1,4]])[0])',5,5/10^12);
+// patch 0060-median-list-by-value.patch
+// g789-quantile-matrix-neg-inf (precision.yaml, derived)
+Digits:=40:; pc("g789-quantile-matrix-neg-inf",'(quantile([[1,4],[-inf,5],[-3,6]],1/2)[0])',-3,5/10^12);
+// patch 0060-median-list-by-value.patch
+// g789-quartiles-matrix-inf-q2 (precision.yaml, derived)
+Digits:=40:; pc("g789-quartiles-matrix-inf-q2",'(quartiles([[1,6],[2,5],[3,4],[-inf,3],[5,inf],[6,1]])[2,1])',4,5/10^12);
 // patch 0059-arg-negative-real-pi.patch
 // g399-arg-i-pi-squared (precision.yaml, derived)
 Digits:=40:; pc("g399-arg-i-pi-squared",'(arg((i*pi)^2))',(314159265359/10^11),5/10^12);
@@ -1421,6 +1445,87 @@ Digits:=40:; pasr:=0:; try { quartiles([1,2,3+i]); } catch (err) { pasr:=1; }:; 
 // patch 0058-ascsort-mpfr-elements.patch
 // g786f1-quartiles-complex-matrix-refused (derived: no order on a value that is not real, decisions.md "A complex element in median and the quartiles")
 Digits:=40:; pasr:=0:; try { quartiles([[1,2],[3,i],[5,6]]); } catch (err) { pasr:=1; }:; pc("g786f1-quartiles-complex-matrix-refused",'pasr',1,1/10^30);
+// patch 0060-median-list-by-value.patch
+// g789-median-nan-refused (derived: no order on a value that is not real, G786f1's rule on the other path; owner, 2026-11-23)
+Digits:=40:; pasr:=0:; try { median([3,1,0.0/0.0]); } catch (err) { pasr:=1; }:; pc("g789-median-nan-refused",'pasr',1,1/10^30);
+// patch 0060-median-list-by-value.patch
+// g789-median-unsigned-inf-refused (derived: no order on a value that is not real, G786f1's rule on the other path; owner, 2026-11-23)
+Digits:=40:; pasr:=0:; try { median([3,1,unsigned_inf]); } catch (err) { pasr:=1; }:; pc("g789-median-unsigned-inf-refused",'pasr',1,1/10^30);
+// patch 0060-median-list-by-value.patch
+// g789-median-float-undef-refused (derived: no order on a value that is not real, G786f1's rule on the other path; owner, 2026-11-23)
+Digits:=40:; pasr:=0:; try { median([3.0,1.0,undef]); } catch (err) { pasr:=1; }:; pc("g789-median-float-undef-refused",'pasr',1,1/10^30);
+// patch 0060-median-list-by-value.patch
+// g789-median-undef-list-refused (derived: no order on a value that is not real, G786f1's rule on the other path; owner, 2026-11-23)
+Digits:=40:; pasr:=0:; try { median([1,2,3,undef,5]); } catch (err) { pasr:=1; }:; pc("g789-median-undef-list-refused",'pasr',1,1/10^30);
+// patch 0060-median-list-by-value.patch
+// g789-median-undef-matrix-refused (derived: no order on a value that is not real, G786f1's rule on the other path; owner, 2026-11-23)
+Digits:=40:; pasr:=0:; try { median([[1,2],[3,undef],[5,6]]); } catch (err) { pasr:=1; }:; pc("g789-median-undef-matrix-refused",'pasr',1,1/10^30);
+// patch 0060-median-list-by-value.patch
+// g789-median-name-list-refused (derived: no order on a value that is not real, G786f1's rule on the other path; owner, 2026-11-23)
+Digits:=40:; pasr:=0:; try { median([3,g789x,1,2]); } catch (err) { pasr:=1; }:; pc("g789-median-name-list-refused",'pasr',1,1/10^30);
+// patch 0058-ascsort-mpfr-elements.patch
+// g789-median-name-matrix-refused (derived: no order on a value that is not real, G786f1's rule on the other path; owner, 2026-11-23)
+Digits:=40:; pasr:=0:; try { median([[1,2],[3,g789x],[5,6]]); } catch (err) { pasr:=1; }:; pc("g789-median-name-matrix-refused",'pasr',1,1/10^30);
+// patch 0060-median-list-by-value.patch
+// g789-quartile1-undef-list-refused (derived: no order on a value that is not real, G786f1's rule on the other path; owner, 2026-11-23)
+Digits:=40:; pasr:=0:; try { quartile1([1,2,3,undef,5]); } catch (err) { pasr:=1; }:; pc("g789-quartile1-undef-list-refused",'pasr',1,1/10^30);
+// patch 0060-median-list-by-value.patch
+// g789-quartile1-undef-matrix-refused (derived: no order on a value that is not real, G786f1's rule on the other path; owner, 2026-11-23)
+Digits:=40:; pasr:=0:; try { quartile1([[1,2],[3,undef],[5,6]]); } catch (err) { pasr:=1; }:; pc("g789-quartile1-undef-matrix-refused",'pasr',1,1/10^30);
+// patch 0060-median-list-by-value.patch
+// g789-quartile1-name-list-refused (derived: no order on a value that is not real, G786f1's rule on the other path; owner, 2026-11-23)
+Digits:=40:; pasr:=0:; try { quartile1([3,g789x,1,2]); } catch (err) { pasr:=1; }:; pc("g789-quartile1-name-list-refused",'pasr',1,1/10^30);
+// patch 0058-ascsort-mpfr-elements.patch
+// g789-quartile1-name-matrix-refused (derived: no order on a value that is not real, G786f1's rule on the other path; owner, 2026-11-23)
+Digits:=40:; pasr:=0:; try { quartile1([[1,2],[3,g789x],[5,6]]); } catch (err) { pasr:=1; }:; pc("g789-quartile1-name-matrix-refused",'pasr',1,1/10^30);
+// patch 0060-median-list-by-value.patch
+// g789-quartile3-undef-list-refused (derived: no order on a value that is not real, G786f1's rule on the other path; owner, 2026-11-23)
+Digits:=40:; pasr:=0:; try { quartile3([1,2,3,undef,5]); } catch (err) { pasr:=1; }:; pc("g789-quartile3-undef-list-refused",'pasr',1,1/10^30);
+// patch 0060-median-list-by-value.patch
+// g789-quartile3-undef-matrix-refused (derived: no order on a value that is not real, G786f1's rule on the other path; owner, 2026-11-23)
+Digits:=40:; pasr:=0:; try { quartile3([[1,2],[3,undef],[5,6]]); } catch (err) { pasr:=1; }:; pc("g789-quartile3-undef-matrix-refused",'pasr',1,1/10^30);
+// patch 0060-median-list-by-value.patch
+// g789-quartile3-name-list-refused (derived: no order on a value that is not real, G786f1's rule on the other path; owner, 2026-11-23)
+Digits:=40:; pasr:=0:; try { quartile3([3,g789x,1,2]); } catch (err) { pasr:=1; }:; pc("g789-quartile3-name-list-refused",'pasr',1,1/10^30);
+// patch 0058-ascsort-mpfr-elements.patch
+// g789-quartile3-name-matrix-refused (derived: no order on a value that is not real, G786f1's rule on the other path; owner, 2026-11-23)
+Digits:=40:; pasr:=0:; try { quartile3([[1,2],[3,g789x],[5,6]]); } catch (err) { pasr:=1; }:; pc("g789-quartile3-name-matrix-refused",'pasr',1,1/10^30);
+// patch 0060-median-list-by-value.patch
+// g789-quantile-undef-list-refused (derived: no order on a value that is not real, G786f1's rule on the other path; owner, 2026-11-23)
+Digits:=40:; pasr:=0:; try { quantile([1,2,3,undef,5],1/2); } catch (err) { pasr:=1; }:; pc("g789-quantile-undef-list-refused",'pasr',1,1/10^30);
+// patch 0060-median-list-by-value.patch
+// g789-quantile-undef-matrix-refused (derived: no order on a value that is not real, G786f1's rule on the other path; owner, 2026-11-23)
+Digits:=40:; pasr:=0:; try { quantile([[1,2],[3,undef],[5,6]],1/2); } catch (err) { pasr:=1; }:; pc("g789-quantile-undef-matrix-refused",'pasr',1,1/10^30);
+// patch 0060-median-list-by-value.patch
+// g789-quantile-name-list-refused (derived: no order on a value that is not real, G786f1's rule on the other path; owner, 2026-11-23)
+Digits:=40:; pasr:=0:; try { quantile([3,g789x,1,2],1/2); } catch (err) { pasr:=1; }:; pc("g789-quantile-name-list-refused",'pasr',1,1/10^30);
+// patch 0058-ascsort-mpfr-elements.patch
+// g789-quantile-name-matrix-refused (derived: no order on a value that is not real, G786f1's rule on the other path; owner, 2026-11-23)
+Digits:=40:; pasr:=0:; try { quantile([[1,2],[3,g789x],[5,6]],1/2); } catch (err) { pasr:=1; }:; pc("g789-quantile-name-matrix-refused",'pasr',1,1/10^30);
+// patch 0060-median-list-by-value.patch
+// g789-quartiles-undef-list-refused (derived: no order on a value that is not real, G786f1's rule on the other path; owner, 2026-11-23)
+Digits:=40:; pasr:=0:; try { quartiles([1,2,3,undef,5]); } catch (err) { pasr:=1; }:; pc("g789-quartiles-undef-list-refused",'pasr',1,1/10^30);
+// patch 0060-median-list-by-value.patch
+// g789-quartiles-undef-matrix-refused (derived: no order on a value that is not real, G786f1's rule on the other path; owner, 2026-11-23)
+Digits:=40:; pasr:=0:; try { quartiles([[1,2],[3,undef],[5,6]]); } catch (err) { pasr:=1; }:; pc("g789-quartiles-undef-matrix-refused",'pasr',1,1/10^30);
+// patch 0060-median-list-by-value.patch
+// g789-quartiles-name-list-refused (derived: no order on a value that is not real, G786f1's rule on the other path; owner, 2026-11-23)
+Digits:=40:; pasr:=0:; try { quartiles([3,g789x,1,2]); } catch (err) { pasr:=1; }:; pc("g789-quartiles-name-list-refused",'pasr',1,1/10^30);
+// patch 0058-ascsort-mpfr-elements.patch
+// g789-quartiles-name-matrix-refused (derived: no order on a value that is not real, G786f1's rule on the other path; owner, 2026-11-23)
+Digits:=40:; pasr:=0:; try { quartiles([[1,2],[3,g789x],[5,6]]); } catch (err) { pasr:=1; }:; pc("g789-quartiles-name-matrix-refused",'pasr',1,1/10^30);
+// patch 0060-median-list-by-value.patch
+// g789-quartile1-neg-inf (derived: -inf < 1 < 3 < 5: the first of four; Giac's answer with -10^9 for -inf and 10^9 for inf, mapped back)
+Digits:=40:; pc("g789-quartile1-neg-inf",'when((quartile1([5,-inf,3,1]))==-inf,1,0)',1,1/10^30);
+// patch 0060-median-list-by-value.patch
+// g789-quartiles-neg-inf-min (derived: the minimum; Giac's answer with -10^9 for -inf and 10^9 for inf, mapped back)
+Digits:=40:; pc("g789-quartiles-neg-inf-min",'when((quartiles([1,2,3,-inf,5,6])[0])==-inf,1,0)',1,1/10^30);
+// patch 0060-median-list-by-value.patch
+// g789-quartile1-matrix-neg-inf (derived: the first column's first quartile; Giac's answer with -10^9 for -inf and 10^9 for inf, mapped back)
+Digits:=40:; pc("g789-quartile1-matrix-neg-inf",'when((quartile1([[5,1],[-inf,2],[3,3],[1,4]])[0])==-inf,1,0)',1,1/10^30);
+// patch 0060-median-list-by-value.patch
+// g789-quartiles-matrix-inf-max (derived: the second column's maximum; Giac's answer with -10^9 for -inf and 10^9 for inf, mapped back)
+Digits:=40:; pc("g789-quartiles-matrix-inf-max",'when((quartiles([[1,6],[2,5],[3,4],[-inf,3],[5,inf],[6,1]])[4,1])==inf,1,0)',1,1/10^30);
 // patch 0019-atan-exact-cut.patch
 // g135-deg-atan-2i (DEG, oracle)
 angle_radian:=0:; Digits:=40:; pc("g135-deg-atan-2i",'atan(2*i)',90+(3147292373094538001977241539068588825237/10^38)*i,1/10^35);
