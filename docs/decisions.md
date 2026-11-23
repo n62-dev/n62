@@ -63,6 +63,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **P12 (2026-10-13): the keypad against the G2.** Rule: docs/04 5.1 and [06-keypad-vs-g2.md](06-keypad-vs-g2.md). Archived.
 - **P11 (2026-10-13): back to the G2's flow; milestone 4a before the rest of milestone 4.** Departures sit on top of the G2 way, never instead of it (docs/03 rules 5–13). Archived.
 - **P7 (2026-10-12, revised by P11): keypad gestures.** The arrow keys are one trackpad; flicks on every key. Archived.
+- **The pad's sideways drag steps per number or name (owner, 2026-11-22, R867):** a token is a digit run, the ᴇ mark with its sign, or a letter run; boxes, chips, names and operators as before; taps, the hardware arrows and a tap on the line stay one character; Ctrl+← → the same as a drag. Changes P7 (1). Would change if: the owner finds the overshoot worse than the gain on the Fairphone.
 - **The letters stay on the keys (2026-10-14).** Rule: docs/04 5.1 (the letters; the unassigned Shift cells). Would change if: Alpha taps near zero (P7 point 4); a function in the benchmark needs a key and no cell is free.
 - **Start chunk: 180 kB raw, 63 kB gzip (owner, 2026-10-27; raised 2026-11-09), pinned** (size-check.ts). Rule: docs/04 8.3. Archived. Would change if: the Tab One's keyboard-usable time passes 738 ms.
 - **The Ultra terminals' answers (owner, 2026-11-16; T1 to T6):** [the archive](archive/owner-answers-2026-11-16.md); each package file and the brief's rows state the answer they build.
