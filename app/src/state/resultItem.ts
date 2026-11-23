@@ -25,12 +25,16 @@ export function chipFactsOf(named: ChipTable): ChipFactsTable {
   return out;
 }
 
+/** R265: whether a row of the Giac text `giac` reads the angle (the tag in the other mode): it holds the degree factor.
+ *  The one place that decides it, for a line's row (withJob) and a unit view's row (units/row.ts unitRow, R915). */
+export const readsAngleOf = (giac?: string): boolean => giac?.includes(PASDEG) === true;
+
 /** G211: what a row keeps of its job: the Giac text sent (none over FULL_LIMIT, as `full`), the angle and digits it ran
  *  in (`s`, the settings at job time), and the word the port says the request carried. Absent ones are not set. */
 function withJob(out: ItemResult, r: Pick<ItemResult, "word" | "reads">, giac?: string, s?: Pick<CalcSettings, "angle" | "digits">): ItemResult {
   if (giac !== undefined && giac.length <= FULL_LIMIT) out.giac = giac;
   if (s) Object.assign(out, { angle: s.angle, digits: s.digits });
-  if (giac?.includes(PASDEG)) out.readsAngle = true; // R265: the one place that decides it (not tied to the stored text's length)
+  if (readsAngleOf(giac)) out.readsAngle = true; // R265: not tied to the stored text's length
   if (r.word) out.word = r.word;
   if (Array.isArray(r.reads)) out.reads = r.reads.filter((d) => d.value.length <= FULL_LIMIT); // G213f1: as `full`, a longer one not kept
   return out;
