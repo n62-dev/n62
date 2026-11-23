@@ -93,6 +93,8 @@ export class AppShell {
   openSettings: (() => void) | undefined;
   /** R785: an app's ☰ › Mode: the Mode sheet on Format, as the bar's chip opens it in Home and CAS (set by App.svelte). */
   openMode: (() => void) | undefined;
+  /** R887: runs `then` once the Mode code (and the sheet's view) is in, loading it first when it is not (set by App.svelte). */
+  withModeCode: ((then: () => void) => void) | undefined;
   /** R361: counts an app's event that is no press (set by main.ts: the press counts' event). */
   declare onEvent: ((name: string) => void) | undefined;
   /** Which of Home and CAS is under the keys (set by App.svelte); names the Menu there (R83). */
@@ -218,8 +220,9 @@ export class AppShell {
     const v = this.app === null ? (this.homeView?.() ?? "home") : this.view;
     return { text: t("menu.title", { view: t(`view.${v}`) }), icon: v };
   }
-  /** R145: where a ☰ sheet's ⚙ goes: Settings as a level of the sheet (R49), else, before the Mode code is in, Mode › Settings. */
-  private readonly toSettings = (): SubMenu | (() => void) => this.settingsMenu?.() ?? (() => this.openSettings?.());
+  /** R145: where a ☰ sheet's ⚙ goes (and the ⚙ key over any sheet, R887): Settings as a level of the sheet (R49), else, before the
+   *  Mode code is in, Mode › Settings. */
+  readonly toSettings = (): SubMenu | (() => void) => this.settingsMenu?.() ?? (() => this.openSettings?.());
 
   // ---- sheets (docs/05 3.1)
   get switcherOpen(): boolean {

@@ -99,6 +99,40 @@ test.describe("by keys", () => {
     await expect(active(page)).toHaveAttribute("data-id", "counters");
     expect(await entryValue(page)).toBe("");
   });
+
+  // R887: the ⚙ key over an open sheet does what the head's ⚙ does: Settings as the next level of that sheet, and Esc goes back to it
+  for (const [name, open] of [["Find", ["math"]], ["Vars", ["vars"]], ["☰", ["@menu"]], ["Mode", ["@mode"]]] as const) {
+    test(`the ⚙ key over ${name}: Settings as the sheet's next level, Esc back to the sheet (R887)`, async ({ page }) => {
+      const any = page.getByTestId("menu").or(page.getByTestId("find")); // Find and Vars draw as `find`
+      await tap(page, [...open]);
+      await expect(any).toHaveCount(1);
+      const before = (await title(page).textContent())?.trim() ?? "";
+      expect(before).not.toContain("Settings");
+      await tap(page, ["help"]);
+      await expect(title(page)).toHaveText(`${before} › Settings`);
+      expect(await any.getByRole("menuitem").evaluateAll((els) => els.map((e) => e.getAttribute("data-id")))).toEqual(SECTIONS);
+      await tap(page, ["esc"]);
+      await expect(title(page)).toHaveText(before);
+      await tap(page, ["esc"]);
+      await expect(any).toHaveCount(0);
+      expect(await entryValue(page)).toBe(""); // no key reached the line
+    });
+  }
+  test("Shift + the ⚙ key (Help, R863) over ☰ stays a dead press: no Settings, the menu stays (R887)", async ({ page }) => {
+    await tap(page, ["@menu"]);
+    await expect(title(page)).toHaveText("Home menu");
+    await tap(page, ["shift", "help"]);
+    await expect(title(page)).toHaveText("Home menu");
+    await expect(page.locator('[data-key="help"]')).toHaveAttribute("data-dead", "true"); // drawn dead under Shift (a sheet keeps Shift)
+  });
+  test("the ⚙ key with Settings open in the sheet adds no second Settings level (R887)", async ({ page }) => {
+    await tap(page, ["@mode", "d6"]);
+    await expect(title(page)).toHaveText("Mode › Settings");
+    await tap(page, ["help", "d2"]);
+    await expect(title(page)).toHaveText("Mode › Settings › Numbers");
+    await tap(page, ["help"]);
+    await expect(title(page)).toHaveText("Mode › Settings › Numbers");
+  });
 });
 
 test.describe("by touch", () => {
