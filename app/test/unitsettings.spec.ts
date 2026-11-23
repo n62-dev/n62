@@ -6,7 +6,7 @@
 // Home, CAS and Apps stay places: they close the view. Expected values: derived (2π·25 = 157.0796326794896…, from the
 // oracle value of tasks.yaml t04, 2π·0.025 = 0.1570796326794896…; at 6 significant digits 157.080).
 import { expect, test, type Page } from "@playwright/test";
-import { flick, open, tap } from "./helpers.ts";
+import { flick, open, recordVibrations, tap, vibrations } from "./helpers.ts";
 
 const up = (page: Page): Promise<unknown> =>
   page.waitForFunction(() => window.n62.unitView !== undefined && document.activeElement === window.n62.unitView.element && document.querySelector('[data-pad="unit"]') !== null);
@@ -112,12 +112,11 @@ for (const width of [412, 360]) {
     });
 
     test("control: Home, CAS, Apps and the place switch still close the view", async ({ page }) => {
-      // Apps (Alt + A), CAS (slot 2) from Home, Home from CAS, Alt + H (the switch). The pills by a click: a touch tap on
-      // them over the unit view makes no click (phase-1 too, R838 report)
+      // Apps (Alt + A), CAS (slot 2) from Home, Home from CAS, Alt + H (the switch); the pills by a touch tap (R838f1)
       const steps: [() => Promise<unknown>, "home" | "cas"][] = [
         [() => page.keyboard.press("Alt+A"), "home"],
-        [() => page.getByTestId("tab-slot").click(), "cas"],
-        [() => page.getByTestId("tab-home").click(), "home"],
+        [() => page.getByTestId("tab-slot").tap(), "cas"],
+        [() => page.getByTestId("tab-home").tap(), "home"],
         [() => page.keyboard.press("Alt+H"), "cas"],
       ];
       for (const [go, to] of steps) {
@@ -129,6 +128,74 @@ for (const width of [412, 360]) {
         if (await page.getByTestId("apps").isVisible()) await tap(page, ["esc"]);
         expect(await page.evaluate(() => window.n62.session.view)).toBe(to);
       }
+    });
+  });
+}
+
+// R838f1 (F474): a touch tap on a bar control right after the flick that opened the view (Shift + Tmpl's flick up) does its
+// job. Chromium ran the flick as a scroll gesture ending in a fling, and a tap within the fling's time made no click (the pad
+// now cancels its touchmoves, keyboard/noFling.ts). The view is opened once first, so the second opening, with its chunks
+// in, follows the flick at once and the tap comes within that time.
+for (const width of [412, 360]) {
+  test.describe(`a touch tap on the bar right after the flick that opened the unit view (R838f1), ${width} px`, () => {
+    test.use({ viewport: { width, height: 860 } });
+    test.beforeEach(async ({ page }) => {
+      await recordVibrations(page);
+      await open(page);
+    });
+
+    /** The view on `3`, opened by the flick a second time (the first opening loads its chunks; Esc leaves it). */
+    async function flickedOpen(page: Page): Promise<void> {
+      await tap(page, ["d3"]);
+      await unitsKey(page);
+      await tap(page, ["esc"]);
+      await page.waitForFunction(() => window.n62.unitView === undefined);
+      await unitsKey(page);
+    }
+    const gone = (page: Page): Promise<unknown> => page.waitForFunction(() => window.n62.unitView === undefined, undefined, { timeout: 3000 });
+
+    test("tab-slot gives CAS", async ({ page }) => {
+      await flickedOpen(page);
+      await page.getByTestId("tab-slot").tap();
+      await gone(page);
+      expect(await page.evaluate(() => window.n62.session.view)).toBe("cas");
+    });
+
+    test("tab-home gives Home (from CAS)", async ({ page }) => {
+      await tap(page, ["@cas"]);
+      await expect.poll(() => page.evaluate(() => window.n62.session.view)).toBe("cas");
+      await flickedOpen(page);
+      await page.getByTestId("tab-home").tap();
+      await gone(page);
+      expect(await page.evaluate(() => window.n62.session.view)).toBe("home");
+    });
+
+    test("place opens the Apps sheet", async ({ page }) => {
+      await flickedOpen(page);
+      await page.getByTestId("place").tap();
+      await gone(page);
+      await expect(page.getByTestId("apps")).toBeVisible();
+    });
+
+    test("menu-button does what a mouse click on it does: a dead press (its double pulse), the view stays with its focus", async ({ page }) => {
+      const press = async (how: "click" | "tap"): Promise<number> => {
+        const v0 = (await vibrations(page)).length;
+        await page.getByTestId("menu-button")[how]();
+        await page.waitForTimeout(400); // (the dead press's second pulse comes after the first, App.svelte dead)
+        await backOnView(page);
+        expect(await viewOpen(page)).toBe(true);
+        return (await vibrations(page)).length - v0;
+      };
+      await page.evaluate(() => window.n62.session.setHaptics({ on: true, ms: 10 }));
+      await tap(page, ["d3"]);
+      await unitsKey(page);
+      await page.waitForTimeout(1000); // (no flick just before: the mouse's own result)
+      const byMouse = await press("click");
+      expect(byMouse).toBeGreaterThan(0);
+      await tap(page, ["esc"]);
+      await page.waitForFunction(() => window.n62.unitView === undefined);
+      await unitsKey(page);
+      expect(await press("tap")).toBe(byMouse);
     });
   });
 }

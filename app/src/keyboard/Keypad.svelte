@@ -111,6 +111,7 @@
   let padEl: HTMLDivElement | undefined = $state();
   // R41: the names a screen reader says, from their own chunk after the first paint (a button is named by its face till then)
   $effect(loadKeyNames);
+  $effect(() => keyNames()?.noFling(padEl)); // R838f1: a flick starts no fling (noFling.ts; with the key names, after the first paint)
   $effect(() => {
     const m = keyNames();
     if (m && padEl) m.labelKeys(padEl, keys, shift, alpha, cas);
@@ -119,9 +120,7 @@
   // Every face and legend is shrunk until it fits its key: never cut, never overlapping (U0, docs/05 3.7).
   $effect(() => {
     // re-fit when the layer changes (the faces change with it) and when the pad's width does
-    void shift;
-    void alpha;
-    void cas;
+    void [shift, alpha, cas];
     // R820: and when a sheet opens or closes, its code comes in or its query empties or fills (the faces change with them)
     void [sheet?.kind, sheet?.empty, sheet?.filter, sheetChunk.keys];
     if (!padEl) return;
@@ -463,7 +462,7 @@
     background: var(--panel);
     user-select: none;
     -webkit-user-select: none;
-    /* no scrolling or zooming from the pad: every touch is a key, a flick or a trackpad drag */
+    /* no scrolling or zooming from the pad: every touch is a key, a flick or a trackpad drag (noFling.ts: nor a fling) */
     touch-action: none;
     -webkit-touch-callout: none;
     /* Key shadows off (R156): an empty shadow, so a rule that adds it to an inset edge stays valid */
