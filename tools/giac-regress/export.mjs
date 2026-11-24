@@ -1016,6 +1016,27 @@ export function build(cases) {
     patched.push("// patch 0063-matrix-exp-working-precision.patch", `// ${id} (oracle: mpmath)`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
   }
+  // Patch 0066 (G792), written lines: sin, cos, sinh, cosh of a float matrix (usual.cc; the golden g792-* rows are matrices, which the
+  // export leaves out). Stock's analytic_apply worked in doubles at any Digits and left imaginary noise (sin(evalf([[0,1],[-1,0]]))[0][0]
+  // = -4.3e-32-2.9e-15*i at Digits 40). Expected values: mpmath at 60 digits (sinm, cosm; M^2 = -I gives sin M = M*sinh 1, cos M =
+  // cosh 1*I, sinh M = M*sin 1, cosh M = cos 1*I; oracle) rounded to 38 digits; the zero entries within 1e-45, so the noise fails.
+  for (const [id, input, value, tol] of [
+    ["g792-sin-evalf-rotation-01-40", "sin(evalf([[0,1],[-1,0]]))[0][1]", "11752011936438014568823818505956008152/10^37", "5/10^38"],
+    ["g792-sin-evalf-rotation-00-40", "sin(evalf([[0,1],[-1,0]]))[0][0]", "0", "1/10^45"],
+    ["g792-cos-evalf-rotation-00-40", "cos(evalf([[0,1],[-1,0]]))[0][0]", "15430806348152437784779056207570616826/10^37", "5/10^38"],
+    ["g792-cos-evalf-rotation-01-40", "cos(evalf([[0,1],[-1,0]]))[0][1]", "0", "1/10^45"],
+    ["g792-cos-evalf-1234-00-40", "cos(evalf([[1,2],[3,4]]))[0][0]", "85542316507799776054388809715791781410/10^38", "5/10^39"],
+    ["g792-sin-evalf-1234-11-40", "sin(evalf([[1,2],[3,4]]))[1][1]", "-68821817618349523238015607941325420491/10^38", "5/10^39"],
+    ["g792-sinh-evalf-rotation-01-40", "sinh(evalf([[0,1],[-1,0]]))[0][1]", "84147098480789650665250232163029899962/10^38", "5/10^39"],
+    ["g792-cosh-evalf-rotation-00-40", "cosh(evalf([[0,1],[-1,0]]))[0][0]", "54030230586813971740093660744297660373/10^38", "5/10^39"],
+    // fix round 1: entries below the double range (0063's scan reads them as double zeros) are no zero matrix; sin and sinh
+    // of a diagonal matrix are sin and sinh of its entries (mpmath sin, sinh of 10^-400 at 60 digits: 10^-400 to 40 digits)
+    ["g792-sin-evalf-tiny-00-40", "sin(evalf([[10^-400,0],[0,10^-400]]))[0][0]", "1/10^400", "5/10^440"],
+    ["g792-sinh-evalf-tiny-00-40", "sinh(evalf([[10^-400,0],[0,10^-400]]))[0][0]", "1/10^400", "5/10^440"],
+  ]) {
+    patched.push("// patch 0066-matrix-trig-series.patch", `// ${id} (oracle: mpmath)`, `Digits:=40:; pc("${id}",'${input}',${value},${tol});`);
+    nPatched++;
+  }
   for (const [mode, n, tag, value] of [
     ["DEG", 0, "deg", "90+(3147292373094538001977241539068588825237/10^38)*i"],
     ["GRAD", 2, "grad", "100+(3496991525660597779974712821187320916930/10^38)*i"],

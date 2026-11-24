@@ -252,8 +252,9 @@ export const LAZY_VIEWS = ["src/views/Sheet.svelte"];
  *  start chunk keeps only the log's own functions). R791 (fix round 1): the renderer's macro table (render/macros.ts with
  *  entry/macroTable.ts), loaded with MathLive (render/mathlive.svelte.ts). R930: a job's call and result (state/jobRun.ts, with the
  *  item chunk), the field's set-up (entry/fieldUp.ts, with MathLive), the Apps and ☰ rows (apps/shellSheets.ts, with the sheet's
- *  model) and the port's pass of a result (calc/portKeys.ts, with the word store). */
-export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "src/render/tidy.ts", "src/keyboard/shiftPalettes.ts", "src/units/open.ts", "src/entry/field.ts", "src/state/handOver.ts", "src/views/UpdateNote.svelte", "src/views/tipsHost.ts", "src/state/migrations.ts", "src/keyboard/keyNames.ts", "src/views/sheet.svelte.ts", "src/input/click.ts", "src/state/resultItem.ts", "src/state/storedItem.ts", "src/engine/giacPrint.ts", "src/views/rowGesturesCode.ts", "src/apps/longpress.ts", "src/state/taps.svelte.ts", "src/state/pressCount.ts", "src/views/statSheet.ts", "src/views/helpSheet.ts", "src/views/matrixGrid.svelte.ts", "src/entry/cursorFn.ts", "src/engine/decimalLatex.ts", "src/apps/shellOpen.ts", "src/views/icons.ts", "src/input/backLayer.ts", "src/views/AppViews.svelte", "src/engine/defsCheck.ts", "src/engine/rational.ts", "src/engine/readFacts.ts", "src/render/longInsert.ts", "src/render/macros.ts", "src/entry/macroTable.ts", "src/state/jobRun.ts", "src/entry/fieldUp.ts", "src/apps/shellSheets.ts", "src/calc/portKeys.ts"];
+ *  model) and the port's pass of a result (calc/portKeys.ts, with the word store).
+ *  G792: Fmt's cycle and FIX setters (state/modeSets.ts). */
+export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "src/render/tidy.ts", "src/keyboard/shiftPalettes.ts", "src/units/open.ts", "src/entry/field.ts", "src/state/handOver.ts", "src/views/UpdateNote.svelte", "src/views/tipsHost.ts", "src/state/migrations.ts", "src/keyboard/keyNames.ts", "src/views/sheet.svelte.ts", "src/input/click.ts", "src/state/resultItem.ts", "src/state/storedItem.ts", "src/engine/giacPrint.ts", "src/views/rowGesturesCode.ts", "src/apps/longpress.ts", "src/state/taps.svelte.ts", "src/state/pressCount.ts", "src/views/statSheet.ts", "src/views/helpSheet.ts", "src/views/matrixGrid.svelte.ts", "src/entry/cursorFn.ts", "src/engine/decimalLatex.ts", "src/apps/shellOpen.ts", "src/views/icons.ts", "src/input/backLayer.ts", "src/views/AppViews.svelte", "src/engine/defsCheck.ts", "src/engine/rational.ts", "src/engine/readFacts.ts", "src/render/longInsert.ts", "src/render/macros.ts", "src/entry/macroTable.ts", "src/state/jobRun.ts", "src/entry/fieldUp.ts", "src/apps/shellSheets.ts", "src/calc/portKeys.ts", "src/state/modeSets.ts"];
 
 /** R91's pin: the start chunk is at most this many bytes gzip, under the budget of 63 kB (the pin kept its value when the
  *  budget was raised from 61 kB, 2026-11-09). A package that needs more raises the pin with a reason, here and in docs/04 8.3.
@@ -617,7 +618,9 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  63,000 → 61,880 B (R930, a cut; the budget stays 63 kB, so a later package raises the pin with its reason): phase-1 b55cbb1a
  *  measures 62,996 B gzip (176,799 B raw), the branch 61,874 B (172,987 B raw; −1,122 B): code that ran only after a job, the
  *  field's load, a sheet's open or a key on an open sheet rides in the chunk that path already waited for (state/jobRun.ts −310 B,
- *  entry/fieldUp.ts −140 B, apps/shellSheets.ts −281 B, sheetKeys.ts sheetPress and sheetLetter −202 B, calc/portKeys.ts −189 B). */
+ *  entry/fieldUp.ts −140 B, apps/shellSheets.ts −281 B, sheetKeys.ts sheetPress and sheetLetter −202 B, calc/portKeys.ts −189 B).
+ *  G792 (fix round 1, a cut; the pin stays): patch 0066's engine hash took the chunk past the pin; Session.setFmtMode and
+ *  setFixDecimals, which only the lazy Mode sheet calls, moved to state/modeSets.ts (−60 B gzip before the merge with R930). */
 export const START_PIN_GZIP = 61_880;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look

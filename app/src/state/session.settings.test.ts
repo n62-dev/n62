@@ -7,6 +7,7 @@ import { defaultSettings, migrateSettings, MAX_DIGITS, Session, SETTINGS_SCHEMA 
 import { t } from "../i18n/index.ts";
 import { decimalFromRational } from "../engine/rational.ts";
 import { renderNumeric } from "./displayMode.ts";
+import { setFmtMode } from "./modeSets.ts";
 import { fakeKv } from "./fakeKv.ts";
 
 
@@ -213,7 +214,7 @@ describe("Session settings", () => {
     const s = new Session(new FakeCalc(), fakeKv());
     s.setFormat("pfx");
     expect(s.settings.format).toBe("pfx");
-    s.setFmtMode("pfx", true);
+    setFmtMode(s, "pfx", true);
     expect(s.settings.fmtCycle).toContain("pfx");
   });
 });

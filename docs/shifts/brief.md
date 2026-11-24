@@ -148,7 +148,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | B6b | [G622](packages/G622.md) float pivots relative to the matrix | gorge, Opus | `p1/gorge-floatrref` | R930 (rerun of #1533) |
-| B6c | [G792](packages/G792.md) sin, cos of a float matrix | gorge, Opus | `p1/gorge-matsincos` | – (rerun of #1538: golden time only) |
+| B6c | G792 sin, cos of a float matrix | gorge, Opus | `p1/gorge-matsincos` | – (rerun of #1538: golden time only) |
 | B6c1 | [A272](packages/A272.md) size check holds hashed names fixed | annabell, Sonnet | `p1/annabell-hashnames` | G792f1 |
 | B6d | G793 lcm of integers is positive | gorge, Opus | `p1/gorge-lcmsign` | – |
 | B6e | G794 CAS float lists get a mark | gorge, Opus | `p1/gorge-caslistmark` | – |

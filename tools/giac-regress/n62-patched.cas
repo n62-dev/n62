@@ -1646,6 +1646,36 @@ Digits:=12:; pc("g554-exp-evalf-rotation40-00-12",'exp(evalf([[0,40],[-40,0]]))[
 // patch 0063-matrix-exp-working-precision.patch
 // g554-exp-evalf-neg30-00-12 (oracle: mpmath)
 Digits:=12:; pc("g554-exp-evalf-neg30-00-12",'exp(evalf([[-30,0],[0,-30]]))[0][0]',935762296884/10^25,1/10^24);
+// patch 0066-matrix-trig-series.patch
+// g792-sin-evalf-rotation-01-40 (oracle: mpmath)
+Digits:=40:; pc("g792-sin-evalf-rotation-01-40",'sin(evalf([[0,1],[-1,0]]))[0][1]',11752011936438014568823818505956008152/10^37,5/10^38);
+// patch 0066-matrix-trig-series.patch
+// g792-sin-evalf-rotation-00-40 (oracle: mpmath)
+Digits:=40:; pc("g792-sin-evalf-rotation-00-40",'sin(evalf([[0,1],[-1,0]]))[0][0]',0,1/10^45);
+// patch 0066-matrix-trig-series.patch
+// g792-cos-evalf-rotation-00-40 (oracle: mpmath)
+Digits:=40:; pc("g792-cos-evalf-rotation-00-40",'cos(evalf([[0,1],[-1,0]]))[0][0]',15430806348152437784779056207570616826/10^37,5/10^38);
+// patch 0066-matrix-trig-series.patch
+// g792-cos-evalf-rotation-01-40 (oracle: mpmath)
+Digits:=40:; pc("g792-cos-evalf-rotation-01-40",'cos(evalf([[0,1],[-1,0]]))[0][1]',0,1/10^45);
+// patch 0066-matrix-trig-series.patch
+// g792-cos-evalf-1234-00-40 (oracle: mpmath)
+Digits:=40:; pc("g792-cos-evalf-1234-00-40",'cos(evalf([[1,2],[3,4]]))[0][0]',85542316507799776054388809715791781410/10^38,5/10^39);
+// patch 0066-matrix-trig-series.patch
+// g792-sin-evalf-1234-11-40 (oracle: mpmath)
+Digits:=40:; pc("g792-sin-evalf-1234-11-40",'sin(evalf([[1,2],[3,4]]))[1][1]',-68821817618349523238015607941325420491/10^38,5/10^39);
+// patch 0066-matrix-trig-series.patch
+// g792-sinh-evalf-rotation-01-40 (oracle: mpmath)
+Digits:=40:; pc("g792-sinh-evalf-rotation-01-40",'sinh(evalf([[0,1],[-1,0]]))[0][1]',84147098480789650665250232163029899962/10^38,5/10^39);
+// patch 0066-matrix-trig-series.patch
+// g792-cosh-evalf-rotation-00-40 (oracle: mpmath)
+Digits:=40:; pc("g792-cosh-evalf-rotation-00-40",'cosh(evalf([[0,1],[-1,0]]))[0][0]',54030230586813971740093660744297660373/10^38,5/10^39);
+// patch 0066-matrix-trig-series.patch
+// g792-sin-evalf-tiny-00-40 (oracle: mpmath)
+Digits:=40:; pc("g792-sin-evalf-tiny-00-40",'sin(evalf([[10^-400,0],[0,10^-400]]))[0][0]',1/10^400,5/10^440);
+// patch 0066-matrix-trig-series.patch
+// g792-sinh-evalf-tiny-00-40 (oracle: mpmath)
+Digits:=40:; pc("g792-sinh-evalf-tiny-00-40",'sinh(evalf([[10^-400,0],[0,10^-400]]))[0][0]',1/10^400,5/10^440);
 // patch 0019-atan-exact-cut.patch
 // g135-deg-atan-2i (DEG, oracle)
 angle_radian:=0:; Digits:=40:; pc("g135-deg-atan-2i",'atan(2*i)',90+(3147292373094538001977241539068588825237/10^38)*i,1/10^35);
