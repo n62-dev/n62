@@ -6,7 +6,7 @@ import { resolve } from "node:path";
 import { Worker } from "node:worker_threads";
 import { latexToGiac } from "../../../app/src/input/latex-to-giac.ts";
 import { generateEdges } from "./edges.ts";
-import { generate, PINNED } from "./gen.ts";
+import { generate, generateMatrices, MATRIX_PINNED, PINNED, type Case } from "./gen.ts";
 import { judge, type Oracle, type Shown, type Verdict } from "./judge.ts";
 import type { Job } from "./worker.ts";
 
@@ -23,12 +23,16 @@ export interface Judged extends Run {
 }
 
 /** The runs of a seed: the pinned inputs, then every tree in RAD at 12 or 30 digits, trees with an angle function also in DEG. Duplicates dropped.
- * With `edges` (G116) the trees are edges.ts's and the pinned inputs (the gate's) are left out. */
-export function runsOf(seed: number, count: number, edges = false): Run[] {
+ * With `edges` (G116) the trees are edges.ts's and the pinned inputs (the gate's) are left out. G797: `opts.matrices` matrix trees
+ * (generateMatrices, their own stream of the seed) follow, after the pinned matrix inputs; 0 (the default) leaves the runs as before. */
+export function runsOf(seed: number, count: number, edges = false, opts: { matrices?: number } = {}): Run[] {
   const seen = new Set<string>();
   const out: Run[] = [];
-  const trees = (edges ? generateEdges(seed, count) : generate(seed, count)).map((c, i) => ({ c, digits: (i % 2 === 0 ? 12 : 30) as 12 | 30 }));
-  const all = [...(edges ? [] : PINNED.map((c) => ({ c, digits: 12 as const }))), ...trees];
+  const parity = (c: Case, i: number) => ({ c, digits: (i % 2 === 0 ? 12 : 30) as 12 | 30 });
+  const trees = (edges ? generateEdges(seed, count) : generate(seed, count)).map(parity);
+  const m = opts.matrices ?? 0;
+  const matrices = m > 0 ? [...MATRIX_PINNED.map((c) => ({ c, digits: c.digits })), ...generateMatrices(seed, m).map(parity)] : [];
+  const all = [...(edges ? [] : PINNED.map((c) => ({ c, digits: 12 as const }))), ...trees, ...matrices];
   all.forEach(({ c, digits }) => {
     for (const angle of c.angle ? (["rad", "deg"] as const) : (["rad"] as const)) {
       const key = `${angle} ${digits} ${c.latex}`;
