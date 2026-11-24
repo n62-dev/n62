@@ -117,7 +117,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
     fieldEl.style.display = "";
     window.n62.unitView = undefined;
     if (c.entry.value !== line) {
-      console.warn("unit view: the line changed under the view; given back", c.entry.value);
+      console.warn("R917: the line given back", c.entry.value);
       c.entry.set(line, chips);
     }
     c.entry.focus();

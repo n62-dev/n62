@@ -195,7 +195,7 @@
    *  meanwhile in the queue (decisions.md R8). If the chunk does not load, the queued keys run without the sheet. */
   function withPalettes(open: (m: NonNullable<typeof shiftPalettes>) => void): void {
     if (shiftPalettes) return open(shiftPalettes);
-    sheetLoad = loadShiftPalettes().then(open, () => {}).finally(() => (sheetLoad = null));
+    onFind(loadShiftPalettes(), open); // (R917, a start-chunk cut: Find's load path, the sheet's view with it; a chunk that does not load is a dead press)
   }
   /** Tmpl (R10), Shift + 6 (relations and logic), Shift + 9 (symbols and Greek, R18) and Shift + Vars (Chars, R725): a palette on
    *  the grid sheet; a pick inserts its cell as its key would. A view without an entry line (Plot) has nothing to insert into. The palettes (Tmpl too, R91) come in their own chunk, loaded with MathLive, and the sheet's view in its own
@@ -286,15 +286,7 @@
    *  (decisions.md R8), so none of them lands on the line before the sheet is there. */
   function onModeSheet(open: (m: ModeSheetCode) => void): void {
     if (loaders.modeSheet && sheetChunk.C) return open(loaders.modeSheet);
-    sheetLoad = Promise.all([loadModeSheet(), loadSheetView()]).then(
-      ([m]) => {
-        sheetLoad = null;
-        open(m);
-      },
-      () => {
-        sheetLoad = null; // the chunk did not load: the queued keys run without the sheet
-      },
-    );
+    onFind(loadModeSheet(), open); // (R917, a start-chunk cut: Find's load path; a chunk that does not load is a dead press, as every lazy key's)
   }
 
   /** A66f1: the click's code is a lazy chunk; fetch it at start when the setting is on (and after a restore or preset). */
