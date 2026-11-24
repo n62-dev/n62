@@ -122,6 +122,32 @@ test("Function: a long press on a readout value copies it in full; Menu → Copy
   await expect.poll(() => clipboard(page)).toBe("1.41421356237");
 });
 
+// R897: a hold on a Function Num cell copies it as the Solve Num value and the Plot readout do: the value in full, the x.
+/** Function: F1 = x², the Num view at the start 0, the step 0.1 (function.spec.ts); the cells of the row x = 0.3. */
+async function numRow(page: Page): Promise<Locator> {
+  await tap(page, ["@symb"]);
+  await expect(page.getByTestId("entry-label")).toHaveText("F1(x)=");
+  await tap(page, ["x", "pow", "d2", "enter", "@num"]);
+  const cells = page.locator('[data-testid="num-table"] tr:has(td[data-x="0.3"]) td');
+  await expect(cells.nth(1)).toHaveText("0.09");
+  await setClipboard(page, "");
+  return cells;
+}
+
+test("Function Num: a long press on a value cell copies its value", async ({ page }) => {
+  const cells = await numRow(page);
+  await longPress(page, cells.nth(1));
+  await expect(page.getByTestId("notice")).toHaveText("Copied");
+  await expect.poll(() => clipboard(page)).toBe("0.09");
+});
+
+test("Function Num: a long press on an x cell copies its x", async ({ page }) => {
+  const cells = await numRow(page);
+  await longPress(page, cells.nth(0));
+  await expect(page.getByTestId("notice")).toHaveText("Copied");
+  await expect.poll(() => clipboard(page)).toBe("0.3");
+});
+
 // R278f1: the Paste key is gone and a long press on the line is R277's hold, so ☰ → Paste is the way in for a number from
 // another app, wherever the app view shows the entry line. Point mode pastes 1.5, comma mode 1,5 (a pasted 1.5 is no number there).
 for (const comma of [false, true]) {
