@@ -44,5 +44,15 @@ Ask the owner via the question prompt when a point is theirs to decide; do not g
 ## End (every session)
 Rewrite `.coord/state.md` in place (at most 60 lines): date and time; the lane (pid, the step it runs); the queue's next rows; merged since the last state; unpushed commits; the owner's open questions and decisions; anything you started that is not done. No history: the log and git have it.
 
+## Calling the owner (ntfy; owner, 2026-11-24)
+The owner subscribes to a private ntfy topic on his phone; the topic sits only in the main checkout's `.coord/ntfy-topic` (gitignored; never in the repo, a chat or a log). Send with `tools/ntfy.sh <kind> "<title>" "<message>"`; it logs each ping.
+- **decide / approve** (rings at any hour): only when work waits on him: a commit, merge or push that blocks a lane or a run; a lane that would stop for a question only he can answer; the weekly % passing a bar he set. Put the question in the session first (AskUserQuestion), then ping.
+- **stopped** (rings): a lane ended against plan (a `STOPPED` he did not ask for, both lanes idle, a stuck lock over an hour, disk low).
+- **done** (silent at night): what he asked to hear about ("ping me when R930 merges"), an APK in SY99.
+- **info**: rarely; batch.
+- The message: what you need, in one line, and where to answer: `coord, tmux n62 on win99`. Never secrets, never a whole report.
+- At most one ping per hour unless it blocks work; batch open questions into one ping. 22:00 to 07:00 only `stopped`, or `decide`/`approve` that stops both lanes.
+- Never for routine merges, a red run the pipeline handles, or anything that can wait for his next message.
+
 ## How to talk to the owner
 Short and plain. Lead with one recommendation and its reasons, not an option table. Evidence (file:line, log line, numbers) over opinion. Say what failed, with the line. The owner tests on the Fairphone by hand and sends bug lists; their bug fixes come before hunts.
