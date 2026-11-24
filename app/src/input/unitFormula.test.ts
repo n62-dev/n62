@@ -49,7 +49,6 @@ describe("slotFormula (R24c)", () => {
     expect(slotFormula('1\\div2\\char"5E 3x').latex).toBe('1\\placeholder[u1]{}\\div2\\placeholder[u2]{}\\char"5E 3x\\to\\placeholder[end]{}');
     expect(slotFormula("1.5ᴇ-3").slots).toEqual(["u1"]);
     expect(slotFormula("1.5\\emark+3").slots).toEqual(["u1"]);
-    expect(giac("1.5\\times10^{3}")).toBe("(1.5*pasu1)*(10*pasu2)^3");
   });
   it("the parser's units mode reads every slot as pasu<n> in the order written", () => {
     expect(giac("72")).toBe("72*pasu1");
@@ -119,6 +118,58 @@ describe("R349: slotFormula with the end slot off (the default view) and on (→
     const r = latexToGiacInfo(slotFormula("72", false).latex, { units: true });
     expect(r.giac).toBe("72*pasu1");
     expect(r.units?.end).toBeUndefined();
+  });
+});
+
+describe("R925 (F379): ×10ⁿ after a number is part of it, one slot after the power", () => {
+  const ends = (latex: string): string => slotFormula(latex, false).latex;
+  const info = (latex: string) => latexToGiacInfo(slotFormula(latex).latex, { units: true });
+  it("6.62607015×10⁻³⁴, 2×10³ and 2·10³: one slot, after the exponent, read as the ᴇ form", () => {
+    expect(ends("6.62607015\\times10^{-34}")).toBe("6.62607015\\times10^{-34}\\placeholder[u1]{}");
+    expect(ends("2\\times10^{3}")).toBe("2\\times10^{3}\\placeholder[u1]{}");
+    expect(ends("2\\cdot10^{3}")).toBe("2\\cdot10^{3}\\placeholder[u1]{}");
+    expect(ends("2 \\times 10^{+3}+1")).toBe("2 \\times 10^{+3}\\placeholder[u1]{}+1\\placeholder[u2]{}");
+    expect(giac("6.62607015\\times10^{-34}")).toBe(giac("6.62607015\\emark-34"));
+    expect(giac("6.62607015\\times10^{-34}")).toBe("6.62607015e-34*pasu1");
+    expect(giac("2\\times10^{3}")).toBe("2e3*pasu1");
+    expect(giac("2\\cdot10^{3}")).toBe("2e3*pasu1");
+    expect(giac("1.5\\times10^{3}")).toBe("1.5e3*pasu1");
+    expect(giac("3\\times10^{3}\\pm2")).toBe("pasupm(3e3,2)*pasu1"); // a σ after it is the value's, as after 3ᴇ3
+  });
+  it("a power of a number alone keeps its slot before the power (R28): (5 u)², (10 u)²", () => {
+    expect(ends("5^{2}")).toBe("5\\placeholder[u1]{}^{2}");
+    expect(ends("10^{2}")).toBe("10\\placeholder[u1]{}^{2}");
+    expect(giac("10^{2}")).toBe("(10*pasu1)^2");
+  });
+  it("a σ right before ×10ⁿ is refused: 3 ± 0.1×10³ would read σ = 100", () => {
+    expect(ends("3\\pm0.1\\times10^{3}")).toBe("3\\pm0.1\\times10^{3}\\placeholder[u1]{}");
+    expect(() => info("3\\pm0.1\\times10^{3}")).toThrow(expect.objectContaining({ key: "parse.pmTenPower" }));
+    expect(() => info("3\\pm1\\emark-2\\times10^{3}")).toThrow(expect.objectContaining({ key: "parse.pmTenPower" }));
+    expect(() => latexToGiacInfo("3\\pm0.1\\times10^{3}", { units: true })).toThrow(expect.objectContaining({ key: "parse.pmTenPower" })); // the slot left empty
+    expect(ends("3\\pm1\\emark-2\\times10^{3}")).toBe("3\\pm1\\emark-2\\times10^{3}\\placeholder[u1]{}"); // an ᴇ σ and a σ chip the same
+    const chips = { "res:7": { value: "0.5", exact: true } };
+    expect(ends("10\\pm\\res{7}{0.5}\\times10^{3}")).toBe("10\\pm\\res{7}{0.5}\\times10^{3}\\placeholder[u1]{}");
+    expect(() => latexToGiacInfo(slotFormula("10\\pm\\res{7}{0.5}\\times10^{3}").latex, { units: true, chips })).toThrow(expect.objectContaining({ key: "parse.pmTenPower" }));
+  });
+  it("(3 ± 0.1)×10³: the bracket closes the quantity; the 10 is a number of its own with its R28 slot", () => {
+    expect(ends("\\left(3\\pm0.1\\right)\\times10^{3}")).toBe("\\left(3\\pm0.1\\placeholder[u1]{}\\right)\\times10\\placeholder[u2]{}^{3}");
+    expect(giac("\\left(3\\pm0.1\\right)\\times10^{3}")).toBe("(pasupm(3,0.1)*pasu1)*(10*pasu2)^3");
+  });
+  it("controls: a variable or a non-whole exponent, 10 with more digits, the ᴇ form and a mixed number stay as they were", () => {
+    expect(ends("2\\times10^{x}")).toBe("2\\placeholder[u1]{}\\times10\\placeholder[u2]{}^{x}");
+    expect(giac("2\\times10^{x}")).toBe("(2*pasu1)*(10*pasu2)^x");
+    expect(ends("2\\times10^{1.5}")).toBe("2\\placeholder[u1]{}\\times10\\placeholder[u2]{}^{1.5}");
+    expect(ends("2\\times100^{3}")).toBe("2\\placeholder[u1]{}\\times100\\placeholder[u2]{}^{3}");
+    expect(ends("1.5\\emark-3")).toBe("1.5\\emark-3\\placeholder[u1]{}");
+    expect(ends("2\\tfrac12\\times10^{3}")).toBe("2\\tfrac12\\placeholder[u1]{}\\times10\\placeholder[u2]{}^{3}");
+    expect(latexToGiacInfo("2\\times10^{3}").giac).toBe("2*10^3"); // Home: a product, as before
+  });
+  it("the slot reader and the units-mode parser agree: the parser reads exactly the formula's slots", () => {
+    for (const l of ["6.62607015\\times10^{-34}", "2\\times10^{3}", "2\\cdot10^{3}", "2\\times10^{3}\\times10^{2}", "5^{2}", "10^{2}", "\\frac{2\\times10^{3}}{4\\cdot10^{-1}}",
+      "\\left(3\\pm0.1\\right)\\times10^{3}", "3\\times10^{3}\\pm2", "2\\times10^{x}", "2\\times10^{1.5}", "1.5\\emark-3", "-2\\times10^{3}"]) {
+      const f = slotFormula(l);
+      expect(latexToGiacInfo(f.latex, { units: true }).units?.slots, l).toEqual(f.slots);
+    }
   });
 });
 

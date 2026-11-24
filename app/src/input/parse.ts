@@ -13,6 +13,7 @@ import { ABS_LIKE, BASE_PREFIX, CONSTS, FACTOR_CMDS, FUNCS, GREEK, INVERSE, LOGI
   type ParseInfo, type ParseOptions, type UnitsInfo } from "./parseTables.ts";
 import { negateUncertain, percentSigma } from "./pmPercent.ts";
 import { APPROX, ARING, CARET, EMARK, LOGIC, MICRO, PERMILLE, promptId, tokenize, type Tok } from "./tokenize.ts";
+import { eLiteral, tenPowerAt } from "./tenPower.ts";
 
 export { FUNCS, GREEK, INVERSE, LETTER_NAMES, type ParseInfo, type ParseOptions, type UnitsInfo } from "./parseTables.ts";
 
@@ -488,8 +489,10 @@ class Parser implements CalcParser {
           return e;
         }
         this.pos++;
-        if (this.isCmd(EMARK)) {
-          const e = this.unitsAfter(this.eNumber(tok.v));
+        // R925: in the unit view ×10ⁿ after a number is part of it, its slot after the power (unitFormula.ts numberEnd)
+        const ten = this.units && /^[\d.]+$/.test(tok.v) ? tenPowerAt(this.toks, this.pos) : null;
+        if (this.isCmd(EMARK) || ten) {
+          const e = this.unitsAfter(ten ? ((this.pos += ten.len), eLiteral(tok.v, ten.exp)) : this.eNumber(tok.v));
           this.numEnd = this.pos;
           return e;
         }
@@ -552,11 +555,8 @@ class Parser implements CalcParser {
    */
   private eNumber(mant: string): Json {
     this.pos++; // the mark
-    let sign = "";
-    if (this.isCh("-") || this.isCh("+")) {
-      sign = (this.peek() as Tok).v === "-" ? "-" : "";
-      this.pos++;
-    }
+    const sign = this.isCh("-") ? "-" : "";
+    if (sign || this.isCh("+")) this.pos++;
     const t = this.peek();
     if (t?.t !== "num") throw parseError("parse.needsAWhole");
     if (!/^\d+$/.test(t.v)) throw parseError("parse.theExponentAfter", { v: t.v });
@@ -564,9 +564,7 @@ class Parser implements CalcParser {
     if (this.isCmd(EMARK)) throw parseError("parse.oneExponent");
     // x², xʸ after the number put it in brackets; a bare power here would read as 1.5ᴇ3² = 1.5·10⁹ to some, (1.5ᴇ3)² to others
     if (this.isCh("^") || this.isCmd(CARET)) throw parseError("parse.putTheNumber");
-    const m = mant.replace(/^0+(?=\d)/, "").replace(/\.$/, "").replace(/^\./, "0.");
-    const e = t.v.replace(/^0+(?=\d)/, "");
-    return { num: `${m}e${sign}${e}` };
+    return eLiteral(mant, sign + t.v);
   }
 
   /**
@@ -588,6 +586,7 @@ class Parser implements CalcParser {
       const pct = this.isCmd("%");
       if (pct) this.pos++;
       else if (this.isCmd(PERMILLE)) throw parseError("parse.pmPermille"); // R725: ± n ‰ is not read
+      if (tenPowerAt(this.toks, this.pos)) throw parseError("parse.pmTenPower"); // R925: σ·10ⁿ, or (value ± σ)·10ⁿ?
       v = ["Call", "pasupm", n, pct ? percentSigma(n, sigma) : sigma];
     }
     const out = this.slotAfter(v);
@@ -603,6 +602,7 @@ class Parser implements CalcParser {
     const c = this.chips[key];
     if (!c) throw parseError("parse.valueMissing", { what: "result chip" });
     if (this.isCmd("%") || (promptId(this.peek()) !== undefined && this.isCmd("%", 1))) throw parseError("parse.pmChipPercent");
+    if (tenPowerAt(this.toks, this.pos)) throw parseError("parse.pmTenPower"); // R925, as after a typed σ
     const units = this.units as UnitsInfo;
     const sigmas = (units.sigmas ??= []);
     const before = units.slots.length;
