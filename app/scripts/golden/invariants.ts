@@ -13,6 +13,11 @@ import { root, only, cases, freshHost, report } from "./lib.ts";
 /** G324f1: the stage's limit per input (pass 144): 75 s at 1071 inputs; phase-1 e6d907af took 59.6 s. */
 const INVARIANTS_MS_PER_INPUT = 70;
 
+/** G324f2: the stage line after "FAIL invariants: " / "PASS invariants: "; scripts/pipeline-logs.ts (isTiming) reads its tail, so both share this one builder. */
+export function invariantsLine(n: { inputs: number; a: number; b: number; c: number; d: number }, summary: string, secs: number, limit: number, msPerInput: number): string {
+  return `${n.inputs} inputs, ${n.a} (a) RAD/DEG, ${n.b} (b) 12/30 digits, ${n.c} (c) copy and paste, ${n.d} (d) store; ${summary}; ${secs.toFixed(1)} s (< ${limit.toFixed(1)}, ${msPerInput} ms per input)`;
+}
+
 /** G43: the invariants over every home.yaml and precision.yaml input without settings; see invariants.ts. */
 export async function stageInvariants(): Promise<void> {
   const seen = new Set<string>();
@@ -92,5 +97,5 @@ export async function stageInvariants(): Promise<void> {
   for (const l of r.lines) console.log(`  invariants ${l}`);
   const secs = (performance.now() - t0) / 1000;
   const limit = (INVARIANTS_MS_PER_INPUT * inputs.length) / 1000;
-  report("invariants", r.ok && secs < limit, `${inputs.length} inputs, ${checked.a} (a) RAD/DEG, ${checked.b} (b) 12/30 digits, ${checked.c} (c) copy and paste, ${checked.d} (d) store; ${r.summary}; ${secs.toFixed(1)} s (< ${limit.toFixed(1)}, ${INVARIANTS_MS_PER_INPUT} ms per input)`);
+  report("invariants", r.ok && secs < limit, invariantsLine({ inputs: inputs.length, ...checked }, r.summary, secs, limit, INVARIANTS_MS_PER_INPUT));
 }
