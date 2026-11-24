@@ -144,14 +144,9 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| B6b | [G622](packages/G622.md) float pivots relative to the matrix | gorge, Opus | `p1/gorge-floatrref` | R930 (rerun of #1533) |
-| B6c | G792 sin, cos of a float matrix | gorge, Opus | `p1/gorge-matsincos` | – (rerun of #1538: golden time only) |
-| B6c1 | A272 size check holds hashed names fixed | annabell, Sonnet | `p1/annabell-hashnames` | G792f1 |
-| B6c2 | G803 convert refuses a non-integer subtype | gorge, Opus | `p1/gorge-convertsubtype` | A272 |
-| B6d | G793 lcm of integers is positive | gorge, Opus | `p1/gorge-lcmsign` | – |
-| B6e | G794 CAS float lists get a mark | gorge, Opus | `p1/gorge-caslistmark` | – |
-| B6f | G797 the sweep builds matrices | gorge, Opus | `p1/gorge-sweepmatrix` | – |
-| B6g | G798 scaling and sign laws | gorge, Opus | `p1/gorge-lawcheck` | G797 |
+| B6b | [G622](packages/G622.md) float pivots relative to the matrix (G622f2, pass 239) | gorge, Opus | `p1/gorge-floatrref` | – |
+| B6c | [A273](packages/A273.md) the family tests' nightly runs after each pass | annabell, Sonnet | `p1/annabell-familynightly` | – |
+| B6d | [G802](packages/G802.md) exp of a 3×3 float matrix kills the engine | gorge, Opus | `p1/gorge-matexpstack` | – |
 | B6h | [G799](packages/G799.md) marks and Copy agree | gorge, Opus | `p1/gorge-markagree` | – |
 | B6i | [G800](packages/G800.md) a unit sweep | gorge, Opus | `p1/gorge-unitsweep` | R885 |
 | B6j | [G795](packages/G795.md) FIX of a long number | gorge, Opus | `p1/gorge-fixlong` | – |
