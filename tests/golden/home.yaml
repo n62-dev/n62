@@ -274,6 +274,19 @@ cases:
   - { id: "fn-irem-neg", input: "irem(-7,3)", oracle: "F(2)", expect: "2", mark: "=", source: "derived", note: "Euclidean remainder, never negative" }
   - { id: "fn-gcd", input: "gcd(1071,462)", oracle: "F(21)", expect: "21", mark: "=", source: "derived" }
   - { id: "fn-lcm", input: "lcm(4,6)", oracle: "F(12)", expect: "12", mark: "=", source: "derived" }
+  # --- G793 (hunt 2026-11-23 h3 #7): the lcm of integers is the least positive common multiple (Python math.lcm); Giac's
+  # lcm(a,b) = normal(a/gcd(a,b))*b kept the sign of the product (patch 0065) -------------------------------------------------
+  - { id: "g793-lcm-neg4-6", input: "lcm(-4,6)", oracle: "F(12)", expect: "12", mark: "=", source: "derived", note: "G793: Python math.lcm(-4,6) = 12; it showed = -12" }
+  - { id: "g793-lcm-4-neg6", input: "lcm(4,-6)", oracle: "F(12)", expect: "12", mark: "=", source: "derived", note: "G793: math.lcm(4,-6) = 12; it showed = -12" }
+  - { id: "g793-lcm-list-neg4-6-10", input: "lcm([-4,6,10])", oracle: "F(60)", expect: "60", mark: "=", source: "derived", note: "G793: math.lcm(-4,6,10) = 60; it showed = -60" }
+  - { id: "g793-lcm-neg3-neg5-neg7", input: "lcm(-3,-5,-7)", oracle: "F(105)", expect: "105", mark: "=", source: "derived", note: "G793: three negatives, an odd count: math.lcm(-3,-5,-7) = 105; it showed = -105" }
+  - { id: "g793-lcm-neg2^70-3", input: "lcm(-2^70,3)", oracle: "F(3*2**70)", expect: "3.54177486215E21", mark: "≈", exact: "3541774862152233910272", source: "derived", note: "G793: a big integer; 2^70 and 3 are coprime, so the lcm is 3*2^70 (math.lcm(-2**70,3)); it showed -3.54177486215E21" }
+  - { id: "g793-lcm-neg4-alone", input: "lcm(-4)", oracle: "F(4)", expect: "4", mark: "=", source: "derived", note: "G793: one argument: math.lcm(-4) = 4; Giac returned it unchanged, -4" }
+  - { id: "g793-lcm-pairs-neg4-6", input: "lcm([-4,6],[6,4])", expect: "[12,12]", mark: "=", source: "derived", note: "G793: two lists of integers are taken pair by pair: [math.lcm(-4,6), math.lcm(6,4)]; it showed = [-12,12]" }
+  - { id: "g793-keep-lcm-neg4-neg6", input: "lcm(-4,-6)", oracle: "F(12)", expect: "12", mark: "=", source: "derived", note: "G793 control: two negatives, right before the patch (math.lcm(-4,-6) = 12)" }
+  - { id: "g793-keep-lcm-0-5", input: "lcm(0,5)", oracle: "F(0)", expect: "0", mark: "=", source: "derived", note: "G793 control: math.lcm(0,5) = 0" }
+  - { id: "g793-keep-gcd-neg4-neg6", input: "gcd(-4,-6)", oracle: "F(2)", expect: "2", mark: "=", source: "derived", note: "G793 control: gcd was positive already" }
+  - { id: "g793-keep-lcm-poly", input: "lcm(x^2-1,x+1)", expect: "(x-1)*(x+1)", source: "derived", note: "G793 control: a polynomial keeps Giac's form (an lcm of polynomials is defined up to a constant factor)" }
   - { id: "fn-factorial0.5", input: "factorial(0.5)", oracle: "gamma(F(3,2))", expect: "0.886226925453", mark: "≈", source: "oracle" }
   - { id: "fn-comb", input: "comb(52,5)", oracle: "F(factorial(52)//(factorial(5)*factorial(47)))", expect: "2598960", mark: "=", source: "derived" }
   - { id: "stat-mean", input: "mean([1,2,3,4])", oracle: "F(10,4)", expect: "2.5", mark: "=", source: "derived" }
