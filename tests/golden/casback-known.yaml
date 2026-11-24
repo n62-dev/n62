@@ -1,35 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # G64: the failures the CAS check-back (app/scripts/casback.ts, seed 20261024) finds today. id = the question, check = its kind, package = the open backlog id.
 # G798: the laws (check: law; id = "<law> d<digits>: <left LaTeX>"), the hand matrices and 6 of the seed's law matrices, then the integer set:
-# G622 a small or singular float matrix (inv and linsolve at c = 10^-13 claim 12-14 digits of a wrong answer; rank of a singular one is 0 with =);
 # G791 hamdist of two negatives, one beside a big one (hamdist(-1,-2^31) is 4294967295 with =).
 known:
-  - { id: "inv d30: \\operatorname{inv}\\left(10^{-13}\\times \\operatorname{approx}\\left(\\begin{pmatrix}1&2\\\\3&4\\end{pmatrix}\\right)\\right)", check: law, package: G622 }
-  - { id: "linsolve d30: \\operatorname{linsolve}\\left(10^{-13}\\times \\operatorname{approx}\\left(\\begin{pmatrix}1&2\\\\3&4\\end{pmatrix}\\right),10^{-13}\\times \\begin{pmatrix}1\\\\2\\end{pmatrix}\\right)", check: law, package: G622 }
-  - { id: "inv d30: \\operatorname{inv}\\left(10^{-13}\\times \\operatorname{approx}\\left(\\begin{pmatrix}1&2&3\\\\4&5&6\\\\7&8&10\\end{pmatrix}\\right)\\right)", check: law, package: G622 }
-  - { id: "linsolve d30: \\operatorname{linsolve}\\left(10^{-13}\\times \\operatorname{approx}\\left(\\begin{pmatrix}1&2&3\\\\4&5&6\\\\7&8&10\\end{pmatrix}\\right),10^{-13}\\times \\begin{pmatrix}1\\\\2\\\\3\\end{pmatrix}\\right)", check: law, package: G622 }
-  - { id: "rank d12: \\operatorname{rank}\\left(10^{7}\\times \\operatorname{approx}\\left(\\begin{pmatrix}1&2&3\\\\4&5&6\\\\7&8&9\\end{pmatrix}\\right)\\right)", check: law, package: G622 }
-  - { id: "inv d30: \\operatorname{inv}\\left(10^{-13}\\times \\operatorname{approx}\\left(\\begin{pmatrix}1&2&3\\\\4&5&6\\\\7&8&9\\end{pmatrix}\\right)\\right)", check: law, package: G622 }
-  - { id: "linsolve d30: \\operatorname{linsolve}\\left(10^{-13}\\times \\operatorname{approx}\\left(\\begin{pmatrix}1&2&3\\\\4&5&6\\\\7&8&9\\end{pmatrix}\\right),10^{-13}\\times \\begin{pmatrix}1\\\\2\\\\3\\end{pmatrix}\\right)", check: law, package: G622 }
-  - { id: "linsolve d30: \\operatorname{linsolve}\\left(10^{-7}\\times \\operatorname{approx}\\left(\\begin{pmatrix}1&2&3\\\\4&5&6\\\\7&8&9\\end{pmatrix}\\right),10^{-7}\\times \\begin{pmatrix}1\\\\2\\\\3\\end{pmatrix}\\right)", check: law, package: G622 }
-  - { id: "rank d30: \\operatorname{rank}\\left(10^{7}\\times \\operatorname{approx}\\left(\\begin{pmatrix}1&2&3\\\\4&5&6\\\\7&8&9\\end{pmatrix}\\right)\\right)", check: law, package: G622 }
-  - { id: "inv d30: \\operatorname{inv}\\left(10^{13}\\times \\operatorname{approx}\\left(\\begin{pmatrix}1&2&3\\\\4&5&6\\\\7&8&9\\end{pmatrix}\\right)\\right)", check: law, package: G622 }
-  - { id: "linsolve d30: \\operatorname{linsolve}\\left(10^{13}\\times \\operatorname{approx}\\left(\\begin{pmatrix}1&2&3\\\\4&5&6\\\\7&8&9\\end{pmatrix}\\right),10^{13}\\times \\begin{pmatrix}1\\\\2\\\\3\\end{pmatrix}\\right)", check: law, package: G622 }
-  - { id: "rank d12: \\operatorname{rank}\\left(10^{-13}\\times \\operatorname{approx}\\left(\\begin{pmatrix}5&\\pi&7\\\\\\pi&0&\\pi\\\\5+\\pi&\\pi+0&7+\\pi\\end{pmatrix}\\right)\\right)", check: law, package: G622 }
-  - { id: "rank d12: \\operatorname{rank}\\left(10^{-7}\\times \\operatorname{approx}\\left(\\begin{pmatrix}5&\\pi&7\\\\\\pi&0&\\pi\\\\5+\\pi&\\pi+0&7+\\pi\\end{pmatrix}\\right)\\right)", check: law, package: G622 }
-  - { id: "rank d12: \\operatorname{rank}\\left(10^{7}\\times \\operatorname{approx}\\left(\\begin{pmatrix}5&\\pi&7\\\\\\pi&0&\\pi\\\\5+\\pi&\\pi+0&7+\\pi\\end{pmatrix}\\right)\\right)", check: law, package: G622 }
-  - { id: "rank d12: \\operatorname{rank}\\left(10^{13}\\times \\operatorname{approx}\\left(\\begin{pmatrix}5&\\pi&7\\\\\\pi&0&\\pi\\\\5+\\pi&\\pi+0&7+\\pi\\end{pmatrix}\\right)\\right)", check: law, package: G622 }
-  - { id: "rank d30: \\operatorname{rank}\\left(10^{-13}\\times \\operatorname{approx}\\left(\\begin{pmatrix}5&\\pi&7\\\\\\pi&0&\\pi\\\\5+\\pi&\\pi+0&7+\\pi\\end{pmatrix}\\right)\\right)", check: law, package: G622 }
-  - { id: "rank d30: \\operatorname{rank}\\left(10^{-7}\\times \\operatorname{approx}\\left(\\begin{pmatrix}5&\\pi&7\\\\\\pi&0&\\pi\\\\5+\\pi&\\pi+0&7+\\pi\\end{pmatrix}\\right)\\right)", check: law, package: G622 }
-  - { id: "rank d30: \\operatorname{rank}\\left(10^{7}\\times \\operatorname{approx}\\left(\\begin{pmatrix}5&\\pi&7\\\\\\pi&0&\\pi\\\\5+\\pi&\\pi+0&7+\\pi\\end{pmatrix}\\right)\\right)", check: law, package: G622 }
-  - { id: "rank d30: \\operatorname{rank}\\left(10^{13}\\times \\operatorname{approx}\\left(\\begin{pmatrix}5&\\pi&7\\\\\\pi&0&\\pi\\\\5+\\pi&\\pi+0&7+\\pi\\end{pmatrix}\\right)\\right)", check: law, package: G622 }
-  - { id: "inv d30: \\operatorname{inv}\\left(10^{-13}\\times \\operatorname{approx}\\left(\\begin{pmatrix}0.3&7\\\\0&12\\end{pmatrix}\\right)\\right)", check: law, package: G622 }
-  - { id: "linsolve d30: \\operatorname{linsolve}\\left(10^{-13}\\times \\operatorname{approx}\\left(\\begin{pmatrix}0.3&7\\\\0&12\\end{pmatrix}\\right),10^{-13}\\times \\begin{pmatrix}10\\\\7!\\end{pmatrix}\\right)", check: law, package: G622 }
-  - { id: "inv d30: \\operatorname{inv}\\left(10^{-13}\\times \\operatorname{approx}\\left(10^{-13}\\times \\begin{pmatrix}1&2ᴇ8\\\\1&\\pi\\end{pmatrix}\\right)\\right)", check: law, package: G622 }
-  - { id: "linsolve d30: \\operatorname{linsolve}\\left(10^{-13}\\times \\operatorname{approx}\\left(10^{-13}\\times \\begin{pmatrix}1&2ᴇ8\\\\1&\\pi\\end{pmatrix}\\right),10^{-13}\\times \\begin{pmatrix}6.02ᴇ22\\\\\\pi\\end{pmatrix}\\right)", check: law, package: G622 }
-  - { id: "inv d12: \\operatorname{inv}\\left(10^{-13}\\times \\operatorname{approx}\\left(\\begin{pmatrix}2&\\pi&2.5\\\\\\pi&\\pi&1\\\\7&12&10\\end{pmatrix}\\right)\\right)", check: law, package: G622 }
-  - { id: "inv d30: \\operatorname{inv}\\left(10^{-13}\\times \\operatorname{approx}\\left(\\begin{pmatrix}2&\\pi&2.5\\\\\\pi&\\pi&1\\\\7&12&10\\end{pmatrix}\\right)\\right)", check: law, package: G622 }
-  - { id: "linsolve d30: \\operatorname{linsolve}\\left(10^{-13}\\times \\operatorname{approx}\\left(\\begin{pmatrix}2&\\pi&2.5\\\\\\pi&\\pi&1\\\\7&12&10\\end{pmatrix}\\right),10^{-13}\\times \\begin{pmatrix}\\exponentialE\\\\7\\\\3\\end{pmatrix}\\right)", check: law, package: G622 }
   - { id: "hamdist d30: \\operatorname{hamdist}\\left(0,2147483647\\right)", check: law, package: G791 }
   - { id: "hamdist d30: \\operatorname{hamdist}\\left(0,2147483649\\right)", check: law, package: G791 }
   - { id: "hamdist d30: \\operatorname{hamdist}\\left(0,9223372036854775807\\right)", check: law, package: G791 }
