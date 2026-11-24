@@ -160,6 +160,20 @@ export class EntryController {
     // still be worth what they were. The `chips` getter only hands out the chips on the line.
     if (this.mf) this.mf.value = "";
   }
+  /** R898: the line changes owner (Home ↔ CAS, a name prompt's start and end): its own undo starts afresh from what it holds. */
+  freshUndo(): void {
+    const mf = this.mf;
+    if (!mf) return; // (a field still to come starts with no history)
+    const at = mf.selection;
+    const line = mf.value;
+    // resetUndo leaves no entry at all (the next edit would be the first, the line before it lost), and a set to the same
+    // value is skipped: another value first, then the line as the one entry. (A set by value fires no input event.)
+    mf.resetUndo();
+    mf.value = line === "" ? "0" : "";
+    mf.resetUndo();
+    mf.value = line;
+    mf.selection = at;
+  }
   /** Put a previous entry back on the line, with the values of its chips. `recalledIn`: the row reads the angle and ran in this mode (R265). */
   set(latex: string, chips: ChipTable = {}, recalledIn: AngleUnit | null = null): void {
     this.touched = true;
