@@ -47,7 +47,7 @@ async function copied(make: (h: AppHost) => FunctionApp | SolveApp, view: ViewId
   const item = make(host(comma, (t) => (clip = t))).menu(view).find((m) => m.id === id);
   if (!item?.run) throw new Error(`no ${id} item in the ${view} menu`);
   item.run();
-  await vi.waitFor(() => expect(clip).not.toBe("")); // (the copy code loads on first use)
+  await vi.waitFor(() => expect(clip).not.toBe(""), { timeout: 5000 }); // (the copy code loads on first use: a cold import, over 1 s in a loaded parallel run, R930)
   return clip;
 }
 
