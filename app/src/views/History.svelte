@@ -36,11 +36,8 @@
     selected = null,
     part = "row",
     engineState,
-    oncredits,
     historyRead,
   }: {
-    /** R157: a tap on the faint mark of an empty history opens the credits sheet, as N62 then Enter does (R149). */
-    oncredits: () => void;
     /** R860: the view's stored history is read; the mark and the hint of an empty view wait for it (no flash before the rows). */
     historyRead?: boolean;
     /** R133: while the engine starts only the newest FIRST_PAINT rows are drawn (their cost is on the main thread the
@@ -205,11 +202,10 @@
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions (R147: a tap on the empty part drops a pick; Esc does it by keys) -->
 <section class="history" aria-label={t("history.label")} data-marks={marks} bind:this={scroller} onclick={tapHistory}>
   {#if items.length === 0 && historyRead}
-    <!-- R157: the faint N62 mark; decoration for a screen reader (the credits are reached by N62 then Enter), a tap opens them.
+    <!-- R157: the faint N62 mark, decoration only; R924 (owner, 2026-11-23): it takes no tap (the credits are N62 then Enter).
          R860: also above an Undo note, which stays the last row; .empty is its room, the space left up to --mark-h -->
     <div class="empty">
-      <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (decoration: the keys open the credits with N62 then Enter) -->
-      <div class="faint" aria-hidden="true" onclick={oncredits}></div>
+      <div class="faint" aria-hidden="true"></div>
     </div>
     <p>{t("history.empty")}</p>
   {/if}
@@ -337,6 +333,7 @@
     background: var(--mark-faint);
     -webkit-mask: url("/n62-mark.svg") center / contain no-repeat;
     mask: url("/n62-mark.svg") center / contain no-repeat;
+    pointer-events: none; /* R924: a tap on it is a tap on the empty history */
   }
   .item {
     display: flex;
