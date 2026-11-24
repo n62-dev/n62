@@ -81,7 +81,7 @@ export function modeItems(session: Session, env: SettingsEnv = {}): MenuItem[] {
       id: "angle",
       label: modeText("mode.angle"),
       get options() {
-        return buttons(ANGLES, () => s.angle, (v) => session.setAngle(v), (v) => v.toUpperCase(), (v) => t(`angle.${v}`));
+        return buttons(ANGLES, () => s.angle, (v) => session.setAngle(v), (v) => v.toUpperCase(), (v) => modeText(`angle.${v}`));
       },
       adjust: (by) => session.setAngle(cycle(ANGLES, s.angle, by)),
     },

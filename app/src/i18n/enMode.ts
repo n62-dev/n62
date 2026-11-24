@@ -3,6 +3,10 @@
 // start chunk). A table of its own, loaded with the Mode sheet's chunk (R91's pin, docs/04 8.3). English only so far.
 export const enMode = {
   "mode.angle": "Angle",
+  /** The angle buttons' names, read by the Mode sheet and the work report (clipboard/workReport.ts); moved out of en.ts
+   *  by G622f1, as no start code reads them. */
+  "angle.rad": "Radians",
+  "angle.deg": "Degrees",
   "mode.format": "Number format",
   "mode.digits": "Significant digits",
   "mode.decimals": "Decimals in Fixed",
