@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <script lang="ts">
-  // One sheet for every list (docs/05 3.1, decisions.md "R21", R770). Every sheet is drawn in the viewport, over the history
-  // or view, rising from just above the keypad (the entry line's room is kept free while the rows fit above it); the keys stay
-  // live below it and drive it through App.svelte and sheetKeys.ts. A sheet taller than the room scrolls inside its box.
+  // One sheet for every list (docs/05 3.1, decisions.md "R21", R770). Every sheet is drawn in the viewport, its bottom on the
+  // bar, over the history or view and the entry line (R891; only a matrix grid keeps the line, R189); the keys stay live below
+  // it and drive it through App.svelte and sheetKeys.ts. A sheet taller than the room scrolls inside its box.
   // Touch is a shortcut: a tap on a row picks it, ◀ ▶ step a value, ‹ goes back a level, × closes it.
   import { t } from "../i18n/index.ts";
   import { pressFlag } from "../input/pressFlag.ts";
@@ -54,7 +54,7 @@
     /** The ⚙ in the root level's title row (R145): Settings as the next level. */
     ongear: () => void;
     onclose: () => void;
-    /** The height of the entry line under the sheet, kept free while the rows fit above it. */
+    /** The height of the entry line under the sheet, kept free under a matrix grid level only (R189, R891). */
     below?: number;
   } = $props();
 
@@ -275,8 +275,9 @@
     <!-- R778: a sheet with no fixed size (sheet.fillable) fills the whole screen, keypad area included, and back; a touch view -->
     {#if sheet.fillable || sheet.full}<button type="button" class="fill" use:pressFlag data-sheet-full aria-pressed={sheet.full} aria-label={sheetText(sheet.full ? "sheet.unfill" : "sheet.fill")} onclick={() => (sheet.full = !sheet.full)}>{@html sheet.full ? UNFILL : FILL}</button>{/if}
   </div>
-  <!-- shrinks first (flex-shrink weighs by size: 1000 × its height against the sheet's 1 × its own) -->
-  <div class="room" style:flex-basis="{below}px"></div>
+  <!-- R891: only a matrix grid keeps the entry line's room (its cells are typed there, R189); every other sheet sits on the bar,
+       over the line -->
+  <div class="room"></div>
 </div>
 
 <style>
@@ -300,15 +301,14 @@
   .overlay.edits > .sheet {
     pointer-events: auto;
   }
-  /* a matrix grid keeps the line's room (its cells are typed there, R189): the grid scrolls instead */
-  .overlay.matrix > .room {
-    flex-shrink: 0;
-  }
+  /* the line's room, a matrix grid's only (R189, R891): it never shrinks; the grid scrolls instead */
   .room {
-    flex-grow: 0;
-    flex-shrink: 1000;
+    flex: 0 0 0;
     min-height: 0;
     pointer-events: none;
+  }
+  .overlay.matrix > .room {
+    flex-basis: var(--room);
   }
   .sheet {
     position: relative;
