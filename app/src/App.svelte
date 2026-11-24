@@ -230,7 +230,7 @@
     onFind(findNow(), (f) => { picked = null; f.m.showMatrix(ctx, f.index); });
   }
   type FindSlot = { id: string; layer: Layer };
-  const showFind = (f: FindCode, slot?: FindSlot): void => { picked = null; f.m.showFind(shell, entry, f.index, slot && { ...slot, userKeys }); };
+  const showFind = (f: FindCode, slot?: FindSlot): void => { picked = null; f.m.showFind(ctx, f.index, slot && { ...slot, userKeys }); };
   /** Vars and Shift + Math (R4b): Find on the user's variables and functions, or Memory (the code only, not the index). */
   function openNames(memory: boolean): void {
     if (!memory && !shell.showsEntry) return dead();
