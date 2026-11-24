@@ -98,6 +98,24 @@ Digits:=40:; pc("g553-floor-neg-pi-1e-13",'(floor(-pi*10^-13))',-1,5/10^12);
 // patch 0061-floor-mpfr-working-precision.patch
 // g553-round-neg-2.5-pi-1e-13 (home.yaml, derived)
 Digits:=40:; pc("g553-round-neg-2.5-pi-1e-13",'(round(-(25/10^1)-pi*10^-13))',-3,5/10^12);
+// patch 0065-lcm-integers-positive.patch
+// g793-lcm-neg4-6 (home.yaml, derived)
+Digits:=40:; pc("g793-lcm-neg4-6",'(lcm(-4,6))',12,5/10^11);
+// patch 0065-lcm-integers-positive.patch
+// g793-lcm-4-neg6 (home.yaml, derived)
+Digits:=40:; pc("g793-lcm-4-neg6",'(lcm(4,-6))',12,5/10^11);
+// patch 0065-lcm-integers-positive.patch
+// g793-lcm-list-neg4-6-10 (home.yaml, derived)
+Digits:=40:; pc("g793-lcm-list-neg4-6-10",'(lcm([-4,6,10]))',60,5/10^11);
+// patch 0065-lcm-integers-positive.patch
+// g793-lcm-neg3-neg5-neg7 (home.yaml, derived)
+Digits:=40:; pc("g793-lcm-neg3-neg5-neg7",'(lcm(-3,-5,-7))',105,5/10^10);
+// patch 0065-lcm-integers-positive.patch
+// g793-lcm-neg2^70-3 (home.yaml, derived)
+Digits:=40:; pc("g793-lcm-neg2^70-3",'(lcm(-2^70,3))',(354177486215*10^10),5*10^9);
+// patch 0065-lcm-integers-positive.patch
+// g793-lcm-neg4-alone (home.yaml, derived)
+Digits:=40:; pc("g793-lcm-neg4-alone",'(lcm(-4))',4,5/10^12);
 // patch 0046-shift-integer-exact.patch
 // g226-shift-1-neg70 (home.yaml, derived)
 Digits:=40:; pc("g226-shift-1-neg70",'(shift(1,-70))',(118059162072*10^10),5*10^9);

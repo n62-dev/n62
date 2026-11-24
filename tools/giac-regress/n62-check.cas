@@ -267,6 +267,12 @@ Digits:=40:; pc("fn-irem-neg",'(irem(-7,3))',2,5/10^12);
 Digits:=40:; pc("fn-gcd",'(gcd(1071,462))',21,5/10^11);
 // fn-lcm (home.yaml, derived)
 Digits:=40:; pc("fn-lcm",'(lcm(4,6))',12,5/10^11);
+// g793-keep-lcm-neg4-neg6 (home.yaml, derived)
+Digits:=40:; pc("g793-keep-lcm-neg4-neg6",'(lcm(-4,-6))',12,5/10^11);
+// g793-keep-lcm-0-5 (home.yaml, derived)
+Digits:=40:; pc("g793-keep-lcm-0-5",'(lcm(0,5))',0,1/10^30);
+// g793-keep-gcd-neg4-neg6 (home.yaml, derived)
+Digits:=40:; pc("g793-keep-gcd-neg4-neg6",'(gcd(-4,-6))',2,5/10^12);
 // fn-factorial0.5 (home.yaml, oracle)
 Digits:=40:; pc("fn-factorial0.5",'(factorial((5/10^1)))',(886226925453/10^12),5/10^13);
 // fn-comb (home.yaml, derived)
