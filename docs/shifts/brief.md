@@ -155,7 +155,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | B6b | [G622](packages/G622.md) float pivots relative to the matrix | gorge, Opus | `p1/gorge-floatrref` | G790 |
 | B6c | [G792](packages/G792.md) sin, cos of a float matrix | gorge, Opus | `p1/gorge-matsincos` | – |
 | B6d | G793 lcm of integers is positive | gorge, Opus | `p1/gorge-lcmsign` | – |
-| B6e | [G794](packages/G794.md) CAS float lists get a mark | gorge, Opus | `p1/gorge-caslistmark` | – |
+| B6e | G794 CAS float lists get a mark | gorge, Opus | `p1/gorge-caslistmark` | – |
 | B6f | [G797](packages/G797.md) the sweep builds matrices | gorge, Opus | `p1/gorge-sweepmatrix` | – |
 | B6g | [G798](packages/G798.md) scaling and sign laws | gorge, Opus | `p1/gorge-lawcheck` | G797 |
 | B6h | [G799](packages/G799.md) marks and Copy agree | gorge, Opus | `p1/gorge-markagree` | – |
