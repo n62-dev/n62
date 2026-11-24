@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R89: the presets in Mode (views/presetsView.svelte.ts): what a preset's lines say, the name read off the entry line,
 // ◀ ▶ round the ends, and a refused record (a newer version's) offers no Save and no Edit.
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { EntryPrompt } from "../apps/shell.svelte.ts";
 import type { MenuItem } from "../apps/types.ts";
 import type { ClipActions } from "../clipboard/actions.svelte.ts";
@@ -30,6 +30,11 @@ vi.mock("../input/backLayerFront.ts", () => ({
   },
 }));
 const back = (): void => layers.pop()?.();
+
+// G622f1: Presets.apply loads state/backup.ts lazily (its setting rules); its first, cold load takes about 1.3 s here, and
+// longer under the whole suite's load, past vi.waitFor's 1 s default. Load it once before the tests, so a waitFor after
+// ◀ or ▶ waits for the apply, not for the module's transform.
+beforeAll(() => import("../state/backup.ts"), 60_000);
 
 function store(rec?: RawRecord): PresetStore {
   const s = { rec, read: () => Promise.resolve(s.rec), write: (value: StoredPresets) => ((s.rec = { "@n62": DATA_VERSION, value }), Promise.resolve()) };
