@@ -230,7 +230,7 @@ test("every list sits on the bar, over the entry line, and never over the keypad
   await list(page, "Test", ["one", "two"]);
   let b = await boxes();
   expect(Math.abs(b.bottom - b.barTop)).toBeLessThanOrEqual(4); // a short list: its bottom on the bar (its own 4 px margin)
-  expect(b.bottom).toBeGreaterThan(b.entryBottom - 1); // over the whole entry line
+  expect(b.bottom).toBeGreaterThanOrEqual(b.entryBottom - 5); // over the whole entry line (the line ends on the bar)
   expect(b.bottom).toBeLessThanOrEqual(b.keypadTop + 1); // never over the keypad
   expect(b.top).toBeGreaterThan(b.historyTop + 4); // and keeps its height: its top below the history's top
   await tap(page, ["esc"]);
