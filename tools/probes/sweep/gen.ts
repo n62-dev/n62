@@ -242,6 +242,16 @@ export function generateMatrices(seed: number, count: number): Case[] {
   return Array.from({ length: count }, () => caseOf(mtop(r)));
 }
 
+/** G798: matrix leaves for casback's laws (tools/probes/casback/check.ts), on a stream of their own: A and B of one size n, each a
+ *  leaf as above (maybe singular, scaled, inside approx), and a column b of n scalar leaves. */
+export function generateLawMatrices(seed: number, count: number): { n: 2 | 3; a: string; b: string; col: string }[] {
+  const r = lcg(seed * 7 + 798);
+  return Array.from({ length: count }, () => {
+    const n = r() < 0.6 ? 2 : 3;
+    return { n, a: mleaf(r, n).latex, b: mleaf(r, n).latex, col: column(r, n).latex };
+  });
+}
+
 /** Matrix inputs found wrong by the owner-style hunt of 2026-11-23, in every run (with their digits; G790 needs Digits > 14). */
 export const MATRIX_PINNED: (Case & { digits: 12 | 30 })[] = [
   // G790 (F475): approx([[1,2],[3,4]]/10^13)·[[1],[1]] was [[0],[0]]

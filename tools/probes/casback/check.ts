@@ -2,6 +2,8 @@
 // G64: CAS answers checked back (r16 section 3). Each check takes an answer and asks `at(expr, x)` for the number an
 // expression has at x (null: not a plain real number there). A claim holds when the difference is 0 at every point.
 // No expected values: the answer is checked against the question it answers. Only erasable TypeScript syntax.
+import type { ComplexValue, DecimalValue } from "../../../app/src/engine/format.ts";
+import type { Shown } from "../sweep/judge.ts";
 
 /** The value of a Giac expression with x replaced by the text `x`, or null when it is not a plain real number. */
 export type At = (expr: string, x: string) => number | null;
@@ -167,4 +169,168 @@ export function fromCorpus(inputs: readonly string[]): { questions: Question[]; 
     else skipped++;
   }
   return { questions, skipped };
+}
+
+// G798: laws that need no oracle (a family test, owner-style hunt 2026-11-23). A law is two Home inputs whose answers must agree
+// (scale a float matrix by c and the answer scales by the known power; lcm of any signs is lcm of the absolute values, ≥ 0). Each side's
+// claim is its mark at the setting digits: `=` the exact value, `≈` every shown digit, `⚠ n` n digits (as the sweep's judge reads it),
+// a bare `⚠` or `⚠ 0` nothing. A broken law is wrong only when both sides claim digits; the two are compared within what both claim
+// (each within one unit of its last claimed digit, at the larger magnitude). An error or a non-number on either side is not checkable.
+
+/** What Home showed for one side (the sweep's Shown: tools/probes/sweep/shown.ts). */
+export type LawShown = Pick<Shown, "ok" | "mark" | "n" | "value" | "items" | "shape">;
+
+export interface Law {
+  /** The id in casback-known.yaml: `<law> d<digits>: <left LaTeX>`. */
+  id: string;
+  law: string;
+  /** Keyboard LaTeX of the two sides, as Home gets them (latexToGiac). */
+  left: string;
+  right: string;
+  /** The Digits setting both sides run at. */
+  digits: number;
+  /** Both sides must be ≥ 0 (lcm, gcd). */
+  nonneg?: true;
+}
+
+interface Dec {
+  m: bigint;
+  e: number;
+}
+const decOf = (v: DecimalValue): Dec => ({ m: (v.neg ? -1n : 1n) * BigInt(v.digits || "0"), e: v.exp + 1 - v.digits.length });
+/** floor(log10|v|) + 1; -Infinity for 0. */
+const magOf = (v: DecimalValue): number => (v.digits === "" ? -Infinity : v.exp + 1);
+
+/** The digits a side claims: Infinity for an exact `=`, null for none. */
+function claimOf(s: LawShown, digits: number): number | null {
+  if (s.mark === "=") return s.value && (s.value.re.sticky || s.value.im.sticky) ? digits : Infinity;
+  if (s.mark === "≈") return digits;
+  return s.mark === "⚠" && s.n !== undefined && s.n >= 1 ? s.n : null;
+}
+
+/** The power of ten just above |d|: floor(log10|d|) + 1; -Infinity for 0. */
+const top = (d: Dec): number => (d.m === 0n ? -Infinity : d.e + (d.m < 0n ? -d.m : d.m).toString().length);
+
+/** |a − b| ≤ 10^p + 10^q (an infinite p or q adds nothing). */
+function near(a: Dec, b: Dec, p: number, q: number): boolean {
+  const ps = [p, q].filter((x) => Number.isFinite(x));
+  const lo = Math.min(a.m === 0n ? Infinity : a.e, b.m === 0n ? Infinity : b.e, ...ps);
+  if (!Number.isFinite(lo)) return true; // both 0, both exact
+  // far apart (a value 4000 decades from the other or from the bound): the difference is the larger value
+  if (Math.max(top(a), top(b), ...ps) - lo > 4000) return ps.length > 0 && Math.max(top(a), top(b)) <= Math.max(...ps);
+  const at = (d: Dec): bigint => (d.m === 0n ? 0n : d.m * 10n ** BigInt(d.e - lo));
+  const diff = at(a) - at(b);
+  const bound = ps.reduce((sum, x) => sum + 10n ** BigInt(x - lo), 0n);
+  return (diff < 0n ? -diff : diff) <= bound;
+}
+
+const show = (v: ComplexValue): string => {
+  const one = (d: DecimalValue): string => (d.digits === "" ? "0" : `${d.neg ? "-" : ""}${d.digits[0]}${d.digits.length > 1 ? `.${d.digits.slice(1, 16)}${d.digits.length > 16 ? "…" : ""}` : ""}E${d.exp}`);
+  return d0(v.im) ? one(v.re) : `${one(v.re)}+${one(v.im)}i`;
+};
+const d0 = (d: DecimalValue): boolean => d.digits === "";
+const markText = (s: LawShown): string => `${s.mark ?? ""}${s.n ?? ""}`;
+
+/** One entry against the other: wrong when both claim and they differ beyond what both claim. */
+function entryVerdict(l: LawShown, r: LawShown, digits: number, where: string): Verdict {
+  const cl = claimOf(l, digits);
+  const cr = claimOf(r, digits);
+  if (!l.value || !r.value) return skip(`${where}no number`);
+  if (cl === null || cr === null) return ok;
+  const m = Math.max(magOf(l.value.re), magOf(l.value.im), magOf(r.value.re), magOf(r.value.im));
+  const p = cl === Infinity ? Infinity : m - cl;
+  const q = cr === Infinity ? Infinity : m - cr;
+  for (const part of ["re", "im"] as const) {
+    if (!near(decOf(l.value[part]), decOf(r.value[part]), p, q)) return { status: "wrong", detail: `${where}${show(l.value)} ${markText(l)} vs ${show(r.value)} ${markText(r)}` };
+  }
+  return ok;
+}
+
+/** The law's two sides as Home showed them. */
+export function checkLaw(l: LawShown, r: LawShown, digits: number, nonneg = false): Verdict {
+  if (!l.ok || !r.ok) return skip("an error on a side");
+  const li = l.items ?? [l];
+  const ri = r.items ?? [r];
+  const claims = (xs: LawShown[]): boolean => xs.every((x) => claimOf(x, digits) !== null);
+  if (li.length !== ri.length || (l.shape && r.shape && (l.shape[0] !== r.shape[0] || l.shape[1] !== r.shape[1]))) {
+    const what = `shape ${l.shape?.join("×") ?? li.length} vs ${r.shape?.join("×") ?? ri.length}`;
+    return claims(li) && claims(ri) ? { status: "wrong", detail: what } : skip(`${what}, a side marked ⚠`);
+  }
+  for (let i = 0; i < li.length; i++) {
+    const where = li.length > 1 ? `entry ${i + 1}: ` : "";
+    for (const s of nonneg ? [li[i]!, ri[i]!] : []) {
+      if (s.value && claimOf(s, digits) !== null && ((s.value.re.neg && !d0(s.value.re)) || !d0(s.value.im))) return { status: "wrong", detail: `${where}${show(s.value)} ${markText(s)} is not ≥ 0` };
+    }
+    const v = entryVerdict(li[i]!, ri[i]!, digits, where);
+    if (v.status !== "ok") return v;
+  }
+  return ok;
+}
+
+/** The scales of the matrix laws: c = 10^k. */
+export const LAW_SCALES: readonly number[] = [-13, -7, 7, 13];
+/** The Digits settings the laws run at (the default and the most the setting allows; G622's ⚠ 14 shows at 30). */
+export const LAW_DIGITS: readonly number[] = [12, 30];
+
+const law = (name: string, left: string, right: string, digits: number, nonneg = false): Law => ({ id: `${name} d${digits}: ${left}`, law: name, left, right, digits, ...(nonneg ? { nonneg: true as const } : {}) });
+const op = (name: string, ...args: string[]): string => `\\operatorname{${name}}\\left(${args.join(",")}\\right)`;
+/** A float matrix: approx(…) around the matrix, unless it is one already (half of G797's leaves are). */
+const approx = (m: string): string => (/^\\operatorname\{approx\}\\left\(.*\\right\)$/.test(m) ? m : op("approx", m));
+
+/** The matrix laws for A, B (n×n) and a column b, each made a float matrix by approx(…), at every scale and Digits setting:
+ *  (c·A)·B = c·(A·B), det(c·A) = c^n·det(A), inv(c·A) = inv(A)/c, rank(c·A) = rank(A), linsolve(c·A, c·b) = linsolve(A, b). */
+export function matrixLaws(a: string, b: string, col: string, n: number): Law[] {
+  const A = approx(a);
+  const B = approx(b);
+  const out: Law[] = [];
+  for (const d of LAW_DIGITS) {
+    for (const k of LAW_SCALES) {
+      const c = `10^{${k}}`;
+      const cA = `${c}\\times ${A}`;
+      out.push(
+        law("product", `\\left(${cA}\\right)\\times ${B}`, `${c}\\times \\left(${A}\\times ${B}\\right)`, d),
+        law("det", op("det", cA), `\\left(${c}\\right)^{${n}}\\times ${op("det", A)}`, d),
+        law("inv", op("inv", cA), `\\frac{${op("inv", A)}}{${c}}`, d),
+        law("rank", op("rank", cA), op("rank", A), d),
+        law("linsolve", op("linsolve", cA, `${c}\\times ${col}`), op("linsolve", A, col), d),
+      );
+    }
+  }
+  return out;
+}
+
+const pm = (rows: number[][]): string => `\\begin{pmatrix}${rows.map((r) => r.join("&")).join("\\\\")}\\end{pmatrix}`;
+/** The hand matrices of the hunt, in every run: G790's [[1,2],[3,4]], G622's [[1,2,3],[4,5,6],[7,8,10]] and its singular [[…],[7,8,9]]. */
+export const LAW_MATRICES_PINNED: readonly { n: 2 | 3; a: string; b: string; col: string }[] = [
+  { n: 2, a: pm([[1, 2], [3, 4]]), b: pm([[1, 2], [3, 4]]), col: pm([[1], [2]]) },
+  { n: 3, a: pm([[1, 2, 3], [4, 5, 6], [7, 8, 10]]), b: pm([[1, 2, 3], [4, 5, 6], [7, 8, 10]]), col: pm([[1], [2], [3]]) },
+  { n: 3, a: pm([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), b: pm([[1, 2, 3], [4, 5, 6], [7, 8, 10]]), col: pm([[1], [2], [3]]) },
+];
+
+/** The fixed integers of the sign laws: 0, small, 2^31 ± 1, 2^63 ± 1, 2^70 (the negatives come from the laws). */
+export const LAW_INTEGERS: readonly bigint[] = [0n, 7n, 12n, 2n ** 31n - 1n, 2n ** 31n + 1n, 2n ** 63n - 1n, 2n ** 63n + 1n, 2n ** 70n];
+
+/** An integer as an operand (a negative one in brackets after ×). */
+const int = (x: bigint, paren = false): string => (x < 0n && paren ? `\\left(${x}\\right)` : `${x}`);
+
+/** The integer laws for a and b ≥ 0 at Digits 30 (exact, so one setting; there most of them show in full): lcm(±a,±b) = lcm(a,b) ≥ 0, gcd the same, hamdist(a,b) =
+ *  hamdist(−a−1,−b−1) (two's complement: −a−1 is a with every bit flipped), b·iquo(a,b) + irem(a,b) = a for every sign pair (b ≠ 0). */
+export function integerLaws(a: bigint, b: bigint): Law[] {
+  const out: Law[] = [];
+  const signs: readonly [bigint, bigint][] = [[1n, 1n], [1n, -1n], [-1n, 1n], [-1n, -1n]];
+  const d = 30;
+  for (const [sa, sb] of signs) {
+    if ((a === 0n && sa < 0n) || (b === 0n && sb < 0n)) continue; // −0 is 0
+    const x = sa * a;
+    const y = sb * b;
+    if (sa < 0n || sb < 0n) out.push(law("lcm", op("lcm", int(x), int(y)), op("lcm", int(a), int(b)), d, true), law("gcd", op("gcd", int(x), int(y)), op("gcd", int(a), int(b)), d, true));
+    if (y !== 0n) out.push(law("division", `${int(y, true)}\\times ${op("iquo", int(x), int(y))}+${op("irem", int(x), int(y))}`, int(x), d));
+  }
+  out.push(law("hamdist", op("hamdist", int(a), int(b)), op("hamdist", int(-a - 1n), int(-b - 1n)), d));
+  return out;
+}
+
+/** Every integer law over the ordered pairs of LAW_INTEGERS. */
+export function integerLawSet(): Law[] {
+  return LAW_INTEGERS.flatMap((a) => LAW_INTEGERS.flatMap((b) => integerLaws(a, b)));
 }
