@@ -69,7 +69,6 @@ export const en = {
   "mark.noDigit": "⚠ no digit confirmed",
   /** R135: a result too long to draw (or one MathLive refuses): drawn in its place; Copy holds the text. */
   "render.tooLong": "Too long to draw ({size}): Copy holds it",
-  "history.actions": "Row actions",
   "history.recall": "Use this entry again",
   "history.usesHome": "stored in Home",
   "history.usesCas": "stored in CAS",
