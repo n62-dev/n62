@@ -257,6 +257,9 @@ const CANARIES: [string, string, RegExp, string][] = [
   // G792, patch 0066: sin (and cos, sinh, cosh) send a float matrix to analytic_apply, which diagonalises in doubles over the complex
   // eigenvalues and leaves imaginary noise (sin(evalf([[0,1],[-1,0]])) = [[2.998e-15*i,1.17520119364],…] at Digits 12)
   ["0066-matrix-trig-series.patch", "giac-2.1.0/src/usual.cc", /if \(is_squarematrix\(e\)\)\s*return analytic_apply\(at_sin,\*e\._VECTptr,contextptr\);/, "gen sin(const gen & e0,GIAC_CONTEXT){"],
+  // G803 (F240), patch 0067: _convert sets the list's subtype from the last argument's val with no test that it is an _INT_, so a
+  // fraction, a float or a name gave a subtype from its pointer's bits (convert(129,2,1/2) = [129,1/2], pnt[…] or gr2d(logo(…)))
+  ["0067-convert-subtype-integer.patch", "giac-2.1.0/src/prog.cc", /default:\s*return gensizeerr\(contextptr\);\s*\}\s*\}\s*#endif\s*g\.subtype=v\.back\(\)\.val;/, "case _SET__VECT:"],
 ];
 
 const tar = tarball(SOURCES.giac);
