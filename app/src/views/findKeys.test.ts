@@ -18,7 +18,7 @@ describe("findKey: every key types its letter, digits pick only on an empty quer
   it("a tap types the key's letter in lower case, Tmpl and Math too", () => {
     expect(findKey(key("tmpl"), undefined, false, true)).toEqual({ kind: "letter", ch: "c" });
     expect(findKey(key("math"), undefined, false, false)).toEqual({ kind: "letter", ch: "b" });
-    expect(findKey(key("x"), undefined, false, true)).toEqual({ kind: "letter", ch: "d" });
+    expect(findKey(key("x"), undefined, false, true)).toEqual({ kind: "letter", ch: "x" }); // R889: the x key types x (d by Alpha or a flick down)
   });
   it("a digit picks a row while the query is empty and types itself after a letter", () => {
     expect(findKey(key("d3"), undefined, false, true)).toEqual({ kind: "pick", n: 3 });
