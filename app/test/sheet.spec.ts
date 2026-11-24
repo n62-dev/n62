@@ -214,20 +214,28 @@ test("touch: a tap on a row picks it, ‹ goes back, a tap beside the sheet clos
   expect(await ran(page)).toEqual([]);
 });
 
-test("every list stands above the keypad and takes the entry line's room when its rows need it (R770)", async ({ page }) => {
+test("every list sits on the bar, over the entry line, and never over the keypad (R770, R891)", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" }); // no rise animation: the boxes are final at once
-  const bottoms = async () => {
-    const [s, e, k] = await Promise.all([sheet(page).getByRole("menu").boundingBox(), page.locator(".entry").boundingBox(), page.locator(".pad").boundingBox()]);
-    if (!s || !e || !k) throw new Error("no box");
-    return { sheet: s.y + s.height, entryTop: e.y, keypadTop: k.y };
+  const boxes = async () => {
+    const [s, e, b, k, h] = await Promise.all([
+      sheet(page).getByRole("menu").boundingBox(),
+      page.locator(".entry").boundingBox(),
+      page.getByTestId("bar").boundingBox(),
+      page.locator(".pad").boundingBox(),
+      page.locator("section.history").first().boundingBox(),
+    ]);
+    if (!s || !e || !b || !k || !h) throw new Error("no box");
+    return { top: s.y, bottom: s.y + s.height, entryBottom: e.y + e.height, barTop: b.y, keypadTop: k.y, historyTop: h.y };
   };
   await list(page, "Test", ["one", "two"]);
-  let b = await bottoms();
-  expect(b.sheet).toBeLessThanOrEqual(b.keypadTop + 1); // a short list never covers the keypad either
-  expect(b.sheet).toBeLessThanOrEqual(b.entryTop + 1); // and keeps the entry line free while its rows fit above it
+  let b = await boxes();
+  expect(Math.abs(b.bottom - b.barTop)).toBeLessThanOrEqual(4); // a short list: its bottom on the bar (its own 4 px margin)
+  expect(b.bottom).toBeGreaterThanOrEqual(b.entryBottom - 5); // over the whole entry line (the line ends on the bar)
+  expect(b.bottom).toBeLessThanOrEqual(b.keypadTop + 1); // never over the keypad
+  expect(b.top).toBeGreaterThan(b.historyTop + 4); // and keeps its height: its top below the history's top
   await tap(page, ["esc"]);
   await list(page, "Units", UNITS);
-  b = await bottoms();
-  expect(b.sheet).toBeGreaterThan(b.entryTop + 10); // a long list takes the line's room
-  expect(b.sheet).toBeLessThanOrEqual(b.keypadTop + 1);
+  b = await boxes();
+  expect(Math.abs(b.bottom - b.barTop)).toBeLessThanOrEqual(4); // a long list the same
+  expect(b.bottom).toBeLessThanOrEqual(b.keypadTop + 1);
 });

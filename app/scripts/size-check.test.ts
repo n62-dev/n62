@@ -152,25 +152,25 @@ describe("size-check", () => {
         "src/units/calc.ts": { file: "assets/units.js", src: "src/units/calc.ts", isDynamicEntry: true },
         "src/units/open.ts": { file: "assets/open.js", src: "src/units/open.ts", isDynamicEntry: true },
       },
-      { ...files, "assets/find.js": 30_001, "assets/units.js": 10_000, "assets/open.js": 32_000, "find/index.json": { random: 400_001 }, "qalc/qalc.wasm": { random: 1_000_001 }, "qalc/qalc.mjs": 1000, "index.html": 100 },
+      { ...files, "assets/find.js": 30_001, "assets/units.js": 10_000, "assets/open.js": 32_600, "find/index.json": { random: 400_001 }, "qalc/qalc.wasm": { random: 1_000_001 }, "qalc/qalc.mjs": 1000, "index.html": 100 },
     );
     const r = checkSizes(dist);
     expect(r.notBuilt).toEqual([]);
     const failed = r.failures.map((f) => f.split(":")[0]);
     expect(failed).toContain("Find UI chunk");
-    expect(failed).not.toContain("Unit view chunk"); // the UI chunk and the builder together, exactly at 42 kB, are allowed
+    expect(failed).not.toContain("Unit view chunk"); // the UI chunk and the builder together, exactly at 42.6 kB, are allowed
     expect(failed).toContain("Find index asset");
     expect(failed).toContain("qalc wasm + glue");
   });
 
-  it("budgets the unit view's UI chunk and builder as one, at 42 kB raw (R24c; Opus pass 24, G81; R313; G233)", () => {
+  it("budgets the unit view's UI chunk and builder as one, at 42.6 kB raw (R24c; Opus pass 24, G81; R313; G233; R918)", () => {
     const { manifest, files } = base(1000);
     const units = {
       ...manifest,
       "src/units/calc.ts": { file: "assets/units.js", src: "src/units/calc.ts", isDynamicEntry: true },
       "src/units/open.ts": { file: "assets/open.js", src: "src/units/open.ts", isDynamicEntry: true },
     };
-    const r = checkSizes(fakeDist(units, { ...files, "assets/units.js": 10_000, "assets/open.js": 32_001 }));
+    const r = checkSizes(fakeDist(units, { ...files, "assets/units.js": 10_000, "assets/open.js": 32_601 }));
     expect(r.failures.map((f) => f.split(":")[0])).toEqual(["Unit view chunk"]);
     expect(r.rows.find((x) => x.rule === "Unit view chunk")?.files.sort()).toEqual(["assets/open.js", "assets/units.js"]);
   });
@@ -275,12 +275,15 @@ describe("size-check", () => {
     expect(checkSplits(fakeDist(atStart, { ...files, "assets/sheet.js": 1000 }))[0]).toContain("loaded at start");
   });
 
-  it("pins the start chunk at 63,000 B gzip, the budget itself (R703: the branch measures 62,998 B; the earlier pins are in size-check.ts)", () => {
-    expect(START_PIN_GZIP).toBe(63_000);
+  it("pins the start chunk at 61,880 B gzip, under the budget of 63 kB (R930: the branch measures 61,874 B; the earlier pins are in size-check.ts)", () => {
+    expect(START_PIN_GZIP).toBe(61_880);
     const { manifest } = base(0);
     const at = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 60_570 }, "assets/mathlive.js": 1000 }));
     expect(at.failures).toEqual([]); // inside the budget of 63 kB ...
     expect(checkStartPin(at.rows[0]!)).toEqual([]); // ... and inside the pin
+    const room = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 62_200 }, "assets/mathlive.js": 1000 }));
+    expect(room.failures).toEqual([]); // R930: inside the budget, so a package that grows the chunk raises the pin with a reason ...
+    expect(checkStartPin(room.rows[0]!)[0]).toContain("pinned"); // ... and the pin says so
     const over = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 63_200 }, "assets/mathlive.js": 1000 }));
     expect(over.rows[0]!.gzip).toBeGreaterThan(63_000);
     expect(checkStartPin(over.rows[0]!)[0]).toContain("pinned"); // over both

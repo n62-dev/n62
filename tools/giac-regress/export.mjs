@@ -644,6 +644,10 @@ export const PATCHED_IDS = new Map([
   // G551 (F302): misc.cc bitand, bitor and bitxor read a negative _INT_ beside a _ZINT as 2^32+v; the g551-keep-* rows pass on
   // stock and stay in the check file; the sweep of all pairs of 24 values is a written line per operation below
   ...["bitand-neg2-2^64-1", "bitand-neg2-hex-ones", "bitxor-neg1-2^63", "bitor-neg1-2^31", "bitand-neg1-neg2^31", "bitand-neg1-2^70"].map((k) => [`g551-${k}`, "0062-bitops-signed-small-integer.patch"]),
+  // G793, G793f1: usual.cc _lcm kept the sign of the product of integers and of fractions of integers (lcm(-4,6) = -12, lcm(1/2,-1/3) = -1); the
+  // g793*-keep-* rows pass on stock and stay in the check file (the list results of the *-pairs-* rows and the *-cas-* rows are not exported)
+  ...["lcm-neg4-6", "lcm-4-neg6", "lcm-list-neg4-6-10", "lcm-neg3-neg5-neg7", "lcm-neg2^70-3", "lcm-neg4-alone"].map((k) => [`g793-${k}`, "0065-lcm-integers-positive.patch"]),
+  ...["lcm-half-neg-third", "lcm-neg-2/3-4/5", "lcm-list-neg-half-third-quarter", "lcm-neg-half-alone", "lcm-neg4-third", "lcm-neg2^70/3-fifth"].map((k) => [`g793f1-${k}`, "0065-lcm-integers-positive.patch"]),
 ]);
 // G122: Giac's exact answer is right (patch 0014), but pc()'s evalf of it at Digits 40 cancels the digits of a large k*pi
 // (asin(cos(30!)) = -pi/2+30!-k*pi with k of 32 digits keeps about 7, -pi/2+10^50-k*pi none); Home raises the precision
@@ -717,6 +721,10 @@ export function build(cases) {
       nCheck++;
     }
   }
+  // G793f1 control, a written line: patch 0065 leaves a float argument as Giac has it (Home and CAS send a typed 4.0 as the exact 4);
+  // at Digits 12, a double: at Digits 40 Giac takes gcd(-6,4.0) = 1 for an MPFR 4.0, so -24.0, a fault of its own (G793f1 report)
+  check.push("// g793f1-keep-lcm-neg6-float4 (derived: Giac's own value, unchanged by patch 0065; at Digits 12, a double)", 'Digits:=12:; pc("g793f1-keep-lcm-neg6-float4",\'when(string(lcm(-6,approx(4)))=="-12.0",1,0)\',1,1/10^30);');
+  nCheck++;
   // G149 fix round 2, tests/golden/precision.yaml g149-cas-keep-* (the CAS view's exact forms, which no value line reaches): with
   // complex mode off a negative real base with s = 1 lies on the side where patch 0025's rule holds (im(s*ln(b)) = pi), so Giac's forms
   // stay (round 1 kept the powers as typed); Digits 40, the CAS view's precision, where the double of (-pi)^3 has a rounding imaginary
@@ -1008,7 +1016,7 @@ export function build(cases) {
     patched.push("// patch 0063-matrix-exp-working-precision.patch", `// ${id} (oracle: mpmath)`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
   }
-  // Patch 0065 (G792), written lines: sin, cos, sinh, cosh of a float matrix (usual.cc; the golden g792-* rows are matrices, which the
+  // Patch 0066 (G792), written lines: sin, cos, sinh, cosh of a float matrix (usual.cc; the golden g792-* rows are matrices, which the
   // export leaves out). Stock's analytic_apply worked in doubles at any Digits and left imaginary noise (sin(evalf([[0,1],[-1,0]]))[0][0]
   // = -4.3e-32-2.9e-15*i at Digits 40). Expected values: mpmath at 60 digits (sinm, cosm; M^2 = -I gives sin M = M*sinh 1, cos M =
   // cosh 1*I, sinh M = M*sin 1, cosh M = cos 1*I; oracle) rounded to 38 digits; the zero entries within 1e-45, so the noise fails.
@@ -1026,7 +1034,7 @@ export function build(cases) {
     ["g792-sin-evalf-tiny-00-40", "sin(evalf([[10^-400,0],[0,10^-400]]))[0][0]", "1/10^400", "5/10^440"],
     ["g792-sinh-evalf-tiny-00-40", "sinh(evalf([[10^-400,0],[0,10^-400]]))[0][0]", "1/10^400", "5/10^440"],
   ]) {
-    patched.push("// patch 0065-matrix-trig-series.patch", `// ${id} (oracle: mpmath)`, `Digits:=40:; pc("${id}",'${input}',${value},${tol});`);
+    patched.push("// patch 0066-matrix-trig-series.patch", `// ${id} (oracle: mpmath)`, `Digits:=40:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
   }
   for (const [mode, n, tag, value] of [

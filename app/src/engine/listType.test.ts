@@ -42,7 +42,7 @@ describe.skipIf(!giacAvailable())("G109 on the real engine", () => {
   // a CAS result's items, each with its mark
   const marks = (input: string) =>
     (cas(input).numeric?.items ?? []).map((it) => `${it.display} ${markOf(precisionFacts(it), { format: "STD", digits: defaultCasSettings.digits })?.mark ?? "none"}`);
-  // as the app copies: the port passes `exact` only for a rational (calc/engine.ts HOME_KEYS)
+  // as the app copies: the port passes `exact` only for a rational (calc/portKeys.ts HOME_KEYS)
   const copy = (input: string) => {
     const { exact: _exact, ...r } = home(input);
     return copyFull({ latex: "", status: "done", text: r.display, ...homeItem(r, false) });

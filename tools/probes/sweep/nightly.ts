@@ -94,7 +94,11 @@ const oracleText = (o: Oracle): string => {
     if (!m) return t;
     return t.length > 24 ? `${t.slice(0, 18)}…${m[4] !== undefined ? `e${m[4]}` : ""}` : t;
   };
-  return o.im === "0.0" || o.im === "0" ? short(o.re) : `${short(o.re)} ${o.im.startsWith("-") ? "−" : "+"} ${short(o.im.replace(/^-/, ""))}·i`;
+  const cell = (c: { re: string; im: string }): string => (c.im === "0.0" || c.im === "0" ? short(c.re) : `${short(c.re)} ${c.im.startsWith("-") ? "−" : "+"} ${short(c.im.replace(/^-/, ""))}·i`);
+  if (o.kind === "value") return cell(o);
+  // G797: a matrix by rows, a list as one row
+  const cols = o.cols ?? o.cells.length;
+  return `[${Array.from({ length: o.cells.length / cols }, (_, r) => `[${o.cells.slice(r * cols, (r + 1) * cols).map(cell).join(", ")}]`).join(", ")}]`;
 };
 
 /** The Markdown report: header, counts per check, then one table per check. */

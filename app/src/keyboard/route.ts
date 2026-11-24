@@ -339,29 +339,10 @@ export function quietDown(c: RouteCtx, key: Key, drawnDead: boolean): boolean {
   return deadPress(c, key);
 }
 
-/** A key while a sheet is open (docs/05 3.1; every sheet is in the viewport with the keys live below it, R770). Shift and Alpha are
- *  ignored, and the sheet leaves them as they are; no key goes through to the entry line; a key the sheet does not use is dead. A flick down types the key's letter into the filter, on any key (digits
- *  too; docs/05 section 7 point 6); a flick up does nothing there. False: no sheet is open. */
-export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, mods?: Mods): boolean {
-  const shell = c.shell;
-  const sheet = shell.sheet;
-  if (!sheet) return false;
-  const level = sheet.level;
-  if (key.id !== "enter") sheet.disarm(); // R281: any press but Enter (the armed item's second pick) disarms
-  // R4b: while Your keys is open, a free key goes to its own slot's row (the cluster stays live above the sheet)
-  if (key.user && sheet.goKey(key.id, layerOf(modsFor(c, layer)))) return true;
-  const cell = level.grid?.key(c, key, layer); // R189: a matrix grid's cell is edited on the line (matrixGrid.svelte.ts)
-  if (cell === true && layer === undefined) c.session.clearModifiers(); // R300: a key the grid takes (Clear, Store ▶) uses a one-shot Shift up, as on the line
-  if (cell !== undefined) return cell;
-  // a grid whose cells show keys (Shift + 6, R18): a tap on such a key picks its cell, before its usual sheet job
-  const byPlace = layer === "alpha" || layer === "shift" ? undefined : sheet.pickKey(key.id);
-  if (byPlace) {
-    shell.picked(byPlace);
-    return true;
-  }
-  const keys = sheetChunk.keys; // (an open sheet has it: sheetUndrawn above holds the keys until the chunk is in)
-  return keys ? keys.sheetAct(c, key, layer, mods) : false;
-}
+/** A key while a sheet is open (docs/05 3.1): sheetKeys.ts sheetPress (R930: in the sheet's chunk, which an open sheet has: sheetUndrawn
+ *  holds the keys until it is in). False: no sheet is open, or the key is not the sheet's. */
+export const sheetPress = (c: RouteCtx, key: Key, layer: Layer | undefined, mods?: Mods): boolean =>
+  !!c.shell.sheet && !!sheetChunk.keys?.sheetPress(c, key, layer, mods);
 
 // Keys pressed while an app's code is loading wait for it, so nothing typed is lost (like MathLive's queue). Each
 // waits with the layer it was pressed in (Shift and Alpha act at once), so "Plot, Shift, ᴇ" typed fast stores as it
@@ -425,8 +406,6 @@ function replay(c: RouteCtx): void {
 }
 
 const SHEET_KEYS: readonly string[] = OPENS_SHEET.slice(2); // all but settings and mode (OPENS_SHEET lists those two first)
-/** The open sheet is Find (R4a): its keys follow docs/04 3.7 (sheetKeys.ts findKey). */
-const FIND_SHEET = "find";
 /** Does this key open a sheet? (Mode and Settings load the view with their lists.) */
 function opensSheet(key: Key, mods: Mods): boolean {
   const a = actionFor(key, mods.shift, mods.alpha);
@@ -485,26 +464,13 @@ export function press(c: RouteCtx, key: Key, layer?: Layer): void {
  *  grid is asked first, as press asks it (the letter as a type action): it starts the cell's edit, or types into it. */
 export function typeLetter(c: RouteCtx, ch: string): void {
   if (sheetUndrawn(c) || rowsLoading(c)) return wait(c, { letter: ch });
-  const sheet = c.shell.sheet;
-  if (sheet) {
-    sheet.disarm(); // R281
-    const grid = sheet.level.grid;
-    if (grid) {
-      if (grid.key(c, letterKey(ch), "primary") !== false) return; // (the grid's menu took it, or its read is still to come)
-    } else {
-      if (sheet.level.filterable) sheet.level.type(sheet.id === FIND_SHEET ? ch.toLowerCase() : ch);
-      return;
-    }
-  }
+  if (c.shell.sheet && sheetChunk.keys?.sheetLetter(c, ch)) return; // (R930: the open sheet's reading of a letter, in its chunk)
   if (c.shell.loading !== null || c.sheetLoad !== null) return wait(c, { letter: ch });
   c.picked = null;
   c.session.clearModifiers();
   if (c.shell.app !== null && !c.shell.showsEntry) return c.dead();
   c.entry.run({ kind: "type", text: ch });
 }
-
-/** R300: a hardware letter as a key whose one action types it (no key of the pad: the grid reads its action only). */
-const letterKey = (ch: string): Key => ({ id: "letter", row: 0, col: 0, span: 1, cls: "fn", label: { primary: ch }, actions: { primary: { kind: "type", text: ch } } });
 
 /** Shift and Alpha: a tap is the G2's one-shot (L3's double taps lock), counted for P7 point 4; a flick locks
  *  (P7 point 3): up on Shift = shift lock, down on Alpha = capitals, up on Alpha = lower case. */

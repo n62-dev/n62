@@ -14,18 +14,9 @@ import { open, tap } from "./helpers.ts";
 
 /** Today's failures: the case, its finding and the package that removes it. F368 (the angle word, R915) has no line: R915
  *  closed it, and the picked test checks it. F370 F371 (R917): a tap waits for the units load, Esc gives the lent line back
- *  with the focus on it (test/unitopen.spec.ts). */
-const KNOWN: readonly { case: string; f: string; by: string }[] = [
-  { case: "typed tap:row", f: "F367", by: "R918" }, // a tap on a history row picks it under the view (the rule: a dead press)
-  { case: "typed rowbar:copy", f: "F366", by: "R918" }, // the row bar is up under the view: its Copy opens a sheet over the view
-  { case: "typed rowbar:store", f: "F366", by: "R918" }, // the row bar's Store ▶ writes 72[5]▶ into the lent line, "Store 725 in" opens
-  { case: "typed tap:row2", f: "F366", by: "R918" }, // a second tap puts the row's chip into the lent line (R888's case)
-  { case: "picked tap:row", f: "F367", by: "R918" },
-  { case: "picked rowbar:copy", f: "F366", by: "R918" },
-  { case: "picked rowbar:store", f: "F366", by: "R918" },
-  { case: "picked tap:row2", f: "F366", by: "R918" },
-  { case: "window tap:row2", f: "F366", by: "R918" }, // the second tap waits for the load (R917), then puts the row's chip into the lent line
-];
+ *  with the focus on it (test/unitopen.spec.ts). F366 F367 (R918): a tap on a history row under the view is a dead press
+ *  (test/unittap.spec.ts). */
+const KNOWN: readonly { case: string; f: string; by: string }[] = [];
 
 type Snap = {
   line: string;
@@ -156,11 +147,11 @@ const SHEET_TAPS: Readonly<Record<string, string>> = { format: "list:Mode", menu
 /** Opens the view again as the test first opened it (on the typed line; on the picked row). */
 type Reopen = () => Promise<void>;
 
-/** The keys a picked history row takes (keyboard/route.ts historyKey): fired with a row picked under the view. */
+/** The keys a picked history row takes (keyboard/route.ts historyKey): fired after a tap on a row under the view (R918: it picks nothing). */
 const PICK_KEYS = ["up", "down", "left", "right", "bksp", "select", "deselect"] as const;
 
 /** The channels both tests fire at the view: every key of the keypad (Esc last), the bar's controls, the tabs and APP▾,
- *  Android back; last, as they edit the lent line today, a history row, the keys a pick takes and the row bar's buttons. */
+ *  Android back; last a history row, and the keys a pick takes after a tap on it. */
 async function sweep(s: Sweep, page: Page, taken: string, reopen: Reopen): Promise<void> {
   // keys: every key of the keypad (the unit pad's cells in their place), one press each
   const ids = await page.locator("[data-key]").evaluateAll((els) => [...new Set(els.map((e) => e.getAttribute("data-key") ?? ""))]);
@@ -192,19 +183,14 @@ async function sweep(s: Sweep, page: Page, taken: string, reopen: Reopen): Promi
   await reopen();
   await s.leave("back", taken, () => page.goBack());
 
-  // last, as they edit the lent line today: a history row, the keys a pick takes, then each button of the row bar (Store ▶ last)
+  // last: a history row (R918: a dead press, no pick and no row bar under the view), then the keys a pick would take, each
+  // after a tap on the row
   await reopen();
   await s.fire("tap:row", () => row(page, 0).tap());
+  await expect(page.getByTestId("row-actions")).toHaveCount(0);
   for (const id of PICK_KEYS) {
     if (!(await snap(page)).pick) await row(page, 0).tap();
     await s.fire(`pick:${id}`, () => tap(page, [id]));
-  }
-  if (!(await snap(page)).pick) await row(page, 0).tap();
-  const items = await page.getByTestId("row-actions").locator("button").evaluateAll((els) => els.map((e) => e.getAttribute("data-item") ?? ""));
-  expect(items.length).toBeGreaterThan(0);
-  for (const item of items.filter((i) => i !== "store").concat(items.includes("store") ? ["store"] : [])) {
-    if (!(await snap(page)).pick) await row(page, 0).tap();
-    await s.fire(`rowbar:${item}`, () => page.getByTestId("row-actions").locator(`[data-item="${item}"]`).tap());
   }
   // (a leak above left its edit on the line: it is set back, so the next case starts from the line as taken)
   await tap(page, ["esc"]);

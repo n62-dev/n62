@@ -274,6 +274,30 @@ cases:
   - { id: "fn-irem-neg", input: "irem(-7,3)", oracle: "F(2)", expect: "2", mark: "=", source: "derived", note: "Euclidean remainder, never negative" }
   - { id: "fn-gcd", input: "gcd(1071,462)", oracle: "F(21)", expect: "21", mark: "=", source: "derived" }
   - { id: "fn-lcm", input: "lcm(4,6)", oracle: "F(12)", expect: "12", mark: "=", source: "derived" }
+  # --- G793 (hunt 2026-11-23 h3 #7): the lcm of integers is the least positive common multiple (Python math.lcm); Giac's
+  # lcm(a,b) = normal(a/gcd(a,b))*b kept the sign of the product (patch 0065) -------------------------------------------------
+  - { id: "g793-lcm-neg4-6", input: "lcm(-4,6)", oracle: "F(12)", expect: "12", mark: "=", source: "derived", note: "G793: Python math.lcm(-4,6) = 12; it showed = -12" }
+  - { id: "g793-lcm-4-neg6", input: "lcm(4,-6)", oracle: "F(12)", expect: "12", mark: "=", source: "derived", note: "G793: math.lcm(4,-6) = 12; it showed = -12" }
+  - { id: "g793-lcm-list-neg4-6-10", input: "lcm([-4,6,10])", oracle: "F(60)", expect: "60", mark: "=", source: "derived", note: "G793: math.lcm(-4,6,10) = 60; it showed = -60" }
+  - { id: "g793-lcm-neg3-neg5-neg7", input: "lcm(-3,-5,-7)", oracle: "F(105)", expect: "105", mark: "=", source: "derived", note: "G793: three negatives, an odd count: math.lcm(-3,-5,-7) = 105; it showed = -105" }
+  - { id: "g793-lcm-neg2^70-3", input: "lcm(-2^70,3)", oracle: "F(3*2**70)", expect: "3.54177486215E21", mark: "≈", exact: "3541774862152233910272", source: "derived", note: "G793: a big integer; 2^70 and 3 are coprime, so the lcm is 3*2^70 (math.lcm(-2**70,3)); it showed -3.54177486215E21" }
+  - { id: "g793-lcm-neg4-alone", input: "lcm(-4)", oracle: "F(4)", expect: "4", mark: "=", source: "derived", note: "G793: one argument: math.lcm(-4) = 4; Giac returned it unchanged, -4" }
+  - { id: "g793-lcm-pairs-neg4-6", input: "lcm([-4,6],[6,4])", expect: "[12,12]", mark: "=", source: "derived", note: "G793: two lists of integers are taken pair by pair: [math.lcm(-4,6), math.lcm(6,4)]; it showed = [-12,12]" }
+  - { id: "g793-keep-lcm-neg4-neg6", input: "lcm(-4,-6)", oracle: "F(12)", expect: "12", mark: "=", source: "derived", note: "G793 control: two negatives, right before the patch (math.lcm(-4,-6) = 12)" }
+  - { id: "g793-keep-lcm-0-5", input: "lcm(0,5)", oracle: "F(0)", expect: "0", mark: "=", source: "derived", note: "G793 control: math.lcm(0,5) = 0" }
+  - { id: "g793-keep-gcd-neg4-neg6", input: "gcd(-4,-6)", oracle: "F(2)", expect: "2", mark: "=", source: "derived", note: "G793 control: gcd was positive already" }
+  - { id: "g793-keep-lcm-poly", input: "lcm(x^2-1,x+1)", expect: "(x-1)*(x+1)", source: "derived", note: "G793 control: a polynomial keeps Giac's form (an lcm of polynomials is defined up to a constant factor)" }
+  # --- G793f1: the lcm of fractions of integers is positive too: lcm(a/b,c/d) = lcm(a,c)/gcd(b,d) (a/b, c/d in lowest terms);
+  # Giac's lcm kept the sign of the product for them, which patch 0065 left as it was ------------------------------------------
+  - { id: "g793f1-lcm-half-neg-third", input: "lcm(1/2,-1/3)", oracle: "F(1)", expect: "1", mark: "=", source: "derived", note: "G793f1: lcm(1,1)/gcd(2,3) = 1; it showed = -1" }
+  - { id: "g793f1-lcm-neg-2/3-4/5", input: "lcm(-2/3,4/5)", oracle: "F(4)", expect: "4", mark: "=", source: "derived", note: "G793f1: lcm(2,4)/gcd(3,5) = 4; it showed = -4" }
+  - { id: "g793f1-lcm-list-neg-half-third-quarter", input: "lcm([-1/2,1/3,1/4])", oracle: "F(1)", expect: "1", mark: "=", source: "derived", note: "G793f1: lcm(1,1,1)/gcd(2,3,4) = 1; it showed = -1" }
+  - { id: "g793f1-lcm-neg-half-alone", input: "lcm(-1/2)", oracle: "F(1,2)", expect: "0.5", mark: "=", source: "derived", note: "G793f1: one argument: lcm(1)/gcd(2) = 1/2; Giac returned it unchanged, -1/2" }
+  - { id: "g793f1-lcm-neg4-third", input: "lcm(-4,1/3)", oracle: "F(4)", expect: "4", mark: "=", source: "derived", note: "G793f1: an integer and a fraction: lcm(4,1)/gcd(1,3) = 4; it showed = -4" }
+  - { id: "g793f1-lcm-neg2^70/3-fifth", input: "lcm(-2^70/3,1/5)", oracle: "F(2**70)", expect: "1.18059162072E21", mark: "≈", exact: "1180591620717411303424", source: "derived", note: "G793f1: a big numerator: lcm(2^70,1)/gcd(3,5) = 2^70; it showed -1.18059162072E21" }
+  - { id: "g793f1-lcm-pairs-neg-half-third", input: "lcm([-1/2,1/3],[1/4,-1/6])", expect: "[0.5,0.333333333333]", source: "derived", note: "G793f1: pair by pair: [lcm(1,1)/gcd(2,4), lcm(1,1)/gcd(3,6)] = [1/2,1/3]; it showed [-0.5,-0.333333333333]" }
+  - { id: "g793f1-keep-lcm-half-third", input: "lcm(1/2,1/3)", oracle: "F(1)", expect: "1", mark: "=", source: "derived", note: "G793f1 control: positive fractions, right before the patch (lcm(1,1)/gcd(2,3) = 1)" }
+  - { id: "g793f1-keep-lcm-neg6-typed-4.0", input: "lcm(-6,4.0)", oracle: "F(12)", expect: "12", mark: "=", source: "derived", note: "G793f1 control: Home sends a typed 4.0 as the exact 4 (exact first), so math.lcm(-6,4) = 12" }
   - { id: "fn-factorial0.5", input: "factorial(0.5)", oracle: "gamma(F(3,2))", expect: "0.886226925453", mark: "≈", source: "oracle" }
   - { id: "fn-comb", input: "comb(52,5)", oracle: "F(factorial(52)//(factorial(5)*factorial(47)))", expect: "2598960", mark: "=", source: "derived" }
   - { id: "stat-mean", input: "mean([1,2,3,4])", oracle: "F(10,4)", expect: "2.5", mark: "=", source: "derived" }
@@ -370,7 +394,7 @@ cases:
   - { id: "g790-keep-mmult-zero-approx", input: "approx([[0,0],[0,0]])*[[1,2],[3,4]]", expect: "[[0,0],[0,0]]", mark: "=", own: true, source: "derived", note: "G790 control: approx of the exact zero matrix is still all zeros; its product the zero matrix. Mark = as phase-1 shows it (engine of phase-1 593563ae, own engine, G790 fix round 2); Giac's product is [[0.0,0.0],[0.0,0.0]] (smoke.mjs), float zeros" }
   # --- G792 (hunt 2026-11-23 h3 #3): sin, cos, sinh, cosh of a float matrix went to analytic_apply, which diagonalises over the complex
   # eigenvalues in doubles at any Digits: the eigenvectors' round-off stayed as imaginary noise, and both of Home's evaluations agreed on it
-  # (≈). Patch 0065 sums the even and odd series at the working precision (0063's scaling); M^2 = -I gives sin M = M*sinh 1, cos M = cosh 1*I
+  # (≈). Patch 0066 sums the even and odd series at the working precision (0063's scaling); M^2 = -I gives sin M = M*sinh 1, cos M = cosh 1*I
   - { id: "g792-sin-approx-rotation", input: "sin(approx([[0,1],[-1,0]]))", oracle: "(lambda E: Bracket(Bracket(E[0,0],E[0,1]),Bracket(E[1,0],E[1,1])))(mp.sinm(mp.matrix([[0,1],[-1,0]])))", expect: "[[0,1.17520119364],[-1.17520119364,0]]", mark: "⚠", source: "oracle", note: "G792: it showed ≈ [[-4.31408307543E-32-2.88657986403E-15*i,1.17520119364-7.19603190075E-17*i],…]; real now; F477: the float zeros show ⚠ as Home cannot confirm a float zero (g554-exp-approx-neg30's note)" }
   - { id: "g792-cos-approx-rotation", input: "cos(approx([[0,1],[-1,0]]))", oracle: "(lambda E: Bracket(Bracket(E[0,0],E[0,1]),Bracket(E[1,0],E[1,1])))(mp.cosm(mp.matrix([[0,1],[-1,0]])))", expect: "[[1.54308063482,0],[0,1.54308063482]]", mark: "⚠", source: "oracle", note: "G792: it showed ≈ [[1.54308063482+2.46519032882E-32*i,1.91052250483E-31+3.88578058619E-15*i],…]; cosh 1 times the identity; F477: the float zeros show ⚠ as Home cannot confirm a float zero (g554-exp-approx-neg30's note)" }
   - { id: "g792-sinh-approx-rotation", input: "sinh(approx([[0,1],[-1,0]]))", oracle: "(lambda E: Bracket(Bracket(E[0,0],E[0,1]),Bracket(E[1,0],E[1,1])))((mp.expm(mp.matrix([[0,1],[-1,0]]))-mp.expm(-mp.matrix([[0,1],[-1,0]])))/2)", expect: "[[0,0.841470984808],[-0.841470984808,0]]", mark: "⚠", source: "oracle", note: "G792: sinh M = M*sin 1; it showed ≈ with -2.16493489802E-15*i on the diagonal; F477: the float zeros show ⚠ as Home cannot confirm a float zero (g554-exp-approx-neg30's note)" }

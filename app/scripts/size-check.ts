@@ -182,8 +182,8 @@ export function extraStartFiles(manifest: Record<string, ManifestChunk>): string
  *  80.28 → 80.59 kB (R862): phase-1 ebef0cb2 measures 80,222 B, the branch 80,535 B (+313 B: open 30,974 → 31,125 B, ☰'s case in
  *  the view's key handler and the Tools rows' builder shared with Find on units; find 9,373 → 9,535 B, showUnitMenu and
  *  menu.ts's unitViewMenu, the one list of Tools and Constants both menus show). 80,535 B + 0.05 kB, rounded up to the next 0.01 kB.
- *  80.59 → 80.91 kB (R915): phase-1 109317e5 80,535 B, the branch 80,860 B (+325 B, open: the angle and digits watcher, the row's angle tag, Store's row-gone note); + 0.05 kB. 80.91 → 81.20 kB (R917): phase-1 27453760 80,822 B, the branch 81,146 B (+324 B, open: one visit ended in one close, the lent line given back, the focus on the line, the reopen through lazy); + 0.05 kB, rounded up. */
-export const UNIT_VIEW_PIN_RAW = 81_200;
+ *  80.59 → 80.91 kB (R915): phase-1 109317e5 80,535 B, the branch 80,860 B (+325 B, open: the angle and digits watcher, the row's angle tag, Store's row-gone note); + 0.05 kB. 80.91 → 81.20 kB (R917): phase-1 27453760 80,822 B, the branch 81,146 B (+324 B, open: one visit ended in one close, the lent line given back, the focus on the line, the reopen through lazy); + 0.05 kB, rounded up. 81.20 → 81.79 kB (R918): phase-1 ef5141f9 81.15 kB, the branch 81.73 kB (+0.58 kB, open: a tap on the screen outside the view's box is the dead press with its short list, a hold's click swallowed with no pulse, the lent line's row writes refused, a pick from the load dropped); + 0.05 kB, rounded up. */
+export const UNIT_VIEW_PIN_RAW = 81_790;
 
 /** The budgets of docs/04 section 8.3 that apply to files of the build; the device bars are not here. */
 function subjects(manifest: Record<string, ManifestChunk>, all: string[], modules: Record<string, string[]> | null): { present: Subject[]; absent: string[]; missing: string[] } {
@@ -214,8 +214,8 @@ function subjects(manifest: Record<string, ManifestChunk>, all: string[], module
   // 0d8a7e48 measures 38.92 kB, the branch 41.66 kB: a unit of your own as a row of the factor table (units/userUnits.ts
   // mergedTable in the builder's chunk, +2.74 kB: the exact factor of its `of` and the checks a stored definition needs;
   // validateDef, findNames and factorText are not in it). A cut was tried: nothing of it can wait for a later chunk, since
-  // the builder reads every own unit of a request.
-  add("Unit view chunk", dynamic("src/units/"), { rawMax: 42 * KB });
+  // the builder reads every own unit of a request. 42.6 kB (R918): phase-1 ef5141f9 41.95 kB, the branch 42.54 kB (open: a tap outside the view's box is the dead press, the lent line refuses a row).
+  add("Unit view chunk", dynamic("src/units/"), { rawMax: 42.6 * KB });
   // G163: Rollup hoists the units modules that two lazy chunks import (factors.ts with the builder, slot.ts, the cells'
   // store) into shared chunks, which the row above does not see (as finder.ts once was for Find). This row is the unit
   // view's whole code: its entries plus every shared chunk that holds a src/units/ module. Its bar is a pin at today's
@@ -250,31 +250,14 @@ export const LAZY_VIEWS = ["src/views/Sheet.svelte"];
  *  icons (views/AppViews.svelte, drawn only in an open app, so it rides in the shell's app-opening chunk); the stored log's
  *  load check (engine/defsCheck.ts, split from defs.ts: the engine reads the stored log in parallel with the store, the
  *  start chunk keeps only the log's own functions). R791 (fix round 1): the renderer's macro table (render/macros.ts with
- *  entry/macroTable.ts), loaded with MathLive (render/mathlive.svelte.ts). G792: Fmt's cycle and FIX setters (state/modeSets.ts). */
-export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "src/render/tidy.ts", "src/keyboard/shiftPalettes.ts", "src/units/open.ts", "src/entry/field.ts", "src/state/handOver.ts", "src/views/UpdateNote.svelte", "src/views/tipsHost.ts", "src/state/migrations.ts", "src/keyboard/keyNames.ts", "src/views/sheet.svelte.ts", "src/input/click.ts", "src/state/resultItem.ts", "src/state/storedItem.ts", "src/engine/giacPrint.ts", "src/views/rowGesturesCode.ts", "src/apps/longpress.ts", "src/state/taps.svelte.ts", "src/state/pressCount.ts", "src/views/statSheet.ts", "src/views/helpSheet.ts", "src/views/matrixGrid.svelte.ts", "src/entry/cursorFn.ts", "src/engine/decimalLatex.ts", "src/apps/shellOpen.ts", "src/views/icons.ts", "src/input/backLayer.ts", "src/views/AppViews.svelte", "src/engine/defsCheck.ts", "src/engine/rational.ts", "src/engine/readFacts.ts", "src/render/longInsert.ts", "src/render/macros.ts", "src/entry/macroTable.ts", "src/state/modeSets.ts"];
+ *  entry/macroTable.ts), loaded with MathLive (render/mathlive.svelte.ts). R930: a job's call and result (state/jobRun.ts, with the
+ *  item chunk), the field's set-up (entry/fieldUp.ts, with MathLive), the Apps and ☰ rows (apps/shellSheets.ts, with the sheet's
+ *  model) and the port's pass of a result (calc/portKeys.ts, with the word store).
+ *  G792: Fmt's cycle and FIX setters (state/modeSets.ts). */
+export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "src/render/tidy.ts", "src/keyboard/shiftPalettes.ts", "src/units/open.ts", "src/entry/field.ts", "src/state/handOver.ts", "src/views/UpdateNote.svelte", "src/views/tipsHost.ts", "src/state/migrations.ts", "src/keyboard/keyNames.ts", "src/views/sheet.svelte.ts", "src/input/click.ts", "src/state/resultItem.ts", "src/state/storedItem.ts", "src/engine/giacPrint.ts", "src/views/rowGesturesCode.ts", "src/apps/longpress.ts", "src/state/taps.svelte.ts", "src/state/pressCount.ts", "src/views/statSheet.ts", "src/views/helpSheet.ts", "src/views/matrixGrid.svelte.ts", "src/entry/cursorFn.ts", "src/engine/decimalLatex.ts", "src/apps/shellOpen.ts", "src/views/icons.ts", "src/input/backLayer.ts", "src/views/AppViews.svelte", "src/engine/defsCheck.ts", "src/engine/rational.ts", "src/engine/readFacts.ts", "src/render/longInsert.ts", "src/render/macros.ts", "src/entry/macroTable.ts", "src/state/jobRun.ts", "src/entry/fieldUp.ts", "src/apps/shellSheets.ts", "src/calc/portKeys.ts", "src/state/modeSets.ts"];
 
 /** R91's pin: the start chunk is at most this many bytes gzip, under the budget of 63 kB (the pin kept its value when the
  *  budget was raised from 61 kB, 2026-11-09). A package that needs more raises the pin with a reason, here and in docs/04 8.3.
- *  58.5 → 59.5 kB (R4b): phase-1 measures 58.50 kB gzip, the branch 59.42 kB (+0.92 kB): the Vars and Memory keys,
- *  the Your keys level and the free keys' three layers are on the key path.
- *  59.5 → 60 kB (R50e): phase-1 59.42 kB, the branch 59.90 kB (+0.48 kB, raw +1.2 kB): the stored look (its
- *  validation, the schema-3 migration and the first-start default) is in the settings the session reads at start; the
- *  Appearance level, the family list and the theme files are lazy chunks.
- *  60 → 60.5 kB (R57): phase-1 59.90 kB, the branch 60.48 kB (+0.58 kB): the decimal mark setting, the two key faces,
- *  the drawn comma, the hardware keys, and the Paste and rows holds (keyboard/route.ts) are on the key path.
- *  60.5 → 60.52 kB (R24b): phase-1 60.49 kB, the branch 60.51 kB (+0.02 kB, raw +0.06 kB): the unit pad is drawn through the
- *  keypad's own seams (the sheet's state, sheetChunk.pad; Keypad's key list and its row of legends; one hook in
- *  keyboard/route.ts), and everything else (units/pad.ts, units/padView, spec/unit-pad.yaml) is a lazy chunk.
- *  60.52 → 60.68 kB (R24c): phase-1 60.52 kB, the branch 60.68 kB (+0.16 kB): the units key is on the key path (P11),
- *  and the key alone measures 60.58 kB; the unit view itself is a lazy chunk (Opus pass 22: at most 60.70 kB).
- *  60.68 → 60.70 kB (G133f1): no app source changed; the raw chunk is the same 171.54 kB, but Giac patch 0023 gives a
- *  new engine key, and the engine's hashed file name in the chunk compresses 0.01 kB worse (phase-1's engine 60.68 kB,
- *  the branch's 60.69 kB, one build of one tree). 60.70 kB, Opus pass 22's bound, so a new engine hash alone does not trip it.
- *  60.70 → 60.95 kB (R70): phase-1 60.69 kB, the branch 60.93 kB (+0.24 kB, raw +0.92 kB): the counter of every press is on
- *  the key path (Keypad's count at each lift, the screen-tap listener and the hardware-key hooks in App.svelte,
- *  state/pressCount.ts, the counter's field); the Settings row is in the lazy sheet chunk.
- *  60.95 → 60.97 kB (R70f1): the pipeline's build of the branch measures 60.96 kB, 0.03 kB over the 60.93 kB of the first run
- *  (same sources; the order of the chunk's strings, as in G133f1); 0.01 kB of room is left under the pin.
  *  60.97 → 58.96 kB (R70f1, Opus pass 23): phase-1 60.96 kB gzip (172.46 kB raw), the branch 58.95 kB (166.61 kB raw;
  *  −2.01 kB): the entry line's work on the field (its set-up and listeners, ⌫ and Del at a template, ᴇ, 10ˣ, a power's
  *  base, the stops) runs only once MathLive is up, so it is entry/field.ts, loaded beside MathLive; keys pressed before
@@ -631,8 +614,14 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  (176,822 B raw).
  *  G785 (a cut; the pin stays the budget): Fmt skips a step that draws what the row shows (deadPress asks Session.formRow).
  *  Phase-1 5c518933 measures 62,986 B gzip, the change 63,015 B; Memory's purge (Session.forget, read only by the lazy
- *  find/names.svelte.ts) moved there: 62,967 B (176,789 B raw). Lazy-only en.ts strings to lazy tables gave −1 B only. G792 (fix round 1, a cut; the pin stays the budget): patch 0065's engine hash took the chunk to 63.01 kB gzip (176.84 kB raw); Session.setFmtMode and setFixDecimals, which only the lazy Mode sheet calls, moved to state/modeSets.ts: 62.95 kB (176.66 kB raw). */
-export const START_PIN_GZIP = 63_000;
+ *  find/names.svelte.ts) moved there: 62,967 B (176,789 B raw). Lazy-only en.ts strings to lazy tables gave −1 B only.
+ *  63,000 → 61,880 B (R930, a cut; the budget stays 63 kB, so a later package raises the pin with its reason): phase-1 b55cbb1a
+ *  measures 62,996 B gzip (176,799 B raw), the branch 61,874 B (172,987 B raw; −1,122 B): code that ran only after a job, the
+ *  field's load, a sheet's open or a key on an open sheet rides in the chunk that path already waited for (state/jobRun.ts −310 B,
+ *  entry/fieldUp.ts −140 B, apps/shellSheets.ts −281 B, sheetKeys.ts sheetPress and sheetLetter −202 B, calc/portKeys.ts −189 B).
+ *  G792 (fix round 1, a cut; the pin stays): patch 0066's engine hash took the chunk past the pin; Session.setFmtMode and
+ *  setFixDecimals, which only the lazy Mode sheet calls, moved to state/modeSets.ts (−60 B gzip before the merge with R930). */
+export const START_PIN_GZIP = 61_880;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

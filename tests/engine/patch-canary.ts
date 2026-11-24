@@ -251,9 +251,12 @@ const CANARIES: [string, string, RegExp, string][] = [
   // G790 (F475), patch 0064: mmult_atranb's sparse loop skips a left entry with is_zero(acur,context0), an absolute 1e-12 at any Digits
   // (and matrix_density counts zeros the same way), so a left factor of floats below 1e-12 gave the zero matrix at Digits 40
   ["0064-mmult-tiny-float-factor.patch", "giac-2.1.0/src/vecteur.cc", /const gen & acur=\*it;\s*if \(is_zero\(acur,context0\)\)\{\s*int p=1;\s*\+\+it;\s*for \(; \(it!=itend\) && is_zero\(\*it,context0\);/, "double a_density=matrix_density(a),b_density=matrix_density(btran);"],
-  // G792, patch 0065: sin (and cos, sinh, cosh) send a float matrix to analytic_apply, which diagonalises in doubles over the complex
+  // G793, G793f1, patch 0065: _lcm returns lcm(a,b) = normal(a/gcd(a,b))*b as it comes, the sign of the product, for integers and
+  // fractions of integers alike (lcm(-4,6) = -12, lcm(-4) = -4, lcm(1/2,-1/3) = -1, lcm(-1/2) = -1/2)
+  ["0065-lcm-integers-positive.patch", "giac-2.1.0/src/usual.cc", /if \(args\.type!=_VECT\)\s*return args;[\s\S]{0,300}?return apply\(\*it,\*\(it\+1\),lcm\);\s*gen res\(\*it\);\s*for \(\+\+it;it!=itend;\+\+it\)\s*res=lcm\(res,\*it\);\s*return res;/, "gen _lcm(const gen & args,GIAC_CONTEXT){"],
+  // G792, patch 0066: sin (and cos, sinh, cosh) send a float matrix to analytic_apply, which diagonalises in doubles over the complex
   // eigenvalues and leaves imaginary noise (sin(evalf([[0,1],[-1,0]])) = [[2.998e-15*i,1.17520119364],…] at Digits 12)
-  ["0065-matrix-trig-series.patch", "giac-2.1.0/src/usual.cc", /if \(is_squarematrix\(e\)\)\s*return analytic_apply\(at_sin,\*e\._VECTptr,contextptr\);/, "gen sin(const gen & e0,GIAC_CONTEXT){"],
+  ["0066-matrix-trig-series.patch", "giac-2.1.0/src/usual.cc", /if \(is_squarematrix\(e\)\)\s*return analytic_apply\(at_sin,\*e\._VECTptr,contextptr\);/, "gen sin(const gen & e0,GIAC_CONTEXT){"],
 ];
 
 const tar = tarball(SOURCES.giac);

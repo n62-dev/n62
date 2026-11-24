@@ -109,7 +109,6 @@ test.describe("412 × 915: a tap on the history outside the sheet closes it", ()
 test.describe("360 × 740: a sheet that fills the view leaves no history to tap and closes by Esc, Back or ×", () => {
   test.use({ viewport: { width: 360, height: 740 } });
   const FULL: Record<string, (page: Page) => Promise<void>> = {
-    "Home ☰": (page) => tap(page, ["@menu"]),
     Mode: (page) => tap(page, ["@mode"]),
     "Mode › Settings": (page) => tap(page, ["@mode", "d6"]),
     "Plot ☰": async (page) => {
@@ -130,6 +129,14 @@ test.describe("360 × 740: a sheet that fills the view leaves no history to tap 
       expect(await entryValue(page)).toBe(line);
     });
   }
+  test("Home ☰ fits on the bar with the line's room (R891): a tap on the history above it closes it", async ({ page }) => {
+    await tap(page, ["@menu"]);
+    await expect(sheet(page)).toBeVisible();
+    const line = await entryValue(page);
+    await tapHistory(page);
+    await expect(sheet(page)).toHaveCount(0);
+    expect(await entryValue(page)).toBe(line);
+  });
   test("a short sheet still closes by a tap on the history", async ({ page }) => {
     await page.evaluate(() => window.n62.shell.showMenu("Test", [{ id: "a", label: "A", run: () => {} }, { id: "b", label: "B", run: () => {} }]));
     await expect(sheet(page)).toBeVisible();

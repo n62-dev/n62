@@ -48,7 +48,12 @@ for (const width of [412, 360]) {
       await tap(page, ["vars"]);
       await expect(main(page, "vars")).toHaveText("a");
       await expect(main(page, "sin")).toHaveText("g");
+      await expect(main(page, "x")).toHaveText("x"); // R889: the x key types x in a search
+      await tap(page, ["alpha"]);
+      await expect(main(page, "d7")).toHaveText("q"); // R889: Alpha armed, the digit shows the letter it types
       await expect(main(page, "x")).toHaveText("d");
+      await tap(page, ["alpha", "alpha"]); // locked, then off
+      await expect(main(page, "d7")).toHaveText("7");
       await expect(main(page, "d7")).toHaveText("7");
       await expect(main(page, "enter")).not.toHaveText("");
       // R794: ▲ is the round pad's drawing (the inline SVG in Keypad.svelte); the zone keeps its face, transparent (R794f1: it names the zone)

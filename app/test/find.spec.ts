@@ -58,7 +58,7 @@ test.describe("by keys", () => {
   });
 
   test("a function goes in as its syntax with the cursor in its first argument", async ({ page }) => {
-    await tap(page, ["math", "x", "frac", "div"]); // d e t
+    await tap(page, ["math", "alpha", "x", "frac", "div"]); // d (Alpha + x, R889: x alone types x) e t; Alpha is one shot
     await expect(active(page)).toHaveAttribute("data-id", "fn:det");
     await tap(page, ["enter", "d2"]);
     // MathLive keeps the name as \operatorname{\mathrm{det}}; the parser reads both
@@ -73,6 +73,17 @@ test.describe("by keys", () => {
     await expect(find(page).getByTestId("sheet-filter")).toHaveText("s5");
     await tap(page, ["bksp", "bksp"]);
     await expect(rows(page)).toHaveCount(12);
+  });
+
+  test("R889: Alpha armed types the key's letter (Vars, Alpha, 7 is q), once; the x key types x", async ({ page }) => {
+    await tap(page, ["vars", "alpha", "d7"]);
+    await expect(find(page).getByTestId("sheet-filter")).toHaveText("q");
+    await tap(page, ["d7"]); // Alpha is used up: the digit after a letter types itself
+    await expect(find(page).getByTestId("sheet-filter")).toHaveText("q7");
+    await closeSheet(page);
+    await tap(page, ["math", "x"]);
+    await expect(find(page).getByTestId("sheet-filter")).toHaveText("x");
+    expect(await entryValue(page)).toBe("");
   });
 
   test("Esc goes back from a category, then closes; nothing reaches the line", async ({ page }) => {
@@ -121,7 +132,7 @@ test.describe("by keys", () => {
     const first = await find(page).getByTestId("find-preview").textContent();
     await tap(page, ["down"]);
     await expect(find(page).getByTestId("find-preview")).not.toHaveText(first ?? "");
-    await tap(page, ["esc", "math", "x", "math"]); // d b: dB (inside Find, Math types b)
+    await tap(page, ["esc", "math", "alpha", "x", "math"]); // d b: dB (inside Find, Alpha + x is d, R889, and Math types b)
     await expect(find(page).locator('[data-id="unit:dB"] [data-testid="row-note"]')).toHaveText("converts only");
   });
 });
@@ -144,6 +155,7 @@ test.describe("by touch", () => {
 
   test("a tap beside the sheet closes it; the preview shows the highlighted row", async ({ page }) => {
     await page.locator('[data-key="math"]').tap();
+    await page.locator('[data-key="alpha"]').tap(); // d: Alpha + x (R889: x alone types x)
     await page.locator('[data-key="x"]').tap();
     await page.locator('[data-key="frac"]').tap();
     await page.locator('[data-key="div"]').tap();

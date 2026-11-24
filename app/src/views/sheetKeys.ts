@@ -2,7 +2,7 @@
 // What a key does while a sheet is open (docs/05 3.1 with section 7). Shift and Alpha are ignored for picking: a key
 // is read by what it is, never by the layer, so no key goes through the sheet into the entry line (rule 4).
 import { actionFor, type Key, type Layer } from "../keyboard/keyboard.ts";
-import { deadPress, isSelect, modsFor, special, type Mods, type RouteCtx } from "../keyboard/route.ts";
+import { deadPress, isSelect, layerOf, modsFor, special, type Mods, type RouteCtx } from "../keyboard/route.ts";
 
 export type SheetKey =
   | { kind: "move"; by: 1 | -1 }
@@ -89,25 +89,30 @@ const FIND_PASS: readonly string[] = ["settings", "menu", "apps", "slot", "home"
  * A key in Find (R4a, docs/04 3.7, decisions.md S2 rule M1). Every key types its letter in lower case, Tmpl and Math
  * too (no Alpha press); a flick down types it on any key. A digit key picks the row with its number while the level's
  * query is empty (the categories, a category's items) and types its digit once a letter is typed (`g0`, `log10`).
- * Shift + a key, or a flick up, types the key's own character (a digit, `.`). ▲ ▼ move, Enter inserts, ▶ opens a
- * category, ◀ and Esc go back a level (the top closes), ⌫ deletes. `shift`: Shift is on for this tap; `empty`: the
- * open level's query is empty.
+ * Shift + a key, or a flick up, types the key's own character (a digit, `.`). R889: Alpha armed (a tap, `alpha`) types
+ * the key's letter as a flick down does, Shift or not, digits included (Alpha, 7 is q); a key with no letter keeps its
+ * job. A key whose own character is a letter types that letter (the x key types x; its letter d by Alpha or a flick).
+ * ▲ ▼ move, Enter inserts, ▶ opens a category, ◀ and Esc go back a level (the top closes), ⌫ deletes. `shift`, `alpha`:
+ * Shift, Alpha is on for this tap; `empty`: the open level's query is empty.
  */
-export function findKey(key: Key, layer: Layer | undefined, shift: boolean, empty: boolean, numbered = 10): SheetKey {
+export function findKey(key: Key, layer: Layer | undefined, shift: boolean, empty: boolean, numbered = 10, alpha = false): SheetKey {
   const fixed = BY_ID[key.id];
   if (fixed) return fixed;
-  const more = empty && layer !== "alpha" && layer !== "shift" && !(layer === undefined && shift) ? afterZero(key, numbered) : undefined; // R780: `.` and the space bar pick rows 11 and 12 of the empty query's list
+  const letter = letterOf(key)?.toLowerCase();
+  const byAlpha = layer === "alpha" || (layer === undefined && alpha && letter !== undefined); // a flick down, or Alpha armed on a key with a letter
+  const more = empty && !byAlpha && layer !== "shift" && !(layer === undefined && shift) ? afterZero(key, numbered) : undefined; // R780: `.` and the space bar pick rows 11 and 12 of the empty query's list
   if (more) return more;
   if (passes(key, FIND_PASS)) return { kind: "pass" };
+  if (byAlpha) return letter ? { kind: "letter", ch: letter } : { kind: "none" };
   const p = key.actions.primary;
   const own = p?.kind === "type" && [...p.text].length === 1 ? p.text : undefined;
-  const letter = letterOf(key)?.toLowerCase();
-  if (layer === "alpha") return letter ? { kind: "letter", ch: letter } : { kind: "none" };
-  if (layer === "shift" || (layer === undefined && shift)) return own && !/^\p{L}$/u.test(own) ? { kind: "letter", ch: own } : { kind: "none" };
+  const ownLetter = own !== undefined && /^\p{L}$/u.test(own);
+  if (layer === "shift" || (layer === undefined && shift)) return own && !ownLetter ? { kind: "letter", ch: own } : { kind: "none" };
   const d = DIGIT.exec(key.id);
   if (d) return empty ? { kind: "pick", n: Number(d[1]) || 10 } : { kind: "letter", ch: d[1] as string };
-  // a hardware key's own character (R31 hands it on as the primary layer): `.` and `/` type themselves
-  if (layer === "primary" && own && !/^\p{L}$/u.test(own)) return { kind: "letter", ch: own };
+  // a key's own character: x types x (R889), and a hardware key's (R31 hands it on as the primary layer): `.` and `/` type themselves
+  if (own && ownLetter && !key.user) return { kind: "letter", ch: own.toLowerCase() };
+  if (layer === "primary" && own) return { kind: "letter", ch: own };
   return letter ? { kind: "letter", ch: letter } : { kind: "none" };
 }
 
@@ -149,7 +154,7 @@ export function sheetJob(key: Key, s: SheetCtx, mods: Mods, layer: Layer | undef
   if (s.kind === "store") return storeKey(key, mods.shift, mods.alpha, s.cas, s.empty);
   // R887: the ⚙ key's tap opens Settings on the sheet; Shift + it is Help, which stays dead in a sheet (R863)
   if (p?.kind === "special" && p.name === "settings" && !key.user && (mods.shift || layer === "shift")) return { kind: "none" };
-  if (s.kind === "find") return findKey(key, layer, mods.shift, s.empty, s.numbered);
+  if (s.kind === "find") return findKey(key, layer, mods.shift, s.empty, s.numbered, mods.alpha);
   return layer === "alpha" || layer === "shift" ? sheetFlick(key, layer === "alpha", s.filter) : sheetKey(key, s.filter, s.numbered);
 }
 
@@ -160,6 +165,44 @@ export function sheetFace(key: Key, s: SheetCtx, mods: Mods, layer?: Layer): { t
   const job = sheetJob(key, s, mods, layer);
   if (job.kind === "letter") return { text: job.ch, dead: false };
   return { dead: job.kind === "none" };
+}
+
+/** A key while a sheet is open (docs/05 3.1; every sheet is in the viewport with the keys live below it, R770; route.ts sheetPress,
+ *  R930: here in the sheet's chunk). Shift and Alpha are ignored, and the sheet leaves them as they are; no key goes through to the
+ *  entry line; a key the sheet does not use is dead. A flick down types the key's letter into the filter, on any key (digits too;
+ *  docs/05 section 7 point 6); a flick up does nothing there. False: the key goes on to the line (sheetAct). */
+export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, mods?: Mods): boolean {
+  const shell = c.shell;
+  const sheet = shell.sheet;
+  if (!sheet) return false;
+  const level = sheet.level;
+  if (key.id !== "enter") sheet.disarm(); // R281: any press but Enter (the armed item's second pick) disarms
+  // R4b: while Your keys is open, a free key goes to its own slot's row (the cluster stays live above the sheet)
+  if (key.user && sheet.goKey(key.id, layerOf(modsFor(c, layer)))) return true;
+  const cell = level.grid?.key(c, key, layer); // R189: a matrix grid's cell is edited on the line (matrixGrid.svelte.ts)
+  if (cell === true && layer === undefined) c.session.clearModifiers(); // R300: a key the grid takes (Clear, Store ▶) uses a one-shot Shift up, as on the line
+  if (cell !== undefined) return cell;
+  // a grid whose cells show keys (Shift + 6, R18): a tap on such a key picks its cell, before its usual sheet job
+  const byPlace = layer === "alpha" || layer === "shift" ? undefined : sheet.pickKey(key.id);
+  if (byPlace) {
+    shell.picked(byPlace);
+    return true;
+  }
+  return sheetAct(c, key, layer, mods);
+}
+
+/** A letter from a hardware keyboard while a sheet is open (route.ts typeLetter, R930: here in the sheet's chunk). R300: an open
+ *  matrix grid is asked first, as sheetPress asks it (the letter as a type action): it starts the cell's edit, or types into it;
+ *  false when it leaves the letter to the line. Otherwise the letter goes to the level's filter (Find's in lower case, R4a). */
+export function sheetLetter(c: RouteCtx, ch: string): boolean {
+  const sheet = c.shell.sheet;
+  if (!sheet) return false;
+  sheet.disarm(); // R281
+  const grid = sheet.level.grid;
+  // (the grid's menu took it, or its read is still to come; R300: a letter as a key whose one action types it)
+  if (grid) return grid.key(c, { id: "letter", row: 0, col: 0, span: 1, cls: "fn", label: { primary: ch }, actions: { primary: { kind: "type", text: ch } } }, "primary") !== false;
+  if (sheet.level.filterable) sheet.level.type(sheet.id === "find" ? ch.toLowerCase() : ch);
+  return true;
 }
 
 /** What a key does in the open sheet (route.ts sheetPress, once the grid, a free key's slot and a cell's place have not taken it; here, in
@@ -177,8 +220,8 @@ export function sheetAct(c: RouteCtx, key: Key, layer: Layer | undefined, mods?:
   const m = find ? { shift: c.session.shift, alpha: c.session.alpha } : (mods ?? modsFor(c, layer));
   const k = sheetJob(key, { kind: find ? "find" : store ? "store" : "other", filter: level.filterable, numbered: level.numbered, empty: level.filter === "", cas: c.casKeys }, m, layer);
   if (store && k.kind !== "line" && layer === undefined) c.session.clearModifiers();
-  // in Find a one-shot Shift is used up by the key it types (its lock stays); elsewhere a sheet leaves it as it is
-  if (find && c.session.shift && !c.session.shiftLock) c.session.clearModifiers();
+  // in Find a one-shot Shift or Alpha is used up by the key it types (a lock stays, R889); elsewhere a sheet leaves it as it is
+  if (find && ((c.session.shift && !c.session.shiftLock) || (c.session.alpha && !c.session.alphaLock))) c.session.clearModifiers();
   switch (k.kind) {
     case "move":
       level.move(k.by);

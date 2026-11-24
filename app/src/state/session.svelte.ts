@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The calculator session: current view, modifier keys, settings and the history of both views.
 // Plain logic on Svelte 5 runes; the engine comes in through the Calc port.
-import { CalcCancelled, type AngleUnit, type CalcError, type Calc, type CalcSettings, type ConstTable, type NumberFormat, type UserName } from "../calc/port.ts";
+import type { AngleUnit, Calc, CalcSettings, ConstTable, NumberFormat, UserName } from "../calc/port.ts";
 import { ANS_KEY, pruneChips, validChips, type Chip, type ChipTable } from "../input/chips.ts";
 import { parseFailText } from "../input/errors.ts";
 import { loadEntry } from "../input/parser.ts";
-import { hasMessage, t, type MessageKey } from "../i18n/index.ts";
-import { EngineCrashError, EngineLoadError, EngineMemoryError, type StoredRead, type UncTerm } from "../engine/types.ts";
+import { t } from "../i18n/index.ts";
+import { EngineLoadError, EngineMemoryError, type StoredRead, type UncTerm } from "../engine/types.ts";
 import { type ComplexValue, type MarkInfo } from "../engine/format.ts";
-import { homeResultToLatex, type GroupSep } from "../render/home.ts";
+import type { GroupSep } from "../render/home.ts";
 import {
   DEFAULT_FMT_CYCLE,
   isFmtMode,
@@ -34,7 +34,7 @@ import { commaInput } from "../entry/commaInput.ts";
 import { chipOf, HISTORY_LIMIT, rowUid, withUnit } from "./results.ts";
 import { itemsOr, prefetchItems } from "./itemLoad.ts";
 import { targetRow } from "./pickRows.ts";
-import { onTidy, prefetchTidy, tidyOr } from "./tidyLoad.ts";
+import { onTidy } from "./tidyLoad.ts";
 import { storedReader } from "./storedLoad.ts";
 export { loadTidy } from "./tidyLoad.ts";
 import type { Copies, RemovedKind, RemovedRows } from "./removedRows.ts";
@@ -184,8 +184,6 @@ export const loadForms = (): Promise<typeof import("./cycleForms.ts") | undefine
 export const loadRemoved = (): Promise<typeof import("./removedRows.ts") | undefined> =>
   import("./removedRows.ts").then((m) => (removedCode = m), () => undefined);
 
-const errorText = (code: CalcError | undefined, fallback: string): string => // G223: words only the worker has (enEngine.ts): its text
-  code && hasMessage(`error.${code}`) ? t(`error.${code}` as MessageKey) : fallback;
 export const clamp = (n: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, Math.round(n)));
 const clampDigits = (n: number): number => Math.min(MAX_DIGITS, Math.max(1, Math.round(n)));
 
@@ -332,13 +330,6 @@ export class Session {
     } catch {
       /* the engine restarts on its own; the next job refreshes the list */
     }
-  }
-
-  /** A function the engine just took (`p(x):=…`) counts for the next parse at once; the names read after the job
-   *  (refreshNames) then replace this entry with the log's own (R56). */
-  private noteFunction(name: string, view: View, preview: string): void {
-    const rest = this.userNames.filter((u) => u.name !== name);
-    this.userNames = [...rest, { name, kind: "fn", preview, view, time: Date.now() }];
   }
 
   get items(): HistoryItem[] {
@@ -544,46 +535,7 @@ export class Session {
       return;
     }
     if (live.status !== "pending") return;
-    const s: CalcSettings = { digits: this.settings.digits, angle: this.settings.angle, format: this.settings.format };
-    try {
-      if (view === "home") {
-        const tidy = prefetchTidy();
-        const r = await this.calc.home(giac, s, named && m.chipFactsOf(named), consts); // an absent table is not sent (EngineCalc.home)
-        if (live.status !== "pending") return;
-        const latex = !r.ok ? "" : r.latex !== undefined ? await tidyOr(tidy, r.latex, homeResultToLatex(r.display)) : homeResultToLatex(r.display);
-        if (live.status !== "pending") return; // a Cancel while the tidy chunk loaded stands
-        live.status = r.ok ? "done" : "error";
-        live.text = r.ok ? r.display : errorText(r.error, r.display);
-        if (r.settingReset) live.settingReset = true;
-        if (r.ok && r.unitNames?.length) live.unitDropped = true; // G392: a stored name with a unit read, as a chip (R63)
-        // The value, its facts and the chip text, by the one rule (results.ts, G86)
-        Object.assign(live, m.homeItem(r, live.inexactInput === true, giac, s)); // (G211: with the text sent and the job's settings)
-        // A result that is not a number is drawn from Giac's latex(), as in CAS (R18f3); numbers from our formatter.
-        if (r.ok) live.resultLatex = latex;
-      } else {
-        const tidy = prefetchTidy();
-        const r = await this.calc.cas(giac, s);
-        if (live.status !== "pending") return;
-        const latex = r.ok ? await tidyOr(tidy, r.latex, r.latex) : "";
-        if (live.status !== "pending") return;
-        live.status = r.ok ? "done" : "error";
-        live.text = r.ok ? r.text : errorText(r.error, r.text);
-        if (r.settingReset) live.settingReset = true;
-        if (r.ok) live.resultLatex = latex;
-        if (r.ok && r.uses?.length) live.uses = r.uses;
-        Object.assign(live, m.casItem(r, live.inexactInput === true, giac, s));
-      }
-      if (defines && live.status === "done") this.noteFunction(defines, view, live.text);
-    } catch (e) {
-      if (live.status !== "pending") return;
-      if (e instanceof CalcCancelled) {
-        live.status = "cancelled";
-      } else {
-        live.status = "error";
-        // G183: our own line, never a JS error's text
-        live.text = t(e instanceof EngineMemoryError ? "error.memory" : e instanceof EngineCrashError ? "error.crashed" : "error.engine");
-      }
-    }
+    await m.runJob(this, live, view, giac, defines, named, consts); // R930: the engine call and the result, in the item chunk (state/jobRun.ts)
   }
 
   /** Stop the running job. History and variables survive; the engine restarts underneath. */
