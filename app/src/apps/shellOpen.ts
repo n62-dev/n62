@@ -68,7 +68,7 @@ export function shut(): void {
 /** The rest of AppShell.open, which has already set the app and its loading state: load it, then show the view asked
  *  for (default: the view it was left in, else its first). An app closed before this part came in opens no layer. */
 export async function open(s: AppShell, id: AppId, view?: ViewId): Promise<void> {
-  if (s.app === id) back ??= openLayer(() => s.close());
+  if (s.app === id && typeof history !== "undefined") back ??= openLayer(() => s.close()); // (no history: a unit test's shell)
   const l = await load(s, id);
   if (s.app !== id) return;
   const v = view ?? (l.instance.views.includes(s.view) ? s.view : (l.instance.views[0] as ViewId));
