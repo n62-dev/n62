@@ -197,6 +197,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R87:** no ISC or UIUC text in `LICENSES/`: yaml is build-time only, Emscripten's runtime ships under MIT (THIRD_PARTY.md). Would change if: a shipped part needs another licence's text.
 - **G116, the sweep oracle:** on atanh's cut it takes Giac's side (+π/2·i for a real x > 1), and an argument on a cut within noise is a skip. Would change if: a case shows Giac off the textbook side.
 - **G798, what a law's side claims:** `=` its exact value, `≈` every shown digit, `⚠ n` n digits (as the sweep's judge reads it), a bare `⚠` or `⚠ 0` nothing; so G622's inverse with ⚠ 14 on a wrong matrix fails its law. Would change if: the owner reads "with ⚠ on either side it passes" as every ⚠.
+- **G798's det rows (pass 239):** F479's family joins G622 (patch 0066 splits det's blocks and tests its double pivot); G622f2 runs casback. Would change if: det rows stay after it.
 - **Start chunk room (owner, 2026-11-09):** a package over the pin raises it as docs/04 8.3 says; one over the 63 kB budget gets a cut, never an allowance. Would change if: the owner moves the budget.
 - **R918, the unit view's entries budget (owner, 2026-11-24):** 42.6 kB, for the history-tap guard (0.59 kB). Would change if: the owner wants it cut.
 - **R872, R873 contrast (owner, 2026-11-24):** N62 Light HC Enter stays 2.79:1 (its label 7:1); Solarized's pad arrows stay 4.03 and 4.28:1. Would change if: the owner's look on the phone says otherwise.
