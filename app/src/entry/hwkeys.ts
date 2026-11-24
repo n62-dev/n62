@@ -30,7 +30,12 @@
 // R867: Ctrl+← → take the round pad's drag step (wordStep). The Ctrl, Alt and Meta combinations the table does not name stay with MathLive and the browser (copy, cut, select
 // all); a paste, Ctrl+V included, is field.ts's paste listener (R114). AltGr characters count as typed, and so do a Mac's Option characters that are ASCII punctuation
 // (Option + 5 is `[` on a German Mac; R131f1, optionChar).
+// R922 (F373): under an open sheet the line takes nothing that follows the focus (docs/05 rule 4): a key goes to the shell as
+// above (the sheet's own keys), and what would act on the line by itself here is the dead press: `<` `>` `!`, a character
+// outside ASCII (µ), a `)` `}` `]` that would leave its pair, Select all, cut and a word delete. field.ts does the same for a
+// system paste, MathLive's own text input and a cut from a menu.
 import type { MathfieldElement } from "mathlive";
+import type { Where } from "./appValue.ts";
 import { numberRunStart } from "./numberRun.ts";
 import { EMARK } from "./macros.ts";
 import { keyboard, type Key, type Layer, type Special } from "../keyboard/keyboard.ts";
@@ -48,6 +53,8 @@ export interface HwTarget {
   readonly decimalComma: boolean;
   /** R198: the user's names (session.userNames): typed before `(`, they stay the user's. */
   readonly stored?: readonly string[];
+  /** R922: the shell, whose open sheet takes what follows the focus. */
+  readonly shell?: Where | undefined;
   /** A palette symbol typed on the hardware keyboard (`<`, `>`, `!`): `latex`, the Shift palettes' own insert. */
   onSymbol(latex: string, repeat: boolean): void;
   /** Press a keypad key in a layer, as a tap would (the shell's path: Ans first, one-line forms, open sheets). `repeat`
@@ -87,6 +94,9 @@ const ARROWS: Readonly<Record<string, string>> = { ArrowLeft: "left", ArrowRight
 /** The Shift palettes' symbols typed by one ASCII character, and their inserts (spec/keyboard.yaml `relations` lt, gt;
  *  `symbols` fact). `%` is a key's since R323 (Shift + 0, KEYS). */
 const PALETTE: Readonly<Record<string, string>> = { "<": "<", ">": ">", "!": "!" };
+/** R922: the chords the table names none for that MathLive acts on the line with (Select all, cut, a word delete), lower case:
+ *  dead under a sheet. Copy, paste (field.ts's listener) and the browser's own chords stay theirs. */
+const LINE_CHORDS = new Set(["a", "x", "backspace", "delete"]);
 
 /** The keypad key and layer a hardware control key presses (R45, F38): Backspace is ⌫, Delete is Shift + ⌫ (Del), the
  *  arrows are the pad's arrow keys, Enter is Enter and Escape is Esc. Shift + an arrow is none (MathLive's selection on
@@ -170,8 +180,9 @@ export function hardwareKey(ev: KeyboardEvent, tg: HwTarget): boolean {
   const ch = ev.key;
   const mf = tg.field;
   if (!mf || ev.isComposing) return false;
+  const sheet = !!tg.shell?.sheet; // R922: a sheet takes what follows the focus
   // R119, R131: a chord the table names presses its key (Ctrl+Z, Alt+S); every other one stays MathLive's (copy, select all)
-  if (isChord(ev)) return wordStep(ev, tg) || pressChord(ev, tg);
+  if (isChord(ev)) return wordStep(ev, tg) || pressChord(ev, tg) || (sheet && lineChord(ev, tg));
   if (ch.length !== 1) {
     // a plain Enter or Escape: the field's own listener presses the same keys (EntryController: onKey, R45)
     if ((ch === "Enter" || ch === "Escape") && !ev.shiftKey) return false;
@@ -185,15 +196,15 @@ export function hardwareKey(ev: KeyboardEvent, tg: HwTarget): boolean {
     else return false;
     return true;
   }
-  // a character outside ASCII (é, µ, π from a keyboard layout) is left to MathLive, as before
-  if (ch < " " || ch > "~") return false;
+  // a character outside ASCII (é, µ, π from a keyboard layout) is left to MathLive, as before; under a sheet a dead press
+  if (ch < " " || ch > "~") return sheet && dead(ev, tg);
   if ((ch === "e" || ch === "E") && afterNumber(mf)) {
     tg.onKey("emark", "primary", ev.repeat);
     return true;
   }
   const closes = CLOSES[ch];
   if (closes) {
-    if (leave(mf, closes)) {
+    if (!sheet && leave(mf, closes)) {
       mf.focus();
       tg.onPress(ev.repeat);
     } else if (ch === "|") tg.onKey("neg", "shift", ev.repeat);
@@ -203,16 +214,27 @@ export function hardwareKey(ev: KeyboardEvent, tg: HwTarget): boolean {
   // R57: with the decimal comma both `.` and `,` type the decimal mark (the keypad's `.` key); `;` stays the separator
   const k = KEYS.get(tg.decimalComma && ch === "," ? "." : ch);
   const sym = PALETTE[ch];
-  const call = ch === "(" && tg.onDesk ? callKey(mf, tg) : undefined;
+  const call = ch === "(" && tg.onDesk && !sheet ? callKey(mf, tg) : undefined;
   if (call) tg.onDesk?.("hw:name", call, "primary", ev.repeat); // R198: counted apart from the ( ) key's `paren:hw`
   else if (k && DESK_CHARS.has(ch)) desk({ key: k[0], layer: k[1] }, ch, ev, tg);
   else if (k) tg.onKey(k[0], k[1], ev.repeat);
-  else if (sym !== undefined) tg.onSymbol(sym, ev.repeat);
+  else if (sym !== undefined) void (sheet ? tg.onDead(ev.repeat) : tg.onSymbol(sym, ev.repeat));
   else if (/^[A-Za-z]$/.test(ch)) {
     askIndex();
     tg.onLetter(ch, ev.repeat);
   } else tg.onDead(ev.repeat);
   return true;
+}
+
+/** R922: the dead press for a key the line would take by itself under a sheet; true (handled). */
+function dead(ev: KeyboardEvent, tg: HwTarget): true {
+  tg.onDead(ev.repeat);
+  return true;
+}
+
+/** R922: a chord MathLive edits or selects the line with (LINE_CHORDS), Ctrl or Cmd without Alt: under a sheet the dead press. */
+function lineChord(ev: KeyboardEvent, tg: HwTarget): boolean {
+  return (ev.ctrlKey || ev.metaKey) && !ev.altKey && LINE_CHORDS.has(ev.key.toLowerCase()) && dead(ev, tg);
 }
 
 /** R198: a name of one letter is a variable's or a user function's (`f(`); pi is π, which Giac's help lists as a function;

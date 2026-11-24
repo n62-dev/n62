@@ -16,6 +16,8 @@ export async function fieldFor(c: EntryController, Field: typeof MathfieldElemen
     enter: (repeat) => c.onKey("enter", "primary", repeat),
     escape: (repeat) => c.onKey("esc", "primary", repeat),
     paste: (text) => c.onPaste(text),
+    sheet: () => !!c.shell?.sheet, // R922
+    dead: () => c.onDead(false),
   });
   c.mf = mf;
   void import("./namemarks.ts").then((n) => (c.marks = new n.NameMarks(mf)).setNames(c.stored));

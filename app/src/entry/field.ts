@@ -115,6 +115,10 @@ export interface FieldEvents {
   escape(repeat: boolean): void;
   /** A system paste on the field (Ctrl+V, Shift+Insert, the context menu), with its text (R114). */
   paste(text: string): void;
+  /** R922: a sheet is open: it takes what follows the focus, so a paste, MathLive's own text input and a cut are `dead`. */
+  sheet(): boolean;
+  /** R922: the dead press (docs/05 3.7), a press all the same (R107). */
+  dead(): void;
 }
 
 /**
@@ -182,10 +186,12 @@ export async function makeField(Field: typeof MathfieldElement, host: HTMLElemen
     (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
-      on.paste(ev.clipboardData?.getData("text/plain") ?? "");
+      if (on.sheet()) on.dead(); // R922 (F372): never through a sheet to the line
+      else on.paste(ev.clipboardData?.getData("text/plain") ?? "");
     },
     { capture: true },
   );
+  sheetShut(mf, on);
   mf.addEventListener("keydown", (ev) => {
     if (ev.key !== "Enter") return;
     ev.preventDefault();
@@ -194,6 +200,35 @@ export async function makeField(Field: typeof MathfieldElement, host: HTMLElemen
   settleClick(mf);
   lineTouch(mf, mf.parentElement ?? mf, (dx) => scrollLine(mf, dx));
   return mf;
+}
+
+/**
+ * R922 (F373): under a sheet the line takes no text the browser hands the field itself: MathLive's own text input (µ from a
+ * keyboard layout, an IME's composition, the browser's insertText) and a cut from a menu (Ctrl+X is hwkeys.ts's). The capture
+ * on the host runs before MathLive's listeners on its hidden textarea; MathLive's own events on the host (its `input` after
+ * an insert of ours) are left alone. A composition's text never reaches MathLive, so the textarea is emptied, else it would
+ * come with the next character typed once the sheet is closed. The dead press once per character or composition.
+ * Not MathLive's read-only mode: it blocks our own edits made through executeCommand (an `insert` command left the line empty,
+ * measured 2026-11-24; runOnField types and deletes that way), while a sheet's pick may still have to edit the line.
+ */
+function sheetShut(mf: MathfieldElement, on: FieldEvents): void {
+  const shut = (ev: Event): boolean => {
+    if (ev.composedPath()[0] === mf || !on.sheet()) return false;
+    ev.preventDefault();
+    ev.stopPropagation();
+    return true;
+  };
+  const empty = (ev: Event): void => {
+    const t = ev.composedPath()[0];
+    if (t instanceof HTMLTextAreaElement) t.value = "";
+  };
+  const capture = { capture: true };
+  mf.addEventListener("cut", (ev) => void (shut(ev) && on.dead()), capture);
+  mf.addEventListener("beforeinput", (ev) => void (shut(ev) && !ev.isComposing && on.dead()), capture);
+  mf.addEventListener("input", (ev) => void (shut(ev) && empty(ev)), capture);
+  mf.addEventListener("compositionstart", (ev) => void shut(ev), capture);
+  mf.addEventListener("compositionupdate", (ev) => void shut(ev), capture);
+  mf.addEventListener("compositionend", (ev) => void (shut(ev) && (empty(ev), on.dead())), capture);
 }
 
 /**
