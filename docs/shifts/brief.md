@@ -67,6 +67,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 888e2e | R925 ×10ⁿ takes no unit slot | ron, Opus | `p1/ron-tenpowslot` | R918 |
 | 888e3 | R889 Alpha in a search types its letter | ron, Opus | `p1/ron-sheetalpha` | – |
 | 888e4 | R891 sheets sit on the tab bar | ron, Opus | `p1/ron-sheetline` | – |
+| 888e4r | [R930](packages/R930.md) 1 kB room in the start chunk | ron, Opus | `p1/ron-startroom` | – |
 | 888e4a | [R924](packages/R924.md) the mark takes no tap | ron, Opus | `p1/ron-marknotap` | – |
 | 888e4b | [R926](packages/R926.md) back closes an app | ron, Opus | `p1/ron-appback` | R919, R924 |
 | 888e4c | [A271](packages/A271.md) back twice to leave (waits: a device) | annabell, Sonnet | `p1/annabell-backtwice` | R926 |
@@ -152,8 +153,8 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| B6b | [G622](packages/G622.md) float pivots relative to the matrix | gorge, Opus | `p1/gorge-floatrref` | G790 |
-| B6c | [G792](packages/G792.md) sin, cos of a float matrix | gorge, Opus | `p1/gorge-matsincos` | – |
+| B6b | [G622](packages/G622.md) float pivots relative to the matrix | gorge, Opus | `p1/gorge-floatrref` | R930 (rerun of #1533) |
+| B6c | [G792](packages/G792.md) sin, cos of a float matrix | gorge, Opus | `p1/gorge-matsincos` | – (rerun of #1538: golden time only) |
 | B6d | G793 lcm of integers is positive | gorge, Opus | `p1/gorge-lcmsign` | – |
 | B6e | G794 CAS float lists get a mark | gorge, Opus | `p1/gorge-caslistmark` | – |
 | B6f | G797 the sweep builds matrices | gorge, Opus | `p1/gorge-sweepmatrix` | – |
