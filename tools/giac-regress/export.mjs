@@ -644,6 +644,9 @@ export const PATCHED_IDS = new Map([
   // G551 (F302): misc.cc bitand, bitor and bitxor read a negative _INT_ beside a _ZINT as 2^32+v; the g551-keep-* rows pass on
   // stock and stay in the check file; the sweep of all pairs of 24 values is a written line per operation below
   ...["bitand-neg2-2^64-1", "bitand-neg2-hex-ones", "bitxor-neg1-2^63", "bitor-neg1-2^31", "bitand-neg1-neg2^31", "bitand-neg1-2^70"].map((k) => [`g551-${k}`, "0062-bitops-signed-small-integer.patch"]),
+  // G793: usual.cc _lcm kept the sign of the product of integers (lcm(-4,6) = -12); the g793-keep-* rows pass on stock and stay in the check file
+  // (the list result of g793-lcm-pairs-neg4-6 and the g793-cas-* rows are not exported)
+  ...["lcm-neg4-6", "lcm-4-neg6", "lcm-list-neg4-6-10", "lcm-neg3-neg5-neg7", "lcm-neg2^70-3", "lcm-neg4-alone"].map((k) => [`g793-${k}`, "0065-lcm-integers-positive.patch"]),
 ]);
 // G122: Giac's exact answer is right (patch 0014), but pc()'s evalf of it at Digits 40 cancels the digits of a large k*pi
 // (asin(cos(30!)) = -pi/2+30!-k*pi with k of 32 digits keeps about 7, -pi/2+10^50-k*pi none); Home raises the precision
