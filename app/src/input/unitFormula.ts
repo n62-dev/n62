@@ -7,6 +7,7 @@
 import type { ChipTable } from "./chips.ts";
 import { sigmaChipOf, uncChipsIn } from "./chipUnit.ts";
 import { latexToGiacInfo } from "./latex-to-giac.ts";
+import { TEN_POWER } from "./tenPower.ts";
 import type { UnitRequest, UnitSlot } from "../units/types.ts";
 
 /** The end slot's prompt id. */
@@ -46,11 +47,14 @@ function groupEnd(s: string, i: number): number {
 }
 
 /** Where the number that starts at `i` ends: digits, the point, the decimal comma `{,}`, an ᴇ mark (`\emark` or the
- *  character) and its signed digits, and a mixed number's `\tfrac` (2½ is one quantity). A power is not part of it:
- *  the parser reads a slot only right after a number literal, so `5^{2}`'s slot goes before the power, (5 u)² (R28). */
+ *  character) and its signed digits, or (R925) `\times10^{n}` / `\cdot10^{n}` with a whole n (tenPower.ts, as the parser
+ *  reads it), and a mixed number's `\tfrac` (2½ is one quantity). Any other power is not part of it: the parser reads a
+ *  slot only right after a number literal, so `5^{2}`'s slot goes before the power, (5 u)² (R28). */
 function numberEnd(s: string, i: number): number {
   const m = /^(?:\d|\.|\{,\})+(?:(?:\\emark|ᴇ)\s*(?:\{[-−+]?\d+\}|[-−+]?\d+))?/.exec(s.slice(i));
   let j = i + (m?.[0].length ?? 0);
+  const ten = m && !/ᴇ|emark/.test(m[0]) ? TEN_POWER.exec(s.slice(j)) : null;
+  if (ten) return j + ten[0].length;
   const t = /^\\tfrac(?![A-Za-z])/.exec(s.slice(j));
   if (t) j = groupEnd(s, groupEnd(s, j + t[0].length));
   return j;
@@ -118,7 +122,9 @@ function afterSigma(s: string, j: number): { end: number; chip?: string | undefi
   const k = j + m[0].length;
   const res = /^\\res\s*\{(\d+)\}/.exec(s.slice(k));
   if (!res && !/^(?:\d|\.)/.test(s.slice(k))) return { end: j };
-  const e = res ? groupEnd(s, k + res[0].length) : numberEnd(s, k);
+  const e0 = res ? groupEnd(s, k + res[0].length) : numberEnd(s, k);
+  // R925: ×10ⁿ after a σ chip or an ᴇ σ goes with the σ as after a plain one (numberEnd), so the parser sees it there (and refuses it)
+  const e = e0 + (TEN_POWER.exec(s.slice(e0))?.[0].length ?? 0);
   // a `\%` after a chip goes with the σ too, as after a number, so the parser sees it there (and refuses it)
   const pct = /^\s*\\%/.exec(s.slice(e));
   return { end: pct ? e + pct[0].length : e, chip: res ? `res:${res[1] as string}` : undefined };
