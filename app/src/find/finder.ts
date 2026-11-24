@@ -175,8 +175,8 @@ export interface SlotTarget {
 
 /** Math (R4a): Find over the history or view, as a list that takes letters (decisions.md R21). A pick (docs/04 3.6)
  *  puts a constant on the line as a chip with its value and uncertainty, anything else as its insert (a function
- *  with the cursor in its first argument). R893: a unit in Home or CAS (which have no units, docs/04 4.3) opens the unit
- *  view on the line with it in the active slot, as the units key does (the keys pressed meanwhile wait, R8). With `slot`
+ *  with the cursor in its first argument). R893: a unit or a prefix in Home or CAS (which have no units, docs/04 4.3) opens the unit
+ *  view on the line with it in the active slot (a prefix armed), as the units key does (the keys pressed meanwhile wait, R8). With `slot`
  *  (R4b) a pick sets that free key's slot instead. */
 export function showFind(c: RouteCtx, index: FindIndex, slot?: SlotTarget): void {
   const { shell, entry } = c;
@@ -184,7 +184,7 @@ export function showFind(c: RouteCtx, index: FindIndex, slot?: SlotTarget): void
   if (slot?.id.startsWith("cell:")) return void import("../units/find.ts").then((m) => m.showCellFind(shell, index, slot.id.slice(5), LEG[slot.layer]));
   const pick = (it: FindItem): void => {
     if (slot) return slot.userKeys.set(slot.id, slot.layer, bindingOf(it));
-    if (it.kind === "unit" && shell.app === null) return lazy(c, import("../units/open.ts").then((m) => m.openUnits(c, undefined, it)));
+    if ((it.kind === "unit" || it.kind === "pfx") && shell.app === null) return lazy(c, import("../units/open.ts").then((m) => m.openUnits(c, undefined, it)));
     putOnLine(entry, it);
   };
   const { categories, search } = findMenu(index, pick);
