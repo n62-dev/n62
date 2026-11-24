@@ -118,7 +118,7 @@ describe("Settings › Appearance (R50e)", () => {
   it("is the first section: Theme with its dots, Brightness, and the four switches with one line each (Key shadows: R156, Key pop-ups: R163)", () => {
     const s = settings(1);
     expect(s.path).toBe("Mode › Settings › Appearance");
-    expect(s.level.items.map((x) => x.id)).toEqual(["theme", "brightness", "contrast", "plain", "shadow", "pops"]);
+    expect(s.level.items.map((x) => x.id)).toEqual(["theme", "brightness", "contrast", "plain", "shadow", "pops", "findFull"]);
     expect(s.level.items.length).toBeLessThanOrEqual(7); // a level of settings holds at most seven rows
     expect(byId(s, "theme")?.dots).toHaveLength(5);
     expect(byId(s, "theme")?.value).toBe("N62");
@@ -185,6 +185,20 @@ describe("Settings › Appearance (R50e)", () => {
     expect(s.pickNumber(6)).toEqual({ kind: "stay" });
     expect(session.settings.look.pops).toBe(true);
     expect(pops).toEqual([false, true]);
+  });
+  it("R932: Find opens full screen is the last row, a switch off by default; a digit, Enter or a tap toggles it and stays", () => {
+    const s = settings(1);
+    expect(s.level.items.map((x) => x.id).at(-1)).toBe("findFull");
+    expect(byId(s, "findFull")).toMatchObject({ label: "Find opens full screen", selected: false });
+    expect(byId(s, "findFull")?.hint).toBeUndefined(); // one string, the label
+    expect(s.pickNumber(7)).toEqual({ kind: "stay" }); // a digit
+    expect(session.settings.look.findFull).toBe(true);
+    expect(byId(s, "findFull")?.selected).toBe(true);
+    s.level.highlight = at(s, "findFull");
+    expect(s.enter()).toEqual({ kind: "stay" }); // Enter
+    expect(session.settings.look.findFull).toBe(false);
+    expect(s.activate(at(s, "findFull"))).toEqual({ kind: "stay" }); // a tap
+    expect(session.settings.look.findFull).toBe(true);
   });
 });
 

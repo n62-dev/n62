@@ -89,8 +89,34 @@ describe("migrateSettings", () => {
   });
 });
 
+describe("R932: Find opens full screen (look.findFull)", () => {
+  it("reads false on a fresh profile and on a stored look without it, with no migration step", async () => {
+    expect(defaultSettings.look.findFull).toBe(false);
+    const fresh = new Session(new FakeCalc(), fakeKv());
+    await fresh.restoreSettings();
+    expect(fresh.settings.look.findFull).toBe(false);
+    const kv = fakeKv();
+    kv.data.set("settings", { schema: SETTINGS_SCHEMA, look: { family: "bw", brightness: "light", contrast: false, plain: false, shadow: true, pops: true, findFull: false } });
+    const old = new Session(new FakeCalc(), kv);
+    await old.restoreSettings();
+    expect(old.settings.look.findFull).toBe(false);
+    expect(migrateSettings({ schema: SETTINGS_SCHEMA, look: { family: "bw" } }).migrated).toBe(false);
+  });
+  it("set to true, it is stored and survives a reload", async () => {
+    const kv = fakeKv();
+    const s = new Session(new FakeCalc(), kv);
+    await s.restoreSettings();
+    s.settings.look = { ...s.settings.look, findFull: true };
+    s.save();
+    expect((kv.data.get("settings") as { look: { findFull: unknown } }).look.findFull).toBe(true);
+    const again = new Session(new FakeCalc(), kv);
+    await again.restoreSettings();
+    expect(again.settings.look.findFull).toBe(true);
+  });
+});
+
 describe("the look (R50e, schema 3)", () => {
-  const first = { family: "n62", brightness: "dark", contrast: true, plain: false, shadow: true, pops: true } as const;
+  const first = { family: "n62", brightness: "dark", contrast: true, plain: false, shadow: true, pops: true, findFull: false } as const;
   it("every schema before 3 gets the first-start look and is marked as migrated", () => {
     for (const old of [{ digits: 9 }, { schema: 2, digits: 9 }]) {
       const { settings, migrated } = migrateSettings(old, first);
@@ -100,7 +126,7 @@ describe("the look (R50e, schema 3)", () => {
     }
   });
   it("a stored look wins over the first-start look, field by field", () => {
-    const stored = { schema: 3, look: { family: "solarized", brightness: "light", contrast: false, plain: true, shadow: false, pops: false } };
+    const stored = { schema: 3, look: { family: "solarized", brightness: "light", contrast: false, plain: true, shadow: false, pops: false, findFull: false } };
     const { settings, migrated } = migrateSettings(stored, first);
     expect(migrated).toBe(true); // schema 3 → 4 (R57) keeps the look
     expect(settings.look).toEqual(stored.look);
@@ -108,7 +134,7 @@ describe("the look (R50e, schema 3)", () => {
     expect(migrateSettings({ schema: 3, look: 7 }, first).settings.look).toEqual(first);
   });
   it("migrating from schema 1, 2 or 3 to 4 keeps a stored look and gives the point as the decimal mark (R57)", () => {
-    const look = { family: "bw", brightness: "light", contrast: true, plain: true, shadow: true, pops: true };
+    const look = { family: "bw", brightness: "light", contrast: true, plain: true, shadow: true, pops: true, findFull: false };
     for (const schema of [undefined, 2, 3]) {
       const { settings, migrated } = migrateSettings({ ...(schema === undefined ? {} : { schema }), digits: 9, look }, first);
       expect(migrated).toBe(true);
@@ -116,7 +142,7 @@ describe("the look (R50e, schema 3)", () => {
     }
   });
   it("the defaults are N62, System, High contrast and Plain keys off, Key shadows on", () => {
-    expect(defaultSettings.look).toEqual({ family: "n62", brightness: "system", contrast: false, plain: false, shadow: true, pops: true });
+    expect(defaultSettings.look).toEqual({ family: "n62", brightness: "system", contrast: false, plain: false, shadow: true, pops: true, findFull: false });
   });
   it("restoring tells the page the look it read", async () => {
     const kv = fakeKv();
@@ -125,7 +151,7 @@ describe("the look (R50e, schema 3)", () => {
     const seen: unknown[] = [];
     s.onLook = (l) => seen.push(l);
     await s.restoreSettings();
-    expect(seen).toEqual([{ family: "bw", brightness: "light", contrast: false, plain: false, shadow: true, pops: true }]); // R156: a look stored before Key shadows has them on
+    expect(seen).toEqual([{ family: "bw", brightness: "light", contrast: false, plain: false, shadow: true, pops: true, findFull: false }]); // R156: a look stored before Key shadows has them on
   });
   it("a start with nothing stored writes its look, so a later start does not ask the phone again", async () => {
     const kv = fakeKv();

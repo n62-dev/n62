@@ -189,6 +189,9 @@ export function showFind(c: RouteCtx, index: FindIndex, slot?: SlotTarget): void
   };
   const { categories, search } = findMenu(index, pick);
   shell.showFind(slot ? t("slot.title") : t("title"), categories, search);
+  // R932, Settings › Appearance › Find opens full screen: the sheet opens filling the screen. It is open now: every caller
+  // waits for the sheet's view, which brings its model (App.svelte openFind, onFind), so the open is not deferred.
+  if (shell.sheet?.id === "find" && c.session.settings.look.findFull) shell.sheet.full = true;
 }
 
 type MatrixCtx = Parameters<typeof import("../views/matrixSheet.ts").showMatrix>[0]; // (the route's context: its shell, entry line and session)
