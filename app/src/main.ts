@@ -23,7 +23,7 @@ import { plotHook } from "./apps/function/plotHook.ts";
 import { reloadOnMissingChunk } from "./state/chunkReload.ts";
 import { claimWriter, yieldWriter } from "./state/writer.ts";
 import type { unitPad } from "./units/padView.svelte.ts";
-import type { OpenUnitView } from "./units/open.ts";
+import type { OpenUnitView, UnitHooks } from "./units/open.ts";
 
 // A lazy chunk missing after a deploy (A49): reload once for the new index.html; the half-typed line is kept on pagehide.
 addEventListener("vite:preloadError", () => void reloadOnMissingChunk(sessionStorage, Date.now(), () => location.reload()));
@@ -101,7 +101,7 @@ mount(App, { target: document.getElementById("app") as HTMLElement, props: { ses
 // Test hook (desktop Playwright): read the entry line and the session without reaching into the DOM.
 declare global {
   interface Window {
-    n62: { entry: EntryController; session: Session; shell: AppShell; userKeys: UserKeys; calc: Calc; plot: typeof plotHook; renderStats: { count: number }; unitPad?: typeof unitPad; unitView?: OpenUnitView | undefined; yieldWriter: typeof yieldWriter };
+    n62: { entry: EntryController; session: Session; shell: AppShell; userKeys: UserKeys; calc: Calc; plot: typeof plotHook; renderStats: { count: number }; unitPad?: typeof unitPad; unitView?: OpenUnitView | undefined; unitHooks?: UnitHooks | undefined; yieldWriter: typeof yieldWriter };
   }
 }
 // yieldWriter: a kill in the e2e tests (persist.spec.ts) lets go of the store without the pagehide flush (R95)
