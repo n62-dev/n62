@@ -421,7 +421,7 @@ The types live in the code; this is the map. Views see `Calc` (`app/src/calc/por
 
 | Item | Budget | State | Enforced by |
 |---|---|---|---|
-| Start chunk | ≤ 180 kB raw, ≤ 63 kB gzip; pin `START_PIN_GZIP` | its value and each raise with both sizes: size-check.ts. A package growing the chunk past it raises it to its size after merging phase-1 plus 0.05 kB, with the reason; no start file may hold a `LAZY_PARTS` module (chunk-modules.json; a module inside another lazy chunk passes). `tools/probes/start-chunk.mjs` lists bytes per source | size test (`npm run size`) |
+| Start chunk | ≤ 180 kB raw, ≤ 63 kB gzip, gzip measured with hashed names held fixed (A272); pin `START_PIN_GZIP` | each raise with both sizes: size-check.ts. A package past it raises it to its size after merging phase-1 plus 0.05 kB; no start file holds a `LAZY_PARTS` module (chunk-modules.json; one inside another lazy chunk passes). `tools/probes/start-chunk.mjs` lists bytes per source | size test (`npm run size`) |
 | Inline scripts of `index.html` (run before the first paint, outside the start chunk) | pin 1.53 kB gzip (`INLINE_PIN_GZIP`; per script, summed) | 1.53 kB | size test |
 | MathLive chunk (after the keypad) | ≤ 830 kB raw | 807.74 kB | size test |
 | Find UI chunk | ≤ 30 kB raw | 8.04 kB raw: the chunk that holds `src/find/finder.ts` (dynamic entry or shared chunk); a build without it fails | size test |
