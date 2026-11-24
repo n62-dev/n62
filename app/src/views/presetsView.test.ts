@@ -17,6 +17,20 @@ import { UnitCells } from "../units/userCells.svelte.ts";
 import { askName, groupValue, nameFrom, presetRow, setPresetsModel, summary } from "./presetsView.svelte.ts";
 import { fakeKv } from "../state/fakeKv.ts";
 
+// R919: the prompt's back layer, without the browser's history (this file runs in node): `layers` holds the open ones,
+// and back pops the newest.
+const layers = vi.hoisted(() => [] as (() => void)[]);
+vi.mock("../input/backLayerFront.ts", () => ({
+  openLayer: (close: () => void) => {
+    layers.push(close);
+    return () => {
+      const i = layers.indexOf(close);
+      if (i >= 0) layers.splice(i, 1);
+    };
+  },
+}));
+const back = (): void => layers.pop()?.();
+
 function store(rec?: RawRecord): PresetStore {
   const s = { rec, read: () => Promise.resolve(s.rec), write: (value: StoredPresets) => ((s.rec = { "@n62": DATA_VERSION, value }), Promise.resolve()) };
   return s;
@@ -32,7 +46,10 @@ async function setup(rec?: RawRecord | "unreadable") {
 }
 const items = (row: MenuItem): readonly MenuItem[] => row.submenu?.items ?? [];
 
-afterEach(() => setPresetsModel(null));
+afterEach(() => {
+  setPresetsModel(null);
+  layers.length = 0;
+});
 
 describe("what a preset says", () => {
   it("its line: the Mode values, the decimal mark, the free keys and a theme that is not the default", () => {
@@ -249,6 +266,45 @@ describe("Mode's Preset row", () => {
     shell.prompt?.cancel();
     expect(locks.at(-1)).toBe(false);
     expect(presets.list.map((p) => p.name)).toEqual(["ab"]);
+  });
+  it("R919: a name prompt opens a back layer a tick after it starts; back ends it as Esc does, and an end some other way releases it", async () => {
+    const { session, presets } = await setup();
+    const shell = { prompt: null as EntryPrompt | null, sheet: null, app: null, view: "symb" };
+    let line = "7+1";
+    const entry = { get value() { return line; }, chips: {}, set: (latex: string) => void (line = latex), run: (a: ActionBody) => void (line += a.kind === "type" ? a.text : ""), clear: () => void (line = "") };
+    const locks: boolean[] = [];
+    const host = { shell, entry, alpha: (on: boolean) => void locks.push(on), data: (run: (c: ClipActions) => void) => run({ say: () => {} } as unknown as ClipActions) };
+    const save = () => items(presetRow(session, host)).find((r) => r.id === "save")?.run?.();
+    save();
+    expect(layers).toHaveLength(0); // (a tick later: after the Alpha lock's own layer)
+    await vi.waitFor(() => expect(layers).toHaveLength(1));
+    shell.prompt?.key({ kind: "type", text: "z" });
+    back();
+    expect(shell.prompt).toBeNull();
+    expect(line).toBe("7+1");
+    expect(locks).toEqual([true, false]);
+    save();
+    await vi.waitFor(() => expect(layers).toHaveLength(1));
+    shell.prompt?.key({ kind: "special", name: "esc" }); // Esc ends it: its layer goes with it
+    expect(layers).toHaveLength(0);
+    save();
+    shell.prompt?.key({ kind: "special", name: "esc" }); // ended before its layer was due: none opens
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(layers).toHaveLength(0);
+    expect(presets.list).toEqual([]);
+  });
+  it("R919: a prompt held for the entry field has its back layer too, and back ends it before the field is up", async () => {
+    const { session } = await setup();
+    const shell = { prompt: null as EntryPrompt | null, sheet: null, app: null, view: "symb" };
+    let line = "";
+    const entry = { get value() { return line; }, chips: {}, set: (latex: string) => void (line = latex), run: () => {}, clear: () => {}, fieldPending: true, fieldUp: new Promise<void>(() => {}) };
+    const locks: boolean[] = [];
+    items(presetRow(session, { shell, entry, alpha: (on: boolean) => void locks.push(on) })).find((r) => r.id === "save")?.run?.();
+    await vi.waitFor(() => expect(layers).toHaveLength(1));
+    back();
+    expect(shell.prompt).toBeNull();
+    expect(locks).toEqual([true, false]);
   });
   it("R776: a plain prompt (a field of the unit form) has no hint and leaves Alpha as it is", async () => {
     const shell = { prompt: null as EntryPrompt | null, sheet: null, app: null, view: "symb" };

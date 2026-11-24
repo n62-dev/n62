@@ -6,8 +6,9 @@
 // a sheet over the folded keypad): one closed under another stays on the stack, released, and its entry goes back with
 // the layer above it. The layers (R700 lists them; each is taken back when its state ends some other way): a pick sheet
 // and Settings (App.svelte), the fold, a picked history row and an armed or locked Shift or Alpha (App.svelte), the
-// unit view (units/open.ts: its alternatives row first), the first-start tips (views/tipsHost.ts). The last opened closes
-// first. No dependency.
+// unit view (units/open.ts: its alternatives row first), the first-start tips (views/tipsHost.ts), a name prompt (askName in
+// views/presetsView.svelte.ts, over the Alpha lock it starts, so one back ends both; R919). The last opened closes first.
+// No dependency.
 
 interface Layer {
   readonly close: () => void;
