@@ -114,6 +114,13 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   // line's chips (Ans is never stored)
   const ans = c.session.lastChip();
   const parseChips: ChipTable = ans ? { ...chips, [ANS_KEY]: ans } : chips;
+  // R894: the result is one Home row (docs/04 4.3), so from CAS the view opens in Home, where the row shows under it and
+  // after Esc. As the place key does outside an app (route.ts "switch"): the pick goes (it names a CAS row), then
+  // session.setView; not App's goTo, whose shell.close clears a line not typed (a picked row's input) and is for apps
+  if (c.session.view !== "home") {
+    c.picked = null;
+    c.session.setView("home");
+  }
   const me = {};
   visit = me;
   let made: UnitView | undefined;
