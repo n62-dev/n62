@@ -37,12 +37,12 @@ describe("sheetFace: a filtered list (Vars, Find, Memory share one sheet; the ot
 });
 
 describe("sheetFace: Find (lower case, Shift types the key's own character)", () => {
-  it("Vars a, sin g, Tmpl c, x d; the flick down a", () => {
+  it("Vars a, sin g, Tmpl c, x x; the flick down a", () => {
     const s = ctx("find");
     expect(face("vars", s).text).toBe("a");
     expect(face("sin", s).text).toBe("g");
     expect(face("tmpl", s).text).toBe("c");
-    expect(face("x", s).text).toBe("d");
+    expect(face("x", s).text).toBe("x"); // R889: the x key types x in a search (its letter d by Alpha or a flick down)
     expect(face("vars", s, { shift: false, alpha: true }, "alpha")).toEqual({ text: "a", dead: false });
   });
   it("a digit picks on an empty query (its own face) and types itself after a letter", () => {
@@ -57,6 +57,30 @@ describe("sheetFace: Find (lower case, Shift types the key's own character)", ()
     expect(face("dot", s, SHIFT)).toEqual({ text: ".", dead: false });
     expect(face("enter", s, SHIFT)).toEqual({ dead: false });
     expect(face("shift", s, SHIFT)).toEqual({ dead: false });
+  });
+});
+
+describe("R889: Alpha armed in Find, Vars or Memory types the key's letter; the x key types x", () => {
+  const ALPHA = { shift: false, alpha: true };
+  it("Alpha + 7 is q on an empty query and after a letter; R S U V W Y Z on 8 9 4 5 6 1 2 too", () => {
+    expect(face("d7", ctx("find"), ALPHA)).toEqual({ text: "q", dead: false });
+    expect(face("d7", ctx("find", { empty: false }), ALPHA)).toEqual({ text: "q", dead: false });
+    const letters: Record<string, string> = { d8: "r", d9: "s", d4: "u", d5: "v", d6: "w", d1: "y", d2: "z" };
+    for (const [id, ch] of Object.entries(letters)) expect(sheetJob(key(id), ctx("find"), ALPHA, undefined), id).toEqual({ kind: "letter", ch });
+    expect(face("vars", ctx("find"), ALPHA).text).toBe("a"); // a key that types its letter anyway: the same letter
+    expect(face("x", ctx("find"), ALPHA).text).toBe("d"); // Alpha + x is its letter d
+    expect(face("x", ctx("find"), { shift: true, alpha: true }).text).toBe("d"); // Shift + Alpha: still lower case
+    expect(face("enter", ctx("find"), ALPHA)).toEqual({ dead: false }); // a key with no letter keeps its job
+  });
+  it("the x key types x in a search; its flick down types d", () => {
+    expect(face("x", ctx("find"))).toEqual({ text: "x", dead: false });
+    expect(face("x", ctx("find", { empty: false }))).toEqual({ text: "x", dead: false });
+    expect(face("x", ctx("find"), NO, "alpha")).toEqual({ text: "d", dead: false });
+  });
+  it("controls: without Alpha a digit picks on an empty query and types itself after a letter; a flick down types its letter", () => {
+    expect(sheetJob(key("d7"), ctx("find"), NO, undefined)).toEqual({ kind: "pick", n: 7 });
+    expect(face("d7", ctx("find", { empty: false }))).toEqual({ text: "7", dead: false });
+    expect(face("d7", ctx("find"), NO, "alpha")).toEqual({ text: "q", dead: false });
   });
 });
 

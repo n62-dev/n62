@@ -61,9 +61,9 @@ tasks:
     title: 0xFF AND 0x3C, shown in binary
     angle: none
     source: derived   # 0xFF = 11111111, 0x3C = 00111100, AND = 00111100 = 60
-    # Math, a n d (Find's first hit is bitand), Enter; 0 x F F (Alpha, then the key lettered F, twice), `,`, 0 x 3 C; Enter;
+    # Math, a n d (d: a flick down on x, whose tap types x in Find, R889; Find's first hit is bitand), Enter; 0 x F F (Alpha, then the key lettered F, twice), `,`, 0 x 3 C; Enter;
     # a flick up on − (Shift + −: the Base menu; a tap on Shift then − opens it under the touch and counts a stray row tap), 2 (the BIN row)
-    keys: [math, vars, paren, x, enter, d0, x, alpha, pow, alpha, pow, comma, d0, x, d3, alpha, tmpl, enter, {up: sub}, d2]
+    keys: [math, vars, paren, {down: x}, enter, d0, x, alpha, pow, alpha, pow, comma, d0, x, d3, alpha, tmpl, enter, {up: sub}, d2]
     expect: { value: "60", text: "0b111100" }
     compare:
       g2: { presses: null, seconds: null, source: null, date: null }
@@ -90,7 +90,7 @@ tasks:
     source: oracle   # 9.81 9.79 9.83 9.80 9.82 9.78 9.84 9.81 9.80 9.82; mean = 981/100, s (n − 1) by mpmath 1.3.0
     # the readings in a list (Shift + 8) stored in x once, then mean(x) and the sample standard deviation of x by Find; Home shows the last two rows
     read: rows
-    keys: [shift, d8, d9, dot, d8, d1, comma, d9, dot, d7, d9, comma, d9, dot, d8, d3, comma, d9, dot, d8, comma, d9, dot, d8, d2, comma, d9, dot, d7, d8, comma, d9, dot, d8, d4, comma, d9, dot, d8, d1, comma, d9, dot, d8, comma, d9, dot, d8, d2, right, shift, emark, x, enter, math, neg, frac, vars, enter, x, enter, math, {down: d9}, div, x, enter, x, enter]
+    keys: [shift, d8, d9, dot, d8, d1, comma, d9, dot, d7, d9, comma, d9, dot, d8, d3, comma, d9, dot, d8, comma, d9, dot, d8, d2, comma, d9, dot, d7, d8, comma, d9, dot, d8, d4, comma, d9, dot, d8, d1, comma, d9, dot, d8, comma, d9, dot, d8, d2, right, shift, emark, x, enter, math, neg, frac, vars, enter, x, enter, math, {down: d9}, div, {down: x}, enter, x, enter]
     expect: { value: ["9.81", "0.0182574185835055371152323260934"], text: ["9.81", "0.0182574185835"] }
     compare:
       g2: { presses: null, seconds: null, source: null, date: null }
