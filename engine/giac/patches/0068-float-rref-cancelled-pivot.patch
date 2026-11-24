@@ -1,4 +1,4 @@
-# Upstream: giac 2.1.0 vecteur.cc, solve.cc, misc.cc: the float row reduction under rank, rref, ker, det, inv and linsolve (backlog F436; T6b bug hunt 2026-11-16, G622). Each test below took a float entry for 0 by is_zero (|x| <= epsilon, 1e-12 at any Digits, gen.cc) or for nonzero by is_exactly_zero, whatever the precision and the matrix's scale. (1) vecteur.cc linear_combination, the row operation of mrref's generic path (an MPFR matrix, Digits > 14), zeroes a cancelled entry with trim, which tests doubles only, and rref_reduce's pivot test is is_exactly_zero, so the cancelled pivot of a singular MPFR matrix (about 1e-40 at Digits 40) was a pivot: rank(evalf([[1,2,3],[4,5,6],[7,8,9]])) = 0 (right 2), rref the identity (right [[1,0,-1],[0,1,2],[0,0,0]]), ker [] (right the line through [1,-2,1]), linsolve(…,[1,2,3]) one solution for a line of them. Now an MPFR sum c1*x+c2*y at or below the rounding of its terms, 2^(12-prec) of the larger, is an exact 0, as trim makes it for doubles. (2) mrref divided each line of a float matrix by its largest entry, 1/0 for a zero line (rank(evalf([[0,0],[0,1]])) = 2 at Digits 40); a zero line now stays. (3) is_blockmatrix, under det and inv, split a matrix into blocks at entries is_zero takes for 0, so M = evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]) was two 1x1 blocks: det(M) 1e-13 (right -2e-26), inv(M) [[1e13,0],[0,2.5e12]] (right [[-2e13,1e13],[1.5e13,-5e12]]); now only exact zeros split it. (4) in_doublerref (Digits <= 14) took a first pivot below 1e-13 for 0 whatever the matrix's scale, so M had no pivot at Digits 12 (inv(M) [[infinity,0],[0,infinity]], det 0); now below a scale of 1 (the largest |entry| reduced) the first test scales with it. (5) solve.cc _linsolve took a typed square matrix of floats as triangular by is_zero (linsolve([[1e-13,2e-13],[3e-13,4e-13]],[1,1]) = [1e13,-5e12] at any Digits, right [-1e13,1e13]); now by exact zeros. And linsolve(vecteur,vecteur), the kernel of [M|-b], met in_doublerref's absolute pivot test (1e-12 at a scale of 1, which -b sets): at Digits 12 M = evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]) had no pivot (linsolve(M,[1,1]) = [1e13,-5e12] from mker, [] after (6)); a matrix of doubles whose largest |entry| is below 1 is now scaled by a power of 2 (exact) to [1,2), its kernel the same and the particular solution divided back. (6) mdividebypivot's first_non_zero skipped a pivot below 1e-12 of its row's largest entry and mker took a diagonal entry below 1e-12 for 0, so the kernel of [M|-b] had a wrong dimension (linsolve(M,[1,1]) = [] after (5)); an MPFR entry is now zero there when it is an exact zero. (7) misc.cc _rank counted rows of mrref's result (rows multiplied by the pivots) that are not is_zero, so a matrix whose pivots are below 1e-12 had rank 0: rank(evalf([[1,1],[1,1+10^-20]])) at Digits 40 (right 2); an MPFR entry is now zero when it is an exact zero. Exact matrices, doubles of scale 1 or more and non-singular matrices of moderate scale keep their answers; is_zero and epsilon are not changed.
+# Upstream: giac 2.1.0 vecteur.cc, solve.cc, misc.cc: the float row reduction under rank, rref, ker, det, inv and linsolve (backlog F436; T6b bug hunt 2026-11-16, G622). Each test below took a float entry for 0 by is_zero (|x| <= epsilon, 1e-12 at any Digits, gen.cc) or for nonzero by is_exactly_zero, whatever the precision and the matrix's scale. (1) vecteur.cc linear_combination, the row operation of mrref's generic path (an MPFR matrix, Digits > 14), zeroes a cancelled entry with trim, which tests doubles only, and rref_reduce's pivot test is is_exactly_zero, so the cancelled pivot of a singular MPFR matrix (about 1e-40 at Digits 40) was a pivot: rank(evalf([[1,2,3],[4,5,6],[7,8,9]])) = 0 (right 2), rref the identity (right [[1,0,-1],[0,1,2],[0,0,0]]), ker [] (right the line through [1,-2,1]), linsolve(…,[1,2,3]) one solution for a line of them. Now an MPFR sum c1*x+c2*y at or below the rounding of its terms, 2^(12-prec) of the larger, is an exact 0, as trim makes it for doubles. (2) mrref divided each line of a float matrix by its largest entry, 1/0 for a zero line (rank(evalf([[0,0],[0,1]])) = 2 at Digits 40); a zero line now stays. (3) is_blockmatrix, under det and inv, split a matrix into blocks at entries is_zero takes for 0, so M = evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]) was two 1x1 blocks: det(M) 1e-13 (right -2e-26), inv(M) [[1e13,0],[0,2.5e12]] (right [[-2e13,1e13],[1.5e13,-5e12]]); now only exact zeros split it, and mrref's det-only path returned the first block's det alone when is_zero took it for 0 (det(evalf([[2*10^-13,0],[0,3*10^-13]])) 2e-13, right 6e-26; F479): now only an exact 0 ends it. (4) in_doublerref (Digits <= 14) took a first pivot below 1e-13 for 0 whatever the matrix's scale, so M had no pivot at Digits 12 (inv(M) [[infinity,0],[0,infinity]], det 0); now below a scale of 1 (the largest |entry| reduced) the first test scales with it. (5) solve.cc _linsolve took a typed square matrix of floats as triangular by is_zero (linsolve([[1e-13,2e-13],[3e-13,4e-13]],[1,1]) = [1e13,-5e12] at any Digits, right [-1e13,1e13]); now by exact zeros. And linsolve(vecteur,vecteur), the kernel of [M|-b], met in_doublerref's absolute pivot test (1e-12 at a scale of 1, which -b sets): at Digits 12 M = evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]) had no pivot (linsolve(M,[1,1]) = [1e13,-5e12] from mker, [] after (6)); a matrix of doubles whose largest |entry| is below 1 is now scaled by a power of 2 (exact) to [1,2), its kernel the same and the particular solution divided back. (6) mdividebypivot's first_non_zero skipped a pivot below 1e-12 of its row's largest entry and mker took a diagonal entry below 1e-12 for 0, so the kernel of [M|-b] had a wrong dimension (linsolve(M,[1,1]) = [] after (5)); an MPFR entry is now zero there when it is an exact zero. (7) misc.cc _rank counted rows of mrref's result (rows multiplied by the pivots) that are not is_zero, so a matrix whose pivots are below 1e-12 had rank 0: rank(evalf([[1,1],[1,1+10^-20]])) at Digits 40 (right 2); an MPFR entry is now zero when it is an exact zero. Exact matrices, doubles of scale 1 or more and non-singular matrices of moderate scale keep their answers; is_zero and epsilon are not changed.
 # Changed by Pascaline contributors, 2026-11-23
 --- a/src/misc.cc
 +++ b/src/misc.cc
@@ -202,7 +202,18 @@
      }
    }
  
-@@ -7548,7 +7597,9 @@
+@@ -7295,7 +7344,9 @@
+         vector<int> p2; complement(p1,s,p2);
+         extract(a,p2,a2);
+         det=mdet(a1,contextptr);
+-        if (is_zero(det))
++        // N62 (G622, F479): only an exact 0 ends here; is_zero takes a float det of 1e-12 or less for 0, so the first
++        // block's det was returned alone: det(evalf([[2*10^-13,0],[0,3*10^-13]])) was 2e-13 (right 6e-26)
++        if (is_exactly_zero(det))
+           return 1;
+         gen d2=mdet(a2,contextptr);
+         det=det*d2;
+@@ -7548,7 +7599,9 @@
  	if (num_mat){ // divide each line by max coeff in abs value
  	  lcm_deno=linfnorm(*it,contextptr);
  	  detnum=lcm_deno*detnum;
@@ -213,7 +224,7 @@
  	}
  	else { // non num mat
  	  lcm_deno=common_deno(*it->_VECTptr);
-@@ -9657,6 +9708,20 @@
+@@ -9657,6 +9710,20 @@
      }
      bool noswap=true;
      double epspivot=(eps<1e-13)?1e-13:eps;
@@ -234,7 +245,7 @@
      doublerref_temp_t * tmpptr=workptr;
  #ifndef GIAC_HAS_STO_38 
      bool blocktest=lmax-l>=2*mmult_double_blocksize && cmax-c>=2*mmult_double_blocksize;
-@@ -11128,6 +11193,13 @@
+@@ -11128,6 +11195,13 @@
        it=v.begin();
        vmax=inv(vmax,contextptr);
        for (;it!=itend;++it){
@@ -248,7 +259,7 @@
  	if (!is_zero(*it*vmax,contextptr))
  	  //if (!is_exactly_zero(*it))
  	  return *it;
-@@ -11948,7 +12020,9 @@
+@@ -11948,7 +12022,9 @@
        for (int j=0;j<s;++j){
          if (connected[j])
            continue;
@@ -259,7 +270,7 @@
            continue;
          connected[j]=1;
        }
-@@ -15756,7 +15830,7 @@
+@@ -15756,7 +15832,7 @@
      matrice::const_iterator it=res.begin(),itend=res.end();
      int i;
      for (i=0;(i<c) && (it!=itend);++i){
@@ -268,7 +279,7 @@
  	newres.push_back(vecteur(c,zero));
        }
        else {
-@@ -15774,7 +15848,7 @@
+@@ -15774,7 +15850,7 @@
      itend=restran.end();
      bool modular=!pivots.empty() && pivots.front().type==_MOD;
      for (int i=0;it!=itend;++it,++i){

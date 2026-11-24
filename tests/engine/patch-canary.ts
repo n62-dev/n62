@@ -257,6 +257,9 @@ const CANARIES: [string, string, RegExp, string][] = [
   ["0068-float-rref-cancelled-pivot.patch", "giac-2.1.0/src/vecteur.cc", /if \(is_one\(c\)\)\{\s*for \(;jt1!=it1end;\+\+jt1,\+\+it2\)\{\s*\*jt1=trim\(c1\*\(\*jt1\)\+c2\*\(\*it2\),c1,eps\);/, "void linear_combination(const gen & c1,const vecteur & v1,const gen & c2,const vecteur & v2,const gen & c,const gen & cinv,vecteur & v,double eps,int cstart){"],
   // ... is_blockmatrix (under det and inv) splits at entries is_zero takes for 0, 1e-12 at any scale (det(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]])) = 1e-13)
   ["0068-float-rref-cancelled-pivot.patch", "giac-2.1.0/src/vecteur.cc", /if \(is_zero\(ai\[j\]\) && is_zero\(\(\*a\[j\]\._VECTptr\)\[i\]\)\)/, "bool is_blockmatrix(const matrice & a,vector<int> & p){"],
+  // ... and mrref's det-only path, after that split, returns the first block's det alone when is_zero takes it for 0 (F479:
+  // det(evalf([[2*10^-13,0],[0,3*10^-13]])) = 2e-13)
+  ["0068-float-rref-cancelled-pivot.patch", "giac-2.1.0/src/vecteur.cc", /det=mdet\(a1,contextptr\);\s*if \(is_zero\(det\)\)\s*return 1;/, "if (rref_or_det_or_lu==-1){ /* det only */"],
   // ... and _rank counts the rows of mrref's result that are not is_zero (pivots below 1e-12: rank(evalf([[1,1],[1,1+10^-20]])) = 0 at Digits 40)
   ["0068-float-rref-cancelled-pivot.patch", "giac-2.1.0/src/misc.cc", /mr=mrref\(mr,contextptr\);\s*int r=int\(mr\.size\(\)\);\s*for \(;r;--r\)\{\s*if \(!is_zero\(mr\[r-1\]\)\)/, "gen _rank(const gen & args,GIAC_CONTEXT){"],
   // G793, G793f1, patch 0065: _lcm returns lcm(a,b) = normal(a/gcd(a,b))*b as it comes, the sign of the product, for integers and
