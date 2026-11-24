@@ -134,7 +134,7 @@ export const KNOWN_RULES = [
   [/Bessel|Airy|besselj/, "register row no-mpfr-path (G4, G50): no MPFR path, an error at Digits above 14"],
   [/^prec-4-romberg/, "register row no-mpfr-path (G4, G50): romberg works in a double, 30 digits asked"],
   [/^g184-sum-harmonic-1e6$/, "register row no-mpfr-path (G4, G50): Giac's Psi has no MPFR path, so Psi(1000001)+euler_gamma (its closed form of the sum) stays unevaluated at Digits 40; Home shows its double with ⚠ (G184)"],
-  [/^g622-rank-approx-near-singular-1e-39$/, "register row sign-at-digits (G38, G622): patch 0066 takes an MPFR sum within 2^(12-prec) of its larger term for 0, so the rank of a matrix whose determinant is 10^-39 is 1 at Digits 40; Home decides rank again at P + 20 and P + 40 (2)"],
+  [/^g622-rank-approx-near-singular-1e-39$/, "register row sign-at-digits (G38, G622): patch 0068 takes an MPFR sum within 2^(12-prec) of its larger term for 0, so the rank of a matrix whose determinant is 10^-39 is 1 at Digits 40; Home decides rank again at P + 20 and P + 40 (2)"],
   [/^g140f2-negbinomial_cdf-/, "G140f1: Giac's incomplete Beta (negbinomial_cdf off the integers) is a double at Digits 40; Home shows it as an unaudited double with rule 3's count"],
 ];
 // The ids Giac fails on the pin (run.mjs: every line of the known file fails).
@@ -646,10 +646,10 @@ export const PATCHED_IDS = new Map([
   // G551 (F302): misc.cc bitand, bitor and bitxor read a negative _INT_ beside a _ZINT as 2^32+v; the g551-keep-* rows pass on
   // stock and stay in the check file; the sweep of all pairs of 24 values is a written line per operation below
   ...["bitand-neg2-2^64-1", "bitand-neg2-hex-ones", "bitxor-neg1-2^63", "bitor-neg1-2^31", "bitand-neg1-neg2^31", "bitand-neg1-2^70"].map((k) => [`g551-${k}`, "0062-bitops-signed-small-integer.patch"]),
-  // G622 (F436): the float row reduction (patch 0066); the g622-keep-* rows pass on stock and stay in the check file. The det, inv and
-  // near-singular rank rows fail on a build without 0066 alone; in this file a line before them leaves context0's epsilon at 1e-180
+  // G622 (F436): the float row reduction (patch 0068); the g622-keep-* rows pass on stock and stay in the check file. The det, inv and
+  // near-singular rank rows fail on a build without 0068 alone; in this file a line before them leaves context0's epsilon at 1e-180
   // (F478), which masks their is_zero fault there, so the written g622-* lines, first in the file, test the same inputs
-  ...["rank-approx-123", "linsolve-approx-tiny-0-20", "rank-approx-123-20", "rank-approx-near-singular-1e-20", "det-approx-tiny", "inv-approx-tiny-10-20", "det-approx-tiny-20"].map((k) => [`g622-${k}`, "0066-float-rref-cancelled-pivot.patch"]),
+  ...["rank-approx-123", "linsolve-approx-tiny-0-20", "rank-approx-123-20", "rank-approx-near-singular-1e-20", "det-approx-tiny", "inv-approx-tiny-10-20", "det-approx-tiny-20"].map((k) => [`g622-${k}`, "0068-float-rref-cancelled-pivot.patch"]),
   // G793, G793f1: usual.cc _lcm kept the sign of the product of integers and of fractions of integers (lcm(-4,6) = -12, lcm(1/2,-1/3) = -1); the
   // g793*-keep-* rows pass on stock and stay in the check file (the list results of the *-pairs-* rows and the *-cas-* rows are not exported)
   ...["lcm-neg4-6", "lcm-4-neg6", "lcm-list-neg4-6-10", "lcm-neg3-neg5-neg7", "lcm-neg2^70-3", "lcm-neg4-alone"].map((k) => [`g793-${k}`, "0065-lcm-integers-positive.patch"]),
@@ -712,7 +712,7 @@ export function build(cases) {
     patched.push("// patch 0064-mmult-tiny-float-factor.patch", `// ${id} (derived: the exact product)`, `Digits:=40:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
   }
-  // Patch 0066 (G622, F436), written lines: the float row reduction under rank, rref, ker, det, inv and linsolve (vecteur.cc mrref,
+  // Patch 0068 (G622, F436), written lines: the float row reduction under rank, rref, ker, det, inv and linsolve (vecteur.cc mrref,
   // linear_combination, is_blockmatrix, in_doublerref, mker; solve.cc _linsolve; misc.cc _rank; the golden g622-* rows are matrices
   // or Home's values at P). First in the file with the g790 lines, for the same reason (context0's epsilon, F478). Stock at Digits 15 and up kept a cancelled pivot (rank 0, rref the identity, ker []) and took entries
   // near 1e-13 for 0 at any Digits. Expected values: derived by hand (row 3 = 2*row 2 - row 1, rows 1 and 2 independent, so rank 2,
@@ -739,7 +739,7 @@ export function build(cases) {
     ["g622-linsolve-evalf-tiny-0-40", 40, `linsolve(${N2},[1,1])[0]`, "-10^13", "1/10^20"],
     ["g622-linsolve-evalf-tiny-0-12", 12, `linsolve(${N2},[1,1])[0]`, "-10^13", "10^3"],
   ]) {
-    patched.push("// patch 0066-float-rref-cancelled-pivot.patch", `// ${id} (derived)`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
+    patched.push("// patch 0068-float-rref-cancelled-pivot.patch", `// ${id} (derived)`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
   }
   for (const [file, c] of cases) {
@@ -1051,6 +1051,48 @@ export function build(cases) {
   ]) {
     patched.push("// patch 0063-matrix-exp-working-precision.patch", `// ${id} (oracle: mpmath)`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
+  }
+  // Patch 0066 (G792), written lines: sin, cos, sinh, cosh of a float matrix (usual.cc; the golden g792-* rows are matrices, which the
+  // export leaves out). Stock's analytic_apply worked in doubles at any Digits and left imaginary noise (sin(evalf([[0,1],[-1,0]]))[0][0]
+  // = -4.3e-32-2.9e-15*i at Digits 40). Expected values: mpmath at 60 digits (sinm, cosm; M^2 = -I gives sin M = M*sinh 1, cos M =
+  // cosh 1*I, sinh M = M*sin 1, cosh M = cos 1*I; oracle) rounded to 38 digits; the zero entries within 1e-45, so the noise fails.
+  for (const [id, input, value, tol] of [
+    ["g792-sin-evalf-rotation-01-40", "sin(evalf([[0,1],[-1,0]]))[0][1]", "11752011936438014568823818505956008152/10^37", "5/10^38"],
+    ["g792-sin-evalf-rotation-00-40", "sin(evalf([[0,1],[-1,0]]))[0][0]", "0", "1/10^45"],
+    ["g792-cos-evalf-rotation-00-40", "cos(evalf([[0,1],[-1,0]]))[0][0]", "15430806348152437784779056207570616826/10^37", "5/10^38"],
+    ["g792-cos-evalf-rotation-01-40", "cos(evalf([[0,1],[-1,0]]))[0][1]", "0", "1/10^45"],
+    ["g792-cos-evalf-1234-00-40", "cos(evalf([[1,2],[3,4]]))[0][0]", "85542316507799776054388809715791781410/10^38", "5/10^39"],
+    ["g792-sin-evalf-1234-11-40", "sin(evalf([[1,2],[3,4]]))[1][1]", "-68821817618349523238015607941325420491/10^38", "5/10^39"],
+    ["g792-sinh-evalf-rotation-01-40", "sinh(evalf([[0,1],[-1,0]]))[0][1]", "84147098480789650665250232163029899962/10^38", "5/10^39"],
+    ["g792-cosh-evalf-rotation-00-40", "cosh(evalf([[0,1],[-1,0]]))[0][0]", "54030230586813971740093660744297660373/10^38", "5/10^39"],
+    // fix round 1: entries below the double range (0063's scan reads them as double zeros) are no zero matrix; sin and sinh
+    // of a diagonal matrix are sin and sinh of its entries (mpmath sin, sinh of 10^-400 at 60 digits: 10^-400 to 40 digits)
+    ["g792-sin-evalf-tiny-00-40", "sin(evalf([[10^-400,0],[0,10^-400]]))[0][0]", "1/10^400", "5/10^440"],
+    ["g792-sinh-evalf-tiny-00-40", "sinh(evalf([[10^-400,0],[0,10^-400]]))[0][0]", "1/10^400", "5/10^440"],
+  ]) {
+    patched.push("// patch 0066-matrix-trig-series.patch", `// ${id} (oracle: mpmath)`, `Digits:=40:; pc("${id}",'${input}',${value},${tol});`);
+    nPatched++;
+  }
+  // Patch 0067 (G803, F240), written lines: prog.cc _convert took the list's subtype from a last argument that is no _INT_ (its
+  // pointer's or its double's bits: convert(129,2,1/2) printed [129,1/2], pnt[129,1/2] or gr2d(logo(…)) by the session); now
+  // refused, as B. Parisse said it should (2026-11-24). A line passes when the input is an error (pasr 1); stock answers a list.
+  // The golden g803-* rows are refusals and CAS rows, which the export leaves out. The check lines are Giac's help's own
+  // examples with an integer last argument (aide_cas), unchanged by the patch.
+  for (const [k, pre, input] of [
+    ["half", "", "convert(129,2,1/2)"],
+    ["float", "", "convert(129,2,0.5)"],
+    ["name", "", "convert(129,2,g803x)"],
+    ["half-after-power", "2^100:; ", "convert(129,2,1/2)"],
+  ]) {
+    patched.push("// patch 0067-convert-subtype-integer.patch", `// g803-convert-129-2-${k}-refused (derived: no integer subtype; Parisse, 2026-11-24: "it should probably error")`, `Digits:=40:; ${pre}pasr:=0:; try { ${input}; } catch (err) { pasr:=1; }:; pc("g803-convert-129-2-${k}-refused",'pasr',1,1/10^30);`);
+    nPatched++;
+  }
+  for (const [id, input, value] of [
+    ["g803-keep-convert-129-2-8", "convert(129,2,8)", "[1,0,0,0,0,0,0,1]"],
+    ["g803-keep-convert-123-base-8", "convert(123,base,8)", "[3,7,1]"],
+  ]) {
+    check.push(`// ${id} (derived: Giac's help example, unchanged by patch 0067)`, `Digits:=40:; pc("${id}",'when((${input})==${value},1,0)',1,1/10^30);`);
+    nCheck++;
   }
   for (const [mode, n, tag, value] of [
     ["DEG", 0, "deg", "90+(3147292373094538001977241539068588825237/10^38)*i"],

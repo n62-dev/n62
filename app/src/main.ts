@@ -49,6 +49,7 @@ session.saveDelayMs = 400;
 // Settings › Appearance (R50e): the stored look goes on the page once the settings are read, and on every change; the
 // inline script of index.html has already shown it (lazy chunk, off the start).
 session.onLook = (look) => void import("./theme/lookApply.ts").then((m) => m.applyLook(look)).catch(() => {});
+session.onView = () => entry.freshUndo(); // R898: Home and CAS share the line, not its undo
 const shell = new AppShell(calc, idbKv, entry, () => session.settings, () => session.userNames);
 shell.onEvent = (n) => void session.taps.load().then((c) => c?.event(n)); // R361: an event that is no press, in the counter's chunk
 entry.shell = shell; // R747: an app's line holds no chip: a constant goes in as its value (entry/appValue.ts)

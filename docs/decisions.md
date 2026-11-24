@@ -9,9 +9,6 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 - **G784, Paste of a copied name:** Copy writes the letters (`2*i`, `r*a*i*n*b*o*w`, `β*2`); Paste reads one number, so a product of names is refused, and `2*i` copied from the name i came back as the constant i, another value (principle 3): G784f1 (pass 231) refuses a text N62 copied from a row with a stand-in. Recommended: keep Paste a number reader, so a copied name does not paste back; reading expressions is its own package (the letter i against the constant i needs a rule first).
 - **R779, the drag after the arrow keys, on the Fairphone:** Chromium touch emulation could not reproduce "drag, arrow keys, drag" (linetouch.spec.ts, R779 cases, green on phase-1 too); lineTouch.ts now ends a stale touch (a new first finger, a lift off the line). Does the drag work on the Fairphone 6 after it? If not, record `adb` pointer events (down/move/up/cancel with ids) for the sequence.
-- **R872, N62 Light HC Enter:** keep 2.79:1 (recommended): 3:1 and a 7:1 black label cannot both hold (fill luminance ≤ 0.277, label ≥ 0.30); a white label puts a dark brown Enter near Shift.
-- **R873, Solarized's pad arrows:** keep 4.03 and 4.28:1 (recommended): `--key-text` at 70 % on a pad 1.25:1 from the keypad tops out near 4.0:1; or raise the arrows' opacity.
-- **R918, the unit view's entries budget 42 → 42.6 kB:** keep it (recommended): the tap guard that makes a history tap under the view a dead press costs 0.59 kB and has nowhere else to go but the start chunk (pin 81.79 kB with shared); else a cut of that size in the view's chunk.
 
 ## Decided proposals
 
@@ -150,7 +147,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R98, Clear and Delete:** rule: docs/05 3.5 (cancelled and note rows too; one Undo copy per view; a backup never holds it). Archived.
 - **R112: a key drawn dead, or a press the route's one rule finds dead (route.ts deadPress), gives the double pulse alone, no look, pop or click; every other key gives one pulse at finger-down.** The unit pad's dead presses keep three (the touch's, then the double; docs/05 3.7).
 - **R144, R146, changed by R770 (owner, 2026-11-19: every window in the viewport):** the keys stay live below an open sheet and drive it; a key it does not use is dead and the sheet stays. Rule: docs/05 3.1. Archived.
-- **R157, the mark:** `--mark-faint` is the hint's colour at 1.25:1, ≤ 1.3:1; Home's glyph is a house (R874, R856: owner, 2026-11-22), 16 × 16 on the bar and in the Apps sheet; shown whenever the view is empty (R860). Archived. Would change if: the owner's look on his phone (B&W Dark, N62 Dark).
+- **R157, the mark:** `--mark-faint` is the hint's colour at 1.25:1, ≤ 1.3:1; Home's glyph is a house (R874, R856: owner, 2026-11-22), 16 × 16 on the bar and in the Apps sheet; shown whenever the view is empty (R860); no tap (owner, 2026-11-23, R924). Archived. Would change if: the owner's look on his phone (B&W Dark, N62 Dark).
 - **R153–R155:** the generator's moves stand. Archived. Would change if: the owner's look after R24d.
 - **N62 Light's Enter orange (owner, 2026-11-20, R843):** #c26a00 with a black label (his pick A from R842's page, 2026-11-22); Dark keeps #529997. The family's `edge` (#529997) keeps the unit pad's prefix cells teal (and R840's window edge). Would change if: users press Shift for Enter (or the reverse) in Light.
 - **R795, Plain keys (owner K3, 2026-11-20):** the keys keep their family's fills (Black & White its two neutral tones, unchanged); only the legends' colour coding goes (it reverses R50's "one neutral tone"). Would change if: the owner's look on his phone.
@@ -199,7 +196,12 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **Built, archived ("2026-11-16, Ultra"):** A47b; A45; R38b, R88; G119; G172; A101.
 - **R87:** no ISC or UIUC text in `LICENSES/`: yaml is build-time only, Emscripten's runtime ships under MIT (THIRD_PARTY.md). Would change if: a shipped part needs another licence's text.
 - **G116, the sweep oracle:** on atanh's cut it takes Giac's side (+π/2·i for a real x > 1), and an argument on a cut within noise is a skip. Would change if: a case shows Giac off the textbook side.
+- **G798, what a law's side claims:** `=` its exact value, `≈` every shown digit, `⚠ n` n digits (as the sweep's judge reads it), a bare `⚠` or `⚠ 0` nothing; so G622's inverse with ⚠ 14 on a wrong matrix fails its law. Would change if: the owner reads "with ⚠ on either side it passes" as every ⚠.
+- **G798's det rows (pass 239):** F479's family joins G622 (patch 0068 splits det's blocks and tests its double pivot); G622f2 runs casback. Would change if: det rows stay after it.
 - **Start chunk room (owner, 2026-11-09):** a package over the pin raises it as docs/04 8.3 says; one over the 63 kB budget gets a cut, never an allowance. Would change if: the owner moves the budget.
+- **R918, the unit view's entries budget (owner, 2026-11-24):** 42.6 kB, for the history-tap guard (0.59 kB). Would change if: the owner wants it cut.
+- **R872, R873 contrast (owner, 2026-11-24):** N62 Light HC Enter stays 2.79:1 (its label 7:1); Solarized's pad arrows stay 4.03 and 4.28:1. Would change if: the owner's look on the phone says otherwise.
+- **R892's strip, no (owner, 2026-11-24):** the fill button goes to the title row and Chars has none (R931); Find full by default is a setting, off (R932). Would change if: his look on the phone says otherwise.
 - **R163, Key pop-ups (ron, run 763):** one switch for both bubbles over the keypad; a look stored before R163 has it on. Would change if: the owner wants the pop and the flick bubble apart.
 - **R53, R159:** Counters: Shift and Alpha share a row (seven rows); `uses` is not backed up. Would change if: the owner wants the counts apart.
 - **G618 (run 1361):** Σ to ∞ is checked against its terms only for a term rational in k, or (−1)^k times one, poles left of start + 100. Archived. Would change if: the owner wants every term estimated.

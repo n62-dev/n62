@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { invariantsLine } from "./golden/invariants.ts";
 import { countMismatch, failedItems, FLAKE_CAP, failNames, flakeLines, isTiming, NAMES_CHARS, NAMES_MAX, onlyTiming, rerunnable } from "./pipeline-logs.ts";
 
 const dir = join(dirname(fileURLToPath(import.meta.url)), "../../tests/fixtures/pipeline");
@@ -116,6 +117,24 @@ describe("golden and e2e logs", () => {
     expect(onlyTiming("golden", inv(0, 1, "71.9"))).toBe(false);
     expect(onlyTiming("golden", inv(1, 0, "42.8"))).toBe(false);
     expect(onlyTiming("golden", inv(0, 0, "71.9") + "FAIL home: 12/13 match\n")).toBe(false);
+  });
+  // G324f2: since G324f1 the stage prints "137.4 s (< 115.6, 70 ms per input)"; the test builds the line with the stage's own function
+  const invNow = (fresh: number, now: number, secs: number) => {
+    const summary = `2 known failures, ${fresh} new, ${now} now passing`;
+    return `FAIL invariants: ${invariantsLine({ inputs: 1651, a: 1298, b: 1156, c: 1169, d: 2291 }, summary, secs, 115.6, 70)}\n`;
+  };
+  it("G324f2: the invariants line of today (decimal limit, ms per input) only on its clock is timing; a new or now-passing case is not", () => {
+    expect(invNow(0, 0, 137.4)).toContain("137.4 s (< 115.6, 70 ms per input)");
+    expect(failedItems("golden", invNow(0, 0, 137.4))).toHaveLength(1);
+    expect(onlyTiming("golden", invNow(0, 0, 137.4))).toBe(true);
+    expect(onlyTiming("golden", invNow(1, 0, 137.4))).toBe(false);
+    expect(onlyTiming("golden", invNow(0, 1, 137.4))).toBe(false);
+    expect(onlyTiming("golden", invNow(0, 0, 90.2))).toBe(false);
+  });
+  it("G324f2: the invariants clock miss next to a units p95 miss is only timing; with a new failure it is not", () => {
+    const u = units(116, "6.16");
+    expect(onlyTiming("golden", invNow(0, 0, 137.4) + u)).toBe(true);
+    expect(onlyTiming("golden", invNow(1, 0, 137.4) + u)).toBe(false);
   });
   it("e2e: the copy poll and the solve reload are timing, others are not", () => {
     const l = (f: string, t: string) => `  1) [chromium-phone] › test/${f}:89:1 › ${t} ────────────\n`;

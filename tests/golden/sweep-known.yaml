@@ -3,16 +3,9 @@
 # judge's check (=, ≈, ⚠n, part, novalue, hang), package = the package whose fix removes the entry. The stage passes when its failures are exactly
 # these; remove an entry when its fix lands. F62 (proposed in decisions.md): sin of a 1.5-million-digit float takes 11 s.
 # G797: the matrix trees (100 of the seed's own stream) and the pinned hunt inputs (gen.ts MATRIX_PINNED) follow, judged entry by entry:
-# G792 cos or sin of a matrix (imaginary noise, wrong digits under ⚠n and ≈); G622's singular float matrix rows left with its patch 0066, and with them one cos.
+# G622's singular float matrix rows left with its patch 0068, G792's sin and cos rows with its patch 0066; F480 cos of an exact matrix with entries 10^16 apart (analytic_apply; patch 0066 takes float matrices only).
 known:
   - { id: "rad 30 \\sin\\left(\\cosh\\left(10!\\right)\\right)+\\left(\\exponentialE^{\\cos\\left(7\\right)}\\right)", check: "hang", package: F62 }
   - { id: "deg 30 \\sin\\left(\\cosh\\left(10!\\right)\\right)+\\left(\\exponentialE^{\\cos\\left(7\\right)}\\right)", check: "hang", package: F62 }
-  - { id: "rad 12 \\sin\\left(\\operatorname{approx}\\left(\\begin{pmatrix}0&1\\\\-1&0\\end{pmatrix}\\right)\\right)", check: "part", package: G792 }
-  - { id: "deg 12 \\sin\\left(\\operatorname{approx}\\left(\\begin{pmatrix}0&1\\\\-1&0\\end{pmatrix}\\right)\\right)", check: "part", package: G792 }
-  - { id: "rad 30 \\cos\\left(1\\times \\operatorname{approx}\\left(\\begin{pmatrix}2&7&9.81\\\\3&10!&3.7\\\\1&2&1.5ᴇ8\\end{pmatrix}\\right)\\right)", check: "⚠n", package: G792 }
-  - { id: "rad 30 \\cos\\left(\\begin{pmatrix}\\pi&1\\\\3.7&3\\end{pmatrix}\\times \\operatorname{approx}\\left(10^{-15}\\times \\begin{pmatrix}10!&0.1\\\\7&10\\end{pmatrix}\\right)\\right)", check: "⚠n", package: G792 }
-  - { id: "deg 30 \\cos\\left(\\begin{pmatrix}\\pi&1\\\\3.7&3\\end{pmatrix}\\times \\operatorname{approx}\\left(10^{-15}\\times \\begin{pmatrix}10!&0.1\\\\7&10\\end{pmatrix}\\right)\\right)", check: "⚠n", package: G792 }
-  - { id: "rad 30 \\cos\\left(10^{-7}\\times \\begin{pmatrix}2ᴇ-8&0&0.2\\\\2.5&2&1\\\\2&0.2&6.02ᴇ8\\end{pmatrix}\\right)\\times \\begin{pmatrix}7\\\\3.7\\\\5\\end{pmatrix}", check: "⚠n", package: G792 }
-  - { id: "deg 30 \\cos\\left(10^{-7}\\times \\begin{pmatrix}2ᴇ-8&0&0.2\\\\2.5&2&1\\\\2&0.2&6.02ᴇ8\\end{pmatrix}\\right)\\times \\begin{pmatrix}7\\\\3.7\\\\5\\end{pmatrix}", check: "≈", package: G792 }
-  - { id: "deg 30 \\cos\\left(\\left(10^{-12}\\times \\begin{pmatrix}7&10&9.81\\\\3&\\pi&3\\\\1.05&2.5&3!\\end{pmatrix}\\right)+\\operatorname{approx}\\left(\\begin{pmatrix}0.2&3&2ᴇ-8\\\\0.2&0.001&9.81\\\\12&0.3&2ᴇ-8\\end{pmatrix}\\right)\\right)", check: "part", package: G792 }
-  - { id: "deg 12 \\begin{pmatrix}1.5ᴇ22&1\\\\2\\times \\left(1.5ᴇ22\\right)&2\\times 1\\end{pmatrix}\\times \\cos\\left(\\operatorname{approx}\\left(10^{-1}\\times \\begin{pmatrix}0.2&3\\\\3&7\\end{pmatrix}\\right)\\right)", check: "≈", package: G792 }
+  - { id: "rad 30 \\cos\\left(10^{-7}\\times \\begin{pmatrix}2ᴇ-8&0&0.2\\\\2.5&2&1\\\\2&0.2&6.02ᴇ8\\end{pmatrix}\\right)\\times \\begin{pmatrix}7\\\\3.7\\\\5\\end{pmatrix}", check: "⚠n", package: F480 }
+  - { id: "deg 30 \\cos\\left(10^{-7}\\times \\begin{pmatrix}2ᴇ-8&0&0.2\\\\2.5&2&1\\\\2&0.2&6.02ᴇ8\\end{pmatrix}\\right)\\times \\begin{pmatrix}7\\\\3.7\\\\5\\end{pmatrix}", check: "≈", package: F480 }

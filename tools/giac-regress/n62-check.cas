@@ -357,6 +357,8 @@ Digits:=40:; pc("g622-keep-rank-approx-123-246-111",'(rank(approx([[1,2,3],[2,4,
 Digits:=40:; pc("g622-keep-rank-exact-123",'(rank([[1,2,3],[4,5,6],[7,8,9]]))',2,5/10^12);
 // g622-keep-det-approx-123 (home.yaml, derived)
 Digits:=40:; pc("g622-keep-det-approx-123",'(det(approx([[1,2,3],[4,5,6],[7,8,9]])))',0,1/10^30);
+// g792-keep-sin-approx-scalar (home.yaml, oracle)
+Digits:=40:; pc("g792-keep-sin-approx-scalar",'(sin(approx(1)))',(841470984808/10^12),5/10^13);
 // g353-keep-variance-double (home.yaml, oracle)
 Digits:=40:; pc("g353-keep-variance-double",'(variance([(15/10^1),(25/10^1),4]))',(105555555556/10^11),5/10^12);
 // g356-lagrange-11-points (home.yaml, oracle)
@@ -1239,4 +1241,8 @@ Digits:=12:; pc("g793f1-keep-lcm-neg6-float4",'when(string(lcm(-6,approx(4)))=="
 Digits:=40:; pc("g149-cas-keep-forms",'when(string(acosh(-2))=="ln(-2+sqrt(-2+1)*sqrt(-2-1))" and string(ln((-pi)^(3/2)))=="ln(-sqrt(-pi)*pi)" and string(sqrt((-pi)^3))=="sqrt((-pi)^3)" and string(sqrt(acosh(-1/2)^2))=="sqrt(ln(-1/2+sqrt(-1/2+1)*sqrt(-1/2-1))^2)" and string((-1-i/10^20)^(1/2))=="sqrt((-100000000000000000000-i)/100000000000000000000)" and string(asinh(-10^300))=="-ln(1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000+sqrt((-1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)^2+1))",1,0)',1,1/10^30);
 // g553-keep-floor-pythagoras-minus-2-40 (derived: sin(1)^2+cos(1)^2 = 1)
 Digits:=40:; pc("g553-keep-floor-pythagoras-minus-2-40",'floor(sin(1)^2+cos(1)^2-2)',-1,1/10^30);
+// g803-keep-convert-129-2-8 (derived: Giac's help example, unchanged by patch 0067)
+Digits:=40:; pc("g803-keep-convert-129-2-8",'when((convert(129,2,8))==[1,0,0,0,0,0,0,1],1,0)',1,1/10^30);
+// g803-keep-convert-123-base-8 (derived: Giac's help example, unchanged by patch 0067)
+Digits:=40:; pc("g803-keep-convert-123-base-8",'when((convert(123,base,8))==[3,7,1],1,0)',1,1/10^30);
 print("n62-check: "+pasfail+" of "+pasn+" failed");

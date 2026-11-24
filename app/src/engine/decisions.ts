@@ -44,7 +44,7 @@ export const DECISION_FUNCTIONS: ReadonlySet<string> = new Set([
   // G306: an odd root by the sign of its argument (∛ is surd), a quadrant by the signs of y and x, an order by
   // comparisons; surd(sin(10^70),3) is sin(10^70)^(1/3) at Digits 40 and -(-sin(10^70))^(1/3) at 80 (tier1-decide.ts)
   "surd", "atan2", "sort", "SortA", "SortD", "sorta", "sortd", "sortperm",
-  // G622: the rank of a float matrix counts the pivots its row reduction keeps, and patch 0066 takes a cancelled one for 0
+  // G622: the rank of a float matrix counts the pivots its row reduction keeps, and patch 0068 takes a cancelled one for 0
   // within the rounding of P (rank(approx([[1,1],[1,1+10^-39]])) is 1 at 40 digits, 2 at 60, where the matrix holds 10^-39)
   "rank",
 ]);

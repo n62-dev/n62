@@ -78,6 +78,16 @@ export function sharedChunksHolding(manifest: Record<string, ManifestChunk>, mod
     .map((c) => c.file);
 }
 
+/** A272: a file's text with every hashed name held fixed. Vite names its files `<name>-<8 characters>.<ext>` (and the Find index
+ *  the same), the engine `giac.<16 hex digits>.<ext>`; the start chunk lists them, and a new hash gzips a few bytes differently with
+ *  no source change. Each hash becomes the same number of `~`, so the length and everything else stay. Gzip and brotli measure this. */
+export function hashFree(buf: Buffer): Buffer {
+  const text = buf.toString("latin1").replace(/([-.])[\w-]{8}(?=\.(?:m?js|css|json|wasm|html|svg|png|woff2?)\b)|(\.)[0-9a-f]{16}(?=\.(?:m?js|wasm)\b)/g, (m, a?: string) => (a === undefined ? "." : a) + "~".repeat(m.length - 1));
+  return Buffer.from(text, "latin1");
+}
+/** Files whose text names other files: only these go through hashFree (a wasm's bytes are measured as they are). */
+const NAMING = /\.(?:m?js|css|json|html)$/;
+
 function readManifest(dist: string): Record<string, ManifestChunk> {
   const path = join(dist, ".vite/manifest.json");
   if (!existsSync(path)) throw new Error(`size-check: no ${path}; build with build.manifest: true (vite.config.ts)`);
@@ -252,8 +262,9 @@ export const LAZY_VIEWS = ["src/views/Sheet.svelte"];
  *  start chunk keeps only the log's own functions). R791 (fix round 1): the renderer's macro table (render/macros.ts with
  *  entry/macroTable.ts), loaded with MathLive (render/mathlive.svelte.ts). R930: a job's call and result (state/jobRun.ts, with the
  *  item chunk), the field's set-up (entry/fieldUp.ts, with MathLive), the Apps and ☰ rows (apps/shellSheets.ts, with the sheet's
- *  model) and the port's pass of a result (calc/portKeys.ts, with the word store). */
-export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "src/render/tidy.ts", "src/keyboard/shiftPalettes.ts", "src/units/open.ts", "src/entry/field.ts", "src/state/handOver.ts", "src/views/UpdateNote.svelte", "src/views/tipsHost.ts", "src/state/migrations.ts", "src/keyboard/keyNames.ts", "src/views/sheet.svelte.ts", "src/input/click.ts", "src/state/resultItem.ts", "src/state/storedItem.ts", "src/engine/giacPrint.ts", "src/views/rowGesturesCode.ts", "src/apps/longpress.ts", "src/state/taps.svelte.ts", "src/state/pressCount.ts", "src/views/statSheet.ts", "src/views/helpSheet.ts", "src/views/matrixGrid.svelte.ts", "src/entry/cursorFn.ts", "src/engine/decimalLatex.ts", "src/apps/shellOpen.ts", "src/views/icons.ts", "src/input/backLayer.ts", "src/views/AppViews.svelte", "src/engine/defsCheck.ts", "src/engine/rational.ts", "src/engine/readFacts.ts", "src/render/longInsert.ts", "src/render/macros.ts", "src/entry/macroTable.ts", "src/state/jobRun.ts", "src/entry/fieldUp.ts", "src/apps/shellSheets.ts", "src/calc/portKeys.ts"];
+ *  model) and the port's pass of a result (calc/portKeys.ts, with the word store).
+ *  G792: Fmt's cycle and FIX setters (state/modeSets.ts). */
+export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "src/render/tidy.ts", "src/keyboard/shiftPalettes.ts", "src/units/open.ts", "src/entry/field.ts", "src/state/handOver.ts", "src/views/UpdateNote.svelte", "src/views/tipsHost.ts", "src/state/migrations.ts", "src/keyboard/keyNames.ts", "src/views/sheet.svelte.ts", "src/input/click.ts", "src/state/resultItem.ts", "src/state/storedItem.ts", "src/engine/giacPrint.ts", "src/views/rowGesturesCode.ts", "src/apps/longpress.ts", "src/state/taps.svelte.ts", "src/state/pressCount.ts", "src/views/statSheet.ts", "src/views/helpSheet.ts", "src/views/matrixGrid.svelte.ts", "src/entry/cursorFn.ts", "src/engine/decimalLatex.ts", "src/apps/shellOpen.ts", "src/views/icons.ts", "src/input/backLayer.ts", "src/views/AppViews.svelte", "src/engine/defsCheck.ts", "src/engine/rational.ts", "src/engine/readFacts.ts", "src/render/longInsert.ts", "src/render/macros.ts", "src/entry/macroTable.ts", "src/state/jobRun.ts", "src/entry/fieldUp.ts", "src/apps/shellSheets.ts", "src/calc/portKeys.ts", "src/state/modeSets.ts"];
 
 /** R91's pin: the start chunk is at most this many bytes gzip, under the budget of 63 kB (the pin kept its value when the
  *  budget was raised from 61 kB, 2026-11-09). A package that needs more raises the pin with a reason, here and in docs/04 8.3.
@@ -461,9 +472,6 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  names in Unicode's order, so one table gives both the LaTeX and the letter), in the history's uses line; and the letter
  *  stand-ins e_, i_ as user functions (parse.ts, latex-to-giac.ts). phase-1 3b8ab8e7 measures 60,843 B gzip (171,945 B raw),
  *  the branch merged with it 60,922 B (172,108 B raw, +79 B): 60,922 B + 0.05 kB, rounded up to the next 0.01 kB.
- *  G313f1 (no start-chunk file changed, the R260 pin of 60,980 B stayed): phase-1 33f50c78 measures 60,844 B gzip (171,945 B raw), the branch
- *  60,853 B (171,945 B raw, the same): the start chunk names the Find index asset, whose hashed file name changed with the new
- *  sigfig row, and the hash's characters gzip 9 B differently. 60,853 B + 0.05 kB, rounded up to the next 0.01 kB; the merged branch stayed inside the R260 pin.
  *  60,980 → 61,210 B (R276): a history row's hold copies and its swipe deletes. Their code (views/rowSwipe.ts and
  *  apps/longpress.ts, +1.22 kB gzip in the start chunk) is a lazy chunk fetched when idle (views/rowGesturesCode.ts); what
  *  stays is the loader (views/rowGestures.ts), the row's touch-action and App's delete on a swipe. phase-1 f2e29dd6
@@ -475,10 +483,6 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  one-line methods. The merge base 5bfdb4c1 measures 61.18 kB gzip (172.85 kB raw), the branch 61.34 kB (173.25 kB raw,
  *  +0.16 kB; 61.44 kB before the step code moved into the lazy chunk; 61.35 kB after merging phase-1 31b97787): 61.35 kB
  *  + 0.05 kB.
- *  61,400 → 61,460 B (G341, no start-chunk source changed): phase-1 8214eddf measures 61,400 B gzip, the branch 61,403 B,
- *  both 173,248 B raw: the start chunk names the lazy chunks and the Find index by their hashed file names, which the
- *  parser's and the index's changes renamed, and the new names gzip 3 B differently (as G313f1). 61,403 B + 0.05 kB,
- *  rounded up to the next 0.01 kB.
  *  61,460 → 61,700 B (R281): the store sheet. Its model, view, words and key reading ride in lazy chunks (views/storeSheet.svelte.ts
  *  in Vars' chunk, SheetCells.svelte with the sheet's view, sheetKeys.ts storeKey, i18n/enStore.ts); what stays is Store ▶
  *  opening it (route.ts run, App.svelte openStore and the row actions' `stored`), the sheet's disarm on a key, the store
@@ -496,9 +500,6 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  (`drag`, so a drag never grows the matrix) and the entry holding the field chunk's `Grown` (made with the field,
  *  passed to runOnField, cleared when a line is set). The merge base 68e296cf measures 61.77 kB gzip (174.36 kB raw), the
  *  branch 61.85 kB (174.55 kB raw): 61.85 kB + 0.05 kB.
- *  61,900 → 61,970 B (G308, as G322): no app file changed; Giac patch 0048 changes the engine build, so the engine worker's
- *  hashed name and the chunk names that follow it gzip differently. The same tree measures 61,899 B gzip with phase-1's
- *  engine and 61,917 B with the patched one (174,781 B raw both): 61,917 B + 0.05 kB.
  *  61,970 → 62,040 B (R224): the wide layout. Its look is CSS (App.svelte's `@media` block, outside the JS); what stays in
  *  the chunk is the condition (views/wide.ts), its matchMedia in App.svelte's onMount and `canFold` reading it (no results
  *  mode side by side). svelte/reactivity's MediaQuery cost 0.17 kB more, so a plain matchMedia. The merge base 4ee33b66
@@ -618,11 +619,14 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  measures 62,996 B gzip (176,799 B raw), the branch 61,874 B (172,987 B raw; −1,122 B): code that ran only after a job, the
  *  field's load, a sheet's open or a key on an open sheet rides in the chunk that path already waited for (state/jobRun.ts −310 B,
  *  entry/fieldUp.ts −140 B, apps/shellSheets.ts −281 B, sheetKeys.ts sheetPress and sheetLetter −202 B, calc/portKeys.ts −189 B).
- *  G622 (pin kept): with the branch's engine (patch 0066), phase-1 2a9cc931 measures 61,838 B gzip (172,875 B raw; 61,848 B with
- *  the main checkout's engine), the branch before its cut 61,840 B (172,875 B raw). The cut, made when the start measured 63,001 B
- *  before R930: angle.rad and angle.deg left en.ts for i18n/enMode.ts (read by views/modeSheet.ts and the lazy
- *  clipboard/workReport.ts): 61,842 B (172,860 B raw; +2 B gzip, −15 B raw). */
-export const START_PIN_GZIP = 61_880;
+ *  G622 (a cut; the pin stays): with patch 0068's engine phase-1 2a9cc931 measured 61,838 B gzip (172,875 B raw); angle.rad and
+ *  angle.deg left en.ts for i18n/enMode.ts (read by views/modeSheet.ts and the lazy clipboard/workReport.ts): 61,842 B (172,860 B raw).
+ *  G792 (fix round 1, a cut; the pin stays): patch 0066's engine hash took the chunk past the pin; Session.setFmtMode and
+ *  setFixDecimals, which only the lazy Mode sheet calls, moved to state/modeSets.ts (−60 B gzip before the merge with R930).
+ *  61,880 → 60,670 B (A272, the measure changed, not the code): gzip and brotli hold the hashed file names fixed (hashFree), so a new
+ *  lazy-chunk, Find-index or engine hash no longer moves the pin (the hash-only notes above, G313f1, G341, G308, are in git log -L).
+ *  Phase-1 5812dc91's start files: 61,798 B gzip real, 60,612 B held (172.71 kB raw). 60,612 B + 0.05 kB, rounded up to 10 B. */
+export const START_PIN_GZIP = 60_670;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its
@@ -647,7 +651,7 @@ function inlineRow(dist: string): Row | null {
   if (!existsSync(index)) return null;
   const scripts = inlineScripts(readFileSync(index, "utf8")).map((t) => Buffer.from(t));
   const raw = scripts.reduce((n, b) => n + b.length, 0);
-  const gzip = scripts.reduce((n, b) => n + gzipSync(b).length, 0);
+  const gzip = scripts.reduce((n, b) => n + gzipSync(hashFree(b)).length, 0);
   const failures = gzip > INLINE_PIN_GZIP ? [`Inline scripts: index.html's inline scripts are pinned at ${kB(INLINE_PIN_GZIP)} gzip (R103), now ${kB(gzip)}: they run before the first paint; move work into the bundle, or raise INLINE_PIN_GZIP in size-check.ts with a reason`] : [];
   return { rule: "Inline scripts", files: ["index.html"], raw, gzip, brotli: 0, rawMax: undefined, gzipMax: INLINE_PIN_GZIP, brotliMax: undefined, failures };
 }
@@ -731,8 +735,9 @@ export function checkSizes(dist: string): Report {
       const buf = readFileSync(join(dist, f));
       raw += buf.length;
       // The precache total is a raw sum only; compressing 13 MB of wasm for a number nobody budgets would just slow the build.
-      if (!isTotal && s.gzipMax !== undefined) gzip += gzipSync(buf).length;
-      if (!isTotal && s.brotliMax !== undefined) brotli += brotliCompressSync(buf, { params: { [constants.BROTLI_PARAM_QUALITY]: 11, [constants.BROTLI_PARAM_SIZE_HINT]: buf.length } }).length;
+      const held = isTotal || !NAMING.test(f) ? buf : hashFree(buf); // A272
+      if (!isTotal && s.gzipMax !== undefined) gzip += gzipSync(held).length;
+      if (!isTotal && s.brotliMax !== undefined) brotli += brotliCompressSync(held, { params: { [constants.BROTLI_PARAM_QUALITY]: 11, [constants.BROTLI_PARAM_SIZE_HINT]: held.length } }).length;
     }
     const failures: string[] = [];
     if (s.rawMax !== undefined && raw > s.rawMax) failures.push(`${s.rule}: ${kB(raw)} raw is over the budget of ${kB(s.rawMax)} (${s.files.join(", ")})`);
@@ -756,6 +761,7 @@ function format(report: Report): string {
     const parts = [cell(r.raw, r.rawMax, "raw"), cell(r.gzip, r.gzipMax, "gzip"), cell(r.brotli, r.brotliMax, "brotli")].filter(Boolean);
     return `  ${r.failures.length > 0 ? "FAIL" : "ok  "}  ${r.rule.padEnd(19)} ${parts.join("   ")}`;
   });
+  lines.unshift("  gzip (hashes held): hashed file names are fixed before gzip and brotli (A272); raw is the real file");
   if (report.notBuilt.length > 0) lines.push(`  (not built yet: ${report.notBuilt.join(", ")})`);
   return lines.join("\n");
 }

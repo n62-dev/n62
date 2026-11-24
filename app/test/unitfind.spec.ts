@@ -285,3 +285,100 @@ test.describe("the user cells", () => {
     await expect(cell(page, "u1").locator(".main")).toHaveText("dB");
   });
 });
+
+// R893 (owner-style hunt 2026-11-23, h2 #2; R893f1: a prefix too): a unit or a prefix picked from Find in Home or CAS opens the unit view on the line with the
+// unit in the active slot (Home has no units, docs/04 4.x; `\unit{…}` on the line was a parse error). Expected values
+// derived: 3 with km/h in the slot is 3 km/h.
+test.describe("a unit picked from Find outside the view (R893)", () => {
+  test.beforeEach(async ({ page }) => {
+    await open(page, "");
+    await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
+  });
+  const result = (page: Page) => page.getByTestId("unit-result");
+  const errors = (page: Page) => page.locator('.history [data-status="error"]');
+  /** 3, Find, kmh (km/h is the first hit), Enter: the view is up on 3 with km/h in its active slot, no row; Enter: 3 km/h. */
+  async function threeKmh(page: Page): Promise<void> {
+    await tap(page, ["d3"]);
+    await openFind(page);
+    await typeFind(page, "kmh");
+    await expect(rows(page).first()).toHaveAttribute("data-id", "unit:km/h");
+    await tap(page, ["enter"]);
+    await expect(find(page)).toBeHidden();
+    await up(page);
+    expect(await page.evaluate(() => window.n62.unitView?.view.line)).toBe("3");
+    expect(await page.evaluate(() => window.n62.unitView?.view.activeId)).toBe("u1");
+    expect((await tokens(page)).map((t) => `${t.prefix ?? ""}${t.unit}${t.power ? `^${t.power}` : ""}`).join(" ")).toBe("km/h");
+    await expect(errors(page)).toHaveCount(0);
+    await tap(page, ["enter"]);
+    await expect(result(page)).toHaveAttribute("data-text", "3");
+    await expect(result(page)).toHaveAttribute("data-unit", "km/h");
+    await expect(errors(page)).toHaveCount(0);
+    expect(await page.evaluate(() => window.n62.session.view)).toBe("home");
+  }
+
+  test("Home, 3, Find, km/h, Enter: the unit view on 3 with km/h in the active slot; Enter: = 3 km/h", async ({ page }) => {
+    await threeKmh(page);
+  });
+
+  test("CAS, 3, Find, km/h, Enter: the same, the view in Home (R894); CAS gets no row", async ({ page }) => {
+    await page.evaluate(() => window.n62.session.setView("cas"));
+    await expect(page.getByTestId("tab-slot")).toHaveAttribute("aria-selected", "true");
+    await threeKmh(page);
+    expect(await page.evaluate(() => window.n62.session.cas.length)).toBe(0);
+  });
+
+  /** 3, Find, kilo, the k prefix (the first hit), Enter: the view is up on 3 with k armed in the active slot, no row; then the
+   *  pad's m (d9) and Enter: 3 km (derived: k is 10^3, so 3 · 10^3 m is 3 km). */
+  async function threeKilo(page: Page): Promise<void> {
+    await tap(page, ["d3"]);
+    await openFind(page);
+    await typeFind(page, "kilo");
+    await expect(rows(page).first()).toHaveAttribute("data-id", "pfx:k");
+    await tap(page, ["enter"]);
+    await expect(find(page)).toBeHidden();
+    await up(page);
+    expect(await page.evaluate(() => window.n62.unitView?.view.line)).toBe("3");
+    expect(await page.evaluate(() => window.n62.unitView?.view.activeId)).toBe("u1");
+    expect(await page.evaluate(() => window.n62.unitView?.view.model("u1")?.armed)).toEqual({ prefix: "k", sqrt: false });
+    expect(await tokens(page)).toEqual([]);
+    await expect(errors(page)).toHaveCount(0);
+    await tap(page, ["d9"]); // m
+    expect(await tokens(page)).toEqual([{ prefix: "k", unit: "m" }]);
+    await tap(page, ["enter"]);
+    await expect(result(page)).toHaveAttribute("data-text", "3");
+    await expect(result(page)).toHaveAttribute("data-unit", "km");
+    await expect(errors(page)).toHaveCount(0);
+    expect(await page.evaluate(() => window.n62.session.view)).toBe("home");
+  }
+
+  test("Home, 3, Find, kilo, the k prefix, Enter: the unit view on 3 with k armed; m, Enter: = 3 km", async ({ page }) => {
+    await threeKilo(page);
+  });
+
+  test("CAS, 3, Find, the k prefix, Enter: the same, the view in Home (R894); CAS gets no row", async ({ page }) => {
+    await page.evaluate(() => window.n62.session.setView("cas"));
+    await expect(page.getByTestId("tab-slot")).toHaveAttribute("aria-selected", "true");
+    await threeKilo(page);
+    expect(await page.evaluate(() => window.n62.session.cas.length)).toBe(0);
+  });
+
+  test("control: a constant picked in Home goes on the line as its chip, as before; no unit view", async ({ page }) => {
+    await tap(page, ["d3", "math", "tmpl", "enter"]);
+    await expect(find(page)).toBeHidden();
+    expect(await page.evaluate(() => window.n62.entry.value)).toBe("3\\const{c}{c}");
+    await page.waitForTimeout(300);
+    expect(await page.evaluate(() => window.n62.unitView)).toBeUndefined();
+  });
+
+  test("control: km/h picked from Find inside the unit view lands in the slot as before", async ({ page }) => {
+    await tap(page, ["d3"]);
+    await unitsKey(page);
+    await openFind(page);
+    await typeFind(page, "kmh");
+    await tap(page, ["enter"]);
+    await expect(find(page)).toBeHidden();
+    expect((await tokens(page)).map((t) => `${t.prefix ?? ""}${t.unit}`).join(" ")).toBe("km/h");
+    await tap(page, ["enter"]);
+    await expect(result(page)).toHaveAttribute("data-unit", "km/h");
+  });
+});

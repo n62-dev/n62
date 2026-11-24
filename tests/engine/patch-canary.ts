@@ -251,17 +251,23 @@ const CANARIES: [string, string, RegExp, string][] = [
   // G790 (F475), patch 0064: mmult_atranb's sparse loop skips a left entry with is_zero(acur,context0), an absolute 1e-12 at any Digits
   // (and matrix_density counts zeros the same way), so a left factor of floats below 1e-12 gave the zero matrix at Digits 40
   ["0064-mmult-tiny-float-factor.patch", "giac-2.1.0/src/vecteur.cc", /const gen & acur=\*it;\s*if \(is_zero\(acur,context0\)\)\{\s*int p=1;\s*\+\+it;\s*for \(; \(it!=itend\) && is_zero\(\*it,context0\);/, "double a_density=matrix_density(a),b_density=matrix_density(btran);"],
-  // G622 (F436), patch 0066: linear_combination, the row operation of mrref at Digits > 14, keeps a cancelled MPFR entry (trim tests
+  // G622 (F436), patch 0068: linear_combination, the row operation of mrref at Digits > 14, keeps a cancelled MPFR entry (trim tests
   // doubles only) and rref_reduce's pivot test is is_exactly_zero, so the cancelled pivot of a singular float matrix was a pivot
   // (rank(evalf([[1,2,3],[4,5,6],[7,8,9]])) = 0 at Digits 15, rref the identity, ker [])
-  ["0066-float-rref-cancelled-pivot.patch", "giac-2.1.0/src/vecteur.cc", /if \(is_one\(c\)\)\{\s*for \(;jt1!=it1end;\+\+jt1,\+\+it2\)\{\s*\*jt1=trim\(c1\*\(\*jt1\)\+c2\*\(\*it2\),c1,eps\);/, "void linear_combination(const gen & c1,const vecteur & v1,const gen & c2,const vecteur & v2,const gen & c,const gen & cinv,vecteur & v,double eps,int cstart){"],
+  ["0068-float-rref-cancelled-pivot.patch", "giac-2.1.0/src/vecteur.cc", /if \(is_one\(c\)\)\{\s*for \(;jt1!=it1end;\+\+jt1,\+\+it2\)\{\s*\*jt1=trim\(c1\*\(\*jt1\)\+c2\*\(\*it2\),c1,eps\);/, "void linear_combination(const gen & c1,const vecteur & v1,const gen & c2,const vecteur & v2,const gen & c,const gen & cinv,vecteur & v,double eps,int cstart){"],
   // ... is_blockmatrix (under det and inv) splits at entries is_zero takes for 0, 1e-12 at any scale (det(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]])) = 1e-13)
-  ["0066-float-rref-cancelled-pivot.patch", "giac-2.1.0/src/vecteur.cc", /if \(is_zero\(ai\[j\]\) && is_zero\(\(\*a\[j\]\._VECTptr\)\[i\]\)\)/, "bool is_blockmatrix(const matrice & a,vector<int> & p){"],
+  ["0068-float-rref-cancelled-pivot.patch", "giac-2.1.0/src/vecteur.cc", /if \(is_zero\(ai\[j\]\) && is_zero\(\(\*a\[j\]\._VECTptr\)\[i\]\)\)/, "bool is_blockmatrix(const matrice & a,vector<int> & p){"],
   // ... and _rank counts the rows of mrref's result that are not is_zero (pivots below 1e-12: rank(evalf([[1,1],[1,1+10^-20]])) = 0 at Digits 40)
-  ["0066-float-rref-cancelled-pivot.patch", "giac-2.1.0/src/misc.cc", /mr=mrref\(mr,contextptr\);\s*int r=int\(mr\.size\(\)\);\s*for \(;r;--r\)\{\s*if \(!is_zero\(mr\[r-1\]\)\)/, "gen _rank(const gen & args,GIAC_CONTEXT){"],
+  ["0068-float-rref-cancelled-pivot.patch", "giac-2.1.0/src/misc.cc", /mr=mrref\(mr,contextptr\);\s*int r=int\(mr\.size\(\)\);\s*for \(;r;--r\)\{\s*if \(!is_zero\(mr\[r-1\]\)\)/, "gen _rank(const gen & args,GIAC_CONTEXT){"],
   // G793, G793f1, patch 0065: _lcm returns lcm(a,b) = normal(a/gcd(a,b))*b as it comes, the sign of the product, for integers and
   // fractions of integers alike (lcm(-4,6) = -12, lcm(-4) = -4, lcm(1/2,-1/3) = -1, lcm(-1/2) = -1/2)
   ["0065-lcm-integers-positive.patch", "giac-2.1.0/src/usual.cc", /if \(args\.type!=_VECT\)\s*return args;[\s\S]{0,300}?return apply\(\*it,\*\(it\+1\),lcm\);\s*gen res\(\*it\);\s*for \(\+\+it;it!=itend;\+\+it\)\s*res=lcm\(res,\*it\);\s*return res;/, "gen _lcm(const gen & args,GIAC_CONTEXT){"],
+  // G792, patch 0066: sin (and cos, sinh, cosh) send a float matrix to analytic_apply, which diagonalises in doubles over the complex
+  // eigenvalues and leaves imaginary noise (sin(evalf([[0,1],[-1,0]])) = [[2.998e-15*i,1.17520119364],…] at Digits 12)
+  ["0066-matrix-trig-series.patch", "giac-2.1.0/src/usual.cc", /if \(is_squarematrix\(e\)\)\s*return analytic_apply\(at_sin,\*e\._VECTptr,contextptr\);/, "gen sin(const gen & e0,GIAC_CONTEXT){"],
+  // G803 (F240), patch 0067: _convert sets the list's subtype from the last argument's val with no test that it is an _INT_, so a
+  // fraction, a float or a name gave a subtype from its pointer's bits (convert(129,2,1/2) = [129,1/2], pnt[…] or gr2d(logo(…)))
+  ["0067-convert-subtype-integer.patch", "giac-2.1.0/src/prog.cc", /default:\s*return gensizeerr\(contextptr\);\s*\}\s*\}\s*#endif\s*g\.subtype=v\.back\(\)\.val;/, "case _SET__VECT:"],
 ];
 
 const tar = tarball(SOURCES.giac);

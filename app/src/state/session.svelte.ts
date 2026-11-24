@@ -184,7 +184,7 @@ export const loadForms = (): Promise<typeof import("./cycleForms.ts") | undefine
 export const loadRemoved = (): Promise<typeof import("./removedRows.ts") | undefined> =>
   import("./removedRows.ts").then((m) => (removedCode = m), () => undefined);
 
-const clamp = (n: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, Math.round(n)));
+export const clamp = (n: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, Math.round(n)));
 const clampDigits = (n: number): number => Math.min(MAX_DIGITS, Math.max(1, Math.round(n)));
 
 /** The haptics settings from a stored or merged record: a missing number is the default's, the rest is clamped. */
@@ -267,6 +267,8 @@ export class Session {
   private readonly kv: Kv;
   /** Put a look on the page (main.ts: theme/lookApply.ts); called when it changes and once the settings are read. */
   onLook: ((look: Look) => void) | undefined;
+  /** Home ↔ CAS, called before the switch (main.ts: the entry line's undo starts afresh, R898). */
+  onView: (() => void) | undefined;
   /** 0 = write the history at once (tests); the app sets a delay so Enter does not wait for the store. */
   saveDelayMs = 0;
   private saveTimer: ReturnType<typeof setTimeout> | undefined;
@@ -381,10 +383,10 @@ export class Session {
   }
 
   toggleView(): void {
-    this.view = this.view === "home" ? "cas" : "home";
-    this.saveView();
+    this.setView(this.view === "home" ? "cas" : "home");
   }
   setView(v: View): void {
+    if (v !== this.view) this.onView?.(); // R898: the shared line's undo stops at the switch
     this.view = v;
     this.saveView();
   }
@@ -418,17 +420,7 @@ export class Session {
   input(item: HistoryItem): string {
     return this.decimalComma ? commaInput(item.latex) : item.latex;
   }
-  setFmtMode(mode: FmtMode, on: boolean): void {
-    const ticked = new Set(this.settings.fmtCycle);
-    if (on) ticked.add(mode);
-    else ticked.delete(mode);
-    this.settings.fmtCycle = normalizeCycle([...ticked]);
-    this.save();
-  }
-  setFixDecimals(n: number): void {
-    this.settings.fixDecimals = clamp(n, 0, 12);
-    this.save();
-  }
+  // setFmtMode and setFixDecimals, which only the Mode sheet calls, are in modeSets.ts (G792: the start chunk's pin)
   setHaptics(h: Partial<HapticsSettings>): void {
     this.settings.haptics = hapticsOf({ ...this.settings.haptics, ...h });
     this.save();

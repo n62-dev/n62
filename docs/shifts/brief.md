@@ -61,22 +61,19 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 888e4r | R930 1 kB room in the start chunk | ron, Opus | `p1/ron-startroom` | – |
-| 888e4a | R924 the mark takes no tap | ron, Opus | `p1/ron-marknotap` | – |
-| 888e4b | R926 back closes an app | ron, Opus | `p1/ron-appback` | R919, R924 |
 | 888e4c | [A271](packages/A271.md) back twice to leave (waits: a device) | annabell, Sonnet | `p1/annabell-backtwice` | R926 |
-| 888e5 | [R892](packages/R892.md) room under the corner button | ron, Opus | `p1/ron-fullroom` | R891 |
-| 888e6 | [R894](packages/R894.md) the units key in CAS goes to Home | ron, Opus | `p1/ron-unitfromcas` | – |
-| 888e7 | [R893](packages/R893.md) a unit from Find in Home | ron, Opus | `p1/ron-findunithome` | R894, R917 |
+| 888e6a | R931 fill button in the title row; none on Chars | ron, Opus | `p1/ron-fillhead` | R894 |
+| 888e6b | [R932](packages/R932.md) setting: Find opens full screen | ron, Opus | `p1/ron-findfull` | R931 |
+| 888e6c | [R933](packages/R933.md) non-digit keys off the background | ron, Opus | `p1/ron-keyfill` | – |
 | 888e7a | [R929](packages/R929.md) a constant shows its unit | ron, Opus | `p1/ron-constlabel` | G801 |
-| 888e8 | [R897](packages/R897.md) a hold on a Num cell copies | ron, Opus | `p1/ron-numhold` | – |
-| 888e9 | [R898](packages/R898.md) a new line owner ends Undo | ron, Opus | `p1/ron-viewundo` | – |
+| 888e8 | R897 a hold on a Num cell copies | ron, Opus | `p1/ron-numhold` | – |
+| 888e9 | R898 a new line owner ends Undo | ron, Opus | `p1/ron-viewundo` | – |
 | 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Opus | `p1/ron-keepline` | – |
 | 888e10a | [R921](packages/R921.md) layer sweep 2: sheets | ron, Opus | `p1/ron-layersweep2` | R916 |
-| 888e10b | [R922](packages/R922.md) sheets take paste, typing | ron, Opus | `p1/ron-sheetchannels` | – |
+| 888e10b | R922 sheets take paste, typing | ron, Opus | `p1/ron-sheetchannels` | – |
 | 888e11 | [R900](packages/R900.md) Paste into a name filter | ron, Opus | `p1/ron-sheetpaste` | R889, R922 |
 | 888e12 | [R901](packages/R901.md) Settings and Mode keep the pick | ron, Opus | `p1/ron-keeppick` | – |
-| 888e12a | [R927](packages/R927.md) Preset on top; Mode in Settings | ron, Opus | `p1/ron-modeorder` | R887, R901 |
+| 888e12a | [R927](packages/R927.md) Settings on top; Mode its row 1, Preset first | ron, Opus | `p1/ron-modeorder` | R887, R901 |
 | 888e13 | [R902](packages/R902.md) a dropped unit says so | ron, Opus | `p1/ron-unitdropped` | – |
 | 888e14 | [R903](packages/R903.md) hold on the line copies | ron, Opus | `p1/ron-linehold` | – |
 | 888e15 | [R904](packages/R904.md) Copied notice tells the truth | ron, Opus | `p1/ron-copiednotice` | – |
@@ -147,12 +144,9 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| B6b | G622 float pivots relative to the matrix | gorge, Opus | `p1/gorge-floatrref` | R930 (rerun of #1533) |
-| B6c | [G792](packages/G792.md) sin, cos of a float matrix | gorge, Opus | `p1/gorge-matsincos` | – (rerun of #1538: golden time only) |
-| B6d | G793 lcm of integers is positive | gorge, Opus | `p1/gorge-lcmsign` | – |
-| B6e | G794 CAS float lists get a mark | gorge, Opus | `p1/gorge-caslistmark` | – |
-| B6f | G797 the sweep builds matrices | gorge, Opus | `p1/gorge-sweepmatrix` | – |
-| B6g | [G798](packages/G798.md) scaling and sign laws | gorge, Opus | `p1/gorge-lawcheck` | G797 |
+| B6b | G622 float pivots relative to the matrix (G622f2, pass 239) | gorge, Opus | `p1/gorge-floatrref` | – |
+| B6c | [A273](packages/A273.md) the family tests' nightly runs after each pass | annabell, Sonnet | `p1/annabell-familynightly` | – |
+| B6d | [G802](packages/G802.md) exp of a 3×3 float matrix kills the engine | gorge, Opus | `p1/gorge-matexpstack` | – |
 | B6h | [G799](packages/G799.md) marks and Copy agree | gorge, Opus | `p1/gorge-markagree` | – |
 | B6i | [G800](packages/G800.md) a unit sweep | gorge, Opus | `p1/gorge-unitsweep` | R885 |
 | B6j | [G795](packages/G795.md) FIX of a long number | gorge, Opus | `p1/gorge-fixlong` | – |

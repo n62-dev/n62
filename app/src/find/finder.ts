@@ -3,12 +3,12 @@
 // browser is idle after the engine is ready, or on the first Math press. The index is a Vite asset outside every
 // chunk (find-index.<hash>.json), fetched here and prepared once. No usage ranking and nothing stored (P11).
 import indexUrl from "./_gen/find-index.json?url";
-import type { AppShell } from "../apps/shell.svelte.ts";
 import type { MenuItem } from "../apps/types.ts";
 import type { EntryController } from "../entry/controller.ts";
 import { findText as t } from "../i18n/enFind.ts";
 import { constKey, type Chip } from "../input/chips.ts";
 import type { Layer } from "../keyboard/keyboard.ts";
+import { lazy, type RouteCtx } from "../keyboard/route.ts";
 import type { UserBinding, UserKeys } from "../keyboard/userKeys.svelte.ts";
 import { CATEGORIES, categoryItems } from "./categories.ts";
 import { FIRST_KEYS, prepare, search, warmSearch, type PreparedIndex } from "./rank.ts";
@@ -175,12 +175,16 @@ export interface SlotTarget {
 
 /** Math (R4a): Find over the history or view, as a list that takes letters (decisions.md R21). A pick (docs/04 3.6)
  *  puts a constant on the line as a chip with its value and uncertainty, anything else as its insert (a function
- *  with the cursor in its first argument). With `slot` (R4b) a pick sets that free key's slot instead. */
-export function showFind(shell: AppShell, entry: EntryController, index: FindIndex, slot?: SlotTarget): void {
+ *  with the cursor in its first argument). R893: a unit or a prefix in Home or CAS (which have no units, docs/04 4.3) opens the unit
+ *  view on the line with it in the active slot (a prefix armed), as the units key does (the keys pressed meanwhile wait, R8). With `slot`
+ *  (R4b) a pick sets that free key's slot instead. */
+export function showFind(c: RouteCtx, index: FindIndex, slot?: SlotTarget): void {
+  const { shell, entry } = c;
   // R24d: a unit pad cell ("cell:u1", Settings › Your keys › Unit pad cells): Find on units, the pick sets that leg
   if (slot?.id.startsWith("cell:")) return void import("../units/find.ts").then((m) => m.showCellFind(shell, index, slot.id.slice(5), LEG[slot.layer]));
   const pick = (it: FindItem): void => {
     if (slot) return slot.userKeys.set(slot.id, slot.layer, bindingOf(it));
+    if ((it.kind === "unit" || it.kind === "pfx") && shell.app === null) return lazy(c, import("../units/open.ts").then((m) => m.openUnits(c, undefined, it)));
     putOnLine(entry, it);
   };
   const { categories, search } = findMenu(index, pick);

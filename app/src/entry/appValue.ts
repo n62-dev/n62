@@ -12,6 +12,8 @@ export interface Where {
   readonly app: string | null;
   readonly view: string;
   readonly clip?: { say(note: string): void } | undefined;
+  /** R922: the open sheet, if any: under it the line takes nothing that follows the focus (entry/hwkeys.ts, entry/field.ts). */
+  readonly sheet?: object | null;
 }
 type Kind = "expr" | "num";
 const kindOf = (w: Where | undefined): Kind | undefined => (w?.app ? (w.view === "num" ? "num" : "expr") : undefined);

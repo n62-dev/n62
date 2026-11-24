@@ -13,6 +13,7 @@ import { PRESET_GROUPS, PRESETS_KEY, PresetError, Presets, START_COPIES, type Pr
 import { Session } from "./session.svelte.ts";
 import { DATA_VERSION, USER_KEYS } from "./storage.ts";
 import type { RawRecord } from "./storageRaw.ts";
+import { setFixDecimals, setFmtMode } from "./modeSets.ts";
 import { fakeKv } from "./fakeKv.ts";
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
@@ -103,8 +104,8 @@ describe("presets (R88)", () => {
   it("apply, then capture, gives the same snapshot", async () => {
     const { session, userKeys, cells, presets } = await setup();
     session.setAngle("deg");
-    session.setFixDecimals(7);
-    session.setFmtMode("pfx", true);
+    setFixDecimals(session, 7);
+    setFmtMode(session, "pfx", true);
     session.settings.look = { family: "solarized", brightness: "light", contrast: true, plain: true, shadow: false, pops: false };
     userKeys.set(U2, "shift", mol);
     cells.set(C1, "up", { unit: "mol" });
