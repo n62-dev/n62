@@ -2,7 +2,8 @@
 # G61: the failures the oracle sweep (app/scripts/sweep.ts, seed 20261021, 1000 trees) finds today. id = "<angle> <digits> <keyboard LaTeX>", check = the
 # judge's check (=, ≈, ⚠n, part, novalue, hang), package = the package whose fix removes the entry. The stage passes when its failures are exactly
 # these; remove an entry when its fix lands. F62 (proposed in decisions.md): sin of a 1.5-million-digit float takes 11 s.
-# G797: the matrix trees (100 of the seed's own stream) and the pinned hunt inputs (gen.ts MATRIX_PINNED) follow, judged entry by entry.
+# G797: the matrix trees (100 of the seed's own stream) and the pinned hunt inputs (gen.ts MATRIX_PINNED) follow, judged entry by entry:
+# G622 a singular float matrix (rank, inv, linsolve), G792 cos or sin of a matrix (imaginary noise, wrong digits under ⚠n and ≈).
 known:
   - { id: "rad 30 \\sin\\left(\\cosh\\left(10!\\right)\\right)+\\left(\\exponentialE^{\\cos\\left(7\\right)}\\right)", check: "hang", package: F62 }
   - { id: "deg 30 \\sin\\left(\\cosh\\left(10!\\right)\\right)+\\left(\\exponentialE^{\\cos\\left(7\\right)}\\right)", check: "hang", package: F62 }
@@ -10,3 +11,14 @@ known:
   - { id: "rad 12 \\operatorname{rank}\\left(\\operatorname{approx}\\left(\\begin{pmatrix}1&2&3\\\\4&5&6\\\\7&8&9\\end{pmatrix}\\right)\\right)", check: "part", package: G622 }
   - { id: "rad 12 \\sin\\left(\\operatorname{approx}\\left(\\begin{pmatrix}0&1\\\\-1&0\\end{pmatrix}\\right)\\right)", check: "part", package: G792 }
   - { id: "deg 12 \\sin\\left(\\operatorname{approx}\\left(\\begin{pmatrix}0&1\\\\-1&0\\end{pmatrix}\\right)\\right)", check: "part", package: G792 }
+  - { id: "rad 30 \\cos\\left(1\\times \\operatorname{approx}\\left(\\begin{pmatrix}2&7&9.81\\\\3&10!&3.7\\\\1&2&1.5ᴇ8\\end{pmatrix}\\right)\\right)", check: "⚠n", package: G792 }
+  - { id: "rad 30 \\cos\\left(\\begin{pmatrix}\\pi&1\\\\3.7&3\\end{pmatrix}\\times \\operatorname{approx}\\left(10^{-15}\\times \\begin{pmatrix}10!&0.1\\\\7&10\\end{pmatrix}\\right)\\right)", check: "⚠n", package: G792 }
+  - { id: "deg 30 \\cos\\left(\\begin{pmatrix}\\pi&1\\\\3.7&3\\end{pmatrix}\\times \\operatorname{approx}\\left(10^{-15}\\times \\begin{pmatrix}10!&0.1\\\\7&10\\end{pmatrix}\\right)\\right)", check: "⚠n", package: G792 }
+  - { id: "rad 30 \\cos\\left(10^{-7}\\times \\begin{pmatrix}2ᴇ-8&0&0.2\\\\2.5&2&1\\\\2&0.2&6.02ᴇ8\\end{pmatrix}\\right)\\times \\begin{pmatrix}7\\\\3.7\\\\5\\end{pmatrix}", check: "⚠n", package: G792 }
+  - { id: "deg 30 \\cos\\left(10^{-7}\\times \\begin{pmatrix}2ᴇ-8&0&0.2\\\\2.5&2&1\\\\2&0.2&6.02ᴇ8\\end{pmatrix}\\right)\\times \\begin{pmatrix}7\\\\3.7\\\\5\\end{pmatrix}", check: "≈", package: G792 }
+  - { id: "deg 30 \\cos\\left(\\left(10^{-12}\\times \\begin{pmatrix}7&10&9.81\\\\3&\\pi&3\\\\1.05&2.5&3!\\end{pmatrix}\\right)+\\operatorname{approx}\\left(\\begin{pmatrix}0.2&3&2ᴇ-8\\\\0.2&0.001&9.81\\\\12&0.3&2ᴇ-8\\end{pmatrix}\\right)\\right)", check: "part", package: G792 }
+  - { id: "deg 30 \\cos\\left(10^{-13}\\times \\begin{pmatrix}\\pi&12&9.81\\\\3.7&2&7\\\\\\pi&\\pi&9.81\\end{pmatrix}\\right)", check: "≈", package: G792 }
+  - { id: "rad 12 \\operatorname{rank}\\left(\\operatorname{approx}\\left(\\begin{pmatrix}0&1&7!\\\\2ᴇ-8&3!&0.1\\\\0+\\left(2ᴇ-8\\right)&1+\\left(3!\\right)&\\left(7!\\right)+0.1\\end{pmatrix}\\right)\\times \\frac{\\begin{pmatrix}10&12&1.5ᴇ22\\\\10&\\pi&6.02ᴇ-3\\\\1&3&2\\end{pmatrix}}{10^{11}}\\right)", check: "part", package: G622 }
+  - { id: "rad 12 \\pi\\times \\operatorname{inv}\\left(\\operatorname{approx}\\left(10^{-1}\\times \\begin{pmatrix}5!&0.2&5\\\\\\exponentialE&12&7\\\\\\left(5!\\right)+\\exponentialE&0.2+12&5+7\\end{pmatrix}\\right)\\right)", check: "novalue", package: G622 }
+  - { id: "deg 12 \\begin{pmatrix}1.5ᴇ22&1\\\\2\\times \\left(1.5ᴇ22\\right)&2\\times 1\\end{pmatrix}\\times \\cos\\left(\\operatorname{approx}\\left(10^{-1}\\times \\begin{pmatrix}0.2&3\\\\3&7\\end{pmatrix}\\right)\\right)", check: "≈", package: G792 }
+  - { id: "rad 12 \\operatorname{linsolve}\\left(\\left(\\operatorname{approx}\\left(10^{-8}\\times \\begin{pmatrix}1.05&\\pi&7\\\\7&\\pi&3.7\\\\1.05+7&\\pi+\\pi&7+3.7\\end{pmatrix}\\right)\\right)^{2},\\begin{pmatrix}3.7\\\\0.001\\\\\\pi\\end{pmatrix}\\right)", check: "novalue", package: G622 }
