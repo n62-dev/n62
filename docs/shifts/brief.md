@@ -61,12 +61,6 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 888e2b | R917 unit view opens in one step | ron, Opus | `p1/ron-unitopen` | – |
-| 888e2c | R918 no row taps under units | ron, Opus | `p1/ron-unitrowtap` | R916, R917 |
-| 888e2d | R919 back ends a name prompt | ron, Opus | `p1/ron-promptback` | – |
-| 888e2e | R925 ×10ⁿ takes no unit slot | ron, Opus | `p1/ron-tenpowslot` | R918 |
-| 888e3 | R889 Alpha in a search types its letter | ron, Opus | `p1/ron-sheetalpha` | – |
-| 888e4 | R891 sheets sit on the tab bar | ron, Opus | `p1/ron-sheetline` | – |
 | 888e4r | [R930](packages/R930.md) 1 kB room in the start chunk | ron, Opus | `p1/ron-startroom` | – |
 | 888e4a | [R924](packages/R924.md) the mark takes no tap | ron, Opus | `p1/ron-marknotap` | – |
 | 888e4b | [R926](packages/R926.md) back closes an app | ron, Opus | `p1/ron-appback` | R919, R924 |
