@@ -138,3 +138,83 @@ test("control: back with nothing open leaves; a typed line does not stop it", as
   await page.goBack();
   await gone(page);
 });
+
+// R919 (F375): a name prompt (askName, views/presetsView.svelte.ts) is a layer of its own, on top of the Alpha lock it
+// starts (R776): one back ends both, as Esc would; the line is what it was, Alpha is off, the app stays, and no entry is
+// left for a second back to use up.
+const label = (p: Page) => p.getByTestId("entry-label");
+const menuRow = (p: Page, id: string) => sheet(p).locator(`[role="menuitem"][data-id="${id}"]`);
+async function backEnds(p: Page, name: string): Promise<void> {
+  await expect(label(p)).toHaveText(name);
+  await expect.poll(async () => (await mods(p)).al).toBe(true);
+  await tap(p, ["d2"]); // z (Alpha is locked in lower case)
+  expect(await entryValue(p)).toContain("z");
+  await p.goBack();
+  await expect(label(p)).toHaveCount(0);
+  expect(await entryValue(p)).toBe("7+1");
+  await expect.poll(async () => await mods(p)).toEqual({ s: false, a: false, sl: false, al: false });
+  stays(p);
+  await expect.poll(() => layer(p)).toBeUndefined();
+  await p.goBack();
+  await gone(p);
+}
+
+test("(g) Mode › Presets › Save: back ends the name prompt and its Alpha lock at once; a second back leaves", async ({ page }) => {
+  await tap(page, ["d7", "add", "d1"]);
+  await tap(page, ["@mode", "d5", "d1"]);
+  await backEnds(page, "Preset name");
+});
+
+test("(h) a preset's Rename: back ends the prompt as Esc would; the name is kept", async ({ page }) => {
+  await tap(page, ["@mode", "d5", "d1"]); // Save, as Lab
+  await expect(label(page)).toHaveText("Preset name");
+  await page.keyboard.type("Lab");
+  await page.keyboard.press("Enter");
+  await expect(label(page)).toHaveCount(0);
+  await tap(page, ["d7", "add", "d1"]);
+  await tap(page, ["@mode", "d5", "d3", "d1", "d7", "d1"]); // Edit › Lab › Rename or delete › Rename
+  await backEnds(page, "Preset name");
+});
+
+test("(i) Settings › Sync › Device name: back ends the prompt", async ({ page }) => {
+  await page.addInitScript(() => {
+    const cap = {}; // (as nameprompt.spec.ts: the Sync rows are the Android ones)
+    Object.defineProperty(cap, "isNativePlatform", { get: () => () => true, set: () => {} });
+    (window as unknown as { Capacitor: unknown }).Capacitor = cap;
+  });
+  await open(page);
+  await tap(page, ["d7", "add", "d1"]);
+  await tap(page, ["@mode", "d6", "d5"]);
+  await menuRow(page, "sync").tap();
+  await menuRow(page, "device").tap();
+  await backEnds(page, "Device name");
+});
+
+test("(j) a field of the unit form (no Alpha lock): back ends it, the line is as it was", async ({ page }) => {
+  await tap(page, ["d7", "add", "d1"]);
+  await tap(page, ["@mode", "d6", "d4"]);
+  await menuRow(page, "units").tap();
+  await menuRow(page, "new").tap();
+  await menuRow(page, "name").tap();
+  await expect(label(page)).toHaveText("Unit name");
+  expect((await mods(page)).al).toBe(false);
+  await page.keyboard.type("q");
+  await page.goBack();
+  await expect(label(page)).toHaveCount(0);
+  expect(await entryValue(page)).toBe("7+1");
+  stays(page);
+  await expect.poll(() => layer(page)).toBeUndefined();
+});
+
+test("control (R919): Esc in a name prompt ends it and Alpha; back then leaves", async ({ page }) => {
+  await tap(page, ["d7", "add", "d1"]);
+  await tap(page, ["@mode", "d5", "d1"]);
+  await expect(label(page)).toHaveText("Preset name");
+  await tap(page, ["d2", "esc"]);
+  await expect(label(page)).toHaveCount(0);
+  expect(await entryValue(page)).toBe("7+1");
+  await expect.poll(async () => await mods(page)).toEqual({ s: false, a: false, sl: false, al: false });
+  await expect.poll(() => layer(page)).toBeUndefined();
+  await page.goBack();
+  await gone(page);
+});
