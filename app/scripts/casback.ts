@@ -8,7 +8,7 @@
 // signs = those of the absolute values, ≥ 0, hamdist(a,b) = hamdist(−a−1,−b−1), b·iquo(a,b) + irem(a,b) = a. A broken law fails only
 // where both sides claim their digits (=, ≈, ⚠ n); a bare ⚠ passes.
 //   node scripts/casback.ts                       # the gate stage: fixed seed, CASBACK_COUNT generated questions (default 120), 6 law matrices, exit 1 on a new failure or past 30 s
-//   node scripts/casback.ts --nightly [--seed N] [--count N] [--laws N]   # rotating seed, default 1200 questions and 60 law matrices, report only
+//   node scripts/casback.ts --nightly [--seed N] [--count N] [--laws N]   # rotating seed, default 1200 questions and 60 law matrices, report only (FINDING: not a known row)
 // Known failures: tests/golden/casback-known.yaml (id = the question or the law, check = its kind or `law`, package = the open backlog id). Environment: GIAC_OUT.
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -125,12 +125,19 @@ const unique = [...new Map(failures.map((f) => [`${f.id} ${f.check}`, f])).value
 const secs = (performance.now() - t0) / 1000;
 const stats = `${questions.length} questions and ${laws.length} laws (seed ${seed}): ${checked} checked, ${skipped} skipped as not checkable, ${unique.length} failed, total ${secs.toFixed(1)} s`;
 
+const known = parse(readFileSync(resolve(repo, "tests/golden/casback-known.yaml"), "utf8")) as { known?: KnownFailure[] };
 if (nightly) {
-  for (const f of unique) console.log(`FINDING ${f.id} [${f.check}]: ${f.detail}`);
-  console.log(`CASBACK NIGHTLY: ${stats}`);
+  // G798: a known row's failure (the hand matrices and the integer laws are the same every night) is not a new finding for the week
+  const pkg = new Map((known.known ?? []).map((k) => [`${k.id} ${k.check}`, k.package]));
+  let fresh = 0;
+  for (const f of unique) {
+    const p = pkg.get(`${f.id} ${f.check}`);
+    if (p === undefined) fresh++;
+    console.log(`${p === undefined ? "FINDING" : `known (${p})`} ${f.id} [${f.check}]: ${f.detail}`);
+  }
+  console.log(`CASBACK NIGHTLY: ${stats}; ${fresh} new`);
   process.exit(0);
 }
-const known = parse(readFileSync(resolve(repo, "tests/golden/casback-known.yaml"), "utf8")) as { known?: KnownFailure[] };
 const v = invariantsStage(unique, known.known ?? []);
 for (const l of v.lines) console.log(`  casback ${l}`);
 const ok = v.ok && secs < BUDGET_S;
