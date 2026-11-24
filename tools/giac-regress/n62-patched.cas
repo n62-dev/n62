@@ -116,6 +116,24 @@ Digits:=40:; pc("g793-lcm-neg2^70-3",'(lcm(-2^70,3))',(354177486215*10^10),5*10^
 // patch 0065-lcm-integers-positive.patch
 // g793-lcm-neg4-alone (home.yaml, derived)
 Digits:=40:; pc("g793-lcm-neg4-alone",'(lcm(-4))',4,5/10^12);
+// patch 0065-lcm-integers-positive.patch
+// g793f1-lcm-half-neg-third (home.yaml, derived)
+Digits:=40:; pc("g793f1-lcm-half-neg-third",'(lcm(1/2,-1/3))',1,5/10^12);
+// patch 0065-lcm-integers-positive.patch
+// g793f1-lcm-neg-2/3-4/5 (home.yaml, derived)
+Digits:=40:; pc("g793f1-lcm-neg-2/3-4/5",'(lcm(-2/3,4/5))',4,5/10^12);
+// patch 0065-lcm-integers-positive.patch
+// g793f1-lcm-list-neg-half-third-quarter (home.yaml, derived)
+Digits:=40:; pc("g793f1-lcm-list-neg-half-third-quarter",'(lcm([-1/2,1/3,1/4]))',1,5/10^12);
+// patch 0065-lcm-integers-positive.patch
+// g793f1-lcm-neg-half-alone (home.yaml, derived)
+Digits:=40:; pc("g793f1-lcm-neg-half-alone",'(lcm(-1/2))',(5/10^1),5/10^13);
+// patch 0065-lcm-integers-positive.patch
+// g793f1-lcm-neg4-third (home.yaml, derived)
+Digits:=40:; pc("g793f1-lcm-neg4-third",'(lcm(-4,1/3))',4,5/10^12);
+// patch 0065-lcm-integers-positive.patch
+// g793f1-lcm-neg2^70/3-fifth (home.yaml, derived)
+Digits:=40:; pc("g793f1-lcm-neg2^70/3-fifth",'(lcm(-2^70/3,1/5))',(118059162072*10^10),5*10^9);
 // patch 0046-shift-integer-exact.patch
 // g226-shift-1-neg70 (home.yaml, derived)
 Digits:=40:; pc("g226-shift-1-neg70",'(shift(1,-70))',(118059162072*10^10),5*10^9);

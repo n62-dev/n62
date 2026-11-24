@@ -1827,3 +1827,13 @@ cases:
   - { id: "g793-cas-lcm-neg2^70-3", kind: "cas", input: "lcm(-2^70,3)", expect: "3541774862152233910272", mark: "=", source: "derived", note: "G793: 2^70 and 3 are coprime, so 3*2^70 (math.lcm(-2**70,3)); CAS showed -3541774862152233910272" }
   - { id: "g793-cas-keep-lcm-neg4-neg6", kind: "cas", input: "lcm(-4,-6)", oracle: "F(12)", expect: "12", mark: "=", source: "derived", note: "G793 control: two negatives, right before the patch" }
   - { id: "g793-cas-keep-lcm-poly", kind: "cas", input: "lcm(x^2-1,x+1)", expect: "(x-1)*(x+1)", source: "derived", note: "G793 control: a polynomial keeps Giac's form" }
+  # --- G793f1: the lcm of fractions of integers in the CAS view is positive: lcm(a/b,c/d) = lcm(a,c)/gcd(b,d) (patch 0065) ---
+  - { id: "g793f1-cas-lcm-half-neg-third", kind: "cas", input: "lcm(1/2,-1/3)", oracle: "F(1)", expect: "1", source: "derived", note: "G793f1: lcm(1,1)/gcd(2,3) = 1; CAS showed -1" }
+  - { id: "g793f1-cas-lcm-neg-2/3-4/5", kind: "cas", input: "lcm(-2/3,4/5)", oracle: "F(4)", expect: "4", source: "derived", note: "G793f1: lcm(2,4)/gcd(3,5) = 4; CAS showed -4" }
+  - { id: "g793f1-cas-lcm-list-neg-half-third-quarter", kind: "cas", input: "lcm([-1/2,1/3,1/4])", oracle: "F(1)", expect: "1", source: "derived", note: "G793f1: lcm(1,1,1)/gcd(2,3,4) = 1; CAS showed -1" }
+  - { id: "g793f1-cas-lcm-neg-half-alone", kind: "cas", input: "lcm(-1/2)", oracle: "F(1,2)", expect: "1/2", source: "derived", note: "G793f1: one argument: 1/2; CAS showed -1/2" }
+  - { id: "g793f1-cas-lcm-neg4-third", kind: "cas", input: "lcm(-4,1/3)", oracle: "F(4)", expect: "4", source: "derived", note: "G793f1: lcm(4,1)/gcd(1,3) = 4; CAS showed -4" }
+  - { id: "g793f1-cas-lcm-pairs-neg-half-third", kind: "cas", input: "lcm([-1/2,1/3],[1/4,-1/6])", expect: "[1/2,1/3]", source: "derived", note: "G793f1: pair by pair [lcm(-1/2,1/4), lcm(1/3,-1/6)] = [1/2,1/3]; CAS showed [-1/2,-1/3]" }
+  - { id: "g793f1-cas-keep-lcm-half-third", kind: "cas", input: "lcm(1/2,1/3)", oracle: "F(1)", expect: "1", source: "derived", note: "G793f1 control: positive fractions, right before the patch" }
+  - { id: "g793f1-cas-keep-lcm-4-6", kind: "cas", input: "lcm(4,6)", oracle: "F(12)", expect: "12", source: "derived", note: "G793f1 control: positive integers (math.lcm(4,6) = 12)" }
+  - { id: "g793f1-cas-keep-lcm-neg6-typed-4.0", kind: "cas", input: "lcm(-6,4.0)", oracle: "F(12)", expect: "12", source: "derived", note: "G793f1 control: the typed 4.0 reaches Giac as the exact 4, so math.lcm(-6,4) = 12" }
