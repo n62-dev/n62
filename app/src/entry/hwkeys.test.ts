@@ -294,6 +294,35 @@ describe("R131: % and the desktop keys", () => {
     expect(run(ev("{", "Digit7", { ctrl: true, alt: true, altGraph: true })).got).toEqual(["d8:shift"]);
   });
 
+  // R922 (F373): under a sheet the line takes nothing that follows the focus; the keys still go to the shell (the sheet's)
+  describe("R922: under a sheet", () => {
+    const under = (sheet: object | null, ...evs: KeyboardEvent[]): { handled: boolean[]; got: string[] } => {
+      const { t, got } = target();
+      const s: HwTarget = { ...t, shell: { app: null, view: "home", sheet } };
+      return { handled: evs.map((e) => hardwareKey(e, s)), got };
+    };
+    it("< > !, a character outside ASCII (µ) and a ) that would leave its pair are dead presses, handled", () => {
+      expect(under({}, ev("!"), ev("<"), ev(">"), ev("µ"), ev(")"), ev("}"), ev("]"))).toEqual({ handled: Array(7).fill(true), got: Array(7).fill("dead") });
+    });
+    it("Select all, cut and a word delete (Ctrl or Cmd) are dead presses; copy, paste (field.ts) and the browser's chords stay theirs", () => {
+      const r = under({}, ev("a", "KeyA", { ctrl: true }), ev("x", "KeyX", { meta: true }), ev("Backspace", "Backspace", { ctrl: true }), ev("c", "KeyC", { ctrl: true }), ev("v", "KeyV", { ctrl: true }), ev("r", "KeyR", { ctrl: true }), ev("F5", "F5"));
+      expect(r).toEqual({ handled: [true, true, true, false, false, false, false], got: ["dead", "dead", "dead"] });
+    });
+    it("the keys still go to the shell, whose sheet takes them: a digit, a letter, |, (, Ctrl+Z, Alt+F", () => {
+      expect(under({}, ev("7"), ev("k"), ev("|"), ev("("), ev("z", "KeyZ", { ctrl: true }), ev("f", "KeyF", { alt: true })).got).toEqual([
+        "d7:primary",
+        "letter k",
+        "neg:shift",
+        "paren:primary",
+        "undo:primary",
+        "math:primary",
+      ]);
+    });
+    it("with no sheet each channel is as before: ! the symbol, µ and Ctrl+A MathLive's", () => {
+      expect(under(null, ev("!"), ev("µ"), ev("a", "KeyA", { ctrl: true }))).toEqual({ handled: [true, false, false], got: ["symbol !"] });
+    });
+  });
+
   // R303 (fh-2): the unit view's capture listener (units/open.ts) stopped every chord and letter
   describe("R303: unitViewKey, the unit view's hardware keys", () => {
     /** What ran, and whether the view stopped each event (left to the browser and MathLive when not). */
