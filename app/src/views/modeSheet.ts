@@ -11,6 +11,7 @@ import { modeText, type ModeKey } from "../i18n/enMode.ts";
 import { hasStrength, loadClick, vibrate } from "../input/haptics.ts";
 import { NOTATION_MODES } from "../state/displayMode.ts";
 import { MAX_DIGITS, type DecimalMark, type EntryMode, type MarkStyle, type Session, type UncertaintyView } from "../state/session.svelte.ts";
+import { setFixDecimals, setFmtMode } from "../state/modeSets.ts";
 import { groupSepFor, type GroupSep } from "../render/home.ts";
 import { aboutText } from "../i18n/enAbout.ts";
 import { uncText } from "../i18n/enUnc.ts";
@@ -352,7 +353,7 @@ export function numbersItems(session: Session, words: WordStore = wordStore): Me
     get value() {
       return String(s.fixDecimals);
     },
-    adjust: (by) => session.setFixDecimals(s.fixDecimals + by),
+    adjust: (by) => setFixDecimals(session, s.fixDecimals + by),
   };
   const uncertainty: MenuItem = {
     id: "uncertainty",
@@ -453,7 +454,7 @@ function fmtTicks(session: Session): MenuItem[] {
     get selected() {
       return s.fmtCycle.includes(mode);
     },
-    run: () => session.setFmtMode(mode, !s.fmtCycle.includes(mode)),
+    run: () => setFmtMode(session, mode, !s.fmtCycle.includes(mode)),
   }));
 }
 

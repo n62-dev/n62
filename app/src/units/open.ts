@@ -16,6 +16,7 @@ import type { MathfieldElement } from "mathlive";
 import type { Key } from "../keyboard/keyboard.ts";
 import { lazy, type Mods, type RouteCtx } from "../keyboard/route.ts";
 import type { HistoryItem } from "../state/session.svelte.ts";
+import type { FindItem } from "../find/types.ts";
 import { engineFormat } from "../calc/port.ts";
 import { ANS_KEY, type ChipTable } from "../input/chips.ts";
 import { openLayer } from "../input/backLayer.ts";
@@ -101,19 +102,28 @@ function lend(entry: RouteCtx["entry"], dead: () => void): () => void {
   };
 }
 
-/** Open the unit view on the line, or on a picked history row's input (it becomes the line). Dead in an app. */
-export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
+/** Open the unit view on the line, or on a picked history row's input (it becomes the line). Dead in an app. `unit`: a unit
+ *  picked from Find in Home or CAS (R893), put in the active slot as Find on units puts it, through the view's own apply. */
+export async function openUnits(c: RouteCtx, row?: HistoryItem, unit?: FindItem): Promise<void> {
+  const session = c.session; // (read once: the chunk is at its size pin)
   const entryEl = document.querySelector<HTMLElement>(".entry");
   const fieldEl = entryEl?.querySelector<HTMLElement>(".field");
   if (visit || c.shell.app !== null || !entryEl || !fieldEl) return c.dead();
-  if (row) c.entry.set(c.session.input(row), row.chips); // R100: in comma mode its argument commas as `;`
+  if (row) c.entry.set(session.input(row), row.chips); // R100: in comma mode its argument commas as `;`
   const line = c.entry.value;
   const chips = c.entry.chips;
   // R259: Ans is the view's last result (Home's or CAS's, as Enter there reads it, session.submit), read once here: the
   // view's own rows never feed it. Only the parse gets it (unread unless the line holds \ans); the Home row keeps the
   // line's chips (Ans is never stored)
-  const ans = c.session.lastChip();
+  const ans = session.lastChip();
   const parseChips: ChipTable = ans ? { ...chips, [ANS_KEY]: ans } : chips;
+  // R894: the result is one Home row (docs/04 4.3), so from CAS the view opens in Home, where the row shows under it and
+  // after Esc. As the place key does outside an app (route.ts "switch"): the pick goes (it names a CAS row), then
+  // session.setView; not App's goTo, whose shell.close clears a line not typed (a picked row's input) and is for apps
+  if (session.view !== "home") {
+    c.picked = null;
+    session.setView("home");
+  }
   const me = {};
   visit = me;
   let made: UnitView | undefined;
@@ -152,12 +162,13 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
     void unitFind().catch(() => undefined);
     // MathLive comes with the entry line (its field is up once `ready`): the class is taken from the element registry
     // G234: your units are Find's items in the slot too (the store is read first: the list is as it was left)
-    const [, { finder, index }, hw] = await Promise.all([
+    const [, { finder, index }, hw, , , pf] = await Promise.all([
       c.entry.ready,
       Promise.all([import("../find/finder.ts"), ownUnits.restore()]).then(async ([m]) => ({ finder: m, index: m.withOwnUnits(await m.loadIndex(true), ownUnits.list()) })),
       import("../entry/hwkeys.ts"),
       unitCells.restore(),
       hooks()?.hold?.(),
+      unit && unitFind(),
     ]);
     const Field = customElements.get("math-field") as typeof MathfieldElement | undefined;
     if (!Field) return c.dead();
@@ -169,7 +180,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
     /** R838: the angle unit and the digits as one text ("rad12"), those of the last request in `was` (the engine's facts, σ's
      *  text and the Home row take the digits, units/evaluate.ts): a change of either asks again. R915: `job` is that request's
      *  angle and Giac text, for its row (the angle tag, units/row.ts); only the last request's result is shown (view.ts). */
-    const asked = (): string => c.session.settings.angle + c.session.settings.digits;
+    const asked = (): string => session.settings.angle + session.settings.digits;
     let was = asked();
     let job: RowIn["job"];
     const mf = new Field();
@@ -178,8 +189,8 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
       write: (id, latex) => mf.setPromptValue(id, latex, {}),
       evaluate: (req) => {
         was = asked();
-        job = { angle: c.session.settings.angle, formula: req.formula };
-        return c.shell.calc.units(req, c.session.settings);
+        job = { angle: session.settings.angle, formula: req.formula };
+        return c.shell.calc.units(req, session.settings);
       },
       find: (into, dim) =>
         void unitFind().then((m) => {
@@ -187,17 +198,17 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
           const more = dim === undefined ? { constant, tools: tools() } : {};
           m.showUnitFind({ shell: c.shell, index, cat, apply: dim === undefined ? (a) => view.apply(a) : (a) => view.pickMore(a), refresh: () => (unitPad.model = new UnitPad(unitCells.userSet())), ...more }, into, dim);
         }),
-      format: () => ({ format: engineFormat(c.session.settings.format), digits: c.session.settings.digits, decimalComma: c.session.decimalComma, grouped: true, groupSep: c.session.settings.groupSep }),
+      format: () => ({ format: engineFormat(session.settings.format), digits: session.settings.digits, decimalComma: session.decimalComma, grouped: true, groupSep: session.settings.groupSep }),
       alternatives: async (q, req) => {
         const target = q.dimension ? (await readTargets(idbKv))[q.dimension] : undefined;
         return alternatives(q, { table, pad: padUnitList(), user: userUnitCells(unitCells.userSet()), req, ...(target ? { target } : {}) });
       },
       remember: (dim, slot) => writeTarget(idbKv, dim, slot).then(() => undefined),
       dead: () => c.dead(),
-      values: () => userValuesOf(c.session.userNames),
+      values: () => userValuesOf(session.userNames),
       changed: () => panel.draw(),
       reset: (latex, ids) => lockedValue(mf, latex, ids),
-      result: (q) => void (rowId = putRow(c.session, unitRow({ line, chips, q, slots: view.filled(), input: view.drawn(), digits: c.session.settings.digits, job }), rowId)),
+      result: (q) => void (rowId = putRow(session, unitRow({ line, chips, q, slots: view.filled(), input: view.drawn(), digits: session.settings.digits, job }), rowId)),
     };
     /** R92: a constant from the units menu goes on Home's line at its cursor (Find's own pick path); the view leaves
      *  keeping its slots, they go with the new line text, and the view opens again on it. */
@@ -211,7 +222,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
     };
     /** R92: Tools › the number into Home: the view leaves, the result goes on the line as Home's chip (the way back). */
     const home = (): void => {
-      const item = rowId === undefined ? undefined : c.session.home.find((r) => r.id === rowId);
+      const item = rowId === undefined ? undefined : session.home.find((r) => r.id === rowId);
       if (!item || current?.view !== view) return c.dead();
       close();
       c.insertResult(item);
@@ -220,12 +231,12 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
     const tools = (): UnitTool[] => unitTools(view.shown, { end: () => view.toEnd(), alt: (a) => void view.pickAlt(a), alts: () => view.down(), home, store, storeRefused });
     /** R353: the result's row (this visit's, while a result is shown) and the reason a store of it is refused. */
     const resultRow = (): HistoryItem | undefined =>
-      rowId === undefined || view.shown.kind !== "result" ? undefined : c.session.home.find((r) => r.id === rowId && r.status === "done");
+      rowId === undefined || view.shown.kind !== "result" ? undefined : session.home.find((r) => r.id === rowId && r.status === "done");
     const storeRefused = (): string | undefined => {
       const item = resultRow();
       // R915 (F376): a result is shown but its Home row was deleted (a swipe, Delete): say so, not "Eval first"
       if (!item) return unitText(rowId !== undefined && view.shown.kind === "result" ? "units.store.rowGone" : "units.store.first");
-      return storeChip(c.session.chipFor(item), item.units?.unit ?? "", item.units?.unc) ? undefined : unitText("units.store.noUnit");
+      return storeChip(session.chipFor(item), item.units?.unit ?? "", item.units?.unc) ? undefined : unitText("units.store.noUnit");
     };
     /** R353: the refusal of the last Store ▶, shown while what it was pressed on stands. */
     let said: { on: Shown; text: string } | undefined;
@@ -246,7 +257,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
       c.entry.clear();
       c.withClip((x) => void (x.storeRow(item) || c.dead()));
     };
-    const panel = makePanel(() => made, () => c.session.settings.marks, { run: store, said: () => (said && made?.shown === said.on ? said.text : undefined) });
+    const panel = makePanel(() => made, () => session.settings.marks, { run: store, said: () => (said && made?.shown === said.on ? said.text : undefined) });
     const cat = slotCatalogue(index.items);
     const table = factorTable(index.items);
     const view = new UnitView(cat, line, parseChips, host, seed);
@@ -267,6 +278,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
     setUp(mf, element, c, hw, new HwTyping(view));
     lockedValue(mf, view.formula.latex, view.ids);
     view.start();
+    if (unit && pf) for (const a of pf.pickActions(cat, unit)) view.apply(a);
 
     /** R700: Android back is Esc for the view (docs/05 3.7): out of the alternatives row, else it leaves; each back takes a new entry for what is left. */
     const layer = (): void => {

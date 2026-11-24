@@ -66,10 +66,8 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 888e4b | R926 back closes an app | ron, Opus | `p1/ron-appback` | R919, R924 |
 | 888e4c | [A271](packages/A271.md) back twice to leave (waits: a device) | annabell, Sonnet | `p1/annabell-backtwice` | R926 |
 | 888e5 | R892 room under the corner button | ron, Opus | `p1/ron-fullroom` | R891 |
-| 888e6 | [R894](packages/R894.md) the units key in CAS goes to Home | ron, Opus | `p1/ron-unitfromcas` | – |
-| 888e6a | [R931](packages/R931.md) fill button in the title row; none on Chars | ron, Opus | `p1/ron-fillhead` | R894 |
-| 888e6b | [R932](packages/R932.md) setting: Find opens full screen | ron, Opus | `p1/ron-findfull` | R931 |
-| 888e7 | [R893](packages/R893.md) a unit from Find in Home | ron, Opus | `p1/ron-findunithome` | R894, R917 |
+| 888e6 | R894 the units key in CAS goes to Home | ron, Opus | `p1/ron-unitfromcas` | – |
+| 888e7 | R893 a unit from Find in Home | ron, Opus | `p1/ron-findunithome` | R894, R917 |
 | 888e7a | [R929](packages/R929.md) a constant shows its unit | ron, Opus | `p1/ron-constlabel` | G801 |
 | 888e8 | [R897](packages/R897.md) a hold on a Num cell copies | ron, Opus | `p1/ron-numhold` | – |
 | 888e9 | [R898](packages/R898.md) a new line owner ends Undo | ron, Opus | `p1/ron-viewundo` | – |
@@ -150,7 +148,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | B6b | [G622](packages/G622.md) float pivots relative to the matrix | gorge, Opus | `p1/gorge-floatrref` | R930 (rerun of #1533) |
-| B6c | [G792](packages/G792.md) sin, cos of a float matrix | gorge, Opus | `p1/gorge-matsincos` | – (rerun of #1538: golden time only) |
+| B6c | G792 sin, cos of a float matrix | gorge, Opus | `p1/gorge-matsincos` | – (rerun of #1538: golden time only) |
 | B6c1 | [A272](packages/A272.md) size check holds hashed names fixed | annabell, Sonnet | `p1/annabell-hashnames` | G792f1 |
 | B6d | G793 lcm of integers is positive | gorge, Opus | `p1/gorge-lcmsign` | – |
 | B6e | G794 CAS float lists get a mark | gorge, Opus | `p1/gorge-caslistmark` | – |

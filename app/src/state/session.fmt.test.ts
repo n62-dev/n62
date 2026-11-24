@@ -7,6 +7,7 @@ import { EngineHost } from "../engine/host.ts";
 import { defaultHomeSettings, safePrecision } from "../engine/homeEval.ts";
 import { giacAvailable, nodeHost } from "../engine/nodeGiac.ts";
 import { loadForms, Session } from "./session.svelte.ts";
+import { setFmtMode } from "./modeSets.ts";
 import { fakeKv } from "./fakeKv.ts";
 
 
@@ -51,7 +52,7 @@ describe.skipIf(!giacAvailable())("Format key (real Giac)", () => {
 
   it("Fixed is a notation of the Format key; the fraction is a b/c's form (R10)", async () => {
     const s = new Session(await engineCalc(), fakeKv());
-    s.setFmtMode("fix", true);
+    setFmtMode(s, "fix", true);
     await s.submit("\\frac73");
     const seen: string[] = [];
     for (let i = 0; i < 3; i++) {
@@ -120,7 +121,7 @@ describe.skipIf(!giacAvailable())("Format key (real Giac)", () => {
     const kv = fakeKv();
     const a = new Session(await engineCalc(), kv);
     await a.restoreHistory();
-    a.setFmtMode("eng", false);
+    setFmtMode(a, "eng", false);
     await a.submit("\\frac13");
     await a.formKey("cycleFormat");
     expect(text(a)).toBe("3.33333333333E-1");
@@ -190,7 +191,7 @@ describe("Format key (stub engine)", () => {
   it("settings: unticking everything keeps the default cycle; vibration settings are clamped and stored", async () => {
     const kv = fakeKv();
     const s = new Session(new FakeCalc(), kv);
-    for (const m of ["std", "sci", "eng"] as const) s.setFmtMode(m, false);
+    for (const m of ["std", "sci", "eng"] as const) setFmtMode(s, m, false);
     expect(s.settings.fmtCycle).toEqual(["std", "sci", "eng"]);
     expect(s.settings.haptics).toEqual({ on: false, strength: 50, ms: 15, click: false });
     s.setHaptics({ on: true, strength: 500, ms: 1 });
