@@ -8,6 +8,7 @@ Phase 0 (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md). This fil
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
 - **G784, Paste of a copied name:** Copy writes the letters (`2*i`, `r*a*i*n*b*o*w`, `β*2`); Paste reads one number, so a product of names is refused, and `2*i` copied from the name i came back as the constant i, another value (principle 3): G784f1 (pass 231) refuses a text N62 copied from a row with a stand-in. Recommended: keep Paste a number reader, so a copied name does not paste back; reading expressions is its own package (the letter i against the constant i needs a rule first).
+- **G622f2, inv where Home's exact path says Not invertible:** refuse, or the float path's noise? G622f2's report.
 - **R779, the drag after the arrow keys, on the Fairphone:** Chromium touch emulation could not reproduce "drag, arrow keys, drag" (linetouch.spec.ts, R779 cases, green on phase-1 too); lineTouch.ts now ends a stale touch (a new first finger, a lift off the line). Does the drag work on the Fairphone 6 after it? If not, record `adb` pointer events (down/move/up/cancel with ids) for the sequence.
 
 ## Decided proposals
