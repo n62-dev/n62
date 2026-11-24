@@ -27,7 +27,7 @@ type Family = Parameters<typeof familyOf>[0];
 export interface PresetsHost {
   readonly userKeys?: UserKeys;
   readonly shell?: { prompt: EntryPrompt | null; readonly sheet: unknown; readonly app: unknown; readonly view: unknown };
-  readonly entry?: Pick<EntryController, "value" | "chips" | "set" | "run" | "clear"> & Partial<Pick<EntryController, "fieldPending" | "fieldUp">>;
+  readonly entry?: Pick<EntryController, "value" | "chips" | "set" | "run" | "clear"> & Partial<Pick<EntryController, "fieldPending" | "fieldUp" | "freshUndo">>;
   data?(run: (c: ClipActions) => void | Promise<void>): void;
   /** R776: a name prompt locks Alpha in lower case while it is open (true) and lets it go at its end (false); App.svelte's session. */
   alpha?(on: boolean): void;
@@ -241,6 +241,7 @@ function nameNow(host: PresetsHost, start: string, save: (name: string) => void,
     if (!plain) host.alpha?.(false);
     queueMicrotask(stop); // (not from inside the watch's own run)
     entry.set(line, chips);
+    entry.freshUndo?.(); // R898: the name typed is not Undo's to bring back on the line
   };
   const offer = (): void => {
     const name = read(entry.value);
@@ -273,6 +274,7 @@ function nameNow(host: PresetsHost, start: string, save: (name: string) => void,
   shell.prompt = prompt;
   const back = backEnds(host, prompt);
   entry.set(nameLatex(start));
+  entry.freshUndo?.(); // R898: Undo stops at the name the prompt starts with, never the line it set aside
   // a tap that goes elsewhere ends the name as Esc does: a sheet opens, or another app or view (the place name, Plot).
   // Watched here, in the Mode chunk, so the start chunk's shell carries only the `prompt` field (R89 fix round 2).
   const app = shell.app;
