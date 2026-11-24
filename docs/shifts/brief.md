@@ -62,7 +62,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 888e4c | [A271](packages/A271.md) back twice to leave (waits: a device) | annabell, Sonnet | `p1/annabell-backtwice` | R926 |
-| 888e6a | [R931](packages/R931.md) fill button in the title row; none on Chars | ron, Opus | `p1/ron-fillhead` | R894 |
+| 888e6a | R931 fill button in the title row; none on Chars | ron, Opus | `p1/ron-fillhead` | R894 |
 | 888e6b | [R932](packages/R932.md) setting: Find opens full screen | ron, Opus | `p1/ron-findfull` | R931 |
 | 888e6c | [R933](packages/R933.md) non-digit keys off the background | ron, Opus | `p1/ron-keyfill` | – |
 | 888e7a | [R929](packages/R929.md) a constant shows its unit | ron, Opus | `p1/ron-constlabel` | G801 |

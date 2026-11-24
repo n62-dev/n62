@@ -174,8 +174,13 @@
   onpointerdown={noFocus}
   onclick={(e) => e.target === e.currentTarget && onclose()}
 >
+  <!-- R778, R931: a sheet with no fixed size (sheet.fillable) fills the whole screen, keypad area included, and back; a touch
+       view. The button sits in the title row, left of × (and of ⚙); a full sheet keeps it there. -->
+  {#snippet fill()}
+    {#if sheet.fillable || sheet.full}<button type="button" class="fill" use:pressFlag data-sheet-full aria-pressed={sheet.full} aria-label={sheetText(sheet.full ? "sheet.unfill" : "sheet.fill")} onclick={() => (sheet.full = !sheet.full)}>{@html sheet.full ? UNFILL : FILL}</button>{/if}
+  {/snippet}
   <!-- svelte-ignore a11y_interactive_supports_focus (nothing in a sheet takes focus: the caret stays in the entry line) -->
-  <div class="sheet" class:roomy={sheet.fillable || sheet.full} role="menu" aria-label={level.title} data-depth={sheet.depth} bind:this={panel} onpointerdowncapture={() => (pressed = true)} onpointercancel={() => (pressed = false)} onclickcapture={onlyPressed}>
+  <div class="sheet" role="menu" aria-label={level.title} data-depth={sheet.depth} bind:this={panel} onpointerdowncapture={() => (pressed = true)} onpointercancel={() => (pressed = false)} onclickcapture={onlyPressed}>
     {#if columns !== undefined}
       <!-- a grid (the palettes, R10 and R18): no title row; the title, the highlighted cell's name and × share the hint
            line. Each cell is drawn as math, no numbers; a cell picked by the key at its place shows that key in its
@@ -184,6 +189,7 @@
         <span class="gtitle" data-testid="sheet-title">{sheet.path}</span>
         <span class="hint" data-testid="sheet-hint">{level.current?.label ?? ""}</span>
         {#if cutTop || cutBottom}<span class="count" data-testid="sheet-count">{sheetText("sheet.count", { n: String(rows.length) })}</span>{/if}
+        {@render fill()}
         <button type="button" class="icon" use:pressFlag aria-label={sheetText("apps.close")} onclick={onclose}>×</button>
       </div>
       <div
@@ -215,6 +221,7 @@
         {#if sheet.icon}<span class="ticon" aria-hidden="true">{@html icon(sheet.icon)}</span>{/if}<span class="title" data-testid="sheet-title">{sheet.path}</span>
         {#if level.filter !== ""}<span class="filter" data-testid="sheet-filter">{level.filter}</span>{/if}
         {#if (cutTop || cutBottom) && level.text === undefined && !level.grid}<span class="count" data-testid="sheet-count">{sheetText("sheet.count", { n: String(rows.length) })}</span>{/if}
+        {@render fill()}
         {#if sheet.hasSettings}<button type="button" class="icon gear" use:pressFlag data-testid="sheet-gear" aria-label={t("key.settings")} onclick={ongear}>{@html GEAR}</button>{/if}
         <button type="button" class="icon" use:pressFlag aria-label={sheetText("apps.close")} onclick={onclose}>×</button>
       </div>
@@ -272,8 +279,6 @@
       {#if note}<div class="preview" class:long={level.longPreview} data-testid="find-preview">{note}</div>{/if}
       {#if level.current?.put}<button type="button" class="put" use:pressFlag data-testid="find-put" onclick={() => level.current?.put?.run()}>{level.current.put.label} ▶</button>{/if}
     {/if}
-    <!-- R778: a sheet with no fixed size (sheet.fillable) fills the whole screen, keypad area included, and back; a touch view -->
-    {#if sheet.fillable || sheet.full}<button type="button" class="fill" use:pressFlag data-sheet-full aria-pressed={sheet.full} aria-label={sheetText(sheet.full ? "sheet.unfill" : "sheet.fill")} onclick={() => (sheet.full = !sheet.full)}>{@html sheet.full ? UNFILL : FILL}</button>{/if}
   </div>
   <!-- R891: only a matrix grid keeps the entry line's room (its cells are typed there, R189); every other sheet sits on the bar,
        over the line -->
@@ -325,14 +330,6 @@
     min-height: 0;
     flex: 0 1 auto;
   }
-  /* R892: the corner button (.fill) has its own room under the list or grid, so no row or cell lies under it, in the first
-     view or scrolled to the end: a tap on a row does what the row says. Find's ▶ put row shares the bottom with it. */
-  .sheet.roomy {
-    padding-bottom: var(--touch);
-  }
-  .sheet.roomy:has(> .put) {
-    padding-bottom: var(--sp-15);
-  }
   /* R778: the whole screen, the keypad under it; the sheet is its box (no margin, no corners) */
   .overlay.full {
     position: fixed;
@@ -352,13 +349,17 @@
   .overlay.full > .room {
     display: none;
   }
+  /* R931: a 44 × 44 target in the 32 px title row; it reaches up over the head's and the sheet's top padding and down only
+     over the head's own, so no row lies under it (R892) and the row keeps its height. Its padding centres the mark (and the
+     pressed shape, drawn in the content box) on the row. */
   .fill {
     all: unset;
-    position: absolute;
-    right: 0;
-    bottom: 0;
+    flex: none;
+    box-sizing: border-box;
     width: var(--touch);
     height: var(--touch);
+    margin-block: calc(var(--head-h) - var(--touch) + var(--sp-05)) calc(-1 * var(--sp-05));
+    padding-block: calc(var(--touch) - var(--head-h) - var(--sp-05)) var(--sp-05);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -374,6 +375,9 @@
   :is(.icon, .put, .fill, button.cell):global([data-down]) {
     background: var(--key-nav);
     border-radius: var(--radius-s);
+  }
+  button.fill:global([data-down]) {
+    background-clip: content-box;
   }
   button.cell:global([data-down]) {
     border-radius: var(--radius);
