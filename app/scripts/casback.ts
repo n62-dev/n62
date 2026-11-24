@@ -2,9 +2,14 @@
 // G64: CAS answers checked back as a gate stage (r16 section 3): an antiderivative differentiates to the integrand, a solution
 // substitutes to 0, a factorisation expands back, a simplification agrees at three points (tools/probes/casback/check.ts).
 // Questions: Giac's own check/ inputs (A19), G55's corpus (tests/golden/corpus.yaml, the checkable ones) and generated ones from a fixed seed.
-//   node scripts/casback.ts                       # the gate stage: fixed seed, CASBACK_COUNT generated questions (default 120), exit 1 on a new failure or past 30 s
-//   node scripts/casback.ts --nightly [--seed N] [--count N]   # rotating seed, default 1200, report only
-// Known failures: tests/golden/casback-known.yaml (id = the question, check = its kind, package = the open backlog id). Environment: GIAC_OUT.
+// G798: laws that need no oracle, each side through Home as the app calls it (check.ts `checkLaw`): a float matrix A scaled by c in
+// 10^±7, 10^±13 gives (c·A)·B = c·(A·B), det(c·A) = c^n·det(A), inv(c·A) = inv(A)/c, rank(c·A) = rank(A), linsolve(c·A, c·b) = linsolve(A, b)
+// (the hunt's hand matrices and G797's leaves, at Digits 12 and 30); integers 0, 7, 12, 2^31 ± 1, 2^63 ± 1, 2^70 give lcm and gcd of any
+// signs = those of the absolute values, ≥ 0, hamdist(a,b) = hamdist(−a−1,−b−1), b·iquo(a,b) + irem(a,b) = a. A broken law fails only
+// where both sides claim their digits (=, ≈, ⚠ n); a bare ⚠ passes.
+//   node scripts/casback.ts                       # the gate stage: fixed seed, CASBACK_COUNT generated questions (default 120), 6 law matrices, exit 1 on a new failure or past 30 s
+//   node scripts/casback.ts --nightly [--seed N] [--count N] [--laws N]   # rotating seed, default 1200 questions and 60 law matrices, report only
+// Known failures: tests/golden/casback-known.yaml (id = the question or the law, check = its kind or `law`, package = the open backlog id). Environment: GIAC_OUT.
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -17,7 +22,11 @@ import { invariantsStage, type InvariantFailure, type KnownFailure } from "./inv
 import { generate } from "../../tools/probes/sweep/gen.ts";
 import { compileDefinition } from "../src/apps/function/compile.ts";
 import { SETS, loadSet, tarballPath } from "../../tools/probes/giaccheck/suite.ts";
-import { checkBack, fromCorpus, generated, type At, type Entries, type Probe, type Question } from "../../tools/probes/casback/check.ts";
+import { checkBack, checkLaw, fromCorpus, generated, integerLawSet, LAW_MATRICES_PINNED, matrixLaws, type At, type Entries, type LawShown, type Probe, type Question } from "../../tools/probes/casback/check.ts";
+import { generateLawMatrices } from "../../tools/probes/sweep/gen.ts";
+import { shownOf } from "../../tools/probes/sweep/shown.ts";
+import { defaultHomeSettings } from "../src/engine/homeEval.ts";
+import { latexToGiac } from "../src/input/latex-to-giac.ts";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const args = process.argv.slice(2);
@@ -29,6 +38,7 @@ const flag = (name: string): number | null => {
 const GATE_SEED = 20261024;
 const seed = flag("--seed") ?? (nightly ? Math.floor(Date.now() / 86_400_000) : GATE_SEED);
 const count = flag("--count") ?? (nightly ? 1200 : Number(process.env["CASBACK_COUNT"] ?? 120));
+const lawMatrices = flag("--laws") ?? (nightly ? 60 : 6);
 const BUDGET_S = 30;
 const t0 = performance.now();
 setGiacHostGlobals();
@@ -81,6 +91,27 @@ const questions = [...fromFile.questions, ...fromCheck.questions.filter((q) => !
 let checked = 0;
 let skipped = fromFile.skipped + fromCheck.skipped;
 const failures: InvariantFailure[] = [];
+// G798: laws between two inputs, each side through Home as the app calls it (latexToGiac, the law's Digits, the marks of shown.ts);
+// first, so no CAS question before them changes Giac's state under them (F478: one input leaves epsilon at 1e-180)
+const side = (latex: string, digits: number): LawShown => shownOf(host.home(latexToGiac(latex), { ...defaultHomeSettings, digits, workDigits: Math.max(30, digits + 10) }).result, digits);
+const laws = [...LAW_MATRICES_PINNED, ...generateLawMatrices(seed, lawMatrices)].flatMap((m) => matrixLaws(m.a, m.b, m.col, m.n)).concat(integerLawSet());
+for (const l of laws) {
+  let left: LawShown;
+  let right: LawShown;
+  try {
+    left = side(l.left, l.digits);
+    right = side(l.right, l.digits);
+  } catch {
+    skipped++; // a side the keyboard's LaTeX reader refuses
+    continue;
+  }
+  const v = checkLaw(left, right, l.digits, l.nonneg === true);
+  if (v.status === "skip") skipped++;
+  else {
+    checked++;
+    if (v.status === "wrong") failures.push({ id: l.id, check: "law", detail: `${l.right}: ${v.detail}` });
+  }
+}
 for (const q of questions) {
   const answer = cas(q.input);
   const v = checkBack(q, answer, at, entries, probe);
@@ -92,7 +123,7 @@ for (const q of questions) {
 }
 const unique = [...new Map(failures.map((f) => [`${f.id} ${f.check}`, f])).values()];
 const secs = (performance.now() - t0) / 1000;
-const stats = `${questions.length} questions (seed ${seed}): ${checked} checked, ${skipped} skipped as not checkable, ${unique.length} failed, total ${secs.toFixed(1)} s`;
+const stats = `${questions.length} questions and ${laws.length} laws (seed ${seed}): ${checked} checked, ${skipped} skipped as not checkable, ${unique.length} failed, total ${secs.toFixed(1)} s`;
 
 if (nightly) {
   for (const f of unique) console.log(`FINDING ${f.id} [${f.check}]: ${f.detail}`);
