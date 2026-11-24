@@ -28,7 +28,7 @@ export const enEngineShown = {
 /** The worker's table: the app's part and the refusals of (G223) linreg and stats1, (G361) linterp (engine/stats.ts), (G229)
  *  the word operations (engine/wordOps.ts) and (G618) a sum its terms refute (engine/sumcheck.ts). Those are not in en.ts,
  *  so the start chunk does not carry them (size-check.ts START_PIN_GZIP): their row shows the words the worker sends
- *  (state/session.svelte.ts errorText falls back to them, i18n/index.ts hasMessage). */
+ *  (state/jobRun.ts errorText falls back to them, i18n/index.ts hasMessage). */
 export const enEngine = {
   ...enEngineShown,
   "error.sumUnchecked": SUM_UNCHECKED,

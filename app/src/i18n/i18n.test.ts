@@ -34,7 +34,7 @@ describe("i18n", () => {
 // checks that file still builds the prefix, so a family cannot outlive its template.
 const SRC = join(import.meta.dirname, "..");
 const FAMILIES: readonly { prefix: string; suffixes: readonly string[] | "any"; file: string }[] = [
-  { prefix: "view.", suffixes: ["home", "cas", "symb", "plot", "num"], file: "apps/shell.svelte.ts" },
+  { prefix: "view.", suffixes: ["home", "cas", "symb", "plot", "num"], file: "apps/shellSheets.ts" }, // (R930: the Apps and ☰ sheets, out of shell.svelte.ts)
   { prefix: "angle.", suffixes: ["rad", "deg"], file: "views/modeSheet.ts" },
   { prefix: "status.angle.", suffixes: ["rad", "deg"], file: "views/StatusLine.svelte" }, // R783
   { prefix: "engine.", suffixes: ["blink", "gecko", "webkit", "other"], file: "views/aboutItems.ts" }, // R285
@@ -53,7 +53,7 @@ const FAMILIES: readonly { prefix: string; suffixes: readonly string[] | "any"; 
   {
     prefix: "error.",
     suffixes: ["syntax", "timeout", "engine", "integralDiverges", "seriesDiverges", "sumUnchecked", "noLimit", "undecided", "divisionByZero", "overflow", "underflow", "noValue", "unknownFunction", "notSquare", "listPlusNumber", "listAsArguments", "listInArgument", "lengthsDiffer", "vectorsOnly", "notHere", "notData", "listsDiffer", "emptyList", "fewValues", "xAllEqual", "yAllEqual", "tableArgs", "tablePoints", "tableOrder", "tableOutside", "wordArgs", "wordSize", "wordValue", "wordCount"],
-    file: "state/session.svelte.ts",
+    file: "state/jobRun.ts", // (R930: errorText, out of session.svelte.ts)
   },
   { prefix: "part.", suffixes: "any", file: "state/backup.ts" }, // a backup part's name, from the part's key
   { prefix: "units.cat.", suffixes: "any", file: "units/menu.ts" }, // a category of the unit tables

@@ -3,7 +3,8 @@
 // tools/probes/carriers.ts does), so what the views get is what the engine said. Expected facts: the engine's own
 // (host.test.ts and precision.test.ts derive them); the rational rule is the one the port's text check had.
 import { beforeAll, describe, expect, it } from "vitest";
-import { EngineCalc, CAS_KEYS, HOME_KEYS, type PortChecks, type PortKeys, type SameKeys, type Passed } from "./engine.ts";
+import { EngineCalc } from "./engine.ts";
+import { CAS_KEYS, HOME_KEYS, type PortChecks, type PortKeys, type SameKeys, type Passed } from "./portKeys.ts";
 import type { CalcSettings, CasOutcome, HomeOutcome } from "./port.ts";
 import { EngineHost } from "../engine/host.ts";
 import { giacAvailable, nodeHost } from "../engine/nodeGiac.ts";

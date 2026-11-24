@@ -61,7 +61,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 888e4r | [R930](packages/R930.md) 1 kB room in the start chunk | ron, Opus | `p1/ron-startroom` | – |
+| 888e4r | R930 1 kB room in the start chunk | ron, Opus | `p1/ron-startroom` | – |
 | 888e4a | [R924](packages/R924.md) the mark takes no tap | ron, Opus | `p1/ron-marknotap` | – |
 | 888e4b | [R926](packages/R926.md) back closes an app | ron, Opus | `p1/ron-appback` | R919, R924 |
 | 888e4c | [A271](packages/A271.md) back twice to leave (waits: a device) | annabell, Sonnet | `p1/annabell-backtwice` | R926 |

@@ -18,74 +18,6 @@ import { CalcCancelled, type Calc, type CalcSettings, type ChipFactsTable, type 
 import type { IndexItem } from "../find/types.ts";
 import type { WordStore } from "../state/wordStore.svelte.ts";
 
-/**
- * What the port does with each key of an engine result (G76): "pass" gives it to the view as it is (`facts` whole, so
- * every fact the engine adds reaches the views); "held" keeps it back, the reason in a comment beside it (R255: the
- * reasons were texts in the start chunk). A key added to HomeResult or CasResult fails to compile here until it is listed.
- */
-export type PortKeys<T> = { readonly [K in keyof Required<T>]: "pass" | "held" };
-
-export const HOME_KEYS = {
-  ok: "pass",
-  display: "pass",
-  value: "pass",
-  facts: "pass",
-  approximate: "pass",
-  error: "pass",
-  full: "pass",
-  defined: "pass",
-  items: "pass",
-  shape: "pass",
-  braces: "pass",
-  digits: "pass",
-  latex: "pass",
-  settingReset: "pass",
-  reads: "pass",
-  uses: "pass",
-  unitNames: "pass",
-  uncTerms: "pass",
-  exact: "held", // given only when `rational` says it is a plain integer or p/q: the Format key's fraction modes read it
-  rational: "held", // read for `exact`
-  path: "held", // the engine's route, for its tests and probes; no view reads it
-  exactMs: "held", // a timing (measurement builds read the engine's own)
-  totalMs: "held", // a timing (measurement builds read the engine's own)
-} as const satisfies PortKeys<HomeResult>;
-
-export const CAS_KEYS = {
-  ok: "pass",
-  text: "pass",
-  full: "pass",
-  latex: "pass",
-  error: "pass",
-  uses: "pass",
-  reads: "pass",
-  numeric: "pass",
-  approximate: "pass",
-  facts: "pass",
-  settingReset: "pass",
-  timedOut: "held", // `error` is "timeout" then
-  engineMs: "held", // a timing (measurement builds read the engine's own)
-} as const satisfies PortKeys<CasResult>;
-
-/** The keys of T that `M` passes. */
-export type Passed<T, M extends PortKeys<T>> = { [K in keyof M]: M[K] extends "pass" ? K : never }[keyof M] & keyof T;
-
-/** The keys of `r` that `keys` passes, each as it is (absent ones stay absent). */
-function passed<T extends object, M extends PortKeys<T>>(r: T, keys: M): Pick<T, Passed<T, M>> {
-  const out: Partial<T> = {};
-  for (const k of Object.keys(keys) as (keyof T & keyof M)[]) if (keys[k] === "pass" && r[k] !== undefined) out[k] = r[k];
-  return out as Pick<T, Passed<T, M>>;
-}
-
-/** True when A and B are the same set of keys (both ways, so neither a passed key nor an outcome key goes unmapped). */
-export type SameKeys<A extends PropertyKey, B extends PropertyKey> = [Exclude<A, B>, Exclude<B, A>] extends [never, never] ? true : false;
-type Check<T extends true> = T;
-/** Every passed key is an outcome key and every outcome key is passed (or, for `exact`, given by the port itself). */
-export type PortChecks = [
-  Check<SameKeys<Passed<HomeResult, typeof HOME_KEYS> | "exact" | "word", keyof HomeOutcome>>,
-  Check<SameKeys<Passed<CasResult, typeof CAS_KEYS> | "word", keyof CasOutcome>>,
-];
-
 export interface EngineCalcOptions {
   /** The Find index's items, for the unit view's factor table (docs/04 4.2); read on the first units() call. Absent:
    *  Find's own index, loaded by the lazy units/calc.ts (R24c: so the start chunk holds no loader). */
@@ -111,17 +43,17 @@ export class EngineCalc implements Calc {
   home(giac: string, s: CalcSettings, chips?: ChipFactsTable, consts?: ConstTable): Promise<HomeOutcome> {
     // an absent table is not sent (WorkerEngine.home); the session sends `consts` only when the input holds one (R40)
     // G211: each outcome says the word its request carried (WordStore.stamp, in the lazy chunk)
-    const r = this.word().then((w) => w.stamp(this.engine.home(giac, w.home(s), consts, chips && Object.keys(chips).length ? chips : undefined)
-      .then((r) => ({ ...passed(r, HOME_KEYS), ...(r.rational && r.exact !== undefined ? { exact: r.exact } : {}) }))));
+    // R930: what passes of the result is calc/portKeys.ts, in the word store's chunk this call waits for anyway
+    const r = this.word().then(([w, m]) => w.stamp(this.engine.home(giac, w.home(s), consts, chips && Object.keys(chips).length ? chips : undefined).then(m.passHome)));
     return mapCancel(r);
   }
 
   cas(giac: string, s: CalcSettings): Promise<CasOutcome> {
-    return mapCancel(this.word().then((w) => w.stamp(this.engine.cas(giac, w.cas(s)).then((r) => passed(r, CAS_KEYS)))));
+    return mapCancel(this.word().then(([w, m]) => w.stamp(this.engine.cas(giac, w.cas(s)).then(m.passCas))));
   }
 
   solve(req: SolveRequest, s: CalcSettings): Promise<SolveOutcome> {
-    return mapCancel(this.word().then((w) => this.engine.solve(req, w.home(s))));
+    return mapCancel(this.word().then(([w]) => this.engine.solve(req, w.home(s))));
   }
 
   unknowns(equations: string[]): Promise<string[]> {
@@ -129,23 +61,23 @@ export class EngineCalc implements Calc {
   }
 
   analyze(req: AnalysisRequest, s: CalcSettings): Promise<AnalysisResult> {
-    return mapCancel(this.word().then((w) => this.engine.analyze(req, w.home(s))));
+    return mapCancel(this.word().then(([w]) => this.engine.analyze(req, w.home(s))));
   }
 
   table(req: TableRequest, s: CalcSettings): Promise<HomeResult[][]> {
-    return mapCancel(this.word().then((w) => this.engine.table(req, w.home(s))));
+    return mapCancel(this.word().then(([w]) => this.engine.table(req, w.home(s))));
   }
 
   units(req: UnitRequest, s: CalcSettings): Promise<Quantity | UnitError> {
     // The builder and the factor table load with the unit view, never in the start chunk (docs/04 4.4).
-    return mapCancel(Promise.all([import("../units/calc.ts"), this.word()]).then(([m, w]) => m.evaluateUnits(this.engine, this.findIndex, req, w.home(s))));
+    return mapCancel(Promise.all([import("../units/calc.ts"), this.word()]).then(([m, [w]]) => m.evaluateUnits(this.engine, this.findIndex, req, w.home(s))));
   }
 
   /** R194: the settings of every request (Home's, CAS's) come from the lazy word store (state/wordStore.svelte.ts, in the
    *  base forms' chunk, whose name the start chunk lists already): the defaults, the digits and angle, and the word size and
    *  sign the short forms shl, bnot… read (engine/wordOps.ts), once it was read. Nothing of the defaults stays in the start chunk. */
-  private word(): Promise<WordStore> {
-    return import("../state/cycleForms.ts").then((m) => m.wordStore.restore().then(() => m.wordStore));
+  private word(): Promise<[WordStore, Pick<typeof import("./portKeys.ts"), "passHome" | "passCas">]> {
+    return import("../state/cycleForms.ts").then((m) => m.wordStore.restore().then(() => [m.wordStore, m]));
   }
 
   async names(): Promise<UserName[]> {

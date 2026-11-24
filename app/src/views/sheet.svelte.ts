@@ -7,6 +7,7 @@ import type { IconId } from "./icons.ts";
 import type { MatrixGrid } from "./matrixGrid.svelte.ts";
 import { lastPicks } from "./picks.ts";
 import { sheetKey } from "./sheetKeys.ts";
+export { appsSheet, menuItems, menuSheet } from "../apps/shellSheets.ts"; // R930: the shell's Apps and ☰ sheets, built once this model is in
 import type { Key } from "../keyboard/keyboard.ts";
 
 /** Lists with more items than this get the letter filter (docs/05 3.1: "for lists longer than 10 items"). */

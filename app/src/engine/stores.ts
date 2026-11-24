@@ -123,7 +123,7 @@ export function mayStore(text: string): boolean {
 }
 
 /** G354: a store Giac answered with a value and did not keep (functionTarget); host.ts words it as the parser's refusal
- *  of a built-in (enParser.ts parse.builtInName), the view shows those words (session.svelte.ts errorText). */
+ *  of a built-in (enParser.ts parse.builtInName), the view shows those words (state/jobRun.ts errorText). */
 export type StoreRefusal = "builtInName";
 
 /** G354: the Giac function a top-level `name:=…` stores into (`mean:=5`): Giac's tree holds the function itself as the

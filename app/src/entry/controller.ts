@@ -14,14 +14,15 @@ import { ANS_CHIP, constChip, resChip } from "./macros.ts";
 type Term = boolean | Chip;
 
 export class EntryController {
-  private mf: MathfieldElement | undefined;
+  /** The field once it is up (set by field.ts fieldFor; `field` reads it). */
+  mf: MathfieldElement | undefined;
   private host: HTMLElement | undefined;
   /** What waits for the field, in the order made (decisions.md R8): the keys' actions and, as `put`, the inserts (R298). */
-  private queue: (ActionBody | { kind: "put"; latex: string; term: Term; consts?: ChipTable })[] = [];
+  queue: (ActionBody | { kind: "put"; latex: string; term: Term; consts?: ChipTable })[] = [];
   /** How a key acts on the field (entry/field.ts: ⌫ and Del at a template, ᴇ, 10ˣ, a power's base, the stops): loaded with MathLive. */
   private onField: typeof import("./field.ts").runOnField | undefined;
   /** Backspace, Delete and the printable keys of a hardware keyboard (entry/hwkeys.ts, R26b, R31): loaded with MathLive. */
-  private hwKey: typeof import("./hwkeys.ts").hardwareKey | undefined;
+  hwKey: typeof import("./hwkeys.ts").hardwareKey | undefined;
   /** R279: the chain of Select presses that Deselect walks back (entry/grow.ts): loaded with MathLive. */
   private chain: import("./grow.ts").SelectChain | undefined;
   /** R185: the matrices Shift + 5 made on the line, which ▶ and ▼ grow (entry/matgrow.ts; runOnField keeps it up to
@@ -34,18 +35,18 @@ export class EntryController {
    *  chip table, so there a constant goes in as its value (entry/appValue.ts). */
   shell?: Where;
   /** R33: the stored names drawn in their colour (entry/namemarks.ts), made with the field. */
-  private marks: { setNames(names: string[]): void } | undefined;
+  marks: { setNames(names: string[]): void } | undefined;
   /** The user's names (setNames); hwkeys.ts reads them (R198: a typed name of the user's stays the user's). */
   stored: string[] = [];
   /** The line set() put before the field was up (a recall, the kept line); what is typed or inserted meanwhile waits in `queue`. */
-  private pendingValue: string | undefined;
+  pendingValue: string | undefined;
   /** R34: the line was set or cleared before the field was up, so a line kept from before a kill no longer applies. */
   private keptStale = false;
   /**
    * R34: the line on the field is the user's to store: the kept-line read answered within the 1 s cap (the kept line,
    * if any, went on the field), or the line was typed or set since start.
    */
-  private touched = false;
+  touched = false;
   /** The values of the chips on the line (docs/04 3.6); keys as in input/chips.ts. */
   readonly table: ChipTable = {};
   private nextRes = 1;
@@ -103,7 +104,7 @@ export class EntryController {
     const line = Promise.race([kept, new Promise<null>((resolve) => setTimeout(resolve, 1000, null))]).catch(() => null);
     this.kept = 1;
     void line.then((l) => (this.kept = l?.latex ? 2 : 0));
-    this.ready = Promise.all([mathlive.load(), import("./field.ts"), import("./hwkeys.ts"), line]).then(([m, f, h, l]) => {
+    this.ready = Promise.all([mathlive.load(), import("./fieldUp.ts"), import("./hwkeys.ts"), line]).then(([m, f, h, l]) => {
       this.onField = f.runOnField;
       this.chain = new f.SelectChain();
       this.grown = new f.Grown();
@@ -111,40 +112,13 @@ export class EntryController {
       this.hwKey = h.hardwareKey;
       if (l !== null) this.touched = true;
       if (l && !this.keptStale) this.pendingValue = this.adopt(l.latex, l.chips); // (only set() writes pendingValue, and it marks the kept line stale)
-      return this.create(f.makeField, m.MathfieldElement);
+      return f.fieldFor(this, m.MathfieldElement, this.host); // (R930: the field's set-up and the replay of the queue are fieldUp.ts's)
     });
     void this.ready.catch(() => {}).then(() => {
       this.fieldPending = false;
       this.up();
     });
     return this.ready;
-  }
-
-  private async create(make: typeof import("./field.ts").makeField, Field: typeof MathfieldElement): Promise<void> {
-    const mf = await make(Field, this.host, {
-      key: (ev) => this.hwKey?.(ev, this) ?? false,
-      enter: (repeat) => this.onKey("enter", "primary", repeat),
-      escape: (repeat) => this.onKey("esc", "primary", repeat),
-      paste: (text) => this.onPaste(text),
-    });
-    this.mf = mf;
-    void import("./namemarks.ts").then((n) => (this.marks = new n.NameMarks(mf)).setNames(this.stored));
-    if (this.pendingValue !== undefined) mf.value = this.pendingValue;
-    this.pendingValue = undefined;
-    // Replay the queued keys and inserts one by one through the same path as a live keypress or insert (R298: in the
-    // order made). Keys that arrive while we replay (this.mf is set now) go straight in, so drain until the queue is empty.
-    mf.focus();
-    mf.executeCommand("moveToMathfieldEnd");
-    for (let a = this.queue.shift(); a; a = this.queue.shift()) {
-      if (a.kind === "put") this.put(a.latex, a.term, a.consts);
-      else this.run(a);
-    }
-    // what MathLive edits itself (a character outside ASCII); a set of the value is silent
-    mf.addEventListener("input", () => {
-      this.touched = true;
-      this.recalledIn = null;
-      this.onEdit();
-    });
   }
 
   /** R33: the names that hold a value (session.userNames); only a single letter is drawn in the stored-name colour. */
