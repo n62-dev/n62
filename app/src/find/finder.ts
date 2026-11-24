@@ -188,7 +188,7 @@ export function showFind(c: RouteCtx, index: FindIndex, slot?: SlotTarget): void
     putOnLine(entry, it);
   };
   const { categories, search } = findMenu(index, pick);
-  shell.showFind(slot ? t("slot.title") : t("title"), categories, search);
+  shell.showFind(slot ? t("slot.title") : t("title"), categories, search, c.session.settings.look.findFull); // R932
 }
 
 type MatrixCtx = Parameters<typeof import("../views/matrixSheet.ts").showMatrix>[0]; // (the route's context: its shell, entry line and session)

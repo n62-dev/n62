@@ -74,6 +74,16 @@ describe("checkBackup (r11 section 3.4)", () => {
     expect(migrateSettings(older.parts["settings"]).settings.look.pops).toBe(true); // a missing field: on
     expect(refused(withLook({ ...defaultLook(), pops: "no" })).part).toBe("settings");
   });
+  it("R932: a settings part whose look has Find opens full screen, or lacks it (an older file), restores; a wrong type is refused", () => {
+    const withLook = (look: Record<string, unknown>) => withPart("settings", at({ schema: SETTINGS_SCHEMA, ...migrateSettings({}).settings, look }));
+    const on = checkBackup(bytes(withLook({ ...defaultLook(), findFull: true }))) as CheckedBackup;
+    expect(on.ok).toBe(true);
+    expect(migrateSettings(on.parts["settings"]).settings.look.findFull).toBe(true);
+    const older = checkBackup(bytes(withLook({ family: "n62", brightness: "system", contrast: false, plain: false, shadow: true, pops: true }))) as CheckedBackup;
+    expect(older.ok).toBe(true);
+    expect(migrateSettings(older.parts["settings"]).settings.look.findFull).toBe(false); // a missing field: off
+    expect(refused(withLook({ ...defaultLook(), findFull: "yes" })).part).toBe("settings");
+  });
   it("accepts a record stored before versions (stamp 0) and a byte order mark", () => {
     const r = checkBackup(bytes("﻿" + JSON.stringify(withPart("view", at("home", 0)))));
     expect(r.ok && r.parts["view"]).toBe("home");
@@ -209,7 +219,7 @@ describe("the repeated rules agree with the start's readers", () => {
       null,
       "on",
     ],
-    look: [defaultLook(), defaultLook(true, true), { ...defaultLook(), shadow: false }, { shadow: "no" }, { ...defaultLook(), pops: false }, { pops: 1 }, { ...defaultLook(), family: "nope" }, {}, "dark", { plain: true }, { family: "nord", dim: 1 }, { contrast: "yes" }, { family: "nord", toString: 1 }],
+    look: [defaultLook(), defaultLook(true, true), { ...defaultLook(), shadow: false }, { shadow: "no" }, { ...defaultLook(), pops: false }, { pops: 1 }, { ...defaultLook(), findFull: true }, { findFull: "yes" }, { ...defaultLook(), family: "nope" }, {}, "dark", { plain: true }, { family: "nord", dim: 1 }, { contrast: "yes" }, { family: "nord", toString: 1 }],
   };
   // R122: a nested group (haptics, look) passes when migrateSettings keeps every field it holds; one it lacks is filled.
   const keepsAll = (read: unknown, v: unknown): boolean =>
