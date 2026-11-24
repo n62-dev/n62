@@ -160,7 +160,9 @@ export function judge(shown: Shown, oracle: Oracle, digits: number): Verdict {
 function judgeItems(shown: Shown, oracle: Exclude<Oracle, { kind: "skip" }>, digits: number): Verdict {
   const items = shown.items ?? [];
   const numbers = items.length > 0 && items.every((i) => i.value !== undefined);
-  if (oracle.kind === "novalue") return numbers ? { kind: "novalue", check: "novalue", detail: `shows ${(shown.display ?? "numbers").slice(0, 60)} where the oracle has no value` } : { kind: "ok", detail: "no number shown where there is no value" };
+  // where no value exists, any number shown is wrong (as for a scalar): one numeric entry among undef ones fails too
+  const anyNumber = items.some((i) => i.value !== undefined);
+  if (oracle.kind === "novalue") return anyNumber ? { kind: "novalue", check: "novalue", detail: `shows ${(shown.display ?? "numbers").slice(0, 60)} where the oracle has no value` } : { kind: "ok", detail: "no number shown where there is no value" };
   if (oracle.kind === "value") return { kind: "nonnumber", detail: `a list where the oracle has a number: ${(shown.display ?? "").slice(0, 60)}` };
   const want = `${oracle.rows}×${oracle.cols ?? 1}`;
   if (items.length === 0) return shown.value ? { kind: "wrong", check: "shape", detail: `a number ${shown.display ?? ""} where the oracle has a ${want} matrix` } : { kind: "nonnumber", detail: (shown.display ?? "").slice(0, 80) };

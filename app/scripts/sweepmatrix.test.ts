@@ -160,6 +160,37 @@ describe("the oracle's matrices (G797; mpmath matrix, inverse, det, lu_solve, ex
     expect(o[8]).toEqual({ kind: "value", re: "0.0", im: "0.0" });
   }, 60_000);
 
+  it("a matrix that only the lower rung calls singular has a value (G797 fix: the rungs agree on no value too)", () => {
+    // [[1,1],[1,t]] with t = tanh 60: det t − 1 ≈ −1.5e-52, a condition number near 10^52, past 10^45 (60 digits' rank threshold), and no
+    // literal that raises the rungs. Derived by hand: inv = [[t,−1],[−1,1]]/(t−1), linsolve(·, [1,2]) = [t−2, 1]/(t−1), det(inv) = 1/(t−1);
+    // the scalar quotients come from the oracle's scalar path
+    const T = "MAT([[mpf('1'),mpf('1')],[mpf('1'),tanh(mpf('60'))]])";
+    const t = "tanh(mpf('60'))";
+    const q = (num: string): string => `DIV(${num},(${t})-(mpf('1')))`;
+    const o = oracle([
+      `INV(${T})`,
+      `LINSOLVE(${T},MAT([[mpf('1')],[mpf('2')]]))`,
+      `DET(INV(${T}))`,
+      q(t),
+      q("mpf('-1')"),
+      q("mpf('1')"),
+      q(`(${t})-(mpf('2'))`),
+      // the audit's example: its literals raise the rungs (10^±22), so 60 digits never decided it; a value before and after the fix
+      "INV(MSQ(MAT([[mpf('1.5e22'),mpf('1')],[mpf('1'),mpf('2e-8')]])))",
+      `INV(${S})`, // still no value: singular at both rungs
+    ]);
+    const re = (x: Oracle | undefined): string => (x?.kind === "value" ? x.re.slice(0, 40) : `(${x?.kind})`);
+    // 1/(tanh 60 − 1) = −(e^120 + 1)/2: −e^120/2 to a double's digits
+    expect(o[5]!.kind === "value" ? Math.abs(Number(o[5]!.re) / (-Math.exp(120) / 2) - 1) : 1).toBeLessThan(1e-13);
+    expect(o[0]).toMatchObject({ kind: "matrix", rows: 2, cols: 2 });
+    expect(cells(o[0]!, 40)).toEqual([re(o[3]), re(o[4]), re(o[4]), re(o[5])]);
+    expect(o[1]).toMatchObject({ kind: "matrix", rows: 2, cols: null });
+    expect(cells(o[1]!, 40)).toEqual([re(o[6]), re(o[5])]);
+    expect(re(o[2])).toBe(re(o[5]));
+    expect(o[7]!.kind).toBe("matrix");
+    expect(o[8]).toEqual({ kind: "novalue" });
+  }, 60_000);
+
   it("sinm and cosm of J (J² = −I: sin J = J·sinh 1, cos J = cosh 1·I, real) against mpmath's scalar sinh and cosh; DEG scales by π/180", () => {
     const [s, c, sh, ch] = oracle([`SINM(APPROX(${J}))`, `COSM(${J})`, "sinh(mpf('1'))", "cosh(mpf('1'))"]);
     const sinh1 = sh!.kind === "value" ? sh!.re.slice(0, 60) : "";
@@ -222,6 +253,9 @@ describe("the judge, entry by entry (G797; made-up oracles for its rules)", () =
     expect(judge(mat([item("1", "="), item("2", "="), item("3", "="), item("4", "=")], [1, 4]), mo(["1.0", "2.0", "3.0", "4.0"], 2, 2), 12)).toMatchObject({ kind: "wrong", check: "shape" });
     expect(judge(item("1", "="), mo(["1.0", "2.0"], 2, 1), 12)).toMatchObject({ kind: "wrong", check: "shape" });
     expect(judge(mat([item("1", "⚠", 12), item("2", "⚠", 12)]), { kind: "novalue" }, 12)).toMatchObject({ kind: "novalue", check: "novalue" });
+    // one number among non-numbers where no value exists (an inverse shown as [[1e16, undef], …]) fails as a scalar number would
+    expect(judge(mat([item("1e16", "⚠"), { ok: true, display: "undef" }]), { kind: "novalue" }, 12)).toMatchObject({ kind: "novalue", check: "novalue" });
+    expect(judge(mat([{ ok: true, display: "undef" }, { ok: true, display: "undef" }]), { kind: "novalue" }, 12).kind).toBe("ok");
     expect(judge(mat([]), { kind: "novalue" }, 12).kind).toBe("ok");
     expect(judge({ ok: false, error: "engine", display: "Not invertible" }, { kind: "novalue" }, 12).kind).toBe("refused");
     expect(judge(mat([{ ok: true, display: "x" }, item("2", "=")]), mo(["1.0", "2.0"], 2, null), 12).kind).toBe("nonnumber");

@@ -294,17 +294,41 @@ def agree_cells(a, b, hi):
     return out
 
 
+_NOVALUE = (ZeroDivisionError, ValueError)
+
+
+def rungs(f, expr, lo, hi):
+    """G797: the value at both rungs of a pair, or None for a rung with no value (a division by zero, a singular matrix). Raises
+    ZeroDivisionError (main's novalue) only when both rungs have none: a rank or a cancellation that only the lower rung loses (a
+    matrix with a condition number past 10^(lo-15), as [[1,1],[1,tanh 60]] at 60 digits) has a value, and the next pair decides."""
+    out = []
+    for dps in (lo, hi):
+        try:
+            out.append(f(expr, dps))
+        except _NOVALUE:
+            out.append(None)
+    if out[0] is None and out[1] is None:
+        raise ZeroDivisionError
+    return out
+
+
+def _unstable(up):
+    return {"kind": "skip", "reason": f"unstable at {60 + up}/{100 + up} and {150 + up}/{250 + up} digits (or a value at one rung only)"}
+
+
 def one_matrix(expr, up):
     for lo, hi in ((60 + up, 100 + up), (150 + up, 250 + up)):
-        ra, ca, a = at_cells(expr, lo)
-        rb, cb, b = at_cells(expr, hi)
+        pa, pb = rungs(at_cells, expr, lo, hi)
+        if pa is None or pb is None:
+            continue
+        (ra, ca, a), (rb, cb, b) = pa, pb
         if (ra, ca) != (rb, cb):
             continue
         got = agree_cells(a, b, hi)
         if got is not None:
             mp.dps = hi
             return {"kind": "matrix", "rows": rb, "cols": cb, "cells": [{"re": mp.nstr(c[0], 100), "im": mp.nstr(c[1], 100)} for c in got]}
-    return {"kind": "skip", "reason": f"unstable at {60 + up}/{100 + up} and {150 + up}/{250 + up} digits"}
+    return _unstable(up)
 
 
 _MATRIX_TOP = _re.compile(r"^(MAT|APPROX|MADD|MMUL|SMUL|MDIV|MSQ|TRN|INV|EXPM|SINM|COSM|DET|RANK|LINSOLVE)\(")
@@ -379,12 +403,11 @@ def one(expr):
     if _MATRIX_TOP.match(expr) and not expr.startswith(("DET(", "RANK(")):
         return one_matrix(expr, up)
     for lo, hi in ((60 + up, 100 + up), (150 + up, 250 + up)):
-        a = at(expr, lo)
-        b = at(expr, hi)
-        if agree(a, b):
+        a, b = rungs(at, expr, lo, hi)
+        if a is not None and b is not None and agree(a, b):
             mp.dps = hi
             return {"kind": "value", "re": mp.nstr(b[0], 100), "im": mp.nstr(b[1], 100)}
-    return {"kind": "skip", "reason": f"unstable at {60 + up}/{100 + up} and {150 + up}/{250 + up} digits"}
+    return _unstable(up)
 
 
 def main():
