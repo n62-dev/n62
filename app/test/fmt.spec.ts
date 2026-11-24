@@ -301,7 +301,7 @@ test("G785: the default cycle at 12 digits: 5, Fmt 5.00000000000E0, Fmt 5 again 
 test("G785: CAS, cycle STD SCI, digits 6: the first Fmt on 5 shows 5.00000E0 (STD draws the exact 5)", async ({ page }) => {
   await open(page, "");
   await ready(page);
-  await page.evaluate(() => (window.n62.session.setDigits(6), window.n62.session.setFmtMode("eng", false)));
+  await page.evaluate(() => (window.n62.session.setDigits(6), ((window.n62.session.settings.fmtCycle = ["std", "sci"]), window.n62.session.save())));
   await tap(page, ["@cas"]);
   await tap(page, ["d5", "enter"]);
   await expect(lastText(page)).toHaveAttribute("data-text", "5");
@@ -314,7 +314,7 @@ test("G785: CAS, cycle STD SCI, digits 6: the first Fmt on 5 shows 5.00000E0 (ST
 test("G785: Home, Format PFX, cycle STD SCI, digits 6: the first Fmt on 5 shows 5.00000E0 (STD draws 5 as PFX does)", async ({ page }) => {
   await open(page, "");
   await ready(page);
-  await page.evaluate(() => (window.n62.session.setDigits(6), window.n62.session.setFmtMode("eng", false), window.n62.session.setFormat("pfx")));
+  await page.evaluate(() => (window.n62.session.setDigits(6), ((window.n62.session.settings.fmtCycle = ["std", "sci"]), window.n62.session.save()), window.n62.session.setFormat("pfx")));
   await tap(page, ["d5", "enter"]);
   await expect(lastText(page)).toHaveAttribute("data-text", "5");
   await tap(page, ["fmt"]);
@@ -330,7 +330,8 @@ async function pressOnFive(page: Page, cycle: string[], key: "fmt" | "frac", for
   await page.evaluate((c) => {
     const s = window.n62.session;
     s.setHaptics({ on: true, ms: 10 });
-    for (const m of ["std", "sci", "eng"] as const) s.setFmtMode(m, c.includes(m));
+    s.settings.fmtCycle = (["std", "sci", "eng"] as const).filter((m) => c.includes(m)); // modeSets.ts's setFmtMode, which the page cannot reach (G792)
+    s.save();
   }, cycle);
   expect(await page.evaluate(() => window.n62.session.settings.fmtCycle)).toEqual(cycle);
   await tap(page, ["d5", "enter"]);
