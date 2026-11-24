@@ -613,11 +613,15 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  (176,822 B raw).
  *  G785 (a cut; the pin stays the budget): Fmt skips a step that draws what the row shows (deadPress asks Session.formRow).
  *  Phase-1 5c518933 measures 62,986 B gzip, the change 63,015 B; Memory's purge (Session.forget, read only by the lazy
- *  find/names.svelte.ts) moved there: 62,967 B (176,789 B raw). Lazy-only en.ts strings to lazy tables gave −1 B only. G622 (a cut): patch 0066's engine hash and trust counts made 63,003 B; history.actions to i18n/enRowBar.ts (RowBar, lazy): 62,982 B.
+ *  find/names.svelte.ts) moved there: 62,967 B (176,789 B raw). Lazy-only en.ts strings to lazy tables gave −1 B only.
  *  63,000 → 61,880 B (R930, a cut; the budget stays 63 kB, so a later package raises the pin with its reason): phase-1 b55cbb1a
  *  measures 62,996 B gzip (176,799 B raw), the branch 61,874 B (172,987 B raw; −1,122 B): code that ran only after a job, the
  *  field's load, a sheet's open or a key on an open sheet rides in the chunk that path already waited for (state/jobRun.ts −310 B,
- *  entry/fieldUp.ts −140 B, apps/shellSheets.ts −281 B, sheetKeys.ts sheetPress and sheetLetter −202 B, calc/portKeys.ts −189 B). */
+ *  entry/fieldUp.ts −140 B, apps/shellSheets.ts −281 B, sheetKeys.ts sheetPress and sheetLetter −202 B, calc/portKeys.ts −189 B).
+ *  G622 (pin kept): with the branch's engine (patch 0066), phase-1 2a9cc931 measures 61,838 B gzip (172,875 B raw; 61,848 B with
+ *  the main checkout's engine), the branch before its cut 61,840 B (172,875 B raw). The cut, made when the start measured 63,001 B
+ *  before R930: angle.rad and angle.deg left en.ts for i18n/enMode.ts (read by views/modeSheet.ts and the lazy
+ *  clipboard/workReport.ts): 61,842 B (172,860 B raw; +2 B gzip, −15 B raw). */
 export const START_PIN_GZIP = 61_880;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
