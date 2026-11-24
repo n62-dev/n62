@@ -1037,6 +1037,27 @@ export function build(cases) {
     patched.push("// patch 0066-matrix-trig-series.patch", `// ${id} (oracle: mpmath)`, `Digits:=40:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
   }
+  // Patch 0067 (G803, F240), written lines: prog.cc _convert took the list's subtype from a last argument that is no _INT_ (its
+  // pointer's or its double's bits: convert(129,2,1/2) printed [129,1/2], pnt[129,1/2] or gr2d(logo(…)) by the session); now
+  // refused, as B. Parisse said it should (2026-11-24). A line passes when the input is an error (pasr 1); stock answers a list.
+  // The golden g803-* rows are refusals and CAS rows, which the export leaves out. The check lines are Giac's help's own
+  // examples with an integer last argument (aide_cas), unchanged by the patch.
+  for (const [k, pre, input] of [
+    ["half", "", "convert(129,2,1/2)"],
+    ["float", "", "convert(129,2,0.5)"],
+    ["name", "", "convert(129,2,g803x)"],
+    ["half-after-power", "2^100:; ", "convert(129,2,1/2)"],
+  ]) {
+    patched.push("// patch 0067-convert-subtype-integer.patch", `// g803-convert-129-2-${k}-refused (derived: no integer subtype; Parisse, 2026-11-24: "it should probably error")`, `Digits:=40:; ${pre}pasr:=0:; try { ${input}; } catch (err) { pasr:=1; }:; pc("g803-convert-129-2-${k}-refused",'pasr',1,1/10^30);`);
+    nPatched++;
+  }
+  for (const [id, input, value] of [
+    ["g803-keep-convert-129-2-8", "convert(129,2,8)", "[1,0,0,0,0,0,0,1]"],
+    ["g803-keep-convert-123-base-8", "convert(123,base,8)", "[3,7,1]"],
+  ]) {
+    check.push(`// ${id} (derived: Giac's help example, unchanged by patch 0067)`, `Digits:=40:; pc("${id}",'when((${input})==${value},1,0)',1,1/10^30);`);
+    nCheck++;
+  }
   for (const [mode, n, tag, value] of [
     ["DEG", 0, "deg", "90+(3147292373094538001977241539068588825237/10^38)*i"],
     ["GRAD", 2, "grad", "100+(3496991525660597779974712821187320916930/10^38)*i"],
