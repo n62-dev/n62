@@ -64,6 +64,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 888e4c | [A271](packages/A271.md) back twice to leave (waits: a device) | annabell, Sonnet | `p1/annabell-backtwice` | R926 |
 | 888e6a | [R931](packages/R931.md) fill button in the title row; none on Chars | ron, Opus | `p1/ron-fillhead` | R894 |
 | 888e6b | [R932](packages/R932.md) setting: Find opens full screen | ron, Opus | `p1/ron-findfull` | R931 |
+| 888e6c | [R933](packages/R933.md) non-digit keys off the background | ron, Opus | `p1/ron-keyfill` | – |
 | 888e7a | [R929](packages/R929.md) a constant shows its unit | ron, Opus | `p1/ron-constlabel` | G801 |
 | 888e8 | [R897](packages/R897.md) a hold on a Num cell copies | ron, Opus | `p1/ron-numhold` | – |
 | 888e9 | [R898](packages/R898.md) a new line owner ends Undo | ron, Opus | `p1/ron-viewundo` | – |
@@ -72,7 +73,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 888e10b | [R922](packages/R922.md) sheets take paste, typing | ron, Opus | `p1/ron-sheetchannels` | – |
 | 888e11 | [R900](packages/R900.md) Paste into a name filter | ron, Opus | `p1/ron-sheetpaste` | R889, R922 |
 | 888e12 | [R901](packages/R901.md) Settings and Mode keep the pick | ron, Opus | `p1/ron-keeppick` | – |
-| 888e12a | [R927](packages/R927.md) Preset on top; Mode in Settings | ron, Opus | `p1/ron-modeorder` | R887, R901 |
+| 888e12a | [R927](packages/R927.md) Settings on top; Mode its row 1, Preset first | ron, Opus | `p1/ron-modeorder` | R887, R901 |
 | 888e13 | [R902](packages/R902.md) a dropped unit says so | ron, Opus | `p1/ron-unitdropped` | – |
 | 888e14 | [R903](packages/R903.md) hold on the line copies | ron, Opus | `p1/ron-linehold` | – |
 | 888e15 | [R904](packages/R904.md) Copied notice tells the truth | ron, Opus | `p1/ron-copiednotice` | – |
