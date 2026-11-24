@@ -121,6 +121,10 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
       c.entry.set(line, chips);
     }
     c.entry.focus();
+    // M4: a field written while hidden (a tap's text under the view) keeps MathLive's focus flag with no focus, so its focus()
+    // does nothing: its own keyboard sink takes the focus
+    const lineField = c.entry.field;
+    if (document.activeElement !== lineField) lineField?.shadowRoot?.querySelector<HTMLElement>("[part=keyboard-sink]")?.focus();
   };
   let up = false;
   try {

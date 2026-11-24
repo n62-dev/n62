@@ -52,7 +52,7 @@ test.describe("R917: the unit view opens in one step and gives the line back", (
     await page.waitForFunction(() => (window as unknown as { reached?: boolean }).reached === true, undefined, { timeout: 5000 });
     await row(page, 0).tap();
     await row(page, 0).tap();
-    expect(await line(page)).not.toBe("72"); // the taps reached the hidden line (R918 makes them dead)
+    expect(await line(page)).toBe("72"); // the taps wait for the open, as keys do (R8); once it is up they reach the lent line (R918)
     await page.evaluate(() => (window as unknown as { release: () => void }).release());
     await viewUp(page);
     expect(await viewLine(page)).toBe("72");

@@ -386,6 +386,7 @@
    *  the line takes the input at the caret, the tap as Enter, owner 2026-11-22) or a second tap on its result (it goes on the line, L5).
    *  `stay`: Store ▶ keeps a folded keypad down. */
   function tapped(item: HistoryItem, input: boolean, stay = false): void {
+    if (sheetLoad) return void sheetLoad.then(() => tapped(item, input, stay)); // R917: it waits for a load as a key does (R8): the unit view takes the line as it was
     edited = true;
     picked = null;
     shell.prompt?.cancel();

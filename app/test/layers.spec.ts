@@ -13,7 +13,8 @@ import { expect, test, type Page } from "@playwright/test";
 import { open, tap } from "./helpers.ts";
 
 /** Today's failures: the case, its finding and the package that removes it. F368 (the angle word, R915) has no line: R915
- *  closed it, and the picked test checks it. */
+ *  closed it, and the picked test checks it. F370 F371 (R917): a tap waits for the units load, Esc gives the lent line back
+ *  with the focus on it (test/unitopen.spec.ts). */
 const KNOWN: readonly { case: string; f: string; by: string }[] = [
   { case: "typed tap:row", f: "F367", by: "R918" }, // a tap on a history row picks it under the view (the rule: a dead press)
   { case: "typed rowbar:copy", f: "F366", by: "R918" }, // the row bar is up under the view: its Copy opens a sheet over the view
@@ -23,9 +24,7 @@ const KNOWN: readonly { case: string; f: string; by: string }[] = [
   { case: "picked rowbar:copy", f: "F366", by: "R918" },
   { case: "picked rowbar:store", f: "F366", by: "R918" },
   { case: "picked tap:row2", f: "F366", by: "R918" },
-  { case: "picked esc:pick", f: "F367", by: "R918" }, // a row picked under the view outlives it: Enter then puts the row on the line
-  { case: "window tap:row2", f: "F370", by: "R917" }, // two row taps while the units chunk loads edit the line the view is built on
-  { case: "window esc", f: "F370", by: "R917" }, // after Esc the line is 72[5], not the 72 the view took
+  { case: "window tap:row2", f: "F366", by: "R918" }, // the second tap waits for the load (R917), then puts the row's chip into the lent line
 ];
 
 type Snap = {
