@@ -4,7 +4,8 @@
 // `history.back()`) pops it and closes the layer. A layer closed any other way (Esc, ×, a pick, a tap in the viewport)
 // takes its entry back, so the history never grows and back with nothing open leaves the app. Layers can overlap (R53:
 // a sheet over the folded keypad): one closed under another stays on the stack, released, and its entry goes back with
-// the layer above it. The layers (R700 lists them; each is taken back when its state ends some other way): a pick sheet
+// the layer above it. The layers (R700 lists them; each is taken back when its state ends some other way): an open app
+// (apps/shellOpen.ts, one per app session, released by AppShell.close: back closes it to Home or CAS; R926), a pick sheet
 // and Settings (App.svelte), the fold, a picked history row and an armed or locked Shift or Alpha (App.svelte), the
 // unit view (units/open.ts: its alternatives row first), the first-start tips (views/tipsHost.ts), a name prompt (askName in
 // views/presetsView.svelte.ts, over the Alpha lock it starts, so one back ends both; R919). The last opened closes first.
