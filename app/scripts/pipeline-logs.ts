@@ -133,8 +133,9 @@ export function isTiming(check: Check, item: Item): boolean {
   const m = /(\d+)\/(\d+) match/.exec(item.title);
   if (item.file === "units") return !!m && m[1] === m[2] && /p95 [\d.]+ ms \(≤/.test(item.title);
   // invariants (G154f1; 71.9 s against 60 under the other lane, 42.8 s alone): no new failure and none now passing, and
-  // only the seconds limit at the line's end was missed
-  const inv = /; \d+ known failures, 0 new, 0 now passing; ([\d.]+) s \(< (\d+)\)$/.exec(item.title);
+  // only the seconds limit at the line's end was missed. G324f2: the limit is decimal and followed by ", <n> ms per input"
+  // since G324f1 (invariantsLine in app/scripts/golden/invariants.ts builds the line; the test feeds its output here).
+  const inv = /; \d+ known failures, 0 new, 0 now passing; ([\d.]+) s \(< ([\d.]+)(?:, \d+ ms per input)?\)$/.exec(item.title);
   return item.file === "invariants" && !!inv && Number(inv[1]) >= Number(inv[2]);
 }
 
