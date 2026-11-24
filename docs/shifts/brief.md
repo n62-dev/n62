@@ -67,7 +67,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 888e6c | [R933](packages/R933.md) non-digit keys off the background | ron, Opus | `p1/ron-keyfill` | – |
 | 888e7a | [R929](packages/R929.md) a constant shows its unit | ron, Opus | `p1/ron-constlabel` | G801 |
 | 888e8 | R897 a hold on a Num cell copies | ron, Opus | `p1/ron-numhold` | – |
-| 888e9 | [R898](packages/R898.md) a new line owner ends Undo | ron, Opus | `p1/ron-viewundo` | – |
+| 888e9 | R898 a new line owner ends Undo | ron, Opus | `p1/ron-viewundo` | – |
 | 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Opus | `p1/ron-keepline` | – |
 | 888e10a | [R921](packages/R921.md) layer sweep 2: sheets | ron, Opus | `p1/ron-layersweep2` | R916 |
 | 888e10b | [R922](packages/R922.md) sheets take paste, typing | ron, Opus | `p1/ron-sheetchannels` | – |

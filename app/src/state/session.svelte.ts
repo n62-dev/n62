@@ -267,6 +267,8 @@ export class Session {
   private readonly kv: Kv;
   /** Put a look on the page (main.ts: theme/lookApply.ts); called when it changes and once the settings are read. */
   onLook: ((look: Look) => void) | undefined;
+  /** Home ↔ CAS, called before the switch (main.ts: the entry line's undo starts afresh, R898). */
+  onView: (() => void) | undefined;
   /** 0 = write the history at once (tests); the app sets a delay so Enter does not wait for the store. */
   saveDelayMs = 0;
   private saveTimer: ReturnType<typeof setTimeout> | undefined;
@@ -381,10 +383,10 @@ export class Session {
   }
 
   toggleView(): void {
-    this.view = this.view === "home" ? "cas" : "home";
-    this.saveView();
+    this.setView(this.view === "home" ? "cas" : "home");
   }
   setView(v: View): void {
+    if (v !== this.view) this.onView?.(); // R898: the shared line's undo stops at the switch
     this.view = v;
     this.saveView();
   }
