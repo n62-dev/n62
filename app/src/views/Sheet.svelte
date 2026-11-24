@@ -175,7 +175,7 @@
   onclick={(e) => e.target === e.currentTarget && onclose()}
 >
   <!-- svelte-ignore a11y_interactive_supports_focus (nothing in a sheet takes focus: the caret stays in the entry line) -->
-  <div class="sheet" role="menu" aria-label={level.title} data-depth={sheet.depth} bind:this={panel} onpointerdowncapture={() => (pressed = true)} onpointercancel={() => (pressed = false)} onclickcapture={onlyPressed}>
+  <div class="sheet" class:roomy={sheet.fillable || sheet.full} role="menu" aria-label={level.title} data-depth={sheet.depth} bind:this={panel} onpointerdowncapture={() => (pressed = true)} onpointercancel={() => (pressed = false)} onclickcapture={onlyPressed}>
     {#if columns !== undefined}
       <!-- a grid (the palettes, R10 and R18): no title row; the title, the highlighted cell's name and × share the hint
            line. Each cell is drawn as math, no numbers; a cell picked by the key at its place shows that key in its
@@ -324,6 +324,14 @@
     max-height: calc(100% - var(--sp-2));
     min-height: 0;
     flex: 0 1 auto;
+  }
+  /* R892: the corner button (.fill) has its own room under the list or grid, so no row or cell lies under it, in the first
+     view or scrolled to the end: a tap on a row does what the row says. Find's ▶ put row shares the bottom with it. */
+  .sheet.roomy {
+    padding-bottom: var(--touch);
+  }
+  .sheet.roomy:has(> .put) {
+    padding-bottom: var(--sp-15);
   }
   /* R778: the whole screen, the keypad under it; the sheet is its box (no margin, no corners) */
   .overlay.full {
