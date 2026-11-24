@@ -5,6 +5,7 @@
 // It imports the shell as a type only: a value import of a start module's class would make Rolldown cut shared modules
 // out of the entry (R294).
 import type { Chip } from "../input/chips.ts";
+import { openLayer } from "../input/backLayerFront.ts";
 import { t } from "../i18n/index.ts";
 import { shellText } from "../i18n/enShell.ts";
 import type { AppShell } from "./shell.svelte.ts";
@@ -56,9 +57,18 @@ export function load(s: AppShell, id: AppId): Promise<LoadedApp> {
   return p;
 }
 
+/** R926 (F378): the app session's back layer (input/backLayer.ts): back closes the app to Home or CAS, where it was
+ *  opened from. One per session: an app-to-app switch keeps it; `shut` (AppShell.close) takes it back. */
+let back: (() => void) | undefined;
+export function shut(): void {
+  back?.();
+  back = undefined;
+}
+
 /** The rest of AppShell.open, which has already set the app and its loading state: load it, then show the view asked
- *  for (default: the view it was left in, else its first). */
+ *  for (default: the view it was left in, else its first). An app closed before this part came in opens no layer. */
 export async function open(s: AppShell, id: AppId, view?: ViewId): Promise<void> {
+  if (s.app === id) back ??= openLayer(() => s.close());
   const l = await load(s, id);
   if (s.app !== id) return;
   const v = view ?? (l.instance.views.includes(s.view) ? s.view : (l.instance.views[0] as ViewId));
