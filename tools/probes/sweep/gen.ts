@@ -123,3 +123,132 @@ export const PINNED: Case[] = [
   { latex: "\\arccos\\left(\\left(5!\\right)^{2.5+5!}\\right)", mp: "ACOS(POW(FACT(5),(mpf('2.5'))+FACT(5)))", angle: false },
   { latex: "\\exponentialE^{10^{7}}", mp: "exp(POW(mpf('10'),mpf('7')))", angle: false },
 ];
+
+// G797: matrix trees (a family test, owner-style hunt 2026-11-23: every wrong answer of h3 #1–#3 was a float matrix). A matrix leaf is a
+// 2×2 or 3×3 \begin{pmatrix} of the scalar leaves above (one in five singular: the last row the sum of the first two, or twice the first),
+// half of them scaled by 10^k with k in −15..15 (`10^{k}\times M` or `\frac{M}{10^{k}}`), half inside `\operatorname{approx}(…)`. The
+// nodes are what the keys and Find write: + × (a scalar too) ^2, tran, inv, eˣ, sin, cos of a matrix, and at the top det, rank,
+// linsolve(M, column) and M × column. mp names: oracle.py's MAT, MADD, MMUL, SMUL, MDIV, MSQ, TRN, INV, EXPM, SINM, COSM, DET, RANK,
+// LINSOLVE, APPROX. Each matrix node's matrix-valued children are kept for the nightly shrink (matrixChildrenOf).
+
+interface MNode {
+  latex: string;
+  mp: string;
+  angle: boolean;
+  /** The matrix-valued children (for the shrink). */
+  kids: MNode[];
+  /** A literal \begin{pmatrix}, a call or a fraction: no brackets needed as an operand. */
+  atom: boolean;
+  /** A bare \begin{pmatrix}: no brackets needed as a power base either. */
+  lit?: true;
+}
+
+const MKIDS = new Map<string, Case[]>();
+const caseOf = (n: MNode): Case => ({ latex: n.latex, mp: n.mp, angle: n.angle });
+function remember(n: MNode): MNode {
+  if (n.kids.length > 0 && !MKIDS.has(n.latex)) MKIDS.set(n.latex, n.kids.map(caseOf));
+  return n;
+}
+
+/** The matrix-valued subtrees of a matrix tree generated in this process (the nightly shrink's children); [] for any other input. */
+export function matrixChildrenOf(latex: string): Case[] {
+  return MKIDS.get(latex) ?? [];
+}
+
+const pmatrix = (rows: Node[][]): { latex: string; mp: string } => ({
+  latex: `\\begin{pmatrix}${rows.map((r) => r.map((e) => e.latex).join("&")).join("\\\\")}\\end{pmatrix}`,
+  mp: `MAT([${rows.map((r) => `[${r.map((e) => e.mp).join(",")}]`).join(",")}])`,
+});
+
+/** An entry built from two leaves: a + b, or 2 × a. */
+const sumOf = (a: Node, b: Node): Node => ({ latex: `${wrap(a)}+${wrap(b)}`, mp: `(${a.mp})+(${b.mp})`, angle: false, atom: false, plain: false });
+const twice = (a: Node): Node => ({ latex: `2\\times ${wrap(a)}`, mp: `(mpf('2'))*(${a.mp})`, angle: false, atom: false, plain: false });
+
+/** A matrix leaf of size n: the entries, maybe singular, maybe scaled by 10^k, maybe inside approx(…). */
+function mleaf(r: () => number, n: number): MNode {
+  const rows: Node[][] = Array.from({ length: n }, () => Array.from({ length: n }, () => leaf(r)));
+  if (r() < 0.2) rows[n - 1] = n === 2 ? rows[0]!.map(twice) : rows[0]!.map((a, j) => sumOf(a, rows[1]![j]!));
+  let m: MNode = { ...pmatrix(rows), angle: false, kids: [], atom: true, lit: true };
+  if (r() < 0.5) {
+    const k = Math.floor(r() * 31) - 15;
+    const p = `POW(mpf('10'),mpf('${Math.abs(k)}'))`;
+    m =
+      k > 0 && r() < 0.5
+        ? { latex: `\\frac{${m.latex}}{10^{${k}}}`, mp: `MDIV(${m.mp},${p})`, angle: false, kids: [], atom: true }
+        : { latex: `10^{${k}}\\times ${m.latex}`, mp: `SMUL(POW(mpf('10'),mpf('${k}')),${m.mp})`, angle: false, kids: [], atom: false };
+  }
+  if (r() < 0.5) m = { latex: `\\operatorname{approx}\\left(${m.latex}\\right)`, mp: `APPROX(${m.mp})`, angle: false, kids: [], atom: true };
+  return m;
+}
+
+const mwrap = (n: MNode): string => (n.atom ? n.latex : `\\left(${n.latex}\\right)`);
+const call = (name: string, mp: string, a: MNode, angle = false): MNode =>
+  remember({ latex: `${name}\\left(${a.latex}\\right)`, mp: `${mp}(${a.mp})`, angle: angle || a.angle, kids: [a], atom: true });
+
+/** A matrix-valued tree of size n, depth up to `depth`. */
+function mbuild(r: () => number, depth: number, n: number): MNode {
+  if (depth <= 0 || r() < 0.3) return mleaf(r, n);
+  const x = r();
+  const sub = (): MNode => mbuild(r, depth - 1, n);
+  if (x < 0.14) {
+    const a = sub();
+    const b = sub();
+    return remember({ latex: `${mwrap(a)}+${mwrap(b)}`, mp: `MADD(${a.mp},${b.mp})`, angle: a.angle || b.angle, kids: [a, b], atom: false });
+  }
+  if (x < 0.3) {
+    const a = sub();
+    const b = sub();
+    return remember({ latex: `${mwrap(a)}\\times ${mwrap(b)}`, mp: `MMUL(${a.mp},${b.mp})`, angle: a.angle || b.angle, kids: [a, b], atom: false });
+  }
+  if (x < 0.4) {
+    const s = leaf(r);
+    const a = sub();
+    return remember({ latex: `${wrap(s)}\\times ${mwrap(a)}`, mp: `SMUL(${s.mp},${a.mp})`, angle: a.angle, kids: [a], atom: false });
+  }
+  if (x < 0.48) {
+    const a = sub();
+    return remember({ latex: `${a.lit ? a.latex : `\\left(${a.latex}\\right)`}^{2}`, mp: `MSQ(${a.mp})`, angle: a.angle, kids: [a], atom: false });
+  }
+  if (x < 0.56) return call("\\operatorname{tran}", "TRN", sub());
+  if (x < 0.7) return call("\\operatorname{inv}", "INV", sub());
+  if (x < 0.8) {
+    const a = sub();
+    return remember({ latex: `\\exponentialE^{${a.latex}}`, mp: `EXPM(${a.mp})`, angle: a.angle, kids: [a], atom: false });
+  }
+  if (x < 0.9) return call("\\sin", "SINM", sub(), true);
+  return call("\\cos", "COSM", sub(), true);
+}
+
+/** A column of n scalar leaves (linsolve's right side, a product's right factor). */
+function column(r: () => number, n: number): { latex: string; mp: string } {
+  return pmatrix(Array.from({ length: n }, () => [leaf(r)]));
+}
+
+function mtop(r: () => number): MNode {
+  const n = r() < 0.6 ? 2 : 3;
+  const x = r();
+  if (x < 0.45) return mbuild(r, 2, n);
+  const a = mbuild(r, 1, n);
+  if (x < 0.57) return call("\\operatorname{det}", "DET", a);
+  if (x < 0.69) return call("\\operatorname{rank}", "RANK", a);
+  const b = column(r, n);
+  if (x < 0.81) return remember({ latex: `\\operatorname{linsolve}\\left(${a.latex},${b.latex}\\right)`, mp: `LINSOLVE(${a.mp},${b.mp})`, angle: a.angle, kids: [a], atom: true });
+  return remember({ latex: `${mwrap(a)}\\times ${b.latex}`, mp: `MMUL(${a.mp},${b.mp})`, angle: a.angle, kids: [a], atom: false });
+}
+
+/** `count` matrix trees from `seed`, on an LCG stream of their own (the scalar trees of a seed stay as they were). */
+export function generateMatrices(seed: number, count: number): Case[] {
+  const r = lcg(seed * 7 + 797);
+  return Array.from({ length: count }, () => caseOf(mtop(r)));
+}
+
+/** Matrix inputs found wrong by the owner-style hunt of 2026-11-23, in every run (with their digits; G790 needs Digits > 14). */
+export const MATRIX_PINNED: (Case & { digits: 12 | 30 })[] = [
+  // G790 (F475): approx([[1,2],[3,4]]/10^13)·[[1],[1]] was [[0],[0]]
+  { latex: "\\operatorname{approx}\\left(\\frac{\\begin{pmatrix}1&2\\\\3&4\\end{pmatrix}}{10^{13}}\\right)\\times \\begin{pmatrix}1\\\\1\\end{pmatrix}", mp: "MMUL(APPROX(MDIV(MAT([[mpf('1'),mpf('2')],[mpf('3'),mpf('4')]]),POW(mpf('10'),mpf('13')))),MAT([[mpf('1')],[mpf('1')]]))", angle: false, digits: 30 },
+  // G622: the inverse of a small float matrix, and the rank of a singular one (0 with =)
+  { latex: "\\operatorname{inv}\\left(\\operatorname{approx}\\left(\\frac{\\begin{pmatrix}1&2&3\\\\4&5&6\\\\7&8&10\\end{pmatrix}}{10^{13}}\\right)\\right)", mp: "INV(APPROX(MDIV(MAT([[mpf('1'),mpf('2'),mpf('3')],[mpf('4'),mpf('5'),mpf('6')],[mpf('7'),mpf('8'),mpf('10')]]),POW(mpf('10'),mpf('13')))))", angle: false, digits: 12 },
+  { latex: "\\operatorname{rank}\\left(\\operatorname{approx}\\left(\\begin{pmatrix}1&2&3\\\\4&5&6\\\\7&8&9\\end{pmatrix}\\right)\\right)", mp: "RANK(APPROX(MAT([[mpf('1'),mpf('2'),mpf('3')],[mpf('4'),mpf('5'),mpf('6')],[mpf('7'),mpf('8'),mpf('9')]])))", angle: false, digits: 12 },
+  // G792: sin of a float matrix with imaginary noise
+  { latex: "\\sin\\left(\\operatorname{approx}\\left(\\begin{pmatrix}0&1\\\\-1&0\\end{pmatrix}\\right)\\right)", mp: "SINM(APPROX(MAT([[mpf('0'),mpf('1')],[mpf('-1'),mpf('0')]])))", angle: true, digits: 12 },
+];

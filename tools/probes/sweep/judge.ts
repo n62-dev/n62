@@ -2,11 +2,17 @@
 // G61: the judge of the oracle sweep (r16 Appendix B). Pure: it takes what Home showed and what mpmath says, and says whether the
 // mark told the truth. No engine here. `=` must equal the oracle to 1e-50, `≈` must be within half a unit of the shown digits, `⚠ n`
 // within one unit of the nth digit, a bare `⚠` claims nothing, a part not shown must be small against the claim, and a shown part where
-// the oracle has 0 is wrong. A number where the oracle has no value is wrong; a hang is a finding.
+// the oracle has 0 is wrong. A number where the oracle has no value is wrong; a hang is a finding. G797: a matrix or list is judged
+// entry by entry, each entry against its own mark (the matrix grid marks each cell), with a `shape` check for the wrong count of entries.
 import { roundSignificant, type ComplexValue, type DecimalValue } from "../../../app/src/engine/format.ts";
 
 /** What mpmath says about an input (oracle.py): a value (re and im as decimal text at 100 digits), none, or a reason to skip it. */
-export type Oracle = { kind: "value"; re: string; im: string } | { kind: "novalue" } | { kind: "skip"; reason: string };
+export type Oracle =
+  | { kind: "value"; re: string; im: string }
+  /** G797: a matrix (cells by rows) or, with `cols` null, a list (linsolve). */
+  | { kind: "matrix"; rows: number; cols: number | null; cells: { re: string; im: string }[] }
+  | { kind: "novalue" }
+  | { kind: "skip"; reason: string };
 
 /** What Home showed for the input, in the shape the worker thread sends back. `hang` is a missed deadline (the worker was killed). */
 export interface Shown {
@@ -20,12 +26,16 @@ export interface Shown {
   /** markOf's mark and count for the setting digits. */
   mark?: "=" | "≈" | "⚠";
   n?: number;
+  /** G797: the entries of a list or matrix result (rows flattened), each with its own value and mark; `shape` [rows, cols] for a matrix. */
+  items?: Shown[];
+  shape?: [number, number];
 }
 
 export type VerdictKind = "ok" | "wrong" | "novalue" | "hang" | "crash" | "skip" | "refused" | "nonnumber";
 export interface Verdict {
   kind: VerdictKind;
-  /** The failed check, for the known-failures list: `=`, `≈`, `⚠n`, `part` (a part not shown or shown against a 0), `novalue`, `hang`, `crash`. */
+  /** The failed check, for the known-failures list: `=`, `≈`, `⚠n`, `part` (a part not shown or shown against a 0), `novalue`, `hang`, `crash`;
+   *  G797: `shape` (a matrix or list with another count of entries, or a number where the oracle has a matrix). */
   check?: string;
   detail?: string;
 }
@@ -96,6 +106,7 @@ export function judge(shown: Shown, oracle: Oracle, digits: number): Verdict {
   if (!shown.ok) {
     return { kind: "refused", detail: `${shown.error ?? "error"}: ${shown.display ?? ""}`.slice(0, 80) };
   }
+  if (oracle.kind === "matrix" || (shown.items && shown.items.length > 0)) return judgeItems(shown, oracle, digits);
   if (!shown.value) {
     return oracle.kind === "novalue" ? { kind: "ok", detail: "no number shown where there is no value" } : { kind: "nonnumber", detail: (shown.display ?? "").slice(0, 80) };
   }
@@ -143,4 +154,27 @@ export function judge(shown: Shown, oracle: Oracle, digits: number): Verdict {
     }
   }
   return { kind: "ok", ...(mark === "⚠" && claim === null ? { detail: "⚠ without a count" } : {}) };
+}
+
+/** G797: a list or matrix result, entry by entry (each entry as a scalar result with its own mark); the first failing entry is the verdict. */
+function judgeItems(shown: Shown, oracle: Exclude<Oracle, { kind: "skip" }>, digits: number): Verdict {
+  const items = shown.items ?? [];
+  const numbers = items.length > 0 && items.every((i) => i.value !== undefined);
+  if (oracle.kind === "novalue") return numbers ? { kind: "novalue", check: "novalue", detail: `shows ${(shown.display ?? "numbers").slice(0, 60)} where the oracle has no value` } : { kind: "ok", detail: "no number shown where there is no value" };
+  if (oracle.kind === "value") return { kind: "nonnumber", detail: `a list where the oracle has a number: ${(shown.display ?? "").slice(0, 60)}` };
+  const want = `${oracle.rows}×${oracle.cols ?? 1}`;
+  if (items.length === 0) return shown.value ? { kind: "wrong", check: "shape", detail: `a number ${shown.display ?? ""} where the oracle has a ${want} matrix` } : { kind: "nonnumber", detail: (shown.display ?? "").slice(0, 80) };
+  // a list of n and an n×1 column are the same answer; two shapes that are both given must agree
+  const sameShape = items.length === oracle.cells.length && (!shown.shape || oracle.cols === null || (shown.shape[0] === oracle.rows && shown.shape[1] === oracle.cols));
+  if (!sameShape) return { kind: "wrong", check: "shape", detail: `${shown.shape ? shown.shape.join("×") : `a list of ${items.length}`} shown, the oracle has ${want}` };
+  if (!numbers) return { kind: "nonnumber", detail: (shown.display ?? "").slice(0, 80) };
+  const cols = oracle.cols ?? 1;
+  let warnOnly = false;
+  for (let i = 0; i < items.length; i++) {
+    const v = judge({ ok: true, ...items[i]! }, { kind: "value", ...oracle.cells[i]! }, digits);
+    const at = oracle.cols === null ? `[${i + 1}]` : `[${Math.floor(i / cols) + 1},${(i % cols) + 1}]`;
+    if (v.kind !== "ok") return { ...v, detail: `${at} ${v.detail ?? ""}`.slice(0, 160) };
+    if (v.detail === "⚠ without a count") warnOnly = true;
+  }
+  return { kind: "ok", ...(warnOnly ? { detail: "⚠ without a count" } : {}) };
 }

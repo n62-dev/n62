@@ -2,6 +2,11 @@
 # G61: the failures the oracle sweep (app/scripts/sweep.ts, seed 20261021, 1000 trees) finds today. id = "<angle> <digits> <keyboard LaTeX>", check = the
 # judge's check (=, ≈, ⚠n, part, novalue, hang), package = the package whose fix removes the entry. The stage passes when its failures are exactly
 # these; remove an entry when its fix lands. F62 (proposed in decisions.md): sin of a 1.5-million-digit float takes 11 s.
+# G797: the matrix trees (100 of the seed's own stream) and the pinned hunt inputs (gen.ts MATRIX_PINNED) follow, judged entry by entry.
 known:
   - { id: "rad 30 \\sin\\left(\\cosh\\left(10!\\right)\\right)+\\left(\\exponentialE^{\\cos\\left(7\\right)}\\right)", check: "hang", package: F62 }
   - { id: "deg 30 \\sin\\left(\\cosh\\left(10!\\right)\\right)+\\left(\\exponentialE^{\\cos\\left(7\\right)}\\right)", check: "hang", package: F62 }
+  - { id: "rad 12 \\operatorname{inv}\\left(\\operatorname{approx}\\left(\\frac{\\begin{pmatrix}1&2&3\\\\4&5&6\\\\7&8&10\\end{pmatrix}}{10^{13}}\\right)\\right)", check: "part", package: G622 }
+  - { id: "rad 12 \\operatorname{rank}\\left(\\operatorname{approx}\\left(\\begin{pmatrix}1&2&3\\\\4&5&6\\\\7&8&9\\end{pmatrix}\\right)\\right)", check: "part", package: G622 }
+  - { id: "rad 12 \\sin\\left(\\operatorname{approx}\\left(\\begin{pmatrix}0&1\\\\-1&0\\end{pmatrix}\\right)\\right)", check: "part", package: G792 }
+  - { id: "deg 12 \\sin\\left(\\operatorname{approx}\\left(\\begin{pmatrix}0&1\\\\-1&0\\end{pmatrix}\\right)\\right)", check: "part", package: G792 }

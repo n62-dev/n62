@@ -42,9 +42,10 @@ export const idOf = (j: { angle: string; digits: number; latex: string }): strin
 
 /** A saved run without its parsed value (the report and the shrink read only the verdict and the display). */
 const slim = (j: Judged): Judged => {
-  if (!j.shown?.value) return j;
-  const { value: _value, ...shown } = j.shown;
-  return { ...j, shown };
+  if (!j.shown?.value && !j.shown?.items) return j;
+  const { value: _value, items, ...shown } = j.shown;
+  // G797: a matrix's entries keep their display and mark, not their parsed values
+  return { ...j, shown: { ...shown, ...(items ? { items: items.map(({ value: _v, ...it }) => it) } : {}) } };
 };
 
 export function failedOf(judged: readonly Judged[], oracles: readonly Oracle[]): Failed[] {

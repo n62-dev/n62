@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // G61: the oracle sweep as a gate stage (r16 section 3.1): random keyboard-LaTeX trees through the parser and Home as the app calls it,
 // each judged against mpmath at 60 and 100 digits, 2k more for literals holding 10^±k (G162; tools/probes/sweep/oracle.py, judge.ts): does the mark tell the truth, is a number shown only
-// where a value exists, does every input answer or refuse within the deadline.
+// where a value exists, does every input answer or refuse within the deadline. G797: every run also sweeps matrix trees (gen.ts
+// generateMatrices: 2×2 and 3×3 of the scalar leaves, scaled by 10^k, k in −15..15, half inside approx(…); + × ^2 tran inv eˣ sin cos,
+// det, rank, linsolve), one per MATRIX_SHARE trees and the pinned G790/G622/G792 inputs, judged entry by entry (not with --edges).
 //   node scripts/sweep.ts                      # the gate stage: fixed seed, SWEEP_COUNT trees (default 1000, about 1.6 runs each), exit 1 on a new failure
 //   node scripts/sweep.ts --nightly [--edges] [--seed N] [--count N]   # report only (exit 0): the seed is the clock (seconds), printed first;
 //     25000 trees, or with --edges (G116) 5000 of tools/probes/sweep/edges.ts's; an engine crash restarts it and is a `crash` row. Writes
@@ -21,7 +23,8 @@ import { fileURLToPath } from "node:url";
 import { loadKnown, splitNightly, sweepFailures } from "./sweep-known.ts";
 import { addStats, failedOf, mergeParts, parsePart, readSet, sliceOf, statsLine, sweepRuns, writeSaved, type Failed, type Header, type Loaded, type PartFile, type ShrinkFile } from "./sweep-parts.ts";
 import { invariantsStage } from "./invariants.ts";
-import { childrenOf } from "../../tools/probes/sweep/edges.ts";
+import { childrenOf as edgeChildrenOf } from "../../tools/probes/sweep/edges.ts";
+import { matrixChildrenOf } from "../../tools/probes/sweep/gen.ts";
 import { reportMarkdown, shrink, type Finding } from "../../tools/probes/sweep/nightly.ts";
 import { pythonFor, Runner, runsOf } from "../../tools/probes/sweep/run.ts";
 
@@ -39,6 +42,10 @@ const flag = (name: string): number | null => {
 };
 const textFlag = (name: string): string | undefined => args[args.indexOf(name) + 1];
 const GATE_SEED = 20261021;
+/** G797: one matrix tree per MATRIX_SHARE trees (the gate's 1000 give 100; the stage may grow by at most 20 %). */
+const MATRIX_SHARE = 10;
+const matricesOf = (count: number, edges: boolean): number => (edges ? 0 : Math.round(count / MATRIX_SHARE));
+const childrenOf = (latex: string) => [...edgeChildrenOf(latex), ...matrixChildrenOf(latex)];
 const shrinkSeed = flag("--shrink");
 const nightly = args.includes("--nightly") || shrinkSeed !== null;
 const part = args.includes("--part") ? parsePart(textFlag("--part")) : null;
@@ -116,7 +123,7 @@ if (shrinkSeed !== null) {
 const edges = edgesFlag;
 const count = flag("--count") ?? (nightly ? (edges ? 5000 : 25_000) : Number(process.env["SWEEP_COUNT"] ?? 1000));
 if (nightly) console.log(`SWEEP SEED ${seed}${edges ? " --edges" : ""} (repeat: node scripts/sweep.ts --nightly${edges ? " --edges" : ""} --seed ${seed} --count ${count})`);
-const allRuns = runsOf(seed, count, edges);
+const allRuns = runsOf(seed, count, edges, { matrices: matricesOf(count, edges) });
 const runs = part ? sliceOf(allRuns, part) : allRuns;
 const { judged, oracles, stats } = await sweepRuns(runs, python, oraclePy, DEADLINE_MS);
 const failures = sweepFailures(judged);
@@ -137,5 +144,13 @@ const secs = stats.secs;
 const r = invariantsStage(failures, known.gate);
 for (const l of r.lines) console.log(`  sweep ${l}`);
 const ok = r.ok && secs < 60;
+// G797: the matrix share's cost, so the stage's growth can be read off (the runs after the scalar trees)
+const firstMatrix = judged.findIndex((j) => /^[A-Z]+\(/.test(j.mp) && /MAT\(/.test(j.mp));
+if (firstMatrix >= 0) {
+  const mj = judged.slice(firstMatrix);
+  const ms = mj.reduce((t, j) => t + j.ms, 0);
+  const trees = matricesOf(count, edges);
+  console.log(`  sweep matrices: ${mj.length} runs of ${trees} matrix trees and the pinned ones, ${mj.filter((j) => j.verdict.kind === "ok" || j.verdict.kind === "wrong").length} judged; Home ${(ms / 1000).toFixed(1)} s, ${(ms / Math.max(1, mj.length)).toFixed(1)} ms per run`);
+}
 console.log(`${ok ? "SWEEP PASSED" : "SWEEP FAILED"}: ${statsLine(stats, count, seed)}; ${r.summary}${secs < 60 ? "" : " (over 60 s)"}`);
 process.exit(ok ? 0 : 1);
