@@ -30,11 +30,12 @@ describe("i18n", () => {
 
 // R102: a message no source file uses is dead text (and may be a string that lost its place, as `status.busy` did in R82f2).
 // A key counts as used when its quoted text is in a source file (or a `$key.` legend in spec/keyboard.yaml). A key built at run
-// time (`t(`status.angle.${angle}`)`) is covered by a family below: the prefix, the suffixes it takes, and the file that builds it. The test
+// time (`t(`angle.${v}`)`) is covered by a family below: the prefix, the suffixes it takes, and the file that builds it. The test
 // checks that file still builds the prefix, so a family cannot outlive its template.
 const SRC = join(import.meta.dirname, "..");
 const FAMILIES: readonly { prefix: string; suffixes: readonly string[] | "any"; file: string }[] = [
   { prefix: "view.", suffixes: ["home", "cas", "symb", "plot", "num"], file: "apps/shellSheets.ts" }, // (R930: the Apps and ☰ sheets, out of shell.svelte.ts)
+  { prefix: "angle.", suffixes: ["rad", "deg"], file: "views/modeSheet.ts" },
   { prefix: "status.angle.", suffixes: ["rad", "deg"], file: "views/StatusLine.svelte" }, // R783
   { prefix: "engine.", suffixes: ["blink", "gecko", "webkit", "other"], file: "views/aboutItems.ts" }, // R285
   { prefix: "keys.action.", suffixes: ["apps", "menu", "mode", "switch", "symb", "plot", "num", "fold"], file: "keyboard/desktopHelp.ts" }, // R131

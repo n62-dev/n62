@@ -10,7 +10,6 @@
 import type { AngleUnit } from "../calc/port.ts";
 import type { MarkInfo } from "../engine/format.ts";
 import { t } from "../i18n/index.ts";
-import { modeText } from "../i18n/enMode.ts";
 import { typedName } from "../render/home.ts";
 import { commaResult, modeOf } from "../state/displayMode.ts";
 import type { HistoryItem, Settings } from "../state/session.svelte.ts";
@@ -110,7 +109,7 @@ function valueOf(item: HistoryItem, look: ReportLook, based: { any: boolean }): 
   const n = item.rational?.n;
   return n?.startsWith("-") ? `${code(shown)} (${tc("report.inDecimal").replace("{n}", code(n))})` : code(shown);
 }
-const angleName = (a: AngleUnit): string => modeText(a === "deg" ? "angle.deg" : "angle.rad");
+const angleName = (a: AngleUnit): string => t(a === "deg" ? "angle.deg" : "angle.rad");
 
 /** The block of one step; null for a row that is no step (running, cancelled, a note). */
 function step(item: HistoryItem, n: number, look: ReportLook, based: { any: boolean }): string[] | null {

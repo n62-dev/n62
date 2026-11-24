@@ -619,8 +619,6 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  measures 62,996 B gzip (176,799 B raw), the branch 61,874 B (172,987 B raw; −1,122 B): code that ran only after a job, the
  *  field's load, a sheet's open or a key on an open sheet rides in the chunk that path already waited for (state/jobRun.ts −310 B,
  *  entry/fieldUp.ts −140 B, apps/shellSheets.ts −281 B, sheetKeys.ts sheetPress and sheetLetter −202 B, calc/portKeys.ts −189 B).
- *  G622 (a cut; the pin stays): with patch 0068's engine phase-1 2a9cc931 measured 61,838 B gzip (172,875 B raw); angle.rad and
- *  angle.deg left en.ts for i18n/enMode.ts (read by views/modeSheet.ts and the lazy clipboard/workReport.ts): 61,842 B (172,860 B raw).
  *  G792 (fix round 1, a cut; the pin stays): patch 0066's engine hash took the chunk past the pin; Session.setFmtMode and
  *  setFixDecimals, which only the lazy Mode sheet calls, moved to state/modeSets.ts (−60 B gzip before the merge with R930).
  *  61,880 → 60,670 B (A272, the measure changed, not the code): gzip and brotli hold the hashed file names fixed (hashFree), so a new

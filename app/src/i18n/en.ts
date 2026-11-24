@@ -90,6 +90,8 @@ export const en = {
   "engine.safeStart": "Your stored definitions were not loaded because they stopped the engine; Memory lists them.",
   "settings.newer": "Data from a newer version: changes here are not kept",
   "mode.title": "Mode",
+  "angle.rad": "Radians",
+  "angle.deg": "Degrees",
   "format.std": "Standard",
   "format.sci": "Scientific",
   "format.eng": "Engineering",
