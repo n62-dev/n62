@@ -8,8 +8,21 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { join } from "node:path";
 import type { Oracle } from "../../tools/probes/sweep/judge.ts";
 import type { Finding } from "../../tools/probes/sweep/nightly.ts";
+import { childrenOf as edgeChildrenOf } from "../../tools/probes/sweep/edges.ts";
+import { generateMatrices, matrixChildrenOf, type Case } from "../../tools/probes/sweep/gen.ts";
 import { oracleFor, sweep, type Judged, type Run } from "../../tools/probes/sweep/run.ts";
 import { FAILING_KINDS } from "./sweep-known.ts";
+
+/** G797: one matrix tree per MATRIX_SHARE trees (the gate's 1000 give 100; the stage may grow by at most 20 %); none with --edges. */
+export const MATRIX_SHARE = 10;
+export const matricesOf = (count: number, edges: boolean): number => (edges ? 0 : Math.round(count / MATRIX_SHARE));
+
+/** The shrink's children of a failing input: an edge tree's, or a matrix tree's. The matrix children live only in the process that generated
+ * the trees (gen.ts MKIDS), so a `--shrink` run from saved parts generates the seed's matrix trees again first (G797 fix round 1). */
+export function shrinkChildrenOf(seed: number, count: number, edges: boolean): (latex: string) => Case[] {
+  generateMatrices(seed, matricesOf(count, edges));
+  return (latex) => [...edgeChildrenOf(latex), ...matrixChildrenOf(latex)];
+}
 
 export interface Part {
   i: number;
@@ -42,9 +55,10 @@ export const idOf = (j: { angle: string; digits: number; latex: string }): strin
 
 /** A saved run without its parsed value (the report and the shrink read only the verdict and the display). */
 const slim = (j: Judged): Judged => {
-  if (!j.shown?.value) return j;
-  const { value: _value, ...shown } = j.shown;
-  return { ...j, shown };
+  if (!j.shown?.value && !j.shown?.items) return j;
+  const { value: _value, items, ...shown } = j.shown;
+  // G797: a matrix's entries keep their display and mark, not their parsed values
+  return { ...j, shown: { ...shown, ...(items ? { items: items.map(({ value: _v, ...it }) => it) } : {}) } };
 };
 
 export function failedOf(judged: readonly Judged[], oracles: readonly Oracle[]): Failed[] {
