@@ -17,6 +17,8 @@ import type { UserKeys } from "../keyboard/userKeys.svelte.ts";
 import { PRESET_GROUPS, PresetError, presetsFor, type GroupValues, type Preset, type PresetGroup, type Presets } from "../state/presets.svelte.ts";
 import type { Session } from "../state/session.svelte.ts";
 import { familyOf } from "../theme/lookView.ts";
+import { openLayer } from "../input/backLayerFront.ts";
+import { tick } from "svelte";
 
 type Family = Parameters<typeof familyOf>[0];
 
@@ -165,6 +167,21 @@ export function nameFrom(latex: string): string {
 /** A name as the line takes it (rename starts from the old name). */
 const nameLatex = (name: string): string => name.replace(/[\\{}]/g, "").replace(/ /g, "\\ ");
 
+/** R919 (F375): Android back ends a prompt as Esc does. Its layer opens a tick later, after the one App.svelte's effect
+ *  opens for the Alpha lock the prompt starts (R776), so it lies on top and one back ends both: `cancel` lets Alpha go.
+ *  The result releases it when the prompt ends some other way. */
+function backEnds(host: PresetsHost, prompt: EntryPrompt): () => void {
+  let off = false;
+  let release: (() => void) | undefined;
+  void tick().then(() => {
+    if (!off && host.shell?.prompt === prompt) release = openLayer(() => prompt.cancel());
+  });
+  return () => {
+    off = true;
+    release?.();
+  };
+}
+
 /** The sheet has closed: the entry line takes a name under its label, and every key goes to it first. Enter offers the
  *  name to `save` (a refusal is the notice, and the line stays for another try); Esc cancels; C empties the name only,
  *  never the history nor the kept line (R123: the line's own clear would drop it, main.ts onClear); the space key types a space; a key or a tap that goes elsewhere (a sheet, a place) cancels first. Either way the
@@ -187,6 +204,7 @@ export function askName(host: PresetsHost, start: string, save: (name: string) =
     cancel: () => {
       if (shell.prompt !== hold) return;
       shell.prompt = null;
+      holdBack();
       if (!plain) host.alpha?.(false);
     },
     key: (a) => {
@@ -199,9 +217,11 @@ export function askName(host: PresetsHost, start: string, save: (name: string) =
     },
   };
   shell.prompt = hold;
+  const holdBack = backEnds(host, hold);
   void entry.fieldUp.then(() => {
     if (shell.prompt !== hold) return;
     shell.prompt = null;
+    holdBack();
     nameNow(host, start, save, said, label, read, plain);
     const named = (): EntryPrompt | null => shell.prompt; // (set again by nameNow; ended by an Esc among the keys)
     for (const a of held) if (!named()?.key(a) && a.kind !== "special") entry.run(a); // after an Esc: the line's
@@ -217,6 +237,7 @@ function nameNow(host: PresetsHost, start: string, save: (name: string) => void,
   const end = (): void => {
     if (shell.prompt !== prompt) return; // ended already
     shell.prompt = null;
+    back();
     if (!plain) host.alpha?.(false);
     queueMicrotask(stop); // (not from inside the watch's own run)
     entry.set(line, chips);
@@ -250,6 +271,7 @@ function nameNow(host: PresetsHost, start: string, save: (name: string) => void,
     },
   };
   shell.prompt = prompt;
+  const back = backEnds(host, prompt);
   entry.set(nameLatex(start));
   // a tap that goes elsewhere ends the name as Esc does: a sheet opens, or another app or view (the place name, Plot).
   // Watched here, in the Mode chunk, so the start chunk's shell carries only the `prompt` field (R89 fix round 2).
