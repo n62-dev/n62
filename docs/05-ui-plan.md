@@ -125,7 +125,7 @@ docs/04 §3 sets the behaviour; R4a and R4b built this layout:
 - Each row: the item's title, its first name on the right (`finder.ts` `itemRow`). Not built: a kind badge (fn, const, unit, var) in its own colour and shape.
 - **While Find is open a tap on a key types its letter in lower case** (docs/04 3.7), so Alpha is not needed; a flick down shows and types the letter on any key. Alpha armed types the letter too, digits included, and is used up as on the line (Alpha, 7 is `q`); the x key types `x`, its letter `d` by Alpha or a flick down (R889). The faces show it (R820): the key's letter in lower case (Vars `a`, sin `g`), under Shift the key's own character (`-`, `.`), a digit its own face while it picks a row and itself once a letter is typed; the keys that do nothing there (under Shift: Vars, Math, Tmpl, x, sin …) are dimmed. Vars and Memory share this sheet. The letter on a face is upright and its letter line is empty. `sheetFace` (`sheetKeys.ts`) says it from the same function that routes the tap.
 - Preview: constant: symbol, value, unit, uncertainty or "exact"; unit: dimension and SI factor; function: syntax, one example, "not checked" for tier 1.
-- **A unit picked in Home or CAS opens the unit view** on the line with the unit in its active slot, as the units key does (Home has no units; R893); in the view a pick goes in the slot.
+- **A unit or a prefix picked in Home or CAS opens the unit view** on the line with the unit in its active slot (a prefix armed there), as the units key does (Home has no units; R893); in the view a pick goes in the slot.
 
 ### 3.7 The keypad: look only
 
