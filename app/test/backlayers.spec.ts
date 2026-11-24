@@ -226,3 +226,95 @@ test("control (R919): Esc in a name prompt ends it and Alpha; back then leaves",
   await page.goBack();
   await gone(page);
 });
+
+// R926 (F378): an app (shell.app) is a back layer, one per app session (apps/shellOpen.ts opens it, shell.close releases it):
+// back closes it to where it was opened from, Home or CAS, with Home's set-aside line back (R270); what lies over it (☰,
+// Shift) closes first. An app-to-app switch keeps the one layer; the Home or CAS tab inside an app takes its entry back.
+const place = (p: Page) => p.evaluate(() => ({ app: window.n62.shell.app, view: window.n62.session.view }));
+async function inApp(p: Page, app: "function" | "solve", view: "symb" | "plot" | "num"): Promise<void> {
+  if (app === "function") await tap(p, [`@${view}`]);
+  else {
+    await tap(p, ["@place", "d4"]);
+    await tap(p, [`@${view}`]);
+  }
+  await p.waitForFunction((a) => window.n62.shell.app === a && window.n62.shell.loading === null, app);
+  await expect(p.getByTestId("place")).toHaveAttribute("data-view", view);
+}
+async function closesTo(p: Page, view: "home" | "cas", line: string): Promise<void> {
+  await expect.poll(() => place(p)).toEqual({ app: null, view });
+  stays(p);
+  await expect(p.getByTestId("place")).toHaveAttribute("data-view", view);
+  expect(await entryValue(p)).toBe(line);
+  await expect.poll(() => layer(p)).toBeUndefined();
+}
+
+for (const [app, view] of [["function", "symb"], ["function", "plot"], ["function", "num"], ["solve", "symb"], ["solve", "num"]] as const)
+  test(`(k) ${app} ${view}: one back closes the app to Home, with Home's line back; a second back leaves`, async ({ page }) => {
+    await tap(page, ["d7"]); // Home's unentered line (R270)
+    await inApp(page, app, view);
+    await page.goBack();
+    await closesTo(page, "home", "7");
+    await page.goBack();
+    await gone(page);
+  });
+
+test("(l) opened from CAS: back closes the app to CAS", async ({ page }) => {
+  await tap(page, ["@cas"]);
+  await expect.poll(() => place(page)).toEqual({ app: null, view: "cas" });
+  await inApp(page, "function", "num");
+  await page.goBack();
+  await closesTo(page, "cas", "");
+  await page.goBack();
+  await gone(page);
+});
+
+test("(m) Plot with ☰ open: back closes ☰, a second back the app, a third leaves", async ({ page }) => {
+  await inApp(page, "function", "plot");
+  await tap(page, ["@menu"]);
+  await expect(sheet(page)).toBeVisible();
+  await page.goBack();
+  await expect(sheet(page)).toHaveCount(0);
+  stays(page);
+  expect((await place(page)).app).toBe("function");
+  await page.goBack();
+  await closesTo(page, "home", "");
+  await page.goBack();
+  await gone(page);
+});
+
+test("(n) Plot with Shift armed: back disarms Shift, a second back closes the app", async ({ page }) => {
+  await inApp(page, "function", "plot");
+  await tap(page, ["shift"]);
+  expect((await mods(page)).s).toBe(true);
+  await page.goBack();
+  await expect.poll(async () => (await mods(page)).s).toBe(false);
+  stays(page);
+  expect((await place(page)).app).toBe("function");
+  await page.goBack();
+  await closesTo(page, "home", "");
+  await page.goBack();
+  await gone(page);
+});
+
+test("(o) Function, then Apps › Solve: one back lands in Home", async ({ page }) => {
+  await inApp(page, "function", "symb");
+  await tap(page, ["@place", "d4"]);
+  await page.waitForFunction(() => window.n62.shell.app === "solve" && window.n62.shell.loading === null);
+  await page.goBack();
+  await closesTo(page, "home", "");
+  await page.goBack();
+  await gone(page);
+});
+
+test("control (R926): the Home or CAS tab inside an app leaves no history entry behind", async ({ page }) => {
+  await inApp(page, "function", "symb");
+  await tap(page, ["@home"]);
+  await expect.poll(() => place(page)).toEqual({ app: null, view: "home" });
+  await expect.poll(() => page.evaluate(() => history.state)).toBeNull();
+  await inApp(page, "solve", "num");
+  await tap(page, ["@cas"]);
+  await expect.poll(() => place(page)).toEqual({ app: null, view: "cas" });
+  await expect.poll(() => page.evaluate(() => history.state)).toBeNull();
+  await page.goBack();
+  await gone(page);
+});

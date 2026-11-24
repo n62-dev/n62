@@ -170,8 +170,9 @@ export class AppShell {
     if (a?.views.includes(v)) this.code?.showView(this, a, v); // an instance came through the part, so it is in
   }
 
-  /** Back to Home/CAS (the place name, U2, U3 or the Apps sheet from inside an app). */
+  /** Back to Home/CAS (the place name, U2, U3, the Apps sheet from inside an app, or Android back: R926). */
   close(): void {
+    this.code?.shut(); // R926: the app's back layer
     if (this.app !== null) this.lastApp = this.app;
     this.app = null;
     this.sheet = null;
