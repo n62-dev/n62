@@ -1824,6 +1824,6 @@ cases:
   - { id: "g793-cas-lcm-neg4-6", kind: "cas", input: "lcm(-4,6)", oracle: "F(12)", expect: "12", mark: "=", source: "derived", note: "G793: math.lcm(-4,6) = 12; CAS showed -12" }
   - { id: "g793-cas-lcm-4-neg6", kind: "cas", input: "lcm(4,-6)", oracle: "F(12)", expect: "12", mark: "=", source: "derived", note: "G793: math.lcm(4,-6) = 12; CAS showed -12" }
   - { id: "g793-cas-lcm-list-neg4-6-10", kind: "cas", input: "lcm([-4,6,10])", oracle: "F(60)", expect: "60", mark: "=", source: "derived", note: "G793: math.lcm(-4,6,10) = 60; CAS showed -60" }
-  - { id: "g793-cas-lcm-neg2^70-3", kind: "cas", input: "lcm(-2^70,3)", oracle: "F(3*2**70)", expect: "3541774862152233910272", mark: "=", source: "derived", note: "G793: 2^70 and 3 are coprime, so 3*2^70 (math.lcm(-2**70,3)); CAS showed -3541774862152233910272" }
+  - { id: "g793-cas-lcm-neg2^70-3", kind: "cas", input: "lcm(-2^70,3)", expect: "3541774862152233910272", mark: "=", source: "derived", note: "G793: 2^70 and 3 are coprime, so 3*2^70 (math.lcm(-2**70,3)); CAS showed -3541774862152233910272" }
   - { id: "g793-cas-keep-lcm-neg4-neg6", kind: "cas", input: "lcm(-4,-6)", oracle: "F(12)", expect: "12", mark: "=", source: "derived", note: "G793 control: two negatives, right before the patch" }
   - { id: "g793-cas-keep-lcm-poly", kind: "cas", input: "lcm(x^2-1,x+1)", expect: "(x-1)*(x+1)", source: "derived", note: "G793 control: a polynomial keeps Giac's form" }
