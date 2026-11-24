@@ -35,7 +35,8 @@ export function defaultLook(native = false, moreContrast = false): Look {
 }
 
 /** A stored look, field by field: a wrong or missing field keeps `fallback`'s; a missing `shadow` or `pops` (a look stored
- *  before R156 or R163) is on, the default; a missing `findFull` (before R932) is off, its default. */
+ *  before R156 or R163) is on, the default. `findFull` (R932) is on only when stored true: missing (a look from before it)
+ *  or wrong, it is off, its default (not the fallback's: the start chunk's pin, R91). */
 export function validLook(x: unknown, fallback: Look): Look {
   const o = (x && typeof x === "object" ? x : {}) as Partial<Record<keyof Look, unknown>>;
   const family = FAMILY_IDS.find((f) => f === o.family) ?? (typeof o.family === "string" && RETIRED_FAMILIES.includes(o.family) ? "n62" : fallback.family);
@@ -47,6 +48,6 @@ export function validLook(x: unknown, fallback: Look): Look {
     plain: typeof o.plain === "boolean" ? o.plain : fallback.plain,
     shadow: typeof o.shadow === "boolean" ? o.shadow : o.shadow === undefined || fallback.shadow,
     pops: typeof o.pops === "boolean" ? o.pops : o.pops === undefined || fallback.pops,
-    findFull: typeof o.findFull === "boolean" ? o.findFull : o.findFull !== undefined && fallback.findFull,
+    findFull: o.findFull === true,
   };
 }

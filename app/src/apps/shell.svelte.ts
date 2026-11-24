@@ -258,10 +258,9 @@ export class AppShell {
   showMenu(title: string, items: readonly MenuItem[], opts?: { remember?: boolean; filterable?: boolean; at?: string; settings?: boolean; credits?: readonly CreditBlock[]; unc?: UncHead; loading?: () => Promise<void> | null }): void {
     this.openSheet((m) => new m.Sheet(`list:${title}`, title, () => items, { ...opts, settings: opts?.settings ? this.toSettings : undefined }));
   }
-  /** Find (R4a): its categories, searched by the letters typed (Sheet id "find"; route.ts gives it docs/04 3.7's keys).
-   *  `full` (R932, Settings › Appearance › Find opens full screen; find/finder.ts, not Find on units): it opens filling the screen. */
-  showFind(title: string, categories: readonly MenuItem[], search: (q: string) => readonly MenuItem[], full = false): void {
-    this.openSheet((m) => new m.Sheet("find", title, () => categories, { search, remember: false }), (sheet) => void (sheet.full = full));
+  /** Find (R4a): its categories, searched by the letters typed (Sheet id "find"; route.ts gives it docs/04 3.7's keys). */
+  showFind(title: string, categories: readonly MenuItem[], search: (q: string) => readonly MenuItem[]): void {
+    this.openSheet((m) => new m.Sheet("find", title, () => categories, { search, remember: false }));
   }
   /** A palette on the grid sheet: Tmpl (R10; its key closes it again), Shift + 6 `rel`, Shift + 9 `sym` (R18; the
    *  digits pick inside those, so only Esc and Cancel close them) and Shift + Vars `chars` (R725: over the view, its digits pick a cell of the focused row; Sheet reads that from the id). Each opens on its last pick. */
