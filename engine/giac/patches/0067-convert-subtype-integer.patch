@@ -1,0 +1,16 @@
+# Upstream: giac 2.1.0 prog.cc _convert: convert(g,f,last) with an integer f that is no Maple conversion ends with g.subtype=v.back().val, but nothing checks that the last argument is an integer, so for a fraction, a float or a name the subtype came from the bits of its pointer or its double: convert(129,2,1/2) printed [129,1/2], pnt[129,1/2] or gr2d(logo([129,1/2])) by what ran before in the session (convert(129,2,0.5) and convert(129,2,x) the same). B. Parisse (2026-11-24, his answer to email 8 question 11): "was probably meant to convert a vector of some kind to a subtype specified as last argument of convert, but there is no check that v.back() is an integer here, it should probably error." Now a last argument that is not an _INT_ is refused with gensizeerr (Bad Argument Value) before .val is read; an integer last argument (convert(129,2,3) = [0,0,1]), convert(129,base,2) and the two-argument forms are unchanged.
+# Changed by Pascaline contributors, 2026-11-24
+--- a/src/prog.cc
++++ b/src/prog.cc
+@@ -9342,6 +9342,11 @@
+ 	}
+       }
+ #endif
++      // N62 patch 0067 (G803): the subtype is the last argument's integer value; any other type (a fraction, a float, a name:
++      // convert(129,2,1/2)) has no val, and reading it took the subtype from the pointer's bits, so the answer depended on the
++      // heap ([129,1/2], pnt[129,1/2] or gr2d(logo([129,1/2]))). Refused as a bad argument (B. Parisse, 2026-11-24).
++      if (v.back().type!=_INT_)
++	return gensizeerr(contextptr);
+       g.subtype=v.back().val;
+       return g;
+     }

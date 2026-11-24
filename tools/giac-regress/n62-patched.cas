@@ -1676,6 +1676,18 @@ Digits:=40:; pc("g792-sin-evalf-tiny-00-40",'sin(evalf([[10^-400,0],[0,10^-400]]
 // patch 0066-matrix-trig-series.patch
 // g792-sinh-evalf-tiny-00-40 (oracle: mpmath)
 Digits:=40:; pc("g792-sinh-evalf-tiny-00-40",'sinh(evalf([[10^-400,0],[0,10^-400]]))[0][0]',1/10^400,5/10^440);
+// patch 0067-convert-subtype-integer.patch
+// g803-convert-129-2-half-refused (derived: no integer subtype; Parisse, 2026-11-24: "it should probably error")
+Digits:=40:; pasr:=0:; try { convert(129,2,1/2); } catch (err) { pasr:=1; }:; pc("g803-convert-129-2-half-refused",'pasr',1,1/10^30);
+// patch 0067-convert-subtype-integer.patch
+// g803-convert-129-2-float-refused (derived: no integer subtype; Parisse, 2026-11-24: "it should probably error")
+Digits:=40:; pasr:=0:; try { convert(129,2,0.5); } catch (err) { pasr:=1; }:; pc("g803-convert-129-2-float-refused",'pasr',1,1/10^30);
+// patch 0067-convert-subtype-integer.patch
+// g803-convert-129-2-name-refused (derived: no integer subtype; Parisse, 2026-11-24: "it should probably error")
+Digits:=40:; pasr:=0:; try { convert(129,2,g803x); } catch (err) { pasr:=1; }:; pc("g803-convert-129-2-name-refused",'pasr',1,1/10^30);
+// patch 0067-convert-subtype-integer.patch
+// g803-convert-129-2-half-after-power-refused (derived: no integer subtype; Parisse, 2026-11-24: "it should probably error")
+Digits:=40:; 2^100:; pasr:=0:; try { convert(129,2,1/2); } catch (err) { pasr:=1; }:; pc("g803-convert-129-2-half-after-power-refused",'pasr',1,1/10^30);
 // patch 0019-atan-exact-cut.patch
 // g135-deg-atan-2i (DEG, oracle)
 angle_radian:=0:; Digits:=40:; pc("g135-deg-atan-2i",'atan(2*i)',90+(3147292373094538001977241539068588825237/10^38)*i,1/10^35);
