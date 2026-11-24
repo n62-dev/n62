@@ -106,7 +106,7 @@ describe("presets (R88)", () => {
     session.setAngle("deg");
     setFixDecimals(session, 7);
     setFmtMode(session, "pfx", true);
-    session.settings.look = { family: "solarized", brightness: "light", contrast: true, plain: true, shadow: false, pops: false };
+    session.settings.look = { family: "solarized", brightness: "light", contrast: true, plain: true, shadow: false, pops: false, findFull: false };
     userKeys.set(U2, "shift", mol);
     cells.set(C1, "up", { unit: "mol" });
     const id = presets.capture("Chemistry", PRESET_GROUPS);
@@ -355,6 +355,9 @@ describe("presets (R88)", () => {
     expect(VALIDATORS[PRESETS_KEY]?.(old)).toBe(true);
   });
 
+  it("R932: Look holds Find opens full screen, as every Appearance row", () => {
+    expect(GROUP_FIELDS.look).toContain("findFull");
+  });
   it("R163: Look holds Key pop-ups: a capture keeps it, an apply sets it back; a look group saved without it leaves it alone", async () => {
     expect(GROUP_FIELDS.look).toContain("pops");
     const { session, presets, looks } = await setup();

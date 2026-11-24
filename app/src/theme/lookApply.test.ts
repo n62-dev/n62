@@ -25,7 +25,7 @@ vi.mock("./apply.ts", () => ({
   },
 }));
 
-const look = (family: Look["family"], brightness: Look["brightness"]): Look => ({ family, brightness, contrast: false, plain: false, shadow: true, pops: true });
+const look = (family: Look["family"], brightness: Look["brightness"]): Look => ({ family, brightness, contrast: false, plain: false, shadow: true, pops: true, findFull: false });
 
 beforeEach(() => {
   calls.length = 0;

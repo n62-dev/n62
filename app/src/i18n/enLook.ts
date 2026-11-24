@@ -16,6 +16,7 @@ export const enLook = {
   "appearance.shadow.hint": "A dark line under each key",
   "appearance.pops": "Key pop-ups",
   "appearance.pops.hint": "A bubble over the key you press or flick",
+  "appearance.findFull": "Find opens full screen",
 } as const;
 
 export type LookKey = keyof typeof enLook;
