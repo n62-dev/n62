@@ -286,6 +286,17 @@ export class FunctionApp implements AppInstance {
     if (full === undefined) return;
     this.host.toHome(answerShown(this.fmtPoint(c), c.facts, this.host.settings.decimalMark === "comma"), answerChip(full, c.facts));
   }
+  /** R897: a Num cell (long press): a value cell in full as numCsv reads it, an x cell (no column) its x. */
+  async copyNumCell(row: number, col?: number): Promise<void> {
+    if (col === undefined) {
+      const x = this.numXs[row];
+      if (x !== undefined) this.host.copy(this.mark(x));
+      return;
+    }
+    const { copyFull } = await import("../../clipboard/impl.ts"); // not needed to start
+    const text = this.csvCell(this.numCell(row, col), copyFull, this.textOptions());
+    if (text) this.host.copy(text);
+  }
   private async copyNum(): Promise<void> {
     const csv = await this.numCsv();
     if (csv !== undefined) this.host.copy(csv, tc("clip.copiedTable"));
