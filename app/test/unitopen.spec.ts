@@ -117,7 +117,13 @@ test.describe("R917: the unit view opens in one step and gives the line back", (
     await page.waitForFunction(() => /\\pi/.test(window.n62.unitView?.view.line ?? ""));
     await viewUp(page);
     const taken = await line(page);
-    expect(taken).toMatch(/^2.*\\pi$/); // the 3 went to the view's slot, not after π on the line
+    expect(taken).toMatch(/^2.*\\pi$/); // the 3 did not go after π on the line
+    // ... it reached the view: on the unit pad 3 is the second, so the active slot holds s (a dropped or dead 3 leaves it empty)
+    await page.waitForFunction(() => {
+      const v = window.n62.unitView?.view;
+      const slot = v === undefined ? undefined : v.filled()[v.ids[v.active] ?? ""];
+      return slot !== undefined && slot.tokens.length === 1 && slot.tokens[0]?.unit === "s";
+    }, undefined, { timeout: 5000 });
     await leaves(page, taken);
   });
 });
