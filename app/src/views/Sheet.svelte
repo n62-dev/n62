@@ -165,6 +165,7 @@
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (the keys drive the sheet; a tap on the history beside it closes it) -->
 <div
   class="overlay"
+  class:matrix={level.grid !== undefined}
   class:edits={level.grid?.editing != null}
   class:full={sheet.full}
   style:--room="{below}px"
@@ -276,7 +277,7 @@
   </div>
   <!-- R891: only a matrix grid keeps the entry line's room (its cells are typed there, R189); every other sheet sits on the bar,
        over the line -->
-  <div class="room" style:flex-basis="{level.grid ? below : 0}px"></div>
+  <div class="room"></div>
 </div>
 
 <style>
@@ -302,10 +303,12 @@
   }
   /* the line's room, a matrix grid's only (R189, R891): it never shrinks; the grid scrolls instead */
   .room {
-    flex-grow: 0;
-    flex-shrink: 0;
+    flex: 0 0 0;
     min-height: 0;
     pointer-events: none;
+  }
+  .overlay.matrix > .room {
+    flex-basis: var(--room);
   }
   .sheet {
     position: relative;
