@@ -371,3 +371,20 @@ describe("Sheet: grid", () => {
     expect(new Sheet("tmpl", "Templates", cells, { columns: 6 }).level.highlight).toBe(6);
   });
 });
+
+// R931 (owner, 2026-11-24; docs/05 3.1 "Fill the screen"): the fill button is for lists that take letters; Chars, a grid of
+// characters, has none.
+describe("Sheet: fillable (R778, R931)", () => {
+  const many = (n: number): MenuItem[] => Array.from({ length: n }, (_, i) => item(`r${i}`));
+
+  it("a list that takes letters (over 10 rows) has the fill button; a short list has none", () => {
+    expect(new Sheet("list:Units", "Units", () => many(12)).fillable).toBe(true);
+    expect(new Sheet("list:Units", "Units", () => many(5)).fillable).toBe(false);
+  });
+
+  it("Chars (Shift + Vars) has no fill button, though it stays above the keypad", () => {
+    const chars = new Sheet("chars", "Chars", () => many(40), { columns: 8 });
+    expect(chars.letters).toBe(true); // control: the sheet R725 made, a grid over the view
+    expect(chars.fillable).toBe(false);
+  });
+});
