@@ -2,7 +2,7 @@
 // What a key does while a sheet is open (docs/05 3.1 with section 7). Shift and Alpha are ignored for picking: a key
 // is read by what it is, never by the layer, so no key goes through the sheet into the entry line (rule 4).
 import { actionFor, type Key, type Layer } from "../keyboard/keyboard.ts";
-import { deadPress, isSelect, modsFor, special, type Mods, type RouteCtx } from "../keyboard/route.ts";
+import { deadPress, isSelect, layerOf, modsFor, special, type Mods, type RouteCtx } from "../keyboard/route.ts";
 
 export type SheetKey =
   | { kind: "move"; by: 1 | -1 }
@@ -165,6 +165,44 @@ export function sheetFace(key: Key, s: SheetCtx, mods: Mods, layer?: Layer): { t
   const job = sheetJob(key, s, mods, layer);
   if (job.kind === "letter") return { text: job.ch, dead: false };
   return { dead: job.kind === "none" };
+}
+
+/** A key while a sheet is open (docs/05 3.1; every sheet is in the viewport with the keys live below it, R770; route.ts sheetPress,
+ *  R930: here in the sheet's chunk). Shift and Alpha are ignored, and the sheet leaves them as they are; no key goes through to the
+ *  entry line; a key the sheet does not use is dead. A flick down types the key's letter into the filter, on any key (digits too;
+ *  docs/05 section 7 point 6); a flick up does nothing there. False: the key goes on to the line (sheetAct). */
+export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, mods?: Mods): boolean {
+  const shell = c.shell;
+  const sheet = shell.sheet;
+  if (!sheet) return false;
+  const level = sheet.level;
+  if (key.id !== "enter") sheet.disarm(); // R281: any press but Enter (the armed item's second pick) disarms
+  // R4b: while Your keys is open, a free key goes to its own slot's row (the cluster stays live above the sheet)
+  if (key.user && sheet.goKey(key.id, layerOf(modsFor(c, layer)))) return true;
+  const cell = level.grid?.key(c, key, layer); // R189: a matrix grid's cell is edited on the line (matrixGrid.svelte.ts)
+  if (cell === true && layer === undefined) c.session.clearModifiers(); // R300: a key the grid takes (Clear, Store ▶) uses a one-shot Shift up, as on the line
+  if (cell !== undefined) return cell;
+  // a grid whose cells show keys (Shift + 6, R18): a tap on such a key picks its cell, before its usual sheet job
+  const byPlace = layer === "alpha" || layer === "shift" ? undefined : sheet.pickKey(key.id);
+  if (byPlace) {
+    shell.picked(byPlace);
+    return true;
+  }
+  return sheetAct(c, key, layer, mods);
+}
+
+/** A letter from a hardware keyboard while a sheet is open (route.ts typeLetter, R930: here in the sheet's chunk). R300: an open
+ *  matrix grid is asked first, as sheetPress asks it (the letter as a type action): it starts the cell's edit, or types into it;
+ *  false when it leaves the letter to the line. Otherwise the letter goes to the level's filter (Find's in lower case, R4a). */
+export function sheetLetter(c: RouteCtx, ch: string): boolean {
+  const sheet = c.shell.sheet;
+  if (!sheet) return false;
+  sheet.disarm(); // R281
+  const grid = sheet.level.grid;
+  // (the grid's menu took it, or its read is still to come; R300: a letter as a key whose one action types it)
+  if (grid) return grid.key(c, { id: "letter", row: 0, col: 0, span: 1, cls: "fn", label: { primary: ch }, actions: { primary: { kind: "type", text: ch } } }, "primary") !== false;
+  if (sheet.level.filterable) sheet.level.type(sheet.id === "find" ? ch.toLowerCase() : ch);
+  return true;
 }
 
 /** What a key does in the open sheet (route.ts sheetPress, once the grid, a free key's slot and a cell's place have not taken it; here, in
