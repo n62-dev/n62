@@ -2,7 +2,7 @@
 // R801 (owner, 2026-11-20, walk point B4): a tap on a unit slot makes it the active slot (refused as ◀ ▶ is when the active
 // slot cannot be left), and after any tap that opens no sheet the keys stay with the unit view (the focus is on its element).
 import { expect, test, type Page } from "@playwright/test";
-import { flick, open, tap } from "./helpers.ts";
+import { entryValue, flick, open, tap, useClipboardLock } from "./helpers.ts";
 
 const up = (page: Page): Promise<unknown> =>
   page.waitForFunction(() => window.n62.unitView !== undefined && document.activeElement === window.n62.unitView.element && document.querySelector('[data-pad="unit"]') !== null);
@@ -129,3 +129,103 @@ for (const [w, h] of [[412, 915], [360, 740]] as const) {
     });
   });
 }
+
+/** R918 (owner, 2026-11-23): while the unit view is up, a tap on a history row is the dead press (no pick, no row bar, the
+ *  line as it was); a hold still copies the row's value (a hold is no click). R888's keys: 5 Enter; 7 2 Shift + Tmpl, k m. */
+test.describe("R918: a tap on the history under the unit view", () => {
+  const row = (page: Page) => page.locator("article.item").first().locator(".result");
+  /** The view's field as drawn (its slots' prompts included). */
+  const viewField = (page: Page): Promise<string | undefined> => page.evaluate(() => window.n62.unitView?.field.value);
+  const picks = (page: Page) => page.locator('[data-selected="true"]');
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 412, height: 915 });
+    await open(page, "engine=fake");
+    await tap(page, ["d5", "enter"]);
+    await expect(row(page)).toBeVisible();
+    await tap(page, ["d7", "d2", "shift", "tmpl"]);
+    await up(page);
+    await tap(page, ["d4", "d9"]); // k m: the view reads 72 km
+    expect(await slot(page, "u1")).toBe("k:m");
+  });
+
+  test("R888: two taps on the row change nothing; Esc, then Enter enters 72", async ({ page }) => {
+    const field = await viewField(page);
+    expect(field).toMatch(/^72/);
+    await row(page).tap();
+    await row(page).tap();
+    await page.waitForTimeout(300); // (a tap waits for no chunk here: the clipboard code would put the row on the line by now)
+    expect(await viewField(page)).toBe(field);
+    expect(await entryValue(page)).toBe("72");
+    expect(await slot(page, "u1")).toBe("k:m");
+    await expect(picks(page)).toHaveCount(0);
+    expect(await focusOnView(page)).toBe(true);
+    await tap(page, ["esc"]);
+    await page.waitForFunction(() => window.n62.unitView === undefined);
+    expect(await entryValue(page)).toBe("72");
+    await tap(page, ["enter"]);
+    await expect(page.locator("article.item")).toHaveCount(2);
+    await expect(page.locator("article.item").last().locator(".in")).toHaveText("72");
+    expect(await entryValue(page)).toBe("");
+  });
+
+  test("one tap on a row: no pick, no row bar, the line unchanged, the keys still the view's", async ({ page }) => {
+    await row(page).tap();
+    await page.waitForTimeout(300);
+    await expect(picks(page)).toHaveCount(0);
+    await expect(page.getByTestId("row-actions")).toHaveCount(0);
+    expect(await entryValue(page)).toBe("72");
+    expect(await focusOnView(page)).toBe(true);
+    // F367: no pick outlives the view: Esc, then Enter enters the line
+    await tap(page, ["esc"]);
+    await page.waitForFunction(() => window.n62.unitView === undefined);
+    await tap(page, ["enter"]);
+    await expect(page.locator("article.item").last().locator(".in")).toHaveText("72");
+  });
+
+  test("the undo note's tap still brings a deleted row back under the view", async ({ page }) => {
+    await page.evaluate(() => window.n62.session.removeItem(window.n62.session.home[0]!));
+    await expect(page.locator("article.item")).toHaveCount(0);
+    await page.getByTestId("undo-note").tap();
+    await expect(page.locator("article.item")).toHaveCount(1);
+    expect(await entryValue(page)).toBe("72");
+    expect(await slot(page, "u1")).toBe("k:m");
+  });
+
+  test.describe("a hold", () => {
+    test.use({ permissions: ["clipboard-read", "clipboard-write"] });
+    useClipboardLock();
+    test("a hold on the row's result copies its value, as without the view; the line unchanged", async ({ page }) => {
+      await page.evaluate(() => navigator.clipboard.writeText("before"));
+      const box = await row(page).boundingBox();
+      if (!box) throw new Error("no row");
+      const cdp = await page.context().newCDPSession(page);
+      const pt = [{ x: Math.round(box.x + box.width / 2), y: Math.round(box.y + box.height / 2), id: 1 }];
+      await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: pt });
+      await page.waitForTimeout(700);
+      await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+      await cdp.detach();
+      await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe("5");
+      await expect(picks(page)).toHaveCount(0);
+      expect(await entryValue(page)).toBe("72");
+      expect(await slot(page, "u1")).toBe("k:m");
+    });
+  });
+});
+
+test("R918: a tap on a row while the view's code loads leaves no pick under the view", async ({ page }) => {
+  await page.setViewportSize({ width: 412, height: 915 });
+  await page.route(/\/src\/units\/open\.ts/, async (r) => {
+    await new Promise((d) => setTimeout(d, 1500));
+    await r.continue();
+  });
+  await open(page, "engine=fake");
+  await tap(page, ["d5", "enter"]);
+  const row = page.locator("article.item").first().locator(".result");
+  await expect(row).toBeVisible();
+  await tap(page, ["d7", "d2", "shift", "tmpl"]);
+  await row.tap();
+  await up(page);
+  await expect(page.locator('[data-selected="true"]')).toHaveCount(0);
+  await expect(page.getByTestId("row-actions")).toHaveCount(0);
+  expect(await entryValue(page)).toBe("72");
+});

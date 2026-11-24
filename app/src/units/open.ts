@@ -23,6 +23,7 @@ import { userValuesOf } from "../input/latex-to-giac.ts";
 import { unitText } from "../i18n/enUnits.ts";
 import { idbKv } from "../state/storage.ts";
 import { loadSheetView } from "../views/sheetView.svelte.ts";
+import { LONG_PRESS_MS } from "../apps/longpress.ts";
 import { alternatives, readTargets, writeTarget } from "./alternatives.ts";
 import { storeChip } from "./chip.ts";
 import { factorTable } from "./factors.ts";
@@ -79,6 +80,26 @@ const STORE_ARROW = "\\blacktriangleright";
 /** Keys that change place: the unit view closes first, then they do their job. Settings and Mode are none (R838): their
  *  sheet opens over the view, which stays as it is (`unitPad.other`). */
 const PLACES: readonly string[] = ["home", "cas", "switch", "apps", "slot", "symb", "plot", "num"];
+
+/** R918 (owner, 2026-11-23): what a tap on the screen outside the view's own box still reaches while the view is up; any
+ *  other tap there (a history row, the row bar, the history's empty space) is the dead press. None of these writes the line:
+ *  the undo note (R98), a running row's Cancel, the engine's Reload and the update's Restart. */
+const THROUGH = '[data-testid="undo-note"], .history .cancel, [data-testid="engine-reload"], [data-testid="update-note"]';
+
+/** R918: the line's writes a history row reaches (App.svelte tapped: the recall, the input at the caret, the result's chip
+ *  or its drawn text). */
+const ROW_WRITES = ["set", "insert", "insertRecalled", "insertResult"] as const;
+
+/** R918: the line is lent to the view: a row put on it while the view is up is the dead press. A tap made while the view's code
+ *  loaded waits for the load (R917), so it comes after the view is up as no click the view could refuse. Shadows the writes on
+ *  the instance (the start chunk's EntryController stays as it is); the returned function gives them back. */
+function lend(entry: RouteCtx["entry"], dead: () => void): () => void {
+  const own = entry as unknown as Record<string, unknown>;
+  for (const k of ROW_WRITES) own[k] = (): void => dead();
+  return () => {
+    for (const k of ROW_WRITES) delete own[k];
+  };
+}
 
 /** Open the unit view on the line, or on a picked history row's input (it becomes the line). Dead in an app. */
 export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
@@ -260,21 +281,37 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
     window.n62.unitView = current;
     // every press keeps the focus on the view (as the entry line's keys keep it on the line), for the hardware keys
     const keep = (): void => element.focus({ preventScroll: true });
+    /** When the last press on the page went down (R918: a click that long after it ends a hold, which copied). */
+    let downAt = 0;
+    const down = (ev: PointerEvent): void => void (downAt = ev.timeStamp);
     /** R801: a tap on the screen while the view is up (no sheet over it): on a slot's box it makes that slot the active one
      *  (refused as ◀ ▶ is, view.goTo); wherever it lands the focus comes back to the view, so the next hardware key goes
-     *  to the view. A hold stays R797's: it gives no click. */
+     *  to the view. A hold stays R797's: it gives no click. R918: outside the view's box (the entry's) a tap is the dead
+     *  press, unless THROUGH lets it on: no pick, no row bar, nothing on the lent line; a hold on a row copies as before
+     *  (its copy came with the timer, longpress.ts), its click is swallowed with no pulse. */
     const tapped = (ev: MouseEvent): void => {
       if (current?.view !== view || c.shell.sheet !== null) return;
       if (!(ev.target instanceof Element) || !ev.target.closest(".screen")) return; // (the pads and bars keep their own paths)
-      if (ev.composedPath().includes(mf)) {
+      if (!entryEl.contains(ev.target) && !ev.target.closest(THROUGH)) {
+        ev.stopImmediatePropagation();
+        ev.preventDefault();
+        if (ev.timeStamp - downAt < LONG_PRESS_MS) c.dead();
+      } else if (ev.composedPath().includes(mf)) {
         const id = slotAt(mf, view.ids, ev.clientX, ev.clientY);
         if (id !== undefined) view.goTo(id);
       }
       keep();
       setTimeout(() => current?.view === view && c.shell.sheet === null && keep(), 0); // (MathLive moves the focus on its own pointer events)
     };
+    document.addEventListener("pointerdown", down, { capture: true });
     document.addEventListener("click", tapped, { capture: true });
-    untap = () => document.removeEventListener("click", tapped, { capture: true });
+    const unlend = lend(c.entry, () => c.dead());
+    c.picked = null; // R918: a row picked while the view's code loaded (a pick waits for no load) does not stay under it
+    untap = () => {
+      document.removeEventListener("pointerdown", down, { capture: true });
+      document.removeEventListener("click", tapped, { capture: true });
+      unlend();
+    };
     /** R838: a sheet over the view (Settings, Mode, Find on units) took the keys; once it is gone the focus is the view's again
      *  and a setting changed there shows. R915: the angle unit or the digits changed, whoever changed them (the bar's angle word
      *  too, at once, a sheet still open or not): a result shown or being asked for is asked for again as the line would be (the
