@@ -9,7 +9,6 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 - **G784, Paste of a copied name:** Copy writes the letters (`2*i`, `r*a*i*n*b*o*w`, `β*2`); Paste reads one number, so a product of names is refused, and `2*i` copied from the name i came back as the constant i, another value (principle 3): G784f1 (pass 231) refuses a text N62 copied from a row with a stand-in. Recommended: keep Paste a number reader, so a copied name does not paste back; reading expressions is its own package (the letter i against the constant i needs a rule first).
 - **R779, the drag after the arrow keys, on the Fairphone:** Chromium touch emulation could not reproduce "drag, arrow keys, drag" (linetouch.spec.ts, R779 cases, green on phase-1 too); lineTouch.ts now ends a stale touch (a new first finger, a lift off the line). Does the drag work on the Fairphone 6 after it? If not, record `adb` pointer events (down/move/up/cancel with ids) for the sequence.
-- **R892, the corner button's room:** keep the strip (recommended): the sheet reserves `--touch` under its list or grid while the button shows, so no row lies under it in the first view either; the brief's scroller padding alone cleared only the end (Find rows 5, 6 and the ‰ cell at 360 stayed under it, 1216 and 529 px²). Cost: about 38 px less list in a cut sheet.
 
 ## Decided proposals
 
@@ -200,6 +199,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **Start chunk room (owner, 2026-11-09):** a package over the pin raises it as docs/04 8.3 says; one over the 63 kB budget gets a cut, never an allowance. Would change if: the owner moves the budget.
 - **R918, the unit view's entries budget (owner, 2026-11-24):** 42.6 kB, for the history-tap guard (0.59 kB). Would change if: the owner wants it cut.
 - **R872, R873 contrast (owner, 2026-11-24):** N62 Light HC Enter stays 2.79:1 (its label 7:1); Solarized's pad arrows stay 4.03 and 4.28:1. Would change if: the owner's look on the phone says otherwise.
+- **R892's strip, no (owner, 2026-11-24):** the fill button goes to the title row and Chars has none (R931); Find full by default is a setting, off (R932). Would change if: his look on the phone says otherwise.
 - **R163, Key pop-ups (ron, run 763):** one switch for both bubbles over the keypad; a look stored before R163 has it on. Would change if: the owner wants the pop and the flick bubble apart.
 - **R53, R159:** Counters: Shift and Alpha share a row (seven rows); `uses` is not backed up. Would change if: the owner wants the counts apart.
 - **G618 (run 1361):** Σ to ∞ is checked against its terms only for a term rational in k, or (−1)^k times one, poles left of start + 100. Archived. Would change if: the owner wants every term estimated.
