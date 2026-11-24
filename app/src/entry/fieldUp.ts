@@ -1,0 +1,35 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// R930 (a start-chunk cut): the entry line's field made and set up, out of EntryController (entry/controller.ts), whose load
+// fetches this beside MathLive; it brings field.ts's parts the controller keeps (the key's work on the field, Select's chain,
+// the grown matrices, the insert), as field.ts's own import did.
+import type { MathfieldElement } from "mathlive";
+import type { EntryController } from "./controller.ts";
+import { makeField, putText } from "./field.ts";
+export { Grown, putText, runOnField, SelectChain } from "./field.ts";
+
+/** R930 (a start-chunk cut, out of EntryController): the entry line's field, made once MathLive and this chunk are in
+ *  (EntryController.load): the line set or kept meanwhile goes on it, then the keys and inserts that waited, in their order
+ *  (decisions.md R8). */
+export async function fieldFor(c: EntryController, Field: typeof MathfieldElement, host: HTMLElement | undefined): Promise<void> {
+  const mf = await makeField(Field, host, {
+    key: (ev) => c.hwKey?.(ev, c) ?? false,
+    enter: (repeat) => c.onKey("enter", "primary", repeat),
+    escape: (repeat) => c.onKey("esc", "primary", repeat),
+    paste: (text) => c.onPaste(text),
+  });
+  c.mf = mf;
+  void import("./namemarks.ts").then((n) => (c.marks = new n.NameMarks(mf)).setNames(c.stored));
+  if (c.pendingValue !== undefined) mf.value = c.pendingValue;
+  c.pendingValue = undefined;
+  mf.focus();
+  mf.executeCommand("moveToMathfieldEnd");
+  for (let a = c.queue.shift(); a; a = c.queue.shift()) {
+    if (a.kind === "put") putText(c, a.latex, a.term, a.consts);
+    else c.run(a);
+  }
+  mf.addEventListener("input", () => {
+    c.touched = true;
+    c.recalledIn = null;
+    c.onEdit();
+  });
+}

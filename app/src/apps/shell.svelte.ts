@@ -7,14 +7,14 @@ import type { Chip, ChipTable } from "../input/chips.ts";
 import { t } from "../i18n/index.ts";
 import type { ActionBody } from "../keyboard/keyboard.ts";
 import type { Kv } from "../state/storage.ts";
-import type { IconId } from "../views/icons.ts";
 import type { CreditBlock, Picked, Sheet, UncHead } from "../views/sheet.svelte.ts";
 import { loadSheetModel, sheetChunk } from "../views/sheetView.svelte.ts";
 import type * as ShellOpenCode from "./shellOpen.ts";
-import { APPS, appEntry, isAppId, placeGlyph, type BarSlot } from "./registry.ts";
+import { isAppId, type BarSlot } from "./registry.ts";
 import { VIEW_IDS, type AppHost, type AppId, type AppInstance, type LoadedApp, type MenuItem, type NavDir, type SubMenu, type ViewId } from "./types.ts";
 
 type ShellOpen = typeof ShellOpenCode;
+type SheetModel = typeof import("../views/sheet.svelte.ts");
 
 /** R782: the Apps sheet of a second tap on the bar's slot 2 (a sheet id of its own, so APP▾'s and the slot's toggle apart). */
 const SLOT_SHEET = "apps:slot";
@@ -208,18 +208,6 @@ export class AppShell {
     const a = this.instance;
     return !this.entryEdited && (a?.undo?.(this.view) ?? false);
   }
-  /** The open view's own Menu items (Home/CAS: the copy actions), or the pointer row (R83). Settings is the ⚙ in the
-   *  title row (R145), not a row. */
-  get menuItems(): readonly MenuItem[] {
-    const own = this.app === null ? this.homeMenu?.() : this.instance?.menu?.(this.view);
-    if (!own || own.length === 0) return (this.code?.pointer(this) ?? []);
-    return own.every((r) => r.slotRow) ? [...own, ...(this.code?.pointer(this) ?? [])] : own; // R261: Symb's Clear keeps the pointer
-  }
-  /** The Menu's title: the view whose Menu it is, and that view's icon. */
-  get menuTitle(): { text: string; icon: IconId } {
-    const v = this.app === null ? (this.homeView?.() ?? "home") : this.view;
-    return { text: t("menu.title", { view: t(`view.${v}`) }), icon: v };
-  }
   /** R145: where a ☰ sheet's ⚙ goes (and the ⚙ key over any sheet, R887): Settings as a level of the sheet (R49), else, before the
    *  Mode code is in, Mode › Settings. */
   readonly toSettings = (): SubMenu | (() => void) => this.settingsMenu?.() ?? (() => this.openSettings?.());
@@ -245,72 +233,52 @@ export class AppShell {
   barSlot: (() => BarSlot) | undefined;
   setBarSlot: ((slot: BarSlot) => void) | undefined;
   /** Apps key: the Apps sheet (1 Home, 2 CAS, then the apps), or close it when it is open. `slot` (R782, a second tap on the
-   *  current slot-2 place): the same sheet titled "Slot 2", where a pick puts that place in slot 2 and opens it, Home's row is
-   *  dead and the CAS row puts CAS back; a tap on the slot again closes it. */
+   *  current slot-2 place): the same sheet titled "Slot 2" (shellSheets.ts appsSheet); a tap on the slot again closes it. */
   toggleApps(slot = false): void {
     const id = slot ? SLOT_SHEET : "apps";
     if (this.sheet?.id === id) this.sheet = null;
-    else
-      this.openSheet(
-        (S) =>
-          new S(id, t(slot ? "apps.slot" : "apps.title"), () =>
-            (["home", "cas", ...APPS.map((a) => a.id)] as const).map((p) => ({
-              id: p,
-              label: t(p === "home" || p === "cas" ? `view.${p}` : appEntry(p).name),
-              glyph: placeGlyph(p),
-              disabled: slot && p === "home",
-              selected: slot && this.barSlot?.() === p,
-              run: () => {
-                if (slot) this.setBarSlot?.(p as BarSlot);
-                if (p === "home" || p === "cas") this.goTo?.(p);
-                else void this.open(p);
-              },
-            })),
-          ),
-      );
+    else this.openSheet((m) => m.appsSheet(this, id, slot));
   }
-  /** Menu key: the open view's menu, or close the open sheet. False when the view has no menu (a dead key). */
+  /** Menu key: the open view's menu (shellSheets.ts menuSheet), or close the open sheet. False when the view has no menu (a dead key). */
   toggleMenu(opts?: { at?: string }): boolean {
     if (this.menuOpen) {
       this.sheet = null;
       return true;
     }
-    const place = this.app === null ? "home" : `${this.app}:${this.view}`;
-    const { text, icon } = this.menuTitle;
     this.openSheet(
-      (S) => new S(`menu:${place}`, text, () => this.menuItems, { icon, at: opts?.at, settings: this.toSettings }),
+      (m) => m.menuSheet(this, opts?.at),
       // a view whose ☰ has no rows and no pointer opens Settings directly (R145)
-      (sheet) => this.menuItems.length === 0 && this.picked(sheet.openSettings()),
+      (sheet, m) => m.menuItems(this).length === 0 && this.picked(sheet.openSettings()),
     );
     return true;
   }
   /** Open a list of items over the view (a long press on a history row): same sheet and keys as the Menu key.
    *  `settings`: the ⚙ in its title row opens Settings (R145). */
   showMenu(title: string, items: readonly MenuItem[], opts?: { remember?: boolean; filterable?: boolean; at?: string; settings?: boolean; credits?: readonly CreditBlock[]; unc?: UncHead; loading?: () => Promise<void> | null }): void {
-    this.openSheet((S) => new S(`list:${title}`, title, () => items, { ...opts, settings: opts?.settings ? this.toSettings : undefined }));
+    this.openSheet((m) => new m.Sheet(`list:${title}`, title, () => items, { ...opts, settings: opts?.settings ? this.toSettings : undefined }));
   }
   /** Find (R4a): its categories, searched by the letters typed (Sheet id "find"; route.ts gives it docs/04 3.7's keys). */
   showFind(title: string, categories: readonly MenuItem[], search: (q: string) => readonly MenuItem[]): void {
-    this.openSheet((S) => new S("find", title, () => categories, { search, remember: false }));
+    this.openSheet((m) => new m.Sheet("find", title, () => categories, { search, remember: false }));
   }
   /** A palette on the grid sheet: Tmpl (R10; its key closes it again), Shift + 6 `rel`, Shift + 9 `sym` (R18; the
    *  digits pick inside those, so only Esc and Cancel close them) and Shift + Vars `chars` (R725: over the view, its digits pick a cell of the focused row; Sheet reads that from the id). Each opens on its last pick. */
   togglePalette(id: PaletteId, title: string, items: () => readonly MenuItem[], columns: number): void {
     if (this.sheet?.id === id) this.sheet = null;
-    else this.openSheet((S) => new S(id, title, items, { columns }));
+    else this.openSheet((m) => new m.Sheet(id, title, items, { columns }));
   }
   /** Opens the sheet `make` builds, and then runs `then` on it. Before the sheet's model is in (R151: a long press on a
    *  history row before the idle load), it loads first and `sheetPending` holds the open; a sheet set meanwhile (or
    *  none, Esc) wins. If the model does not load, nothing opens. */
-  private openSheet(make: (S: typeof Sheet) => Sheet, then?: (sheet: Sheet) => void): void {
-    const open = (S: typeof Sheet): void => {
-      const sheet = make(S);
+  private openSheet(make: (m: SheetModel) => Sheet, then?: (sheet: Sheet, m: SheetModel) => void): void {
+    const open = (m: SheetModel): void => {
+      const sheet = make(m);
       this.sheet = sheet;
-      then?.(sheet);
+      then?.(sheet, m);
     };
-    if (sheetChunk.model) return open(sheetChunk.model.Sheet);
+    if (sheetChunk.model) return open(sheetChunk.model);
     const pending: Promise<void> = loadSheetModel().then(
-      (m) => void (this.sheetPending === pending && open(m.Sheet)),
+      (m) => void (this.sheetPending === pending && open(m)),
       () => void (this.sheetPending === pending && (this.sheetPending = null)),
     );
     this.sheetPending = pending;

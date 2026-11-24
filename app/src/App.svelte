@@ -160,7 +160,7 @@
       if (credits) openCredits();
     }
   }
-  /** The credits sheet (a lazy chunk with the About data, reached through the Find chunk): N62 then Enter, and a tap on the empty history's faint mark (R157). */
+  /** The credits sheet (a lazy chunk with the About data, reached through the Find chunk): N62 then Enter (R149). */
   function openCredits(): void {
     onFind(finder().then((f) => f.loadCredits()), (m) => { picked = null; m.showCredits(shell); });
   }
@@ -460,7 +460,6 @@
           selected={picked}
           part={pickedPart}
           engineState={session.engineState}
-          oncredits={openCredits}
           historyRead={session.historyRead}
           display={(item) => session.display(item, true)}
           input={(item) => session.input(item)}

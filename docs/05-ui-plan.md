@@ -153,7 +153,7 @@ The layout stays. Only the drawing changes:
 
 - Every empty state says what to do next in one line and never covers content: Plot with no function shows its hint in a box above the axes.
 - Error messages name the problem and the fix: "Units don't match: L vs T", "Angle is in degrees; result uses DEG". No error codes. An Enter that makes an error row leaves the entry field's outline `--error` until the next key (R154).
-- An empty history shows the N62 mark faintly above the hint (`--mark-h` 128 px, a mask of `app/public/n62-mark.svg` in the generated role `--mark-faint`: the faint mark in the hint's colour, `--muted` mixed into `bg` at 1.25:1, never above 1.3:1); decoration for a screen reader; a tap on it opens the credits sheet.
+- An empty history shows the N62 mark faintly above the hint (`--mark-h` 128 px, a mask of `app/public/n62-mark.svg` in the generated role `--mark-faint`: the faint mark in the hint's colour, `--muted` mixed into `bg` at 1.25:1, never above 1.3:1); decoration for a screen reader; it takes no tap (R924, owner 2026-11-23; the credits are N62 then Enter).
 
 ### 3.9 Tablet and landscape
 

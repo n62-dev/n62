@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R157, R856 (owner, 2026-11-22): Home's tile is the house in the segment's colour (R745's colour logo left the bar);
 // CAS and the apps keep their glyphs; the N62 mark is faint on an
-// empty history (--mark-faint, the hint's colour at 1.2 to 1.3:1 on --bg, R874), gone after one result, a tap on it opens the credits sheet. The fake engine.
+// empty history (--mark-faint, the hint's colour at 1.2 to 1.3:1 on --bg, R874), gone after one result; it takes no tap (R924). The fake engine.
 import { expect, test, type Page } from "@playwright/test";
-import { open, tap } from "./helpers.ts";
+import { entryValue, open, sheet, tap } from "./helpers.ts";
 
 interface Look {
   family: "n62" | "bw" | "solarized";
@@ -176,11 +176,19 @@ test.describe("fake engine", () => {
         await expect(page.locator(".faint")).toHaveCount(0);
       });
 
-      test("a tap on it opens the credits sheet, nothing is submitted", async ({ page }) => {
-        await page.locator(".faint").tap();
-        await expect(credits(page)).toBeVisible();
-        await expect(credits(page)).toContainText("N62 stands for \"Number Six Two\": six is the first perfect number, and two is the first prime number.");
+      // R924 (owner, 2026-11-23): the mark takes no tap; a touch at its centre opens no sheet and leaves the line and
+      // the history as they were (the credits stay on N62 then Enter, credits.spec.ts)
+      test("a tap on it opens no sheet and submits nothing (R924)", async ({ page }) => {
+        await tap(page, ["d1"]);
+        const line = await entryValue(page);
+        const b = (await page.locator(".faint").boundingBox())!;
+        await page.touchscreen.tap(b.x + b.width / 2, b.y + b.height / 2);
+        await page.waitForTimeout(500); // the credits come in a lazy chunk
+        await expect(credits(page)).toHaveCount(0);
+        await expect(sheet(page)).toHaveCount(0);
+        expect(await entryValue(page)).toBe(line);
         expect(await page.evaluate(() => window.n62.session.items.length)).toBe(0);
+        await expect(page.locator(".faint")).toBeVisible();
       });
     });
 });

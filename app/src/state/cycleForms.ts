@@ -24,6 +24,7 @@ import {
 import type { HistoryItem, Session } from "./session.svelte.ts";
 import { wordStore } from "./wordStore.svelte.ts";
 export { wordStore };
+export { passCas, passHome } from "../calc/portKeys.ts"; // R930: the Calc port's pass of a result, loaded with the word store (calc/engine.ts word)
 
 const isBase = (m: FmtMode | undefined): m is Base => m === "hex" || m === "bin" || m === "oct";
 
