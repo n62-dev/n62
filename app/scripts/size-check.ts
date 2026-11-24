@@ -78,6 +78,16 @@ export function sharedChunksHolding(manifest: Record<string, ManifestChunk>, mod
     .map((c) => c.file);
 }
 
+/** A272: a file's text with every hashed name held fixed. Vite names its files `<name>-<8 characters>.<ext>` (and the Find index
+ *  the same), the engine `giac.<16 hex digits>.<ext>`; the start chunk lists them, and a new hash gzips a few bytes differently with
+ *  no source change. Each hash becomes the same number of `~`, so the length and everything else stay. Gzip and brotli measure this. */
+export function hashFree(buf: Buffer): Buffer {
+  const text = buf.toString("latin1").replace(/([-.])[\w-]{8}(?=\.(?:m?js|css|json|wasm|html|svg|png|woff2?)\b)|(\.)[0-9a-f]{16}(?=\.(?:m?js|wasm)\b)/g, (m, a?: string) => (a === undefined ? "." : a) + "~".repeat(m.length - 1));
+  return Buffer.from(text, "latin1");
+}
+/** Files whose text names other files: only these go through hashFree (a wasm's bytes are measured as they are). */
+const NAMING = /\.(?:m?js|css|json|html)$/;
+
 function readManifest(dist: string): Record<string, ManifestChunk> {
   const path = join(dist, ".vite/manifest.json");
   if (!existsSync(path)) throw new Error(`size-check: no ${path}; build with build.manifest: true (vite.config.ts)`);
@@ -646,7 +656,7 @@ function inlineRow(dist: string): Row | null {
   if (!existsSync(index)) return null;
   const scripts = inlineScripts(readFileSync(index, "utf8")).map((t) => Buffer.from(t));
   const raw = scripts.reduce((n, b) => n + b.length, 0);
-  const gzip = scripts.reduce((n, b) => n + gzipSync(b).length, 0);
+  const gzip = scripts.reduce((n, b) => n + gzipSync(hashFree(b)).length, 0);
   const failures = gzip > INLINE_PIN_GZIP ? [`Inline scripts: index.html's inline scripts are pinned at ${kB(INLINE_PIN_GZIP)} gzip (R103), now ${kB(gzip)}: they run before the first paint; move work into the bundle, or raise INLINE_PIN_GZIP in size-check.ts with a reason`] : [];
   return { rule: "Inline scripts", files: ["index.html"], raw, gzip, brotli: 0, rawMax: undefined, gzipMax: INLINE_PIN_GZIP, brotliMax: undefined, failures };
 }
@@ -730,8 +740,9 @@ export function checkSizes(dist: string): Report {
       const buf = readFileSync(join(dist, f));
       raw += buf.length;
       // The precache total is a raw sum only; compressing 13 MB of wasm for a number nobody budgets would just slow the build.
-      if (!isTotal && s.gzipMax !== undefined) gzip += gzipSync(buf).length;
-      if (!isTotal && s.brotliMax !== undefined) brotli += brotliCompressSync(buf, { params: { [constants.BROTLI_PARAM_QUALITY]: 11, [constants.BROTLI_PARAM_SIZE_HINT]: buf.length } }).length;
+      const held = isTotal || !NAMING.test(f) ? buf : hashFree(buf); // A272
+      if (!isTotal && s.gzipMax !== undefined) gzip += gzipSync(held).length;
+      if (!isTotal && s.brotliMax !== undefined) brotli += brotliCompressSync(held, { params: { [constants.BROTLI_PARAM_QUALITY]: 11, [constants.BROTLI_PARAM_SIZE_HINT]: held.length } }).length;
     }
     const failures: string[] = [];
     if (s.rawMax !== undefined && raw > s.rawMax) failures.push(`${s.rule}: ${kB(raw)} raw is over the budget of ${kB(s.rawMax)} (${s.files.join(", ")})`);
@@ -755,6 +766,7 @@ function format(report: Report): string {
     const parts = [cell(r.raw, r.rawMax, "raw"), cell(r.gzip, r.gzipMax, "gzip"), cell(r.brotli, r.brotliMax, "brotli")].filter(Boolean);
     return `  ${r.failures.length > 0 ? "FAIL" : "ok  "}  ${r.rule.padEnd(19)} ${parts.join("   ")}`;
   });
+  lines.unshift("  gzip (hashes held): hashed file names are fixed before gzip and brotli (A272); raw is the real file");
   if (report.notBuilt.length > 0) lines.push(`  (not built yet: ${report.notBuilt.join(", ")})`);
   return lines.join("\n");
 }

@@ -386,14 +386,14 @@ describe("size-check", () => {
   });
 
   it("hashFree turns Vite's 8-character hashes and the engine's 16 hex digits into a placeholder of the same length, and touches nothing else (A272)", () => {
-    const text = 'a("./index-AbCdEf12.js"),b("./find-index-Zz9Yy8Xx.json"),c("./giac.0123456789abcdef.mjs"),d("./x.0123456789abcdef.wasm"),e("./a-b-q_-0Z9aB.css"),k = "index-short.js", u = "Zz9Yy8Xx.js"';
+    const text = 'a("./index-AbCdEf12.js"),b("./find-index-Zz9Yy8Xx.json"),c("./giac.0123456789abcdef.mjs"),d("./x.0123456789abcdef.wasm"),e("./a-b-q_-0Z9aB.css"),k = "index-short.js", u = "Qq7Rr6Ss.js"';
     const out = hashFree(Buffer.from(text)).toString();
     expect(out.length).toBe(text.length);
     expect(out).not.toMatch(/AbCdEf12|Zz9Yy8Xx|0123456789abcdef|q_-0Z9aB/);
     expect(out).toContain("./index-");
     expect(out).toContain("./find-index-");
     expect(out).toContain("./giac.");
-    expect(out).toContain('index-short.js", u = "Zz9Yy8Xx.js"'); // too short, or no separator before the 8 characters: not a hash
+    expect(out).toContain('index-short.js", u = "Qq7Rr6Ss.js"'); // too short, or no separator before the 8 characters: not a hash
     expect(hashFree(Buffer.from(text.replace(/AbCdEf12|Zz9Yy8Xx/g, "Qq1Ww2Ee"))).equals(hashFree(Buffer.from(text.replace(/AbCdEf12|Zz9Yy8Xx/g, "Mm3Nn4Oo"))))).toBe(true);
   });
 
