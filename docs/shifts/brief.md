@@ -61,16 +61,11 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 888e4c | [A271](packages/A271.md) back twice to leave (waits: a device) | annabell, Sonnet | `p1/annabell-backtwice` | R926 |
-| 888e6a | R931 fill button in the title row; none on Chars | ron, Opus | `p1/ron-fillhead` | R894 |
 | 888e6b | [R932](packages/R932.md) setting: Find opens full screen | ron, Opus | `p1/ron-findfull` | R931 |
 | 888e6c | [R933](packages/R933.md) non-digit keys off the background | ron, Opus | `p1/ron-keyfill` | – |
 | 888e7a | [R929](packages/R929.md) a constant shows its unit | ron, Opus | `p1/ron-constlabel` | G801 |
-| 888e8 | R897 a hold on a Num cell copies | ron, Opus | `p1/ron-numhold` | – |
-| 888e9 | R898 a new line owner ends Undo | ron, Opus | `p1/ron-viewundo` | – |
 | 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Opus | `p1/ron-keepline` | – |
 | 888e10a | [R921](packages/R921.md) layer sweep 2: sheets | ron, Opus | `p1/ron-layersweep2` | R916 |
-| 888e10b | R922 sheets take paste, typing | ron, Opus | `p1/ron-sheetchannels` | – |
 | 888e11 | [R900](packages/R900.md) Paste into a name filter | ron, Opus | `p1/ron-sheetpaste` | R889, R922 |
 | 888e12 | [R901](packages/R901.md) Settings and Mode keep the pick | ron, Opus | `p1/ron-keeppick` | – |
 | 888e12a | [R927](packages/R927.md) Settings on top; Mode its row 1, Preset first | ron, Opus | `p1/ron-modeorder` | R887, R901 |
@@ -169,7 +164,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | B20 | [G401](packages/G401.md) Find knows engineers' words | gorge, Opus | `p1/gorge-findwords` | – |
 | B21 | [G402](packages/G402.md) Find reads a compound unit | gorge, Opus | `p1/gorge-findcompound` | G401 |
 
-**Not queue rows** (henri never starts them; a session moves a row in when its condition is met). `../n62-next` ran G389 to R351 and R367 to G407; it merges back after the tag. Waiting for the owner: A266f1 (a device; backlog "Needs the user" 10), R225 (the iPhone check), R223 (the measurements), A61 (the Fairphone), A82 (the release candidate on the Fairphone); after the tag S90 and S95 (after A230), then A231, then A240 (after R700, R701, R709). By day A91, then G406 (no lane running); R292 on the release candidate. With no lane running (a stop the owner calls): S33. After the tag (0.2; owner, 2026-11-16), formula then units, in this order: G389, G391, R347, then the name rule (owner, 2026-11-16; R354's file): R354, R355, G393, G394, G395, R356, R357, R358; then R346, G388, R348, R351. After the tag: R882 (hints; then R706 onto it); R923 (after R808, R896). When Parisse publishes a numbered giac_2.1.0-<n> (a session checks his Debian folder): G788, the re-pin. After the tag: R254 then R343 (RPN's keys and stack view; owner, 2026-11-16), A76, A133 to A135, A141 to A143, A154 to A156. After the tag, the night review of 2026-11-16's R367 to R373 and G407 (n62-next; each file's After).
+**Not queue rows** (henri never starts them; a session moves a row in when its condition is met). `../n62-next` ran G389 to R351 and R367 to G407; it merges back after the tag. [A271](packages/A271.md) (pass 240; branch `p1/annabell-backtwice` kept, code done): its device check on the night's device or by day, the Tab One or the Fairphone, whichever is plugged in first; the rerun drops its "Needs the user" line and its report gives the docs/05 text. Waiting for the owner: A266f1 (a device; backlog "Needs the user" 10), R225 (the iPhone check), R223 (the measurements), A61 (the Fairphone), A82 (the release candidate on the Fairphone); after the tag S90 and S95 (after A230), then A231, then A240 (after R700, R701, R709). By day A91, then G406 (no lane running); R292 on the release candidate. With no lane running (a stop the owner calls): S33. After the tag (0.2; owner, 2026-11-16), formula then units, in this order: G389, G391, R347, then the name rule (owner, 2026-11-16; R354's file): R354, R355, G393, G394, G395, R356, R357, R358; then R346, G388, R348, R351. After the tag: R882 (hints; then R706 onto it); R923 (after R808, R896). When Parisse publishes a numbered giac_2.1.0-<n> (a session checks his Debian folder): G788, the re-pin. After the tag: R254 then R343 (RPN's keys and stack view; owner, 2026-11-16), A76, A133 to A135, A141 to A143, A154 to A156. After the tag, the night review of 2026-11-16's R367 to R373 and G407 (n62-next; each file's After).
 
 ### The commands henri replies with (one per decision; `scripts/night.sh` runs it)
 - `scripts/pipeline.sh <agent> "<ID>" --model <sonnet|opus> --audit-model auto`: the next queue step not done (the queue's skip rule above); `--audit-model opus` where its row says "audit Opus".
