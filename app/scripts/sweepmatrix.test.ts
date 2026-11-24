@@ -3,7 +3,7 @@
 // −15..15, approx(…) around a whole matrix, every node kind), the oracle bridge (mpmath matrix, inverse, det, lu_solve, expm, sinm,
 // cosm, rank by SVD; expected values derived by hand or from mpmath's scalar functions by another route), the judge entry by entry
 // (made-up oracles for its rules, as sweep.test.ts), and the pinned hunt inputs through the real engine (red on phase-1: missed there).
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { dirname, resolve } from "node:path";
@@ -92,6 +92,18 @@ describe("the matrix generator (G797)", () => {
     expect(inv.latex).toBe(`\\operatorname{inv}\\left(${kids[0]!.latex}\\right)`);
     expect(inv.mp).toBe(`INV(${kids[0]!.mp})`);
     expect(matrixChildrenOf("1+2")).toEqual([]);
+  });
+
+  it("gives a shrink from saved parts the matrix children too (fix round 1: `--shrink S` runs in a process that never generated the trees)", async () => {
+    // the failures a `--part` process saved: the seed's matrix runs (their children are known here, in the process that generated them)
+    const saved = runsOf(20261021, 1000, false, { matrices: 100 }).filter((r) => matrixChildrenOf(r.latex).length > 0);
+    expect(saved.length).toBeGreaterThan(20);
+    vi.resetModules(); // the `--shrink` process: a fresh gen.ts, nothing generated yet
+    const freshGen = await import("../../tools/probes/sweep/gen.ts");
+    expect(saved.filter((r) => freshGen.matrixChildrenOf(r.latex).length > 0)).toEqual([]);
+    const { shrinkChildrenOf } = await import("./sweep-parts.ts");
+    const childrenOf = shrinkChildrenOf(20261021, 1000, false);
+    for (const r of saved) expect(childrenOf(r.latex), r.latex).toEqual(matrixChildrenOf(r.latex));
   });
 });
 

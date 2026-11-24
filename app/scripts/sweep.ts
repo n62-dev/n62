@@ -21,10 +21,8 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadKnown, splitNightly, sweepFailures } from "./sweep-known.ts";
-import { addStats, failedOf, mergeParts, parsePart, readSet, sliceOf, statsLine, sweepRuns, writeSaved, type Failed, type Header, type Loaded, type PartFile, type ShrinkFile } from "./sweep-parts.ts";
+import { addStats, failedOf, matricesOf, mergeParts, parsePart, readSet, shrinkChildrenOf, sliceOf, statsLine, sweepRuns, writeSaved, type Failed, type Header, type Loaded, type PartFile, type ShrinkFile } from "./sweep-parts.ts";
 import { invariantsStage } from "./invariants.ts";
-import { childrenOf as edgeChildrenOf } from "../../tools/probes/sweep/edges.ts";
-import { matrixChildrenOf } from "../../tools/probes/sweep/gen.ts";
 import { reportMarkdown, shrink, type Finding } from "../../tools/probes/sweep/nightly.ts";
 import { pythonFor, Runner, runsOf } from "../../tools/probes/sweep/run.ts";
 
@@ -42,10 +40,6 @@ const flag = (name: string): number | null => {
 };
 const textFlag = (name: string): string | undefined => args[args.indexOf(name) + 1];
 const GATE_SEED = 20261021;
-/** G797: one matrix tree per MATRIX_SHARE trees (the gate's 1000 give 100; the stage may grow by at most 20 %). */
-const MATRIX_SHARE = 10;
-const matricesOf = (count: number, edges: boolean): number => (edges ? 0 : Math.round(count / MATRIX_SHARE));
-const childrenOf = (latex: string) => [...edgeChildrenOf(latex), ...matrixChildrenOf(latex)];
 const shrinkSeed = flag("--shrink");
 const nightly = args.includes("--nightly") || shrinkSeed !== null;
 const part = args.includes("--part") ? parsePart(textFlag("--part")) : null;
@@ -87,7 +81,9 @@ async function nightlyReport(o: { edges: boolean; count: number; stats: ReturnTy
   console.log(`SWEEP NIGHTLY: ${o.failures.length} failures (${split.fresh.length} not in the known files, ${split.nowPassing.length} nightly rows now passing); ${stats}; ${per1000.toFixed(1)} s per 1,000 trees; report ${file}`);
 }
 
-const shrinkAll = async (failed: Failed[]): Promise<Finding[]> => {
+/** Shrinks the failures of a run of `count` trees (sweep-parts.ts shrinkChildrenOf: the matrix trees' children too, also from saved parts). */
+const shrinkAll = (count: number, edges: boolean) => async (failed: Failed[]): Promise<Finding[]> => {
+  const childrenOf = shrinkChildrenOf(seed, count, edges);
   const runner = new Runner(DEADLINE_MS);
   return shrink(failed, childrenOf, runner, python, oraclePy).finally(() => runner.close());
 };
@@ -104,7 +100,7 @@ if (shrinkSeed !== null) {
   if (shrinkPart) {
     const t0 = performance.now();
     const mine = sliceOf(fresh, shrinkPart);
-    const findings = await shrinkAll(mine);
+    const findings = await shrinkAll(count, edges)(mine);
     const out = writeSaved(tasksDir, "shrink", { seed, count, edges, part: shrinkPart.i, of: shrinkPart.n, failedCount: fresh.length, findings } satisfies ShrinkFile);
     console.log(`SWEEP SHRINK PART ${shrinkPart.i}/${shrinkPart.n}: ${mine.length} of ${fresh.length} failures shrunk in ${((performance.now() - t0) / 1000).toFixed(1)} s; ${out}`);
     process.exit(0);
@@ -115,7 +111,7 @@ if (shrinkSeed !== null) {
     if (shrunk.files.some((f) => f.failedCount !== fresh.length)) die(`SWEEP SHRINK: the shrink parts were cut from another failure list than the ${fresh.length} the sweep parts give now (the known files changed?); shrink again`);
     await nightlyReport({ edges, count, stats: merged.stats, failures: merged.failed, ran: merged.ran, findingsOf: async () => shrunk.files.flatMap((f) => f.findings) });
   } else {
-    await nightlyReport({ edges, count, stats: merged.stats, failures: merged.failed, ran: merged.ran, findingsOf: shrinkAll });
+    await nightlyReport({ edges, count, stats: merged.stats, failures: merged.failed, ran: merged.ran, findingsOf: shrinkAll(count, edges) });
   }
   process.exit(0);
 }
@@ -136,7 +132,7 @@ if (part) {
   process.exit(0);
 }
 if (nightly) {
-  await nightlyReport({ edges, count, stats, failures: failedOf(judged, oracles), ran: new Set(judged.map((j) => `${j.angle} ${j.digits} ${j.latex}`)), findingsOf: shrinkAll });
+  await nightlyReport({ edges, count, stats, failures: failedOf(judged, oracles), ran: new Set(judged.map((j) => `${j.angle} ${j.digits} ${j.latex}`)), findingsOf: shrinkAll(count, edges) });
   process.exit(0);
 }
 const known = loadKnown(repo, false);
