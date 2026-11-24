@@ -27,9 +27,23 @@ export async function fieldFor(c: EntryController, Field: typeof MathfieldElemen
     if (a.kind === "put") putText(c, a.latex, a.term, a.consts);
     else c.run(a);
   }
+  c.freshUndo = () => freshUndo(mf);
   mf.addEventListener("input", () => {
     c.touched = true;
     c.recalledIn = null;
     c.onEdit();
   });
+}
+
+/** R898: the field's undo starts afresh with the line as its one entry. resetUndo leaves no entry at all (the next edit
+ *  would be the first, the line before it lost), and a set to the same value is skipped: another value first, then the
+ *  line. A set by value fires no input event; the selection is kept. */
+function freshUndo(mf: MathfieldElement): void {
+  const at = mf.selection;
+  const line = mf.value;
+  mf.resetUndo();
+  mf.value = line === "" ? "0" : "";
+  mf.resetUndo();
+  mf.value = line;
+  mf.selection = at;
 }
