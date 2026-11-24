@@ -17,55 +17,55 @@ Digits:=40:; pc("g790-mmult-tiny-left-approx-00-40",'(approx([[10^-13,10^-13],[0
 // patch 0064-mmult-tiny-float-factor.patch
 // g790-mmult-tiny-both-11-40 (derived: the exact product)
 Digits:=40:; pc("g790-mmult-tiny-both-11-40",'(approx([[10^-13,0],[0,10^-13]])*approx([[10^-13,0],[0,10^-13]]))[1][1]',1/10^26,1/10^63);
-// patch 0065-float-rref-cancelled-pivot.patch
+// patch 0066-float-rref-cancelled-pivot.patch
 // g622-rank-evalf-123-15 (derived)
 Digits:=15:; pc("g622-rank-evalf-123-15",'rank(evalf([[1,2,3],[4,5,6],[7,8,9]]))',2,0);
-// patch 0065-float-rref-cancelled-pivot.patch
+// patch 0066-float-rref-cancelled-pivot.patch
 // g622-rank-evalf-123-40 (derived)
 Digits:=40:; pc("g622-rank-evalf-123-40",'rank(evalf([[1,2,3],[4,5,6],[7,8,9]]))',2,0);
-// patch 0065-float-rref-cancelled-pivot.patch
+// patch 0066-float-rref-cancelled-pivot.patch
 // g622-rref-evalf-123-02-40 (derived)
 Digits:=40:; pc("g622-rref-evalf-123-02-40",'rref(evalf([[1,2,3],[4,5,6],[7,8,9]]))[0][2]',-1,1/10^30);
-// patch 0065-float-rref-cancelled-pivot.patch
+// patch 0066-float-rref-cancelled-pivot.patch
 // g622-rref-evalf-123-12-40 (derived)
 Digits:=40:; pc("g622-rref-evalf-123-12-40",'rref(evalf([[1,2,3],[4,5,6],[7,8,9]]))[1][2]',2,1/10^30);
-// patch 0065-float-rref-cancelled-pivot.patch
+// patch 0066-float-rref-cancelled-pivot.patch
 // g622-rref-evalf-123-22-40 (derived)
 Digits:=40:; pc("g622-rref-evalf-123-22-40",'rref(evalf([[1,2,3],[4,5,6],[7,8,9]]))[2][2]',0,1/10^30);
-// patch 0065-float-rref-cancelled-pivot.patch
+// patch 0066-float-rref-cancelled-pivot.patch
 // g622-ker-evalf-123-size-40 (derived)
 Digits:=40:; pc("g622-ker-evalf-123-size-40",'size(ker(evalf([[1,2,3],[4,5,6],[7,8,9]])))',1,0);
-// patch 0065-float-rref-cancelled-pivot.patch
+// patch 0066-float-rref-cancelled-pivot.patch
 // g622-ker-evalf-123-ratio01-40 (derived)
 Digits:=40:; pc("g622-ker-evalf-123-ratio01-40",'ker(evalf([[1,2,3],[4,5,6],[7,8,9]]))[0][1]/ker(evalf([[1,2,3],[4,5,6],[7,8,9]]))[0][0]',-2,1/10^30);
-// patch 0065-float-rref-cancelled-pivot.patch
+// patch 0066-float-rref-cancelled-pivot.patch
 // g622-ker-evalf-123-ratio21-40 (derived)
 Digits:=40:; pc("g622-ker-evalf-123-ratio21-40",'ker(evalf([[1,2,3],[4,5,6],[7,8,9]]))[0][2]/ker(evalf([[1,2,3],[4,5,6],[7,8,9]]))[0][0]',1,1/10^30);
-// patch 0065-float-rref-cancelled-pivot.patch
+// patch 0066-float-rref-cancelled-pivot.patch
 // g622-rank-evalf-near-singular-40 (derived)
 Digits:=40:; pc("g622-rank-evalf-near-singular-40",'rank(evalf([[1,1],[1,1+10^-20]]))',2,0);
-// patch 0065-float-rref-cancelled-pivot.patch
+// patch 0066-float-rref-cancelled-pivot.patch
 // g622-rank-evalf-zero-line-40 (derived)
 Digits:=40:; pc("g622-rank-evalf-zero-line-40",'rank(evalf([[0,0],[0,1]]))',1,0);
-// patch 0065-float-rref-cancelled-pivot.patch
+// patch 0066-float-rref-cancelled-pivot.patch
 // g622-det-evalf-tiny-40 (derived)
 Digits:=40:; pc("g622-det-evalf-tiny-40",'det(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]))',-2/10^26,1/10^60);
-// patch 0065-float-rref-cancelled-pivot.patch
+// patch 0066-float-rref-cancelled-pivot.patch
 // g622-inv-evalf-tiny-01-40 (derived)
 Digits:=40:; pc("g622-inv-evalf-tiny-01-40",'inv(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]))[0][1]',10^13,1/10^20);
-// patch 0065-float-rref-cancelled-pivot.patch
+// patch 0066-float-rref-cancelled-pivot.patch
 // g622-inv-evalf-tiny-10-40 (derived)
 Digits:=40:; pc("g622-inv-evalf-tiny-10-40",'inv(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]))[1][0]',15*10^12,1/10^20);
-// patch 0065-float-rref-cancelled-pivot.patch
+// patch 0066-float-rref-cancelled-pivot.patch
 // g622-inv-evalf-tiny-01-12 (derived)
 Digits:=12:; pc("g622-inv-evalf-tiny-01-12",'inv(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]))[0][1]',10^13,10^3);
-// patch 0065-float-rref-cancelled-pivot.patch
+// patch 0066-float-rref-cancelled-pivot.patch
 // g622-det-evalf-tiny-12 (derived)
 Digits:=12:; pc("g622-det-evalf-tiny-12",'det(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]))',-2/10^26,1/10^36);
-// patch 0065-float-rref-cancelled-pivot.patch
+// patch 0066-float-rref-cancelled-pivot.patch
 // g622-linsolve-evalf-tiny-0-40 (derived)
 Digits:=40:; pc("g622-linsolve-evalf-tiny-0-40",'linsolve(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]),[1,1])[0]',-10^13,1/10^20);
-// patch 0065-float-rref-cancelled-pivot.patch
+// patch 0066-float-rref-cancelled-pivot.patch
 // g622-linsolve-evalf-tiny-0-12 (derived)
 Digits:=12:; pc("g622-linsolve-evalf-tiny-0-12",'linsolve(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]),[1,1])[0]',-10^13,10^3);
 // patch 0044-sqrt-complex-real-part-normal.patch
@@ -149,13 +149,49 @@ Digits:=40:; pc("g553-floor-neg-pi-1e-13",'(floor(-pi*10^-13))',-1,5/10^12);
 // patch 0061-floor-mpfr-working-precision.patch
 // g553-round-neg-2.5-pi-1e-13 (home.yaml, derived)
 Digits:=40:; pc("g553-round-neg-2.5-pi-1e-13",'(round(-(25/10^1)-pi*10^-13))',-3,5/10^12);
-// patch 0065-float-rref-cancelled-pivot.patch
+// patch 0065-lcm-integers-positive.patch
+// g793-lcm-neg4-6 (home.yaml, derived)
+Digits:=40:; pc("g793-lcm-neg4-6",'(lcm(-4,6))',12,5/10^11);
+// patch 0065-lcm-integers-positive.patch
+// g793-lcm-4-neg6 (home.yaml, derived)
+Digits:=40:; pc("g793-lcm-4-neg6",'(lcm(4,-6))',12,5/10^11);
+// patch 0065-lcm-integers-positive.patch
+// g793-lcm-list-neg4-6-10 (home.yaml, derived)
+Digits:=40:; pc("g793-lcm-list-neg4-6-10",'(lcm([-4,6,10]))',60,5/10^11);
+// patch 0065-lcm-integers-positive.patch
+// g793-lcm-neg3-neg5-neg7 (home.yaml, derived)
+Digits:=40:; pc("g793-lcm-neg3-neg5-neg7",'(lcm(-3,-5,-7))',105,5/10^10);
+// patch 0065-lcm-integers-positive.patch
+// g793-lcm-neg2^70-3 (home.yaml, derived)
+Digits:=40:; pc("g793-lcm-neg2^70-3",'(lcm(-2^70,3))',(354177486215*10^10),5*10^9);
+// patch 0065-lcm-integers-positive.patch
+// g793-lcm-neg4-alone (home.yaml, derived)
+Digits:=40:; pc("g793-lcm-neg4-alone",'(lcm(-4))',4,5/10^12);
+// patch 0065-lcm-integers-positive.patch
+// g793f1-lcm-half-neg-third (home.yaml, derived)
+Digits:=40:; pc("g793f1-lcm-half-neg-third",'(lcm(1/2,-1/3))',1,5/10^12);
+// patch 0065-lcm-integers-positive.patch
+// g793f1-lcm-neg-2/3-4/5 (home.yaml, derived)
+Digits:=40:; pc("g793f1-lcm-neg-2/3-4/5",'(lcm(-2/3,4/5))',4,5/10^12);
+// patch 0065-lcm-integers-positive.patch
+// g793f1-lcm-list-neg-half-third-quarter (home.yaml, derived)
+Digits:=40:; pc("g793f1-lcm-list-neg-half-third-quarter",'(lcm([-1/2,1/3,1/4]))',1,5/10^12);
+// patch 0065-lcm-integers-positive.patch
+// g793f1-lcm-neg-half-alone (home.yaml, derived)
+Digits:=40:; pc("g793f1-lcm-neg-half-alone",'(lcm(-1/2))',(5/10^1),5/10^13);
+// patch 0065-lcm-integers-positive.patch
+// g793f1-lcm-neg4-third (home.yaml, derived)
+Digits:=40:; pc("g793f1-lcm-neg4-third",'(lcm(-4,1/3))',4,5/10^12);
+// patch 0065-lcm-integers-positive.patch
+// g793f1-lcm-neg2^70/3-fifth (home.yaml, derived)
+Digits:=40:; pc("g793f1-lcm-neg2^70/3-fifth",'(lcm(-2^70/3,1/5))',(118059162072*10^10),5*10^9);
+// patch 0066-float-rref-cancelled-pivot.patch
 // g622-rank-approx-123 (home.yaml, derived)
 Digits:=40:; pc("g622-rank-approx-123",'(rank(approx([[1,2,3],[4,5,6],[7,8,9]])))',2,5/10^12);
-// patch 0065-float-rref-cancelled-pivot.patch
+// patch 0066-float-rref-cancelled-pivot.patch
 // g622-rank-approx-near-singular-1e-20 (home.yaml, derived)
 Digits:=40:; pc("g622-rank-approx-near-singular-1e-20",'(rank(approx([[1,1],[1,1+10^-20]])))',2,5/10^12);
-// patch 0065-float-rref-cancelled-pivot.patch
+// patch 0066-float-rref-cancelled-pivot.patch
 // g622-det-approx-tiny (home.yaml, derived)
 Digits:=40:; pc("g622-det-approx-tiny",'(det(approx([[10^-13,2*10^-13],[3*10^-13,4*10^-13]])))',-(2/10^26),5/10^38);
 // patch 0046-shift-integer-exact.patch
@@ -1313,16 +1349,16 @@ Digits:=40:; pc("g399-arg-acos-5/4-squared",'(arg(acos(5/4)^2))',(314159265359/1
 // patch 0059-arg-negative-real-pi.patch
 // g399-arg-i-ln-i (precision.yaml, derived)
 Digits:=40:; pc("g399-arg-i-ln-i",'(arg(i*ln(i)))',(314159265359/10^11),5/10^12);
-// patch 0065-float-rref-cancelled-pivot.patch
+// patch 0066-float-rref-cancelled-pivot.patch
 // g622-inv-approx-tiny-10-20 (precision.yaml, derived)
 Digits:=40:; pc("g622-inv-approx-tiny-10-20",'(inv(approx([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]))[1][0])',(15*10^12),5/10^7);
-// patch 0065-float-rref-cancelled-pivot.patch
+// patch 0066-float-rref-cancelled-pivot.patch
 // g622-linsolve-approx-tiny-0-20 (precision.yaml, derived)
 Digits:=40:; pc("g622-linsolve-approx-tiny-0-20",'(linsolve(approx([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]),[1,1])[0])',-(1*10^13),5/10^7);
-// patch 0065-float-rref-cancelled-pivot.patch
+// patch 0066-float-rref-cancelled-pivot.patch
 // g622-det-approx-tiny-20 (precision.yaml, derived)
 Digits:=40:; pc("g622-det-approx-tiny-20",'(det(approx([[10^-13,2*10^-13],[3*10^-13,4*10^-13]])))',-(2/10^26),5/10^46);
-// patch 0065-float-rref-cancelled-pivot.patch
+// patch 0066-float-rref-cancelled-pivot.patch
 // g622-rank-approx-123-20 (precision.yaml, derived)
 Digits:=40:; pc("g622-rank-approx-123-20",'(rank(approx([[1,2,3],[4,5,6],[7,8,9]])))',2,5/10^20);
 // patch 0006-reim-root-of-unknown-sign.patch

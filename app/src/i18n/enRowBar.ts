@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// The words only a history row's action bar reads (views/RowBar.svelte, a lazy chunk): a table of its own, so the start
-// chunk does not carry them (it is pinned, size-check.ts; R862, G399, G622). English only so far.
+// G793f1: the words of the picked row's bar (views/RowBar.svelte, in the clipboard chunk). A table of its own, so the
+// start chunk does not carry them (it is pinned, size-check.ts; R862, G399). English only so far.
 export const enRowBar = {
-  /** The bar's accessible name (a toolbar). */
+  /** The bar's name for a screen reader. */
   "history.actions": "Row actions",
 } as const;
 

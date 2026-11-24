@@ -23,6 +23,7 @@ import { userValuesOf } from "../input/latex-to-giac.ts";
 import { unitText } from "../i18n/enUnits.ts";
 import { idbKv } from "../state/storage.ts";
 import { loadSheetView } from "../views/sheetView.svelte.ts";
+import { LONG_PRESS_MS } from "../apps/longpress.ts";
 import { alternatives, readTargets, writeTarget } from "./alternatives.ts";
 import { storeChip } from "./chip.ts";
 import { factorTable } from "./factors.ts";
@@ -50,6 +51,17 @@ export interface OpenUnitView {
 }
 
 let current: OpenUnitView | null = null;
+/** R917 (F371): the visit, open or still opening. It is set before the open's first wait and cleared only by its `close`, so a
+ *  second units key in the open's window is a dead press, and an open that fails leaves nothing behind. */
+let visit: object | null = null;
+
+/** R917: the e2e's hooks, read on the dev server only (test/unitopen.spec.ts): `hold` holds the open at its first wait (a tap in
+ *  that window), `fault` throws once the field is hidden. */
+export interface UnitHooks {
+  hold?: () => Promise<void>;
+  fault?: () => void;
+}
+const hooks = (): UnitHooks | undefined => (import.meta.env.DEV ? window.n62.unitHooks : undefined);
 
 /** The chunk of Find on units (Math in a slot, More…) with the sheet's view that draws it (R46): both loads start when
  *  the view opens, so a tap waits on no module fetch (R121 fix round 2: More… under load showed no Find within 5 s; R125
@@ -69,11 +81,31 @@ const STORE_ARROW = "\\blacktriangleright";
  *  sheet opens over the view, which stays as it is (`unitPad.other`). */
 const PLACES: readonly string[] = ["home", "cas", "switch", "apps", "slot", "symb", "plot", "num"];
 
+/** R918 (owner, 2026-11-23): what a tap on the screen outside the view's own box still reaches while the view is up; any
+ *  other tap there (a history row, the row bar, the history's empty space) is the dead press. None of these writes the line:
+ *  the undo note (R98), a running row's Cancel, the engine's Reload and the update's Restart. */
+const THROUGH = '[data-testid="undo-note"], .history .cancel, [data-testid="engine-reload"], [data-testid="update-note"]';
+
+/** R918: the line's writes a history row reaches (App.svelte tapped: the recall, the input at the caret, the result's chip
+ *  or its drawn text). */
+const ROW_WRITES = ["set", "insert", "insertRecalled", "insertResult"] as const;
+
+/** R918: the line is lent to the view: a row put on it while the view is up is the dead press. A tap made while the view's code
+ *  loaded waits for the load (R917), so it comes after the view is up as no click the view could refuse. Shadows the writes on
+ *  the instance (the start chunk's EntryController stays as it is); the returned function gives them back. */
+function lend(entry: RouteCtx["entry"], dead: () => void): () => void {
+  const own = entry as unknown as Record<string, unknown>;
+  for (const k of ROW_WRITES) own[k] = (): void => dead();
+  return () => {
+    for (const k of ROW_WRITES) delete own[k];
+  };
+}
+
 /** Open the unit view on the line, or on a picked history row's input (it becomes the line). Dead in an app. */
 export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   const entryEl = document.querySelector<HTMLElement>(".entry");
   const fieldEl = entryEl?.querySelector<HTMLElement>(".field");
-  if (current || c.shell.app !== null || !entryEl || !fieldEl) return c.dead();
+  if (visit || c.shell.app !== null || !entryEl || !fieldEl) return c.dead();
   if (row) c.entry.set(c.session.input(row), row.chips); // R100: in comma mode its argument commas as `;`
   const line = c.entry.value;
   const chips = c.entry.chips;
@@ -82,218 +114,256 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   // line's chips (Ans is never stored)
   const ans = c.session.lastChip();
   const parseChips: ChipTable = ans ? { ...chips, [ANS_KEY]: ans } : chips;
-  void unitFind().catch(() => undefined);
-  // MathLive comes with the entry line (its field is up once `ready`): the class is taken from the element registry
-  // G234: your units are Find's items in the slot too (the store is read first: the list is as it was left)
-  const [, { finder, index }, hw] = await Promise.all([
-    c.entry.ready,
-    Promise.all([import("../find/finder.ts"), ownUnits.restore()]).then(async ([m]) => ({ finder: m, index: m.withOwnUnits(await m.loadIndex(true), ownUnits.list()) })),
-    import("../entry/hwkeys.ts"),
-    unitCells.restore(),
-  ]);
-  const Field = customElements.get("math-field") as typeof MathfieldElement | undefined;
-  if (!Field) return c.dead();
-  // R63: a picked unit row shows its slots again. Only the picked row: a line typed again (after a relaunch too) is a
-  // new request, so its slots start empty and the keys typed into them are the whole unit (72 km/h, not km/h km/h)
-  const seed = row ? rowSlots(row) : undefined;
-  /** The Home row of this visit's result (R63): a later result takes its place. */
-  let rowId: number | undefined;
-  /** R838: the angle unit and the digits as one text ("rad12"), those of the last request in `was` (the engine's facts, σ's
-   *  text and the Home row take the digits, units/evaluate.ts): a change of either asks again. R915: `job` is that request's
-   *  angle and Giac text, for its row (the angle tag, units/row.ts); only the last request's result is shown (view.ts). */
-  const asked = (): string => c.session.settings.angle + c.session.settings.digits;
-  let was = asked();
-  let job: RowIn["job"];
-  const mf = new Field();
-  mf.dataset["testid"] = "unit-field";
-  const host: ViewHost = {
-    write: (id, latex) => mf.setPromptValue(id, latex, {}),
-    evaluate: (req) => {
-      was = asked();
-      job = { angle: c.session.settings.angle, formula: req.formula };
-      return c.shell.calc.units(req, c.session.settings);
-    },
-    find: (into, dim) =>
-      void unitFind().then((m) => {
-        if (current?.view !== view) return;
-        const more = dim === undefined ? { constant, tools: tools() } : {};
-        m.showUnitFind({ shell: c.shell, index, cat, apply: dim === undefined ? (a) => view.apply(a) : (a) => view.pickMore(a), refresh: () => (unitPad.model = new UnitPad(unitCells.userSet())), ...more }, into, dim);
-      }),
-    format: () => ({ format: engineFormat(c.session.settings.format), digits: c.session.settings.digits, decimalComma: c.session.decimalComma, grouped: true, groupSep: c.session.settings.groupSep }),
-    alternatives: async (q, req) => {
-      const target = q.dimension ? (await readTargets(idbKv))[q.dimension] : undefined;
-      return alternatives(q, { table, pad: padUnitList(), user: userUnitCells(unitCells.userSet()), req, ...(target ? { target } : {}) });
-    },
-    remember: (dim, slot) => writeTarget(idbKv, dim, slot).then(() => undefined),
-    dead: () => c.dead(),
-    values: () => userValuesOf(c.session.userNames),
-    changed: () => panel.draw(),
-    reset: (latex, ids) => lockedValue(mf, latex, ids),
-    result: (q) => void (rowId = putRow(c.session, unitRow({ line, chips, q, slots: view.filled(), input: view.drawn(), digits: c.session.settings.digits, job }), rowId)),
-  };
-  /** R92: a constant from the units menu goes on Home's line at its cursor (Find's own pick path); the view leaves
-   *  keeping its slots, they go with the new line text, and the view opens again on it. */
-  const constant = (k: ConstPick): void => {
-    if (current?.view !== view) return;
-    close();
-    if ("item" in k) finder.putOnLine(c.entry, k.item);
-    else c.entry.run({ kind: "insert", latex: k.latex });
-    carry(view.line, c.entry.value);
-    void openUnits(c);
-  };
-  /** R92: Tools › the number into Home: the view leaves, the result goes on the line as Home's chip (the way back). */
-  const home = (): void => {
-    const item = rowId === undefined ? undefined : c.session.home.find((r) => r.id === rowId);
-    if (!item || current?.view !== view) return c.dead();
-    close();
-    c.insertResult(item);
-  };
-  /** R92: the Tools rows as the view stands, for Find on units and ☰ (R862). */
-  const tools = (): UnitTool[] => unitTools(view.shown, { end: () => view.toEnd(), alt: (a) => void view.pickAlt(a), alts: () => view.down(), home, store, storeRefused });
-  /** R353: the result's row (this visit's, while a result is shown) and the reason a store of it is refused. */
-  const resultRow = (): HistoryItem | undefined =>
-    rowId === undefined || view.shown.kind !== "result" ? undefined : c.session.home.find((r) => r.id === rowId && r.status === "done");
-  const storeRefused = (): string | undefined => {
-    const item = resultRow();
-    // R915 (F376): a result is shown but its Home row was deleted (a swipe, Delete): say so, not "Eval first"
-    if (!item) return unitText(rowId !== undefined && view.shown.kind === "result" ? "units.store.rowGone" : "units.store.first");
-    return storeChip(c.session.chipFor(item), item.units?.unit ?? "", item.units?.unc) ? undefined : unitText("units.store.noUnit");
-  };
-  /** R353: the refusal of the last Store ▶, shown while what it was pressed on stands. */
-  let said: { on: Shown; text: string } | undefined;
-  /** R353: Store ▶ (Shift + ᴇ, the button beside the result, Tools › Store in a name): the view leaves, the result's chip
-   *  goes on Home's line alone (the line was the request, which the row keeps) and "Store in" opens on its row, the row
-   *  bar's Store ▶ path (clipboard/actions.svelte.ts storeRow, App openStore): the one store path, which keeps the unit
-   *  and σ in the name (G371). No result, or a chip without the unit or σ shown: dead, with the reason. */
-  const store = (): void => {
-    if (current?.view !== view) return c.dead();
-    const why = storeRefused();
-    const item = resultRow();
-    if (why !== undefined || !item) {
-      said = { on: view.shown, text: why ?? unitText("units.store.first") };
-      panel.draw();
-      return c.dead();
-    }
-    close();
-    c.entry.clear();
-    c.withClip((x) => void (x.storeRow(item) || c.dead()));
-  };
+  const me = {};
+  visit = me;
   let made: UnitView | undefined;
-  const panel = makePanel(() => made, () => c.session.settings.marks, { run: store, said: () => (said && made?.shown === said.on ? said.text : undefined) });
-  const cat = slotCatalogue(index.items);
-  const table = factorTable(index.items);
-  const view = new UnitView(cat, line, parseChips, host, seed);
-  made = view;
-  entryEl.insertBefore(panel.element, fieldEl);
-  fieldEl.style.display = "none";
-  panel.draw();
-  // MathLive takes options only once the field is mounted (as the entry line's, entry/controller.ts)
-  const mounted = new Promise<void>((resolve) => {
-    mf.addEventListener("mount", () => resolve(), { once: true });
-    setTimeout(resolve, 1000);
-  });
-  const element = panel.element;
-  panel.formula.append(mf);
-  await mounted;
-  await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-  setUp(mf, element, c, hw, new HwTyping(view));
-  lockedValue(mf, view.formula.latex, view.ids);
-  view.start();
-
-  /** R700: Android back is Esc for the view (docs/05 3.7): out of the alternatives row, else it leaves; each back takes a new entry for what is left. */
+  let shown: HTMLElement | undefined;
   let unlayer = (): void => {};
-  const layer = (): void => {
-    unlayer = openLayer(() => {
-      unlayer = () => {};
-      if (view.escape()) layer();
-      else close();
-    });
-  };
   let untap = (): void => {};
   let unwatch = (): void => {};
+  /** Leave: the one place a visit ends (R917), whether the view came up or not. The line is lent: one that changed under the
+   *  view (F370: a tap while it opened) is given back as it was taken, with a warning, and the focus goes to it. */
   const close = (): void => {
-    if (current?.view !== view) return;
+    if (visit !== me) return;
+    visit = null;
     current = null;
     unlayer();
     untap();
     unwatch();
-    view.keep();
+    made?.keep();
     unitPad.model = null;
     unitPad.on = () => {};
     unitPad.other = undefined;
-    element.remove();
+    shown?.remove();
     fieldEl.style.display = "";
     window.n62.unitView = undefined;
+    if (c.entry.value !== line) {
+      console.warn("R917: the line given back", c.entry.value);
+      c.entry.set(line, chips);
+    }
     c.entry.focus();
+    // M4: a field written while hidden (a tap's text under the view) keeps MathLive's focus flag with no focus, so its focus()
+    // does nothing: its own keyboard sink takes the focus
+    const lineField = c.entry.field;
+    if (document.activeElement !== lineField) lineField?.shadowRoot?.querySelector<HTMLElement>("[part=keyboard-sink]")?.focus();
   };
-  current = { view, field: mf, element, close };
-  layer();
-  window.n62.unitView = current;
-  // every press keeps the focus on the view (as the entry line's keys keep it on the line), for the hardware keys
-  const keep = (): void => element.focus({ preventScroll: true });
-  /** R801: a tap on the screen while the view is up (no sheet over it): on a slot's box it makes that slot the active one
-   *  (refused as ◀ ▶ is, view.goTo); wherever it lands the focus comes back to the view, so the next hardware key goes
-   *  to the view. A hold stays R797's: it gives no click. */
-  const tapped = (ev: MouseEvent): void => {
-    if (current?.view !== view || c.shell.sheet !== null) return;
-    if (!(ev.target instanceof Element) || !ev.target.closest(".screen")) return; // (the pads and bars keep their own paths)
-    if (ev.composedPath().includes(mf)) {
-      const id = slotAt(mf, view.ids, ev.clientX, ev.clientY);
-      if (id !== undefined) view.goTo(id);
-    }
-    keep();
-    setTimeout(() => current?.view === view && c.shell.sheet === null && keep(), 0); // (MathLive moves the focus on its own pointer events)
-  };
-  document.addEventListener("click", tapped, { capture: true });
-  untap = () => document.removeEventListener("click", tapped, { capture: true });
-  /** R838: a sheet over the view (Settings, Mode, Find on units) took the keys; once it is gone the focus is the view's again
-   *  and a setting changed there shows. R915: the angle unit or the digits changed, whoever changed them (the bar's angle word
-   *  too, at once, a sheet still open or not): a result shown or being asked for is asked for again as the line would be (the
-   *  digits are in the engine's answer, σ's text and the Home row too); a setting the result is only drawn with (the format,
-   *  the decimal mark, the digit groups, the marks) draws it again with no request. The focus comes back once no sheet is up. */
-  unwatch = watchSheet(c.shell, asked, () => {
-    if (current?.view !== view) return;
-    if (was !== asked() && (view.shown.kind === "result" || view.shown.kind === "working")) void view.evaluate();
-    else view.redraw();
-    panel.draw();
-    if (c.shell.sheet === null) keep();
-  });
-  unitPad.on = (e) => {
-    view.apply(e);
-    if (current?.view === view && e.do !== "find") keep();
-  };
-  unitPad.other = (c2, key, mods) => {
-    const a = layerAction(key, mods);
-    // a sheet over the view takes the keys, as over the cells (UnitPad.route); R838: Settings and Mode do their job, over the view
-    if (c2.shell.sheet || (a?.kind === "special" && (a.name === "settings" || a.name === "mode"))) return false;
-    if (a?.kind === "special" && PLACES.includes(a.name)) {
+  let up = false;
+  try {
+    void unitFind().catch(() => undefined);
+    // MathLive comes with the entry line (its field is up once `ready`): the class is taken from the element registry
+    // G234: your units are Find's items in the slot too (the store is read first: the list is as it was left)
+    const [, { finder, index }, hw] = await Promise.all([
+      c.entry.ready,
+      Promise.all([import("../find/finder.ts"), ownUnits.restore()]).then(async ([m]) => ({ finder: m, index: m.withOwnUnits(await m.loadIndex(true), ownUnits.list()) })),
+      import("../entry/hwkeys.ts"),
+      unitCells.restore(),
+      hooks()?.hold?.(),
+    ]);
+    const Field = customElements.get("math-field") as typeof MathfieldElement | undefined;
+    if (!Field) return c.dead();
+    // R63: a picked unit row shows its slots again. Only the picked row: a line typed again (after a relaunch too) is a
+    // new request, so its slots start empty and the keys typed into them are the whole unit (72 km/h, not km/h km/h)
+    const seed = row ? rowSlots(row) : undefined;
+    /** The Home row of this visit's result (R63): a later result takes its place. */
+    let rowId: number | undefined;
+    /** R838: the angle unit and the digits as one text ("rad12"), those of the last request in `was` (the engine's facts, σ's
+     *  text and the Home row take the digits, units/evaluate.ts): a change of either asks again. R915: `job` is that request's
+     *  angle and Giac text, for its row (the angle tag, units/row.ts); only the last request's result is shown (view.ts). */
+    const asked = (): string => c.session.settings.angle + c.session.settings.digits;
+    let was = asked();
+    let job: RowIn["job"];
+    const mf = new Field();
+    mf.dataset["testid"] = "unit-field";
+    const host: ViewHost = {
+      write: (id, latex) => mf.setPromptValue(id, latex, {}),
+      evaluate: (req) => {
+        was = asked();
+        job = { angle: c.session.settings.angle, formula: req.formula };
+        return c.shell.calc.units(req, c.session.settings);
+      },
+      find: (into, dim) =>
+        void unitFind().then((m) => {
+          if (current?.view !== view) return;
+          const more = dim === undefined ? { constant, tools: tools() } : {};
+          m.showUnitFind({ shell: c.shell, index, cat, apply: dim === undefined ? (a) => view.apply(a) : (a) => view.pickMore(a), refresh: () => (unitPad.model = new UnitPad(unitCells.userSet())), ...more }, into, dim);
+        }),
+      format: () => ({ format: engineFormat(c.session.settings.format), digits: c.session.settings.digits, decimalComma: c.session.decimalComma, grouped: true, groupSep: c.session.settings.groupSep }),
+      alternatives: async (q, req) => {
+        const target = q.dimension ? (await readTargets(idbKv))[q.dimension] : undefined;
+        return alternatives(q, { table, pad: padUnitList(), user: userUnitCells(unitCells.userSet()), req, ...(target ? { target } : {}) });
+      },
+      remember: (dim, slot) => writeTarget(idbKv, dim, slot).then(() => undefined),
+      dead: () => c.dead(),
+      values: () => userValuesOf(c.session.userNames),
+      changed: () => panel.draw(),
+      reset: (latex, ids) => lockedValue(mf, latex, ids),
+      result: (q) => void (rowId = putRow(c.session, unitRow({ line, chips, q, slots: view.filled(), input: view.drawn(), digits: c.session.settings.digits, job }), rowId)),
+    };
+    /** R92: a constant from the units menu goes on Home's line at its cursor (Find's own pick path); the view leaves
+     *  keeping its slots, they go with the new line text, and the view opens again on it. */
+    const constant = (k: ConstPick): void => {
+      if (current?.view !== view) return;
       close();
-      return false; // the key does its job
-    }
-    c2.session.clearModifiers();
-    const cmd = a?.kind === "cmd" ? a.name : undefined;
-    if (cmd === "moveToPreviousChar") view.move(-1);
-    else if (cmd === "moveToNextChar") view.move(1);
-    else if (cmd === "moveDown") view.down();
-    else if (cmd === "moveUp") view.up();
-    else if (a?.kind === "special" && a.name === "esc") {
-      if (!view.escape()) close();
-    }
-    else if (a?.kind === "insert" && a.latex === STORE_ARROW) store();
-    else if (a?.kind === "special" && a.name === "menu") {
-      // R862: the view's tools and Constants over it (a second ☰, Esc or Back closes the sheet: sheetKeys.ts, watchSheet)
-      void unitFind().then((m) => current?.view === view && c2.shell.sheet === null && m.showUnitMenu(c2.shell, index, tools(), constant), () => c2.dead());
-    }
-    else if (a?.kind === "special" && a.name === "uncertainty") {
-      const row = rowId === undefined ? undefined : c2.session.home.find((r) => r.id === rowId); // R327: the result's row
-      lazy(c2, import("../views/uncSheet.ts").then((m) => m.showUncertainty(c2, row)));
-    }
-    else c2.dead();
-    if (current?.view === view) keep();
-    return true;
-  };
-  unitPad.model = new UnitPad(unitCells.userSet());
-  element.focus();
+      if ("item" in k) finder.putOnLine(c.entry, k.item);
+      else c.entry.run({ kind: "insert", latex: k.latex });
+      carry(view.line, c.entry.value);
+      lazy(c, openUnits(c)); // (the keys pressed while it opens wait for it, R8)
+    };
+    /** R92: Tools › the number into Home: the view leaves, the result goes on the line as Home's chip (the way back). */
+    const home = (): void => {
+      const item = rowId === undefined ? undefined : c.session.home.find((r) => r.id === rowId);
+      if (!item || current?.view !== view) return c.dead();
+      close();
+      c.insertResult(item);
+    };
+    /** R92: the Tools rows as the view stands, for Find on units and ☰ (R862). */
+    const tools = (): UnitTool[] => unitTools(view.shown, { end: () => view.toEnd(), alt: (a) => void view.pickAlt(a), alts: () => view.down(), home, store, storeRefused });
+    /** R353: the result's row (this visit's, while a result is shown) and the reason a store of it is refused. */
+    const resultRow = (): HistoryItem | undefined =>
+      rowId === undefined || view.shown.kind !== "result" ? undefined : c.session.home.find((r) => r.id === rowId && r.status === "done");
+    const storeRefused = (): string | undefined => {
+      const item = resultRow();
+      // R915 (F376): a result is shown but its Home row was deleted (a swipe, Delete): say so, not "Eval first"
+      if (!item) return unitText(rowId !== undefined && view.shown.kind === "result" ? "units.store.rowGone" : "units.store.first");
+      return storeChip(c.session.chipFor(item), item.units?.unit ?? "", item.units?.unc) ? undefined : unitText("units.store.noUnit");
+    };
+    /** R353: the refusal of the last Store ▶, shown while what it was pressed on stands. */
+    let said: { on: Shown; text: string } | undefined;
+    /** R353: Store ▶ (Shift + ᴇ, the button beside the result, Tools › Store in a name): the view leaves, the result's chip
+     *  goes on Home's line alone (the line was the request, which the row keeps) and "Store in" opens on its row, the row
+     *  bar's Store ▶ path (clipboard/actions.svelte.ts storeRow, App openStore): the one store path, which keeps the unit
+     *  and σ in the name (G371). No result, or a chip without the unit or σ shown: dead, with the reason. */
+    const store = (): void => {
+      if (current?.view !== view) return c.dead();
+      const why = storeRefused();
+      const item = resultRow();
+      if (why !== undefined || !item) {
+        said = { on: view.shown, text: why ?? unitText("units.store.first") };
+        panel.draw();
+        return c.dead();
+      }
+      close();
+      c.entry.clear();
+      c.withClip((x) => void (x.storeRow(item) || c.dead()));
+    };
+    const panel = makePanel(() => made, () => c.session.settings.marks, { run: store, said: () => (said && made?.shown === said.on ? said.text : undefined) });
+    const cat = slotCatalogue(index.items);
+    const table = factorTable(index.items);
+    const view = new UnitView(cat, line, parseChips, host, seed);
+    made = view;
+    entryEl.insertBefore((shown = panel.element), fieldEl);
+    fieldEl.style.display = "none";
+    hooks()?.fault?.();
+    panel.draw();
+    // MathLive takes options only once the field is mounted (as the entry line's, entry/controller.ts)
+    const mounted = new Promise<void>((resolve) => {
+      mf.addEventListener("mount", () => resolve(), { once: true });
+      setTimeout(resolve, 1000);
+    });
+    const element = panel.element;
+    panel.formula.append(mf);
+    await mounted;
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    setUp(mf, element, c, hw, new HwTyping(view));
+    lockedValue(mf, view.formula.latex, view.ids);
+    view.start();
+
+    /** R700: Android back is Esc for the view (docs/05 3.7): out of the alternatives row, else it leaves; each back takes a new entry for what is left. */
+    const layer = (): void => {
+      unlayer = openLayer(() => {
+        unlayer = () => {};
+        if (view.escape()) layer();
+        else close();
+      });
+    };
+    current = { view, field: mf, element, close };
+    layer();
+    window.n62.unitView = current;
+    // every press keeps the focus on the view (as the entry line's keys keep it on the line), for the hardware keys
+    const keep = (): void => element.focus({ preventScroll: true });
+    /** When the last press on the page went down (R918: a click that long after it ends a hold, which copied). */
+    let downAt = 0;
+    const down = (ev: PointerEvent): void => void (downAt = ev.timeStamp);
+    /** R801: a tap on the screen while the view is up (no sheet over it): on a slot's box it makes that slot the active one
+     *  (refused as ◀ ▶ is, view.goTo); wherever it lands the focus comes back to the view, so the next hardware key goes
+     *  to the view. A hold stays R797's: it gives no click. R918: outside the view's box (the entry's) a tap is the dead
+     *  press, unless THROUGH lets it on: no pick, no row bar, nothing on the lent line; a hold on a row copies as before
+     *  (its copy came with the timer, longpress.ts), its click is swallowed with no pulse. */
+    const tapped = (ev: MouseEvent): void => {
+      if (current?.view !== view || c.shell.sheet !== null) return;
+      if (!(ev.target instanceof Element) || !ev.target.closest(".screen")) return; // (the pads and bars keep their own paths)
+      if (!entryEl.contains(ev.target) && !ev.target.closest(THROUGH)) {
+        ev.stopImmediatePropagation();
+        ev.preventDefault();
+        if (ev.timeStamp - downAt < LONG_PRESS_MS) c.dead();
+      } else if (ev.composedPath().includes(mf)) {
+        const id = slotAt(mf, view.ids, ev.clientX, ev.clientY);
+        if (id !== undefined) view.goTo(id);
+      }
+      keep();
+      setTimeout(() => current?.view === view && c.shell.sheet === null && keep(), 0); // (MathLive moves the focus on its own pointer events)
+    };
+    document.addEventListener("pointerdown", down, { capture: true });
+    document.addEventListener("click", tapped, { capture: true });
+    const unlend = lend(c.entry, () => c.dead());
+    c.picked = null; // R918: a row picked while the view's code loaded (a pick waits for no load) does not stay under it
+    untap = () => {
+      document.removeEventListener("pointerdown", down, { capture: true });
+      document.removeEventListener("click", tapped, { capture: true });
+      unlend();
+    };
+    /** R838: a sheet over the view (Settings, Mode, Find on units) took the keys; once it is gone the focus is the view's again
+     *  and a setting changed there shows. R915: the angle unit or the digits changed, whoever changed them (the bar's angle word
+     *  too, at once, a sheet still open or not): a result shown or being asked for is asked for again as the line would be (the
+     *  digits are in the engine's answer, σ's text and the Home row too); a setting the result is only drawn with (the format,
+     *  the decimal mark, the digit groups, the marks) draws it again with no request. The focus comes back once no sheet is up. */
+    unwatch = watchSheet(c.shell, asked, () => {
+      if (current?.view !== view) return;
+      if (was !== asked() && (view.shown.kind === "result" || view.shown.kind === "working")) void view.evaluate();
+      else view.redraw();
+      panel.draw();
+      if (c.shell.sheet === null) keep();
+    });
+    unitPad.on = (e) => {
+      view.apply(e);
+      if (current?.view === view && e.do !== "find") keep();
+    };
+    unitPad.other = (c2, key, mods) => {
+      const a = layerAction(key, mods);
+      // a sheet over the view takes the keys, as over the cells (UnitPad.route); R838: Settings and Mode do their job, over the view
+      if (c2.shell.sheet || (a?.kind === "special" && (a.name === "settings" || a.name === "mode"))) return false;
+      if (a?.kind === "special" && PLACES.includes(a.name)) {
+        close();
+        return false; // the key does its job
+      }
+      c2.session.clearModifiers();
+      const cmd = a?.kind === "cmd" ? a.name : undefined;
+      if (cmd === "moveToPreviousChar") view.move(-1);
+      else if (cmd === "moveToNextChar") view.move(1);
+      else if (cmd === "moveDown") view.down();
+      else if (cmd === "moveUp") view.up();
+      else if (a?.kind === "special" && a.name === "esc") {
+        if (!view.escape()) close();
+      }
+      else if (a?.kind === "insert" && a.latex === STORE_ARROW) store();
+      else if (a?.kind === "special" && a.name === "menu") {
+        // R862: the view's tools and Constants over it (a second ☰, Esc or Back closes the sheet: sheetKeys.ts, watchSheet)
+        void unitFind().then((m) => current?.view === view && c2.shell.sheet === null && m.showUnitMenu(c2.shell, index, tools(), constant), () => c2.dead());
+      }
+      else if (a?.kind === "special" && a.name === "uncertainty") {
+        const row = rowId === undefined ? undefined : c2.session.home.find((r) => r.id === rowId); // R327: the result's row
+        lazy(c2, import("../views/uncSheet.ts").then((m) => m.showUncertainty(c2, row)));
+      }
+      else c2.dead();
+      if (current?.view === view) keep();
+      return true;
+    };
+    unitPad.model = new UnitPad(unitCells.userSet());
+    element.focus();
+    up = true;
+  } finally {
+    if (!up) close(); // (an open that failed or ended early leaves nothing behind: lazy makes it a dead press)
+  }
 }
 
 /** R801: the slot whose box holds the point, or none. The box is found by geometry (MathLive draws one `.ML__prompt` box per

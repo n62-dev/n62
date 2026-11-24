@@ -115,10 +115,11 @@ export function casItem(r: CasIn, inexactInput: boolean, giac?: string, s?: Pick
     out.approximate = true;
     out.facts = { ...(r.numeric ? {} : r.facts), exact: false, reliableDigits: null };
   }
-  // A result with a float in it comes with its value and facts (docs/04 2.9): drawn by our formatter, marked.
+  // A result with a float in it comes with its value and facts (docs/04 2.9): drawn by our formatter, marked. A list or
+  // matrix has no value but its elements' facts (`items`), kept as Home keeps them (G794: it was unmarked).
   const n = r.numeric;
-  if (n?.value) {
-    out.value = n.value;
+  if (n?.value || n?.items) {
+    if (n.value) out.value = n.value;
     const f = factsFrom(n);
     if (f) out.facts = f;
     if (n.full.length <= FULL_LIMIT) {

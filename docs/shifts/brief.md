@@ -61,14 +61,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 888e2 | R915 units follow the angle; their RAD tag | ron, Opus | `p1/ron-unitangle` | – |
-| 888e2a | [R916](packages/R916.md) layer sweep 1: unit view | ron, Opus | `p1/ron-layersweep` | – |
-| 888e2b | [R917](packages/R917.md) unit view opens in one step | ron, Opus | `p1/ron-unitopen` | – |
-| 888e2c | [R918](packages/R918.md) no row taps under units | ron, Opus | `p1/ron-unitrowtap` | R916, R917 |
-| 888e2d | [R919](packages/R919.md) back ends a name prompt | ron, Opus | `p1/ron-promptback` | – |
-| 888e2e | [R925](packages/R925.md) ×10ⁿ takes no unit slot | ron, Opus | `p1/ron-tenpowslot` | R918 |
-| 888e3 | [R889](packages/R889.md) Alpha in a search types its letter | ron, Opus | `p1/ron-sheetalpha` | – |
-| 888e4 | [R891](packages/R891.md) sheets sit on the tab bar | ron, Opus | `p1/ron-sheetline` | – |
+| 888e4r | [R930](packages/R930.md) 1 kB room in the start chunk | ron, Opus | `p1/ron-startroom` | – |
 | 888e4a | [R924](packages/R924.md) the mark takes no tap | ron, Opus | `p1/ron-marknotap` | – |
 | 888e4b | [R926](packages/R926.md) back closes an app | ron, Opus | `p1/ron-appback` | R919, R924 |
 | 888e4c | [A271](packages/A271.md) back twice to leave (waits: a device) | annabell, Sonnet | `p1/annabell-backtwice` | R926 |
@@ -154,11 +147,11 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| B6b | G622 float pivots relative to the matrix | gorge, Opus | `p1/gorge-floatrref` | G790 |
-| B6c | [G792](packages/G792.md) sin, cos of a float matrix | gorge, Opus | `p1/gorge-matsincos` | – |
-| B6d | [G793](packages/G793.md) lcm of integers is positive | gorge, Opus | `p1/gorge-lcmsign` | – |
-| B6e | [G794](packages/G794.md) CAS float lists get a mark | gorge, Opus | `p1/gorge-caslistmark` | – |
-| B6f | [G797](packages/G797.md) the sweep builds matrices | gorge, Opus | `p1/gorge-sweepmatrix` | – |
+| B6b | G622 float pivots relative to the matrix | gorge, Opus | `p1/gorge-floatrref` | R930 (rerun of #1533) |
+| B6c | [G792](packages/G792.md) sin, cos of a float matrix | gorge, Opus | `p1/gorge-matsincos` | – (rerun of #1538: golden time only) |
+| B6d | G793 lcm of integers is positive | gorge, Opus | `p1/gorge-lcmsign` | – |
+| B6e | G794 CAS float lists get a mark | gorge, Opus | `p1/gorge-caslistmark` | – |
+| B6f | G797 the sweep builds matrices | gorge, Opus | `p1/gorge-sweepmatrix` | – |
 | B6g | [G798](packages/G798.md) scaling and sign laws | gorge, Opus | `p1/gorge-lawcheck` | G797 |
 | B6h | [G799](packages/G799.md) marks and Copy agree | gorge, Opus | `p1/gorge-markagree` | – |
 | B6i | [G800](packages/G800.md) a unit sweep | gorge, Opus | `p1/gorge-unitsweep` | R885 |
@@ -196,7 +189,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 You are the shift's quality gate and its decision-maker; henri executes your reply literally. Work in your own worktree on `p1/pass-<n>`, made from `phase-1` (the pipeline names it); switch no branch; no code changes.
 1. For each package: its package file (`git show <merge>^1:docs/shifts/packages/<ID>.md`: the merge deleted it, A75; the branch tip's parent if unmerged), its report (`git log -1 <merge>^2`, or the branch tip if unmerged), its diff (`git diff <merge>^1 <merge>`), and the audit's verdict from `.coord/log.md`.
 2. Run once on `phase-1` (from `app/`, with absolute `GIAC_OUT`, `N62_DL_DIR` and `N62_QALC_DL_DIR`): typecheck, `npm run index` then `FIND_INDEX=required npm test`, e2e (its `CORE` line: the core list, R74), and the golden gate when engine or parser code changed. Take `tools/devlock.sh acquire host-cpu opus 1800` around them.
-3. Check what an audit tends to miss: wrong or invented expected values (sources), a missing round trip, silent wrong numbers or marks (principle 3), scope, keys that moved, tests that pass for the wrong reason. An engine package gives its Giac calls per Enter before and after (`tools/probes/engine-calls.ts`). **The net (P23):** a core case that fails and is not `known:` is a FIX now; a device run since the last pass (night.sh's `CORE DEVICE` line, A33, A41) with a new failing case is a FIX or, past a day of work, a backlog bug line; a package that adds a feature its file does not name is a fix-or-revert.
+3. Check what an audit tends to miss: wrong or invented expected values (sources), a missing round trip, silent wrong numbers or marks (principle 3), scope, keys that moved, tests that pass for the wrong reason. An engine package gives its Giac calls per Enter before and after (`tools/probes/engine-calls.ts`). **The net (P23):** a core case that fails and is not `known:` is a FIX now; a device run since the last pass (night.sh's `CORE DEVICE` line, A33, A41) with a new failing case is a FIX or, past a day of work, a backlog bug line; a package that adds a feature its file does not name is a fix-or-revert. **Start chunk room (owner, 2026-11-24):** when the newest merged run's size log (`Start chunk` line) leaves under 0.3 kB to the 63 kB budget and no cut row is queued, write a cut package in R930's form (≥ 1 kB, ron, Opus; next free R id) and put its row at the top of lane A.
 4. Decide each "Needs a decision" item of these packages and each open question from the log: a default within the plan goes into `docs/decisions.md` (rules section 9); a plan change goes under "Needs the user" with your recommendation in one sentence. Apply the "For shared files" text of the packages' reports. A report's proposed backlog lines and its "Needs a decision" items go where they belong in this pass, or in NOTES with where they went; a full doc is no reason to drop one: make room, or name the newest review note. Delete each merged package's row from section 0's table or 0c's queue (the run deleted its file with the merge, A75; a merged FIX package's file, and any `scripts/gc.sh` lists, the pass deletes), and run `node tools/docs-check.mjs`. Commit them on your branch with `git commit -s` and the Opus trailer and leave nothing uncommitted; after your reply the pipeline takes `integ`, merges `phase-1` into your branch, runs the docs check and merges it into `phase-1` (A85), so your FIX and QUEUE lines apply to `phase-1` after that merge; take no lock yourself. After a flake census (`FLAKES <n>` line in the log, file `.tasks/flakes-<date>.md`): write one backlog line per flaky test, named by file and title, and add a wall-clock test to `isTiming` in `app/scripts/pipeline-logs.ts`, the tests the pipeline reruns once (A25). A test with 3 or more `FLAKE` lines in the log since the last census (e2e reruns that passed, A129) gets a backlog line, named by spec and title.
 5. Reply in exactly this form, nothing before `OPUS PASS` and nothing after NOTES, and no backtick or `$` in a FIX prompt (`night.sh` refuses the line; name files and code in plain words). Never edit a DECIDED entry of decisions.md on a proposal that is still OPEN; put the change under the proposal. One FIX line per needed fix package; fix IDs are `<ID>f1`, `<ID>f2`, never `<ID>f3` or `<ID>f2f1`: at a chain's second follow-up the next FIX removes the shared cause, as a new id with the family's earlier cases as its tests (not a FIX line: the pipeline refuses a new id without its package file, A55, so the pass writes `packages/<id>.md` and a queue row); more than a day of work goes under "Needs the user" (owner, 2026-10-20):
 ```

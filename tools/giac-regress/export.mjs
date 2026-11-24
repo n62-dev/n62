@@ -134,7 +134,7 @@ export const KNOWN_RULES = [
   [/Bessel|Airy|besselj/, "register row no-mpfr-path (G4, G50): no MPFR path, an error at Digits above 14"],
   [/^prec-4-romberg/, "register row no-mpfr-path (G4, G50): romberg works in a double, 30 digits asked"],
   [/^g184-sum-harmonic-1e6$/, "register row no-mpfr-path (G4, G50): Giac's Psi has no MPFR path, so Psi(1000001)+euler_gamma (its closed form of the sum) stays unevaluated at Digits 40; Home shows its double with ⚠ (G184)"],
-  [/^g622-rank-approx-near-singular-1e-39$/, "register row sign-at-digits (G38, G622): patch 0065 takes an MPFR sum within 2^(12-prec) of its larger term for 0, so the rank of a matrix whose determinant is 10^-39 is 1 at Digits 40; Home decides rank again at P + 20 and P + 40 (2)"],
+  [/^g622-rank-approx-near-singular-1e-39$/, "register row sign-at-digits (G38, G622): patch 0066 takes an MPFR sum within 2^(12-prec) of its larger term for 0, so the rank of a matrix whose determinant is 10^-39 is 1 at Digits 40; Home decides rank again at P + 20 and P + 40 (2)"],
   [/^g140f2-negbinomial_cdf-/, "G140f1: Giac's incomplete Beta (negbinomial_cdf off the integers) is a double at Digits 40; Home shows it as an unaudited double with rule 3's count"],
 ];
 // The ids Giac fails on the pin (run.mjs: every line of the known file fails).
@@ -646,10 +646,14 @@ export const PATCHED_IDS = new Map([
   // G551 (F302): misc.cc bitand, bitor and bitxor read a negative _INT_ beside a _ZINT as 2^32+v; the g551-keep-* rows pass on
   // stock and stay in the check file; the sweep of all pairs of 24 values is a written line per operation below
   ...["bitand-neg2-2^64-1", "bitand-neg2-hex-ones", "bitxor-neg1-2^63", "bitor-neg1-2^31", "bitand-neg1-neg2^31", "bitand-neg1-2^70"].map((k) => [`g551-${k}`, "0062-bitops-signed-small-integer.patch"]),
-  // G622 (F436): the float row reduction (patch 0065); the g622-keep-* rows pass on stock and stay in the check file. The det, inv and
-  // near-singular rank rows fail on a build without 0065 alone; in this file a line before them leaves context0's epsilon at 1e-180
+  // G622 (F436): the float row reduction (patch 0066); the g622-keep-* rows pass on stock and stay in the check file. The det, inv and
+  // near-singular rank rows fail on a build without 0066 alone; in this file a line before them leaves context0's epsilon at 1e-180
   // (F478), which masks their is_zero fault there, so the written g622-* lines, first in the file, test the same inputs
-  ...["rank-approx-123", "linsolve-approx-tiny-0-20", "rank-approx-123-20", "rank-approx-near-singular-1e-20", "det-approx-tiny", "inv-approx-tiny-10-20", "det-approx-tiny-20"].map((k) => [`g622-${k}`, "0065-float-rref-cancelled-pivot.patch"]),
+  ...["rank-approx-123", "linsolve-approx-tiny-0-20", "rank-approx-123-20", "rank-approx-near-singular-1e-20", "det-approx-tiny", "inv-approx-tiny-10-20", "det-approx-tiny-20"].map((k) => [`g622-${k}`, "0066-float-rref-cancelled-pivot.patch"]),
+  // G793, G793f1: usual.cc _lcm kept the sign of the product of integers and of fractions of integers (lcm(-4,6) = -12, lcm(1/2,-1/3) = -1); the
+  // g793*-keep-* rows pass on stock and stay in the check file (the list results of the *-pairs-* rows and the *-cas-* rows are not exported)
+  ...["lcm-neg4-6", "lcm-4-neg6", "lcm-list-neg4-6-10", "lcm-neg3-neg5-neg7", "lcm-neg2^70-3", "lcm-neg4-alone"].map((k) => [`g793-${k}`, "0065-lcm-integers-positive.patch"]),
+  ...["lcm-half-neg-third", "lcm-neg-2/3-4/5", "lcm-list-neg-half-third-quarter", "lcm-neg-half-alone", "lcm-neg4-third", "lcm-neg2^70/3-fifth"].map((k) => [`g793f1-${k}`, "0065-lcm-integers-positive.patch"]),
 ]);
 // G122: Giac's exact answer is right (patch 0014), but pc()'s evalf of it at Digits 40 cancels the digits of a large k*pi
 // (asin(cos(30!)) = -pi/2+30!-k*pi with k of 32 digits keeps about 7, -pi/2+10^50-k*pi none); Home raises the precision
@@ -708,7 +712,7 @@ export function build(cases) {
     patched.push("// patch 0064-mmult-tiny-float-factor.patch", `// ${id} (derived: the exact product)`, `Digits:=40:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
   }
-  // Patch 0065 (G622, F436), written lines: the float row reduction under rank, rref, ker, det, inv and linsolve (vecteur.cc mrref,
+  // Patch 0066 (G622, F436), written lines: the float row reduction under rank, rref, ker, det, inv and linsolve (vecteur.cc mrref,
   // linear_combination, is_blockmatrix, in_doublerref, mker; solve.cc _linsolve; misc.cc _rank; the golden g622-* rows are matrices
   // or Home's values at P). First in the file with the g790 lines, for the same reason (context0's epsilon, F478). Stock at Digits 15 and up kept a cancelled pivot (rank 0, rref the identity, ker []) and took entries
   // near 1e-13 for 0 at any Digits. Expected values: derived by hand (row 3 = 2*row 2 - row 1, rows 1 and 2 independent, so rank 2,
@@ -735,7 +739,7 @@ export function build(cases) {
     ["g622-linsolve-evalf-tiny-0-40", 40, `linsolve(${N2},[1,1])[0]`, "-10^13", "1/10^20"],
     ["g622-linsolve-evalf-tiny-0-12", 12, `linsolve(${N2},[1,1])[0]`, "-10^13", "10^3"],
   ]) {
-    patched.push("// patch 0065-float-rref-cancelled-pivot.patch", `// ${id} (derived)`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
+    patched.push("// patch 0066-float-rref-cancelled-pivot.patch", `// ${id} (derived)`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
   }
   for (const [file, c] of cases) {
@@ -753,6 +757,10 @@ export function build(cases) {
       nCheck++;
     }
   }
+  // G793f1 control, a written line: patch 0065 leaves a float argument as Giac has it (Home and CAS send a typed 4.0 as the exact 4);
+  // at Digits 12, a double: at Digits 40 Giac takes gcd(-6,4.0) = 1 for an MPFR 4.0, so -24.0, a fault of its own (G793f1 report)
+  check.push("// g793f1-keep-lcm-neg6-float4 (derived: Giac's own value, unchanged by patch 0065; at Digits 12, a double)", 'Digits:=12:; pc("g793f1-keep-lcm-neg6-float4",\'when(string(lcm(-6,approx(4)))=="-12.0",1,0)\',1,1/10^30);');
+  nCheck++;
   // G149 fix round 2, tests/golden/precision.yaml g149-cas-keep-* (the CAS view's exact forms, which no value line reaches): with
   // complex mode off a negative real base with s = 1 lies on the side where patch 0025's rule holds (im(s*ln(b)) = pi), so Giac's forms
   // stay (round 1 kept the powers as typed); Digits 40, the CAS view's precision, where the double of (-pi)^3 has a rounding imaginary

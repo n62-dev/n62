@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { en } from "./en.ts";
 import { enRowBar, rowBarText } from "./enRowBar.ts";
 
-describe("the row action bar's own words (G622: off the start table)", () => {
-  it("names the bar as before", () => {
+describe("the row bar's own words (G793f1: off the start table)", () => {
+  it("names the bar", () => {
     expect(rowBarText("history.actions")).toBe("Row actions");
   });
 

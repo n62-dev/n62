@@ -13,6 +13,10 @@ import type { HistoryItem } from "./session.svelte.ts";
 
 const re = (s: string, sticky = false): ComplexValue => ({ re: { ...decimalFromString(s)!, ...(sticky ? { sticky: true } : {}) }, im: { neg: false, digits: "", exp: 0, sticky: false } });
 const LONG = "1/" + "7".repeat(2100);
+const T40 = "0." + "3".repeat(40);
+const S40 = "0." + "6".repeat(40);
+const L40 = `[0.${"3".repeat(39)},0.${"6".repeat(38)}7]`;
+const dv = (digits: string, exp: number, sticky: boolean) => ({ re: { neg: false, digits, exp, sticky }, im: { neg: false, digits: "", exp: 0, sticky: false } });
 const home = (o: Partial<HomeIn>): HomeIn => ({ ok: true, display: "?", approximate: false, facts: { exact: false, reliableDigits: null }, full: "?", ...o });
 const cas = (o: Partial<CasIn>): CasIn => ({ ok: true, text: "?", facts: { exact: false, reliableDigits: null }, ...o });
 
@@ -46,6 +50,10 @@ const CAS_ROWS: [string, CasIn, boolean][] = [
   ["true on a float", cas({ text: "true", approximate: true, facts: { exact: false, reliableDigits: null } }), false],
   ["true from an inexact chip", cas({ text: "true" }), true],
   ["non-number with a float (G27)", cas({ text: "x+0.5", approximate: true, facts: { exact: false, reliableDigits: null, warn: "unchecked" } }), false],
+  // G794: a CAS list of floats keeps its elements' facts, as Home's list does (the engine's numeric of
+  // approx([1/3,2/3]) and fsolve(cos(x)=x,x), engine/host.ts casRun, phase-1 9c1c42f2; source: derived)
+  ["numeric list (G794)", cas({ text: "[0.333333333333,0.666666666667]", facts: { exact: false, reliableDigits: 39 }, numeric: home({ display: "[0.333333333333,0.666666666667]", approximate: true, facts: { exact: false, reliableDigits: 39 }, full: L40, items: [{ value: re(T40, true), facts: { exact: false, reliableDigits: 39 } }, { value: re(S40, true), facts: { exact: false, reliableDigits: 39 } }] }) }), false],
+  ["numeric list with a warn (G794)", cas({ text: "[0.739085133215]", facts: { exact: false, reliableDigits: 13, warn: "unaudited", why: { unaudited: ["fsolve"] } as never }, numeric: home({ display: "[0.739085133215]", approximate: true, facts: { exact: false, reliableDigits: 13, warn: "unaudited", why: { unaudited: ["fsolve"] } as never }, full: "[0.7390851332152]", items: [{ value: re("0.73908513321516"), facts: { exact: false, reliableDigits: 13, warn: "unaudited" } }] }) }), false],
   ["too long", cas({ text: "x".repeat(2100) }), false],
   ["error", cas({ ok: false, text: "bad" }), false],
 ];
@@ -79,6 +87,8 @@ const EXPECT: Record<string, ItemResult & { chip: unknown }> = {
   "cas true on a float": {"approximate": true, "full": "true", "fullExact": false, "facts": {"exact": false, "reliableDigits": null}, "chip": {"value": "true", "exact": false, "reliableDigits": null}},
   "cas true from an inexact chip": {"approximate": true, "full": "true", "fullExact": false, "facts": {"exact": false, "reliableDigits": null}, "chip": {"value": "true", "exact": false, "reliableDigits": null}},
   "cas non-number with a float (G27)": {"approximate": true, "full": "x+0.5", "fullExact": false, "facts": {"exact": false, "reliableDigits": null, "warn": "unchecked"}, "chip": {"value": "x+0.5", "exact": false, "reliableDigits": null, "warn": "unchecked"}},
+  "cas numeric list (G794)": {"approximate": false, "full": L40, "fullExact": false, "facts": {"exact": false, "reliableDigits": 39, "items": [{"exact": false, "reliableDigits": 39, "value": dv("3".repeat(40), -1, true)}, {"exact": false, "reliableDigits": 39, "value": dv("6".repeat(40), -1, true)}]}, "chip": {"value": L40, "exact": false, "reliableDigits": 39}},
+  "cas numeric list with a warn (G794)": {"approximate": false, "full": "[0.7390851332152]", "fullExact": false, "facts": {"exact": false, "reliableDigits": 13, "warn": "unaudited", "why": {"unaudited": ["fsolve"]}, "items": [{"exact": false, "reliableDigits": 13, "warn": "unaudited", "value": dv("73908513321516", -1, false)}]}, "chip": {"value": "[0.7390851332152]", "exact": false, "reliableDigits": 13, "warn": "unaudited"}},
   "cas too long": {"approximate": false, "chip": null},
   "cas error": {"approximate": false, "chip": null},
 };

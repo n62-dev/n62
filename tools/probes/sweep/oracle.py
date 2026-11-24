@@ -7,12 +7,14 @@
 #     G307: a power of π or e with a negative integer exponent (POW(PI,mpf('-400')), exp(mpf('-400'))) counts as 10^-d, d its digit
 #     count: the tiny term a rung rounds away (a huge one alone loses nothing, and exp of an int leaf such as 2^31 stays judged).
 #     G363: so does the tiny b^n in 1 ± b^n of edges.ts's fourth form of family 0 (b = ln 2, ln 3, tanh 1).
-#   {"kind": "novalue"}   a pole, a non-finite result
+#   {"kind": "matrix", "rows": r, "cols": c, "cells": [{"re", "im"}, …]}   G797: a matrix (rows flattened; cols null for linsolve's list),
+#     each cell agreeing to 1e-45 of itself between the rungs, or below 10^-(hi-10) of the matrix at the higher rung (round-off of an exact 0: 0)
+#   {"kind": "novalue"}   a pole, a non-finite result; G797: inv of a singular matrix, linsolve of a singular system (no unique solution)
 #   {"kind": "skip", "reason": "..."}   unstable, an infinite intermediate under a finite value (G345), a convention (negative base to a non-integer power, 0^0), complex in DEG, too slow
 # Run: tests/golden/.venv/bin/python -I tools/probes/sweep/oracle.py < requests.json   (mpmath 1.3.0)
 import json, math, re as _re, signal, sys
 from decimal import Decimal, InvalidOperation
-from mpmath import mp, mpf, mpc, sqrt, exp, sinh, cosh, tanh, asinh, acosh, atanh, cbrt, sign, log, pi, e, factorial, fabs, sin, cos, tan, asin, acos, atan, isfinite
+from mpmath import matrix, inverse, det as mdet, lu_solve, expm, sinm, cosm, svd_r, svd_c, mp, mpf, mpc, sqrt, exp, sinh, cosh, tanh, asinh, acosh, atanh, cbrt, sign, log, pi, e, factorial, fabs, sin, cos, tan, asin, acos, atan, isfinite
 
 
 class Skip(Exception):
@@ -157,6 +159,181 @@ for _k in [k for k, v in NS.items() if callable(v) and k != "mpf"]:
     NS[_k] = _finite_or_flag(NS[_k])
 
 
+# G797: the matrix nodes of gen.ts. Rank by SVD at the rung's digits: a singular value below 10^-(dps-15) of the largest is round-off of
+# an exact 0 (the rungs must agree on the rank, as on a value). det of a matrix of lower rank is 0; inv and linsolve of one have no value.
+class Vec(list):
+    """linsolve's answer, a list (Giac shows a list, not a column)."""
+
+
+def MAT(rows):
+    return matrix(rows)
+
+
+def APPROX(a):
+    return a
+
+
+def MADD(a, b):
+    return a + b
+
+
+def MMUL(a, b):
+    return a * b
+
+
+def SMUL(s, a):
+    return a * s
+
+
+def MDIV(a, s):
+    return a * (1 / s)
+
+
+def MSQ(a):
+    return a * a
+
+
+def TRN(a):
+    return a.T
+
+
+def _deg(a):
+    return a * (pi / 180) if DEG else a
+
+
+def EXPM(a):
+    return expm(a)
+
+
+def SINM(a):
+    return sinm(_deg(a))
+
+
+def COSM(a):
+    return cosm(_deg(a))
+
+
+def RANK(a):
+    cplx = any(isinstance(a[i, j], mpc) for i in range(a.rows) for j in range(a.cols))
+    sv = svd_c(a, compute_uv=False) if cplx else svd_r(a, compute_uv=False)
+    top = max(fabs(x) for x in sv)
+    if top == 0:
+        return mpf(0)
+    return mpf(sum(1 for x in sv if fabs(x) > top * mpf(10) ** (15 - mp.dps)))
+
+
+def DET(a):
+    return mpf(0) if RANK(a) < a.rows else mdet(a)
+
+
+def INV(a):
+    if RANK(a) < a.rows:
+        raise ZeroDivisionError
+    return inverse(a)
+
+
+def LINSOLVE(a, b):
+    if RANK(a) < a.rows:
+        raise ZeroDivisionError
+    x = lu_solve(a, b)
+    return Vec(x[i, 0] for i in range(x.rows))
+
+
+NS.update(MAT=MAT, APPROX=APPROX, MADD=MADD, MMUL=MMUL, SMUL=SMUL, MDIV=MDIV, MSQ=MSQ, TRN=TRN, EXPM=EXPM, SINM=SINM, COSM=COSM, RANK=RANK,
+          DET=DET, INV=INV, LINSOLVE=LINSOLVE)
+
+
+def _parts(v):
+    if isinstance(v, mpc):
+        re, im = v.real, v.imag
+    else:
+        re, im = mpf(v), mpf(0)
+    if not (isfinite(re) and isfinite(im)):
+        raise ZeroDivisionError
+    if DEG and im != 0:
+        raise Skip("complex in DEG")
+    return re, im
+
+
+def at_cells(expr, dps):
+    """G797: a matrix or list value as (rows, cols or None, [(re, im), …]); a scalar as (None, None, [(re, im)])."""
+    mp.dps = dps
+    INF_STEP[0] = False
+    ns = dict(NS, PI=+pi, E=+e)
+    v = eval(expr, {"__builtins__": {}}, ns)
+    if isinstance(v, Vec):
+        shape, vals = (len(v), None), list(v)
+    elif isinstance(v, matrix):
+        shape, vals = (v.rows, v.cols), [v[i, j] for i in range(v.rows) for j in range(v.cols)]
+    else:
+        shape, vals = (None, None), [v]
+    cells = [_parts(x) for x in vals]
+    if INF_STEP[0]:
+        raise Skip("an infinite intermediate")
+    return shape[0], shape[1], cells
+
+
+def agree_cells(a, b, hi):
+    """G797: the cells of the higher rung when every part agrees with itself to 1e-45, or is below 10^-(hi-10) of the matrix at the
+    higher rung (round-off of an exact 0, which then reads 0); None when a part is unstable."""
+    scale = max([abs(x) for c in a + b for x in c] + [mpf(0)])
+    if scale == 0:
+        return b
+    noise = scale * mpf(10) ** (10 - hi)
+    out = []
+    for ca, cb in zip(a, b):
+        parts = []
+        for x, y in zip(ca, cb):
+            if abs(x - y) <= max(abs(x), abs(y)) * mpf(10) ** -45:
+                parts.append(y)
+            elif abs(y) <= noise:
+                parts.append(mpf(0))
+            else:
+                return None
+        out.append(tuple(parts))
+    return out
+
+
+_NOVALUE = (ZeroDivisionError, ValueError)
+
+
+def rungs(f, expr, lo, hi):
+    """G797: the value at both rungs of a pair, or None for a rung with no value (a division by zero, a singular matrix). Raises
+    ZeroDivisionError (main's novalue) only when both rungs have none: a rank or a cancellation that only the lower rung loses (a
+    matrix with a condition number past 10^(lo-15), as [[1,1],[1,tanh 60]] at 60 digits) has a value, and the next pair decides."""
+    out = []
+    for dps in (lo, hi):
+        try:
+            out.append(f(expr, dps))
+        except _NOVALUE:
+            out.append(None)
+    if out[0] is None and out[1] is None:
+        raise ZeroDivisionError
+    return out
+
+
+def _unstable(up):
+    return {"kind": "skip", "reason": f"unstable at {60 + up}/{100 + up} and {150 + up}/{250 + up} digits (or a value at one rung only)"}
+
+
+def one_matrix(expr, up):
+    for lo, hi in ((60 + up, 100 + up), (150 + up, 250 + up)):
+        pa, pb = rungs(at_cells, expr, lo, hi)
+        if pa is None or pb is None:
+            continue
+        (ra, ca, a), (rb, cb, b) = pa, pb
+        if (ra, ca) != (rb, cb):
+            continue
+        got = agree_cells(a, b, hi)
+        if got is not None:
+            mp.dps = hi
+            return {"kind": "matrix", "rows": rb, "cols": cb, "cells": [{"re": mp.nstr(c[0], 100), "im": mp.nstr(c[1], 100)} for c in got]}
+    return _unstable(up)
+
+
+_MATRIX_TOP = _re.compile(r"^(MAT|APPROX|MADD|MMUL|SMUL|MDIV|MSQ|TRN|INV|EXPM|SINM|COSM|DET|RANK|LINSOLVE)\(")
+
+
 def at(expr, dps):
     mp.dps = dps
     INF_STEP[0] = False
@@ -223,13 +400,14 @@ def one(expr):
     up = 2 * tens(expr)
     if 250 + up > DPS_CAP:
         return {"kind": "skip", "reason": f"needs {250 + up} digits (10^±{up // 2}), past the oracle's cap of {DPS_CAP}"}
+    if _MATRIX_TOP.match(expr) and not expr.startswith(("DET(", "RANK(")):
+        return one_matrix(expr, up)
     for lo, hi in ((60 + up, 100 + up), (150 + up, 250 + up)):
-        a = at(expr, lo)
-        b = at(expr, hi)
-        if agree(a, b):
+        a, b = rungs(at, expr, lo, hi)
+        if a is not None and b is not None and agree(a, b):
             mp.dps = hi
             return {"kind": "value", "re": mp.nstr(b[0], 100), "im": mp.nstr(b[1], 100)}
-    return {"kind": "skip", "reason": f"unstable at {60 + up}/{100 + up} and {150 + up}/{250 + up} digits"}
+    return _unstable(up)
 
 
 def main():

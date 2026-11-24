@@ -182,8 +182,8 @@ export function extraStartFiles(manifest: Record<string, ManifestChunk>): string
  *  80.28 → 80.59 kB (R862): phase-1 ebef0cb2 measures 80,222 B, the branch 80,535 B (+313 B: open 30,974 → 31,125 B, ☰'s case in
  *  the view's key handler and the Tools rows' builder shared with Find on units; find 9,373 → 9,535 B, showUnitMenu and
  *  menu.ts's unitViewMenu, the one list of Tools and Constants both menus show). 80,535 B + 0.05 kB, rounded up to the next 0.01 kB.
- *  80.59 → 80.91 kB (R915): phase-1 109317e5 80,535 B, the branch 80,860 B (+325 B, open: the angle and digits watcher, the row's angle tag, Store's row-gone note); + 0.05 kB. */
-export const UNIT_VIEW_PIN_RAW = 80_910;
+ *  80.59 → 80.91 kB (R915): phase-1 109317e5 80,535 B, the branch 80,860 B (+325 B, open: the angle and digits watcher, the row's angle tag, Store's row-gone note); + 0.05 kB. 80.91 → 81.20 kB (R917): phase-1 27453760 80,822 B, the branch 81,146 B (+324 B, open: one visit ended in one close, the lent line given back, the focus on the line, the reopen through lazy); + 0.05 kB, rounded up. 81.20 → 81.79 kB (R918): phase-1 ef5141f9 81.15 kB, the branch 81.73 kB (+0.58 kB, open: a tap on the screen outside the view's box is the dead press with its short list, a hold's click swallowed with no pulse, the lent line's row writes refused, a pick from the load dropped); + 0.05 kB, rounded up. */
+export const UNIT_VIEW_PIN_RAW = 81_790;
 
 /** The budgets of docs/04 section 8.3 that apply to files of the build; the device bars are not here. */
 function subjects(manifest: Record<string, ManifestChunk>, all: string[], modules: Record<string, string[]> | null): { present: Subject[]; absent: string[]; missing: string[] } {
@@ -214,8 +214,8 @@ function subjects(manifest: Record<string, ManifestChunk>, all: string[], module
   // 0d8a7e48 measures 38.92 kB, the branch 41.66 kB: a unit of your own as a row of the factor table (units/userUnits.ts
   // mergedTable in the builder's chunk, +2.74 kB: the exact factor of its `of` and the checks a stored definition needs;
   // validateDef, findNames and factorText are not in it). A cut was tried: nothing of it can wait for a later chunk, since
-  // the builder reads every own unit of a request.
-  add("Unit view chunk", dynamic("src/units/"), { rawMax: 42 * KB });
+  // the builder reads every own unit of a request. 42.6 kB (R918): phase-1 ef5141f9 41.95 kB, the branch 42.54 kB (open: a tap outside the view's box is the dead press, the lent line refuses a row).
+  add("Unit view chunk", dynamic("src/units/"), { rawMax: 42.6 * KB });
   // G163: Rollup hoists the units modules that two lazy chunks import (factors.ts with the builder, slot.ts, the cells'
   // store) into shared chunks, which the row above does not see (as finder.ts once was for Find). This row is the unit
   // view's whole code: its entries plus every shared chunk that holds a src/units/ module. Its bar is a pin at today's
@@ -631,7 +631,7 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  (176,822 B raw).
  *  G785 (a cut; the pin stays the budget): Fmt skips a step that draws what the row shows (deadPress asks Session.formRow).
  *  Phase-1 5c518933 measures 62,986 B gzip, the change 63,015 B; Memory's purge (Session.forget, read only by the lazy
- *  find/names.svelte.ts) moved there: 62,967 B (176,789 B raw). Lazy-only en.ts strings to lazy tables gave −1 B only. G622 (a cut): patch 0065's engine hash and trust counts made 63,003 B; history.actions to i18n/enRowBar.ts (RowBar, lazy): 62,982 B. */
+ *  find/names.svelte.ts) moved there: 62,967 B (176,789 B raw). Lazy-only en.ts strings to lazy tables gave −1 B only. G622 (a cut): patch 0066's engine hash and trust counts made 63,003 B; history.actions to i18n/enRowBar.ts (RowBar, lazy): 62,982 B. */
 export const START_PIN_GZIP = 63_000;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
