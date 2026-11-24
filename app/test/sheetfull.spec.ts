@@ -286,6 +286,18 @@ async function findFullToggle(page: Page): Promise<void> {
   await expect(sheet(page)).toHaveCount(0);
 }
 const findFull = (page: Page) => page.evaluate(() => window.n62.session.settings.look.findFull);
+/** `look.findFull` as written to IndexedDB (a reload reads this, not the page's memory). */
+const storedFindFull = (page: Page) =>
+  page.evaluate(
+    () =>
+      new Promise<unknown>((res) => {
+        const req = indexedDB.open("n62");
+        req.onsuccess = () => {
+          const g = req.result.transaction("kv").objectStore("kv").get("settings");
+          g.onsuccess = () => res((g.result as { value?: { look?: { findFull?: unknown } } } | undefined)?.value?.look?.findFull);
+        };
+      }),
+  );
 /** Find is open and full: the button pressed and the box the viewport. */
 async function openedFull(page: Page): Promise<void> {
   await expect(page.getByTestId("find")).toBeVisible();
@@ -309,7 +321,7 @@ test("R932: Appearance ends with Find opens full screen, off at a first start; a
   await findRow(page).tap();
   await expect(findRow(page)).toHaveAttribute("data-selected", "true");
   expect(await findFull(page)).toBe(true);
-  await page.waitForTimeout(300); // the store write is asynchronous
+  await expect.poll(() => storedFindFull(page)).toBe(true); // the store writes behind the change: wait for the write itself
   await page.reload();
   await page.waitForFunction(() => window.n62 !== undefined);
   await page.evaluate(() => window.n62.entry.ready);
