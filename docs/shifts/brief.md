@@ -66,7 +66,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 888e4b | R926 back closes an app | ron, Opus | `p1/ron-appback` | R919, R924 |
 | 888e4c | [A271](packages/A271.md) back twice to leave (waits: a device) | annabell, Sonnet | `p1/annabell-backtwice` | R926 |
 | 888e5 | R892 room under the corner button | ron, Opus | `p1/ron-fullroom` | R891 |
-| 888e6 | [R894](packages/R894.md) the units key in CAS goes to Home | ron, Opus | `p1/ron-unitfromcas` | – |
+| 888e6 | R894 the units key in CAS goes to Home | ron, Opus | `p1/ron-unitfromcas` | – |
 | 888e7 | [R893](packages/R893.md) a unit from Find in Home | ron, Opus | `p1/ron-findunithome` | R894, R917 |
 | 888e7a | [R929](packages/R929.md) a constant shows its unit | ron, Opus | `p1/ron-constlabel` | G801 |
 | 888e8 | [R897](packages/R897.md) a hold on a Num cell copies | ron, Opus | `p1/ron-numhold` | – |
