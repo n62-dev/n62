@@ -144,7 +144,7 @@ test("control: back with nothing open leaves; a typed line does not stop it", as
 // left for a second back to use up.
 const label = (p: Page) => p.getByTestId("entry-label");
 const menuRow = (p: Page, id: string) => sheet(p).locator(`[role="menuitem"][data-id="${id}"]`);
-async function backEnds(p: Page, name: string): Promise<void> {
+async function backEnds(p: Page, name: string, after?: () => Promise<void>): Promise<void> {
   await expect(label(p)).toHaveText(name);
   await expect.poll(async () => (await mods(p)).al).toBe(true);
   await tap(p, ["d2"]); // z (Alpha is locked in lower case)
@@ -155,6 +155,7 @@ async function backEnds(p: Page, name: string): Promise<void> {
   await expect.poll(async () => await mods(p)).toEqual({ s: false, a: false, sl: false, al: false });
   stays(p);
   await expect.poll(() => layer(p)).toBeUndefined();
+  if (after) await after(); // checks of its own; it leaves nothing open
   await p.goBack();
   await gone(p);
 }
@@ -173,7 +174,14 @@ test("(h) a preset's Rename: back ends the prompt as Esc would; the name is kept
   await expect(label(page)).toHaveCount(0);
   await tap(page, ["d7", "add", "d1"]);
   await tap(page, ["@mode", "d5", "d3", "d1", "d7", "d1"]); // Edit › Lab › Rename or delete › Rename
-  await backEnds(page, "Preset name");
+  await backEnds(page, "Preset name", async () => {
+    await tap(page, ["@mode", "d5", "d3"]); // Edit: the preset is still Lab (not Labz, not gone)
+    await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Presets › Edit");
+    await expect(sheet(page).getByRole("menuitem").locator(".label")).toHaveText(["Lab"]);
+    await tap(page, ["esc", "esc", "esc"]);
+    await expect(sheet(page)).toHaveCount(0);
+    await expect.poll(() => layer(page)).toBeUndefined();
+  });
 });
 
 test("(i) Settings › Sync › Device name: back ends the prompt", async ({ page }) => {
