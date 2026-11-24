@@ -1,8 +1,8 @@
-# Upstream: giac 2.1.0 usual.cc sin, cos, sinh and cosh of a square matrix send every matrix to analytic_apply (vecteur.cc), which diagonalises it over its complex eigenvalues, applies the function and transforms back. For a matrix of floats the eigenvectors' round-off stays in the result as imaginary noise, and above Digits 14 the entries come back as doubles: sin(evalf([[0,1],[-1,0]])) = [[2.99760216649e-15*i,1.17520119364],[-1.17520119364,2.99760216649e-15*i]] at Digits 12 and [[-4.3140830754274e-32-2.8865798640254e-15*i,1.1752011936438-7.1960319007501e-17*i],...] at Digits 40 (right [[0,sinh 1],[-sinh 1,0]], real: M^2 = -I, so sin M = M*sinh 1; mpmath sinm), cos(evalf([[0,1],[-1,0]])) = [[1.54308063482,-3.88578058619e-15*i],...] (right cosh 1 times the identity), cos(evalf([[1,2],[3,4]])) at Digits 40 = 14 digits. Now a square matrix of numbers with at least one float entry (integers, fractions and pi beside it) takes numeric_matrix_trig: the matrix (in radians) is divided by 2^s as in numeric_matrix_exp (patch 0063, whose scan, product and rounding it reuses), the series of the even part (cos, cosh) and of the odd part (sin, sinh) run at the entries' precision plus s+16 bits until a bound of the rest is below the last bit, and the double-angle rules S'=2*S*C, C'=C^2-S^2 (cos) or C^2+S^2 (cosh) run s times; the result is rounded back to the entries' precision. A real matrix stays real; a complex one works the same; sinh is not (e^M-e^-M)/2, which cancels for a small entry. The zero matrix gives the exact identity or zero matrix; exact and symbolic matrices keep analytic_apply.
+# Upstream: giac 2.1.0 usual.cc sin, cos, sinh and cosh of a square matrix send every matrix to analytic_apply (vecteur.cc), which diagonalises it over its complex eigenvalues, applies the function and transforms back. For a matrix of floats the eigenvectors' round-off stays in the result as imaginary noise, and above Digits 14 the entries come back as doubles: sin(evalf([[0,1],[-1,0]])) = [[2.99760216649e-15*i,1.17520119364],[-1.17520119364,2.99760216649e-15*i]] at Digits 12 and [[-4.3140830754274e-32-2.8865798640254e-15*i,1.1752011936438-7.1960319007501e-17*i],...] at Digits 40 (right [[0,sinh 1],[-sinh 1,0]], real: M^2 = -I, so sin M = M*sinh 1; mpmath sinm), cos(evalf([[0,1],[-1,0]])) = [[1.54308063482,-3.88578058619e-15*i],...] (right cosh 1 times the identity), cos(evalf([[1,2],[3,4]])) at Digits 40 = 14 digits. Now a square matrix of numbers with at least one float entry (integers, fractions and pi beside it) takes numeric_matrix_trig: the matrix (in radians) is divided by 2^s as in numeric_matrix_exp (patch 0063, whose scan, product and rounding it reuses), the series of the even part (cos, cosh) and of the odd part (sin, sinh) run at the entries' precision plus s+16 bits until a bound of the rest is below the last bit of N/2^s (the odd part is of its size), and the double-angle rules S'=2*S*C, C'=C^2-S^2 (cos) or C^2+S^2 (cosh) run s times; the result is rounded back to the entries' precision. A real matrix stays real; a complex one works the same; sinh is not (e^M-e^-M)/2, which cancels for a small entry. A matrix of exact zeros gives the exact identity or zero matrix (entries below the double range, 10^-400 at Digits 40, read as double zeros by the scan, take the series with a bound from their MPFR exponents); exact and symbolic matrices keep analytic_apply.
 # Changed by Pascaline contributors, 2026-11-23
 --- a/src/usual.cc
 +++ b/src/usual.cc
-@@ -1060,6 +1060,99 @@
+@@ -1060,6 +1060,139 @@
      return res;
    }
  
@@ -30,6 +30,31 @@
 +  static bool is_float_squarematrix(const gen & e){
 +    return is_squarematrix(e) && is_fully_numeric(e,num_mask_withint|num_mask_withfrac) && numeric_matrix_has_float(e);
 +  }
++  // N62 (G792): for a matrix of floats whose doubles are all 0 (numeric_matrix_exp_scan's nrm 0), log2 of a bound of
++  // max |re|+|im| over the entries, and nonzero true when an entry is not exactly 0: an MPFR part x has |x| < 2^exp(x),
++  // any other part whose double is 0 is below 2^-1074.
++  static double numeric_matrix_tiny_log2(const gen & g,bool & nonzero){
++    double res=-1e9;
++    if (g.type==_VECT){
++      const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
++      for (;it!=itend;++it)
++	res=std::max(res,numeric_matrix_tiny_log2(*it,nonzero));
++      return res;
++    }
++    for (int k=0;k<2;++k){
++      const gen & p=g.type==_CPLX?*(g._CPLXptr+k):(k?gen(0):g);
++      if (is_exactly_zero(p))
++	continue;
++      nonzero=true;
++      double l=-1074;
++#ifdef HAVE_LIBMPFR
++      if (p.type==_REAL)
++	l=double(mpfr_get_exp(p._REALptr->inf));
++#endif
++      res=std::max(res,l+1); // |re|+|im| below twice the larger part
++    }
++    return res;
++  }
 +  // N62 (G792): sin, cos (hyp false) or sinh, cosh (hyp true) of a numeric square matrix, the odd function when odd, by
 +  // numeric_matrix_exp's scaling and squaring (patch 0063). Stock sent a float matrix to analytic_apply, which
 +  // diagonalises over the complex eigenvalues and transforms back: the eigenvectors' round-off stayed as imaginary noise
@@ -39,8 +64,9 @@
 +  // odd part S (sin or sinh) run at the same bits until the same bound, and the double-angle rules S'=2*S*C, C'=C^2-S^2
 +  // (cos) or C^2+S^2 (cosh) run s times (C and S are series in e, so they commute); the result is rounded back to the
 +  // entries' precision. A real matrix stays real, and sinh is never (e^M-e^-M)/2, which cancels where an entry is small
-+  // (stock's diagonal path gave sinh(evalf([[1,0],[0,10^-20]])) its 1e-20). A zero matrix gives the exact identity (cos,
-+  // cosh) or the exact zero matrix (sin, sinh), as exp does.
++  // (stock's diagonal path gave sinh(evalf([[1,0],[0,10^-20]])) its 1e-20). A matrix whose entries are all exactly 0 gives
++  // the exact identity (cos, cosh) or the exact zero matrix (sin, sinh), as exp does; one whose entries are below the
++  // double range runs the series with a bound from their MPFR exponents.
 +  static gen numeric_matrix_trig(const gen & e0,bool hyp,bool odd,GIAC_CONTEXT){
 +    gen e=evalf(e0,1,contextptr);
 +    if (e.type!=_VECT)
@@ -55,12 +81,24 @@
 +    numeric_matrix_exp_scan(e,nrm,prec,finite,contextptr);
 +    if (!finite)
 +      return gensizeerr(gettext("a matrix entry is not a finite number"));
-+    if (nrm==0)
-+      return odd?gen(vecteur(n,gen(vecteur(n,0))),_MATRIX__VECT):midn(n);
-+    nrm*=n;
 +    int s=0;
-+    for (;nrm>0.5;++s)
-+      nrm/=2;
++    double l2nrm; // log2 of N/2^s, N = n*max(|re|+|im|) over the entries
++    if (nrm==0){
++      // the scan's doubles are all 0: the exact identity or zero matrix only when every entry is exactly 0; an MPFR entry
++      // below the double range (10^-400 at Digits 40) reads as a double 0 too, and its bound comes from its exponent
++      // (sin(evalf([[10^-400,0],[0,10^-400]])) at Digits 40 is that matrix, not the exact zero matrix)
++      bool nonzero=false;
++      l2nrm=numeric_matrix_tiny_log2(e,nonzero);
++      if (!nonzero)
++        return odd?gen(vecteur(n,gen(vecteur(n,0))),_MATRIX__VECT):midn(n);
++      l2nrm+=std::log(double(n))/std::log(2.0);
++    }
++    else {
++      nrm*=n;
++      for (;nrm>0.5;++s)
++	nrm/=2;
++      l2nrm=std::log(nrm)/std::log(2.0);
++    }
 +    int nbits=giacmax(prec,53)+s+16;
 +#ifdef HAVE_LIBMPFR
 +    e=accurate_evalf(e,nbits);
@@ -68,13 +106,15 @@
 +    if (s)
 +      e=e*accurate_evalf(inv(pow(plus_two,s),contextptr),nbits);
 +    gen C=accurate_evalf(midn(n),nbits),S(e),term(e);
-+    double l2nrm=std::log(nrm)/std::log(2.0),lg=l2nrm; // lg: log2 of the bound of the term in `term`, as in numeric_matrix_exp
++    double lg=l2nrm; // lg: log2 of the bound of the term in `term`, as in numeric_matrix_exp
 +    for (int j=2;;++j){
 +      control_c();
 +      if (interrupted)
 +	return gensizeerr(gettext("Stopped by user interruption."));
 +      lg+=l2nrm-std::log(double(j))/std::log(2.0);
-+      if (lg<-nbits-2) // the rest of each series is below twice this bound (N/2^s <= 1/2)
++      // the rest of each series is below twice this bound (N/2^s <= 1/2); the bound is taken relative to N/2^s, not to 1,
++      // because the odd part S is of N's size: sin of a matrix of 10^-400 at Digits 1000 needs its M^3/6
++      if (lg<l2nrm-nbits-2)
 +	break;
 +      term=numeric_matrix_exp_mult(term,e)*accurate_evalf(inv(gen(j),contextptr),nbits);
 +      // e^j/j! goes to C (j even) or S (j odd); cos and sin alternate: + at j = 0 and 1 mod 4
@@ -102,7 +142,7 @@
    gen exp(const gen & e0,GIAC_CONTEXT){
      if (e0.type==_FLOAT_){
  #ifdef BCD
-@@ -1832,6 +1925,8 @@
+@@ -1832,6 +1965,8 @@
  	return e1;
        }
      }
@@ -111,7 +151,7 @@
      if (is_squarematrix(e))
        return analytic_apply(at_cos,*e._VECTptr,contextptr);
      if (e.type==_VECT)
-@@ -2092,6 +2187,8 @@
+@@ -2092,6 +2227,8 @@
  	return res;
        }
      }
@@ -120,7 +160,7 @@
      if (is_squarematrix(e))
        return analytic_apply(at_sin,*e._VECTptr,contextptr);
      if (e.type==_VECT)
-@@ -3120,6 +3217,8 @@
+@@ -3120,6 +3257,8 @@
  	return (g-inv(g,contextptr))/2;
        }
      }
@@ -129,7 +169,7 @@
      if (is_squarematrix(e))
        return analytic_apply(at_sinh,*e._VECTptr,contextptr);
      if (e.type==_VECT)
-@@ -3190,6 +3289,8 @@
+@@ -3190,6 +3329,8 @@
  	return (g+inv(g,contextptr))/2;
        }
      }
