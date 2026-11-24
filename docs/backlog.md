@@ -35,7 +35,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 ## Tasks
 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
-- **F378, F379 (owner's bug list 4, 2026-11-23; `../drafts/2026-11-23-owner-bugs4/`).** F378: one Android back in Function or Solve leaves N62 (R926, then A271's double back). F379: the unit view puts a slot on the 10 of `6.62607015×10⁻³⁴`; m there gives (10 m)⁻³⁴ (R925).
+- **F378, F379 (owner's bug list 4, 2026-11-23; `../drafts/2026-11-23-owner-bugs4/`).** F378: one Android back in Function or Solve leaves N62 (R926, then A271's double back). F379: the unit view puts a slot on the 10 of `6.62607015×10⁻³⁴`; m there gives (10 m)⁻³⁴ (R925 ✓).
 - **F366–F377 (layers study 2026-11-23, sandra + sofia; `../drafts/2026-11-23-layers-study/`).** Input leaks through a layer over Home. Wrong reading: F368 (the unit view keeps the other angle's result) and F377 (its row has no RAD tag), R915 with F376 (R915 ✓). F366 F367 R918 ✓; F370 F371 R917 ✓; F375 R919 ✓; F372 F373 R922; F374 R898. F369 (⌄ folds the keys under the view): no package, nothing is lost. The net: `layers.spec.ts`, its known list per F id (R916 ✓).
 - **F236 (ron, R338).** history-first.spec.ts "engine not ready: the newest five rows" counts 20 renders against 15 under load: 4 failures on 11-12/13, none before. Find the extra re-format; a looser bound is no fix. G224f1 raised it to 20 (da18fc18): the fix sets 15 again.
 - **F238 (A139; R340).** Shift + Fmt, dead, has no `aria-disabled`: TalkBack does not say it does nothing.
