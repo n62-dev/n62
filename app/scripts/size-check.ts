@@ -182,8 +182,8 @@ export function extraStartFiles(manifest: Record<string, ManifestChunk>): string
  *  80.28 → 80.59 kB (R862): phase-1 ebef0cb2 measures 80,222 B, the branch 80,535 B (+313 B: open 30,974 → 31,125 B, ☰'s case in
  *  the view's key handler and the Tools rows' builder shared with Find on units; find 9,373 → 9,535 B, showUnitMenu and
  *  menu.ts's unitViewMenu, the one list of Tools and Constants both menus show). 80,535 B + 0.05 kB, rounded up to the next 0.01 kB.
- *  80.59 → 80.91 kB (R915): phase-1 109317e5 80,535 B, the branch 80,860 B (+325 B, open: the angle and digits watcher, the row's angle tag, Store's row-gone note); + 0.05 kB. */
-export const UNIT_VIEW_PIN_RAW = 80_910;
+ *  80.59 → 80.91 kB (R915): phase-1 109317e5 80,535 B, the branch 80,860 B (+325 B, open: the angle and digits watcher, the row's angle tag, Store's row-gone note); + 0.05 kB. 80.91 → 81.20 kB (R917): phase-1 27453760 80,822 B, the branch 81,146 B (+324 B, open: one visit ended in one close, the lent line given back, the focus on the line, the reopen through lazy); + 0.05 kB, rounded up. */
+export const UNIT_VIEW_PIN_RAW = 81_200;
 
 /** The budgets of docs/04 section 8.3 that apply to files of the build; the device bars are not here. */
 function subjects(manifest: Record<string, ManifestChunk>, all: string[], modules: Record<string, string[]> | null): { present: Subject[]; absent: string[]; missing: string[] } {
