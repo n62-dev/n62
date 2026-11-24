@@ -16,6 +16,7 @@ import type { MathfieldElement } from "mathlive";
 import type { Key } from "../keyboard/keyboard.ts";
 import { lazy, type Mods, type RouteCtx } from "../keyboard/route.ts";
 import type { HistoryItem } from "../state/session.svelte.ts";
+import type { FindItem } from "../find/types.ts";
 import { engineFormat } from "../calc/port.ts";
 import { ANS_KEY, type ChipTable } from "../input/chips.ts";
 import { openLayer } from "../input/backLayer.ts";
@@ -101,8 +102,9 @@ function lend(entry: RouteCtx["entry"], dead: () => void): () => void {
   };
 }
 
-/** Open the unit view on the line, or on a picked history row's input (it becomes the line). Dead in an app. */
-export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
+/** Open the unit view on the line, or on a picked history row's input (it becomes the line). Dead in an app. `unit`: a unit
+ *  picked from Find in Home or CAS (R893), put in the active slot as Find on units puts it, through the view's own apply. */
+export async function openUnits(c: RouteCtx, row?: HistoryItem, unit?: FindItem): Promise<void> {
   const session = c.session; // (read once: the chunk is at its size pin)
   const entryEl = document.querySelector<HTMLElement>(".entry");
   const fieldEl = entryEl?.querySelector<HTMLElement>(".field");
@@ -160,12 +162,13 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
     void unitFind().catch(() => undefined);
     // MathLive comes with the entry line (its field is up once `ready`): the class is taken from the element registry
     // G234: your units are Find's items in the slot too (the store is read first: the list is as it was left)
-    const [, { finder, index }, hw] = await Promise.all([
+    const [, { finder, index }, hw, , , pf] = await Promise.all([
       c.entry.ready,
       Promise.all([import("../find/finder.ts"), ownUnits.restore()]).then(async ([m]) => ({ finder: m, index: m.withOwnUnits(await m.loadIndex(true), ownUnits.list()) })),
       import("../entry/hwkeys.ts"),
       unitCells.restore(),
       hooks()?.hold?.(),
+      unit && unitFind(),
     ]);
     const Field = customElements.get("math-field") as typeof MathfieldElement | undefined;
     if (!Field) return c.dead();
@@ -275,6 +278,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
     setUp(mf, element, c, hw, new HwTyping(view));
     lockedValue(mf, view.formula.latex, view.ids);
     view.start();
+    if (unit && pf) for (const a of pf.pickActions(cat, unit)) view.apply(a);
 
     /** R700: Android back is Esc for the view (docs/05 3.7): out of the alternatives row, else it leaves; each back takes a new entry for what is left. */
     const layer = (): void => {
