@@ -62,6 +62,17 @@ describe("look", () => {
     expect(validLook({ pops: "no" }, off).pops).toBe(false);
     expect(validLook({ pops: 0 }, defaultLook()).pops).toBe(true);
   });
+  it("R932: validLook gives findFull false when the field is missing, keeps a stored boolean, and the fallback's for a wrong type", () => {
+    const on = { ...defaultLook(), findFull: true };
+    expect(defaultLook().findFull).toBe(false);
+    expect(defaultLook(true, true).findFull).toBe(false);
+    expect(validLook({ family: "bw", brightness: "dark", contrast: false, plain: false, shadow: true, pops: true }, on).findFull).toBe(false);
+    expect(validLook({}, on).findFull).toBe(false);
+    expect(validLook({ findFull: true }, defaultLook()).findFull).toBe(true);
+    expect(validLook({ findFull: false }, on).findFull).toBe(false);
+    expect(validLook({ findFull: "yes" }, on).findFull).toBe(true);
+    expect(validLook({ findFull: 1 }, defaultLook()).findFull).toBe(false);
+  });
   it("System follows the phone; the other two do not", () => {
     const l = { ...defaultLook(), family: "solarized" as const, plain: true };
     expect(themeOf(l, true)).toEqual({ family: "solarized", brightness: "light", contrast: "normal", keys: "plain" });

@@ -6,7 +6,7 @@
 // values come from the rule: the box covers the viewport (0, 0, 360, 740); the button is a 44 px touch target whose centre and
 // drawn mark lie in the title row, left of ×. The fake engine, at 360 × 740.
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, open, tap } from "./helpers.ts";
+import { entryValue, flick, open, tap } from "./helpers.ts";
 
 const W = 360;
 const H = 740;
@@ -272,4 +272,125 @@ test("R892: at 360 × 740, Chars, a tap at the ‰ cell's centre-bottom types �
   await page.touchscreen.tap(b.x + b.width / 2, Math.min(b.y + b.height, s.y + s.height) - 2);
   await expect.poll(() => entryValue(page)).toBe("‰");
   await expect(sheet(page)).toHaveCount(0); // the pick closed the sheet
+});
+
+// R932 (owner, 2026-11-24): Settings › Appearance › Find opens full screen, a switch at the end of the section, off by default.
+// On, Math opens Find already full (the button pressed, the box the viewport); the button, Esc or Back returns it to the small
+// window, then the sheet's usual step. Vars, Units, Chars and every other sheet open small either way. Expected values come
+// from the rule.
+const findRow = (page: Page) => sheet(page).locator('[role="menuitem"][data-id="findFull"]');
+/** Mode › Settings › Appearance, the switch toggled by its digit (row 7), and the sheet closed again. */
+async function findFullToggle(page: Page): Promise<void> {
+  await tap(page, ["@mode", "d6", "d1", "d7"]);
+  for (let i = 0; i < 4 && (await sheet(page).count()) > 0; i++) await tap(page, ["esc"]);
+  await expect(sheet(page)).toHaveCount(0);
+}
+const findFull = (page: Page) => page.evaluate(() => window.n62.session.settings.look.findFull);
+/** Find is open and full: the button pressed and the box the viewport. */
+async function openedFull(page: Page): Promise<void> {
+  await expect(page.getByTestId("find")).toBeVisible();
+  await expect(full(page)).toHaveAttribute("aria-pressed", "true");
+  expect(covers(await boxOf(page, '[role="menu"]'))).toBe(true);
+}
+/** The open sheet is small: no pressed button and the box not the viewport. */
+async function small(page: Page): Promise<void> {
+  await expect(sheet(page)).toBeVisible();
+  await expect(page.locator('[data-sheet-full][aria-pressed="true"]')).toHaveCount(0);
+  expect(covers(await boxOf(page, '[role="menu"]'))).toBe(false);
+}
+
+test("R932: Appearance ends with Find opens full screen, off at a first start; a tap toggles it and it survives a reload", async ({ page }) => {
+  expect(await findFull(page)).toBe(false);
+  await tap(page, ["@mode", "d6", "d1"]);
+  const ids = await sheet(page).getByRole("menuitem").evaluateAll((els) => els.map((e) => e.getAttribute("data-id")));
+  expect(ids.at(-1)).toBe("findFull");
+  await expect(findRow(page).locator(".label")).toHaveText("Find opens full screen");
+  await expect(findRow(page)).toHaveAttribute("data-selected", "false");
+  await findRow(page).tap();
+  await expect(findRow(page)).toHaveAttribute("data-selected", "true");
+  expect(await findFull(page)).toBe(true);
+  await page.waitForTimeout(300); // the store write is asynchronous
+  await page.reload();
+  await page.waitForFunction(() => window.n62 !== undefined);
+  await page.evaluate(() => window.n62.entry.ready);
+  expect(await findFull(page)).toBe(true);
+  await tap(page, ["math"]);
+  await openedFull(page);
+});
+
+test("R932: on, Math opens Find full; the button returns it to the small window, then Esc closes it", async ({ page }) => {
+  await findFullToggle(page);
+  expect(await findFull(page)).toBe(true);
+  await tap(page, ["math"]);
+  await openedFull(page);
+  expect(await inHead(page)).toEqual([]);
+  await full(page).tap();
+  await small(page);
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("find")).toHaveCount(0);
+});
+
+test("R932: on, Esc returns a full Find to the small window, a second Esc closes it; the next Math opens full again", async ({ page }) => {
+  await findFullToggle(page);
+  await tap(page, ["math"]);
+  await openedFull(page);
+  await page.keyboard.press("Escape");
+  await small(page);
+  await expect(page.getByTestId("find")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("find")).toHaveCount(0);
+  await tap(page, ["math"]);
+  await openedFull(page);
+});
+
+test("R932: on, Back returns a full Find to the small window, then closes it", async ({ page }) => {
+  await findFullToggle(page);
+  await tap(page, ["math"]);
+  await openedFull(page);
+  await page.goBack();
+  await small(page);
+  await expect(page.getByTestId("find")).toBeVisible();
+  await page.goBack();
+  await expect(page.getByTestId("find")).toHaveCount(0);
+});
+
+test("R932: on, a hardware keyboard drives a full Find: a letter filters, Enter picks", async ({ page }) => {
+  await findFullToggle(page);
+  await tap(page, ["math"]);
+  await openedFull(page);
+  await page.keyboard.press("c");
+  await expect(page.getByTestId("find").getByTestId("sheet-filter")).toHaveText("c");
+  await expect(full(page)).toHaveAttribute("aria-pressed", "true");
+  await page.keyboard.press("Enter");
+  await expect(page.getByTestId("find")).toHaveCount(0);
+  expect(await entryValue(page)).toBe("\\const{c}{c}");
+});
+
+test("R932: off (the default), Math opens Find small", async ({ page }) => {
+  await tap(page, ["math"]);
+  await expect(page.getByTestId("find")).toBeVisible();
+  await expect(full(page)).toHaveAttribute("aria-pressed", "false");
+  await small(page);
+});
+
+test("R932: on, Vars, Chars, Find on units and a long menu open small", async ({ page }) => {
+  await findFullToggle(page);
+  await tap(page, ["vars"]);
+  await small(page);
+  await tap(page, ["esc"]);
+  await expect(sheet(page)).toHaveCount(0);
+  await tap(page, ["shift", "vars"]);
+  await small(page);
+  await tap(page, ["esc"]);
+  await expect(sheet(page)).toHaveCount(0);
+  await menu(page, 40);
+  await small(page);
+  await page.keyboard.press("Escape");
+  await expect(sheet(page)).toHaveCount(0);
+  await flick(page, "tmpl", "up"); // the units key: the unit view, where Math is Find on units
+  await page.waitForFunction(() => document.querySelector('[data-pad="unit"]') !== null);
+  await tap(page, ["math"]);
+  await expect(page.getByTestId("find")).toBeVisible();
+  await expect(full(page)).toHaveAttribute("aria-pressed", "false");
+  await small(page);
 });

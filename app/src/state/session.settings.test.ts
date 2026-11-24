@@ -89,6 +89,32 @@ describe("migrateSettings", () => {
   });
 });
 
+describe("R932: Find opens full screen (look.findFull)", () => {
+  it("reads false on a fresh profile and on a stored look without it, with no migration step", async () => {
+    expect(defaultSettings.look.findFull).toBe(false);
+    const fresh = new Session(new FakeCalc(), fakeKv());
+    await fresh.restoreSettings();
+    expect(fresh.settings.look.findFull).toBe(false);
+    const kv = fakeKv();
+    kv.data.set("settings", { schema: SETTINGS_SCHEMA, look: { family: "bw", brightness: "light", contrast: false, plain: false, shadow: true, pops: true } });
+    const old = new Session(new FakeCalc(), kv);
+    await old.restoreSettings();
+    expect(old.settings.look.findFull).toBe(false);
+    expect(migrateSettings({ schema: SETTINGS_SCHEMA, look: { family: "bw" } }).migrated).toBe(false);
+  });
+  it("set to true, it is stored and survives a reload", async () => {
+    const kv = fakeKv();
+    const s = new Session(new FakeCalc(), kv);
+    await s.restoreSettings();
+    s.settings.look = { ...s.settings.look, findFull: true };
+    s.save();
+    expect((kv.data.get("settings") as { look: { findFull: unknown } }).look.findFull).toBe(true);
+    const again = new Session(new FakeCalc(), kv);
+    await again.restoreSettings();
+    expect(again.settings.look.findFull).toBe(true);
+  });
+});
+
 describe("the look (R50e, schema 3)", () => {
   const first = { family: "n62", brightness: "dark", contrast: true, plain: false, shadow: true, pops: true } as const;
   it("every schema before 3 gets the first-start look and is marked as migrated", () => {
