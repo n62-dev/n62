@@ -1,0 +1,39 @@
+# Upstream: giac 2.1.0 usual.cc _lcm: lcm(a,b) (gen.cc) is normal(a/gcd(a,b))*b, which keeps the sign of the product, so the lcm of integers of opposite signs was negative: lcm(-4,6) = -12, lcm(4,-6) = -12, lcm([-4,6,10]) = -60, lcm(-3,-5,-7) = -105, lcm(-2^70,3) = -3541774862152233910272, element-wise lcm([-4,6],[6,4]) = [-12,12], and lcm(-4) = -4 (right 12, 12, 60, 105, 3541774862152233910272, [12,12], 4: the least positive common multiple, as Python math.lcm). gcd is positive already. Now _lcm returns the abs when every argument is an integer (_INT_ or _ZINT), and the element-wise branch does the same per pair; lcm(a,b) itself, which Giac calls inside, is unchanged, and so are polynomials (lcm(x^2-1,x+1)), rationals and mixed arguments.
+# Changed by Pascaline contributors, 2026-11-24
+--- a/src/usual.cc
++++ b/src/usual.cc
+@@ -7090,19 +7090,30 @@
+   define_unary_function_ptr5( at_gcd ,alias_at_gcd,&__gcd,0,true);
+ 
+   // static symbolic symb_lcm(const gen & a,const gen & b){    return symbolic(at_lcm,makevecteur(a,b));  }
++  // N62 patch 0065 (G793): lcm(a,b) is normal(a/gcd(a,b))*b, which keeps the sign of a*b (lcm(-4,6) = -12, lcm([-4,6,10]) = -60,
++  // lcm([-4,6],[6,4]) = [-12,12]); the lcm of integers is the least positive common multiple, so when every argument is an
++  // integer (_INT_ or _ZINT) the result is its abs. Polynomials, rationals and mixed arguments keep Giac's form.
++  static bool lcm_integer(const gen & a){ return a.type==_INT_ || a.type==_ZINT; }
++  static gen lcm_positive(const gen & a,const gen & b){
++    gen res=lcm(a,b);
++    return (lcm_integer(a) && lcm_integer(b))?abs(res,context0):res;
++  }
+   gen _lcm(const gen & args,GIAC_CONTEXT){
+     if ( args.type==_STRNG && args.subtype==-1) return  args;
+     if (args.type!=_VECT)
+-      return args;
++      return lcm_integer(args)?abs(args,contextptr):args;
+     vecteur::const_iterator it=args._VECTptr->begin(),itend=args._VECTptr->end();
+     if (itend==it)
+       return 1;
+     if (ckmatrix(args) && itend-it==2 && it->subtype!=_POLY1__VECT && (it+1)->subtype!=_POLY1__VECT)
+-      return apply(*it,*(it+1),lcm);
++      return apply(*it,*(it+1),lcm_positive);
+     gen res(*it);
+-    for (++it;it!=itend;++it)
++    bool allint=lcm_integer(res);
++    for (++it;it!=itend;++it){
++      allint=allint && lcm_integer(*it);
+       res=lcm(res,*it);
+-    return res;
++    }
++    return allint?abs(res,contextptr):res;
+   }
+   static const char _lcm_s []="lcm";
+   static define_unary_function_eval (__lcm,&_lcm,_lcm_s);
