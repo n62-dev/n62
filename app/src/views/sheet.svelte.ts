@@ -506,12 +506,12 @@ export class Sheet {
 
   /** R778: the sheet fills the whole screen, the keys under it (a touch view); per open sheet, so closing it resets it. */
   full = $state(false);
-  /** R778: this level has no fixed size, so its corner button may fill the screen: a list that takes letters (Find, Vars, Units,
-   *  a menu over 10 rows) or the Chars grid. A short list, the Mode levels, Tmpl, the Shift palettes, the store sheet's letters
-   *  and a text, a matrix or the credits have none. */
+  /** R778: this level has no fixed size, so the button in its title row may fill the screen: a list that takes letters (Find,
+   *  Vars, Units, a menu over 10 rows). A short list, the Mode levels, Tmpl, the Shift palettes, Chars (R931), the store sheet's
+   *  letters and a text, a matrix or the credits have none. */
   get fillable(): boolean {
     const l = this.level;
-    return l.grid === undefined && l.cells === undefined && l.text === undefined && l.credits === undefined && l.unc === undefined && (l.filterable || l.digits);
+    return l.grid === undefined && l.cells === undefined && l.text === undefined && l.credits === undefined && l.unc === undefined && l.filterable;
   }
 
   /** ◀ and Esc: back one level; a full sheet goes back to the viewport first. False at the root: the caller closes the sheet. */
