@@ -4,9 +4,10 @@ import { randomBytes } from "node:crypto";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { gzipSync } from "node:zlib";
 import { afterEach, describe, expect, it } from "vitest";
 import { readSources, startReach } from "./import-rules.ts";
-import { checkLazyParts, checkSizes, checkSplits, checkStartPin, INLINE_PIN_GZIP, inlineScripts, LAZY_PARTS, lazyFailures, START_PIN_GZIP, startFiles, UNIT_VIEW_PIN_RAW } from "./size-check.ts";
+import { checkLazyParts, checkSizes, checkSplits, checkStartPin, hashFree, INLINE_PIN_GZIP, inlineScripts, LAZY_PARTS, lazyFailures, START_PIN_GZIP, startFiles, UNIT_VIEW_PIN_RAW } from "./size-check.ts";
 
 const dirs: string[] = [];
 afterEach(() => {
@@ -17,7 +18,7 @@ afterEach(() => {
 type Size = number | { random: number };
 
 /** A fake dist: `files` maps a path to its size. */
-function fakeDist(manifest: Record<string, object>, files: Record<string, Size>): string {
+function fakeDist(manifest: Record<string, object>, files: Record<string, Size>, texts: Record<string, string> = {}): string {
   const dist = mkdtempSync(join(tmpdir(), "size-check-"));
   dirs.push(dist);
   mkdirSync(join(dist, ".vite"));
@@ -26,6 +27,10 @@ function fakeDist(manifest: Record<string, object>, files: Record<string, Size>)
     mkdirSync(join(dist, path, ".."), { recursive: true });
     const content = typeof size === "number" ? Buffer.concat([randomBytes(Math.min(size, 20_000)), Buffer.alloc(Math.max(0, size - 20_000))]) : randomBytes(size.random);
     writeFileSync(join(dist, path), content);
+  }
+  for (const [path, text] of Object.entries(texts)) {
+    mkdirSync(join(dist, path, ".."), { recursive: true });
+    writeFileSync(join(dist, path), text);
   }
   return dist;
 }
@@ -339,5 +344,65 @@ describe("size-check", () => {
     const reach = startReach(readSources(join(import.meta.dirname, "..")));
     expect(reach.has("src/apps/shell.svelte.ts")).toBe(true); // the walk sees the start: the shell's start part stays
     expect(parts.filter((src) => reach.has(src))).toEqual([]);
+  });
+
+  // A272: the start chunk names the lazy chunks, the Find index and the engine by their hashed file names; a new hash gzips a few
+  // bytes differently with no source change, so the gzip and brotli columns hold the hashes fixed. Raw stays the real file's.
+  const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-";
+  const hashOf = (seed: number, i: number): string => {
+    let x = (seed * 7919 + i * 104729 + 13) >>> 0;
+    return Array.from({ length: 8 }, () => ((x = (Math.imul(x, 1664525) + 1013904223) >>> 0), ALPHABET[(x >>> 24) % 64])).join("");
+  };
+  const hexOf = (seed: number, i: number): string => (Math.imul(seed * 7919 + i, 2654435761) >>> 0).toString(16).padStart(8, "0");
+  const startText = (seed: number, tail = ""): string => {
+    const names = Array.from({ length: 200 }, (_, i) => `import("./assets/chunk${i}-${hashOf(seed, i)}.js");`);
+    return `${names.join("\n")}\nfetch("./assets/find-index-${hashOf(seed, 1000)}.json");\nnew Worker("./engine/giac.${hexOf(seed, 1001)}${hexOf(seed, 1002)}.mjs");\n${tail}`;
+  };
+  const startDist = (text: string): string => {
+    const { manifest } = base(0);
+    return fakeDist(manifest, { ...FINDER_FILE, "assets/mathlive.js": 800_000 }, { "assets/index.js": text });
+  };
+  const startRow = (text: string) => checkSizes(startDist(text)).rows.find((x) => x.rule === "Start chunk")!;
+
+  it("measures the same gzip for two start chunks that differ only in the hash part of the file names they name (A272)", () => {
+    const a = startText(1);
+    const b = startText(2);
+    expect(a).not.toBe(b);
+    expect(gzipSync(Buffer.from(a)).length).not.toBe(gzipSync(Buffer.from(b)).length); // the real files do gzip differently
+    const ra = startRow(a);
+    const rb = startRow(b);
+    expect(ra.gzip).toBe(rb.gzip);
+    expect(ra.raw).toBe(Buffer.byteLength(a)); // raw is the real file's
+    expect(ra.raw).toBe(rb.raw);
+  });
+
+  it("still measures a start chunk whose code changes by one character differently (A272)", () => {
+    const base1 = startText(1, "var answer = 41;\n" + randomBytes(300).toString("base64"));
+    const changed = base1.replace("var answer = 41;", "var answer = 42;");
+    const other = base1.replace("var answer = 41;", "var anSwer = 41;");
+    expect(changed.length).toBe(base1.length);
+    expect(hashFree(Buffer.from(changed)).equals(hashFree(Buffer.from(base1)))).toBe(false);
+    expect(hashFree(Buffer.from(other)).equals(hashFree(Buffer.from(base1)))).toBe(false);
+  });
+
+  it("hashFree turns Vite's 8-character hashes and the engine's 16 hex digits into a placeholder of the same length, and touches nothing else (A272)", () => {
+    const text = 'a("./index-AbCdEf12.js"),b("./find-index-Zz9Yy8Xx.json"),c("./giac.0123456789abcdef.mjs"),d("./x.0123456789abcdef.wasm"),e("./a-b-q_-0Z9aB.css"),k = "index-short.js", u = "Zz9Yy8Xx.js"';
+    const out = hashFree(Buffer.from(text)).toString();
+    expect(out.length).toBe(text.length);
+    expect(out).not.toMatch(/AbCdEf12|Zz9Yy8Xx|0123456789abcdef|q_-0Z9aB/);
+    expect(out).toContain("./index-");
+    expect(out).toContain("./find-index-");
+    expect(out).toContain("./giac.");
+    expect(out).toContain('index-short.js", u = "Zz9Yy8Xx.js"'); // too short, or no separator before the 8 characters: not a hash
+    expect(hashFree(Buffer.from(text.replace(/AbCdEf12|Zz9Yy8Xx/g, "Qq1Ww2Ee"))).equals(hashFree(Buffer.from(text.replace(/AbCdEf12|Zz9Yy8Xx/g, "Mm3Nn4Oo"))))).toBe(true);
+  });
+
+  it("holds the hashes fixed for the brotli column too (A272)", () => {
+    const mk = (seed: number) => {
+      const { manifest, files } = base(1000);
+      const dist = fakeDist(manifest, files, { "assets/qalc.js": startText(seed) });
+      return checkSizes(dist).rows.find((x) => x.rule === "qalc wasm + glue")!.brotli;
+    };
+    expect(mk(3)).toBe(mk(4));
   });
 });
