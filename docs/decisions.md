@@ -11,6 +11,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **R779, the drag after the arrow keys, on the Fairphone:** Chromium touch emulation could not reproduce "drag, arrow keys, drag" (linetouch.spec.ts, R779 cases, green on phase-1 too); lineTouch.ts now ends a stale touch (a new first finger, a lift off the line). Does the drag work on the Fairphone 6 after it? If not, record `adb` pointer events (down/move/up/cancel with ids) for the sequence.
 - **R872, N62 Light HC Enter:** keep 2.79:1 (recommended): 3:1 and a 7:1 black label cannot both hold (fill luminance ≤ 0.277, label ≥ 0.30); a white label puts a dark brown Enter near Shift.
 - **R873, Solarized's pad arrows:** keep 4.03 and 4.28:1 (recommended): `--key-text` at 70 % on a pad 1.25:1 from the keypad tops out near 4.0:1; or raise the arrows' opacity.
+- **R892, the corner button's room:** keep the strip (recommended): the sheet reserves `--touch` under its list or grid while the button shows, so no row lies under it in the first view either; the brief's scroller padding alone cleared only the end (Find rows 5, 6 and the ‰ cell at 360 stayed under it, 1216 and 529 px²). Cost: about 38 px less list in a cut sheet.
 - **R918, the unit view's entries budget 42 → 42.6 kB:** keep it (recommended): the tap guard that makes a history tap under the view a dead press costs 0.59 kB and has nowhere else to go but the start chunk (pin 81.79 kB with shared); else a cut of that size in the view's chunk.
 
 ## Decided proposals
