@@ -472,9 +472,6 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  names in Unicode's order, so one table gives both the LaTeX and the letter), in the history's uses line; and the letter
  *  stand-ins e_, i_ as user functions (parse.ts, latex-to-giac.ts). phase-1 3b8ab8e7 measures 60,843 B gzip (171,945 B raw),
  *  the branch merged with it 60,922 B (172,108 B raw, +79 B): 60,922 B + 0.05 kB, rounded up to the next 0.01 kB.
- *  G313f1 (no start-chunk file changed, the R260 pin of 60,980 B stayed): phase-1 33f50c78 measures 60,844 B gzip (171,945 B raw), the branch
- *  60,853 B (171,945 B raw, the same): the start chunk names the Find index asset, whose hashed file name changed with the new
- *  sigfig row, and the hash's characters gzip 9 B differently. 60,853 B + 0.05 kB, rounded up to the next 0.01 kB; the merged branch stayed inside the R260 pin.
  *  60,980 → 61,210 B (R276): a history row's hold copies and its swipe deletes. Their code (views/rowSwipe.ts and
  *  apps/longpress.ts, +1.22 kB gzip in the start chunk) is a lazy chunk fetched when idle (views/rowGesturesCode.ts); what
  *  stays is the loader (views/rowGestures.ts), the row's touch-action and App's delete on a swipe. phase-1 f2e29dd6
@@ -486,10 +483,6 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  one-line methods. The merge base 5bfdb4c1 measures 61.18 kB gzip (172.85 kB raw), the branch 61.34 kB (173.25 kB raw,
  *  +0.16 kB; 61.44 kB before the step code moved into the lazy chunk; 61.35 kB after merging phase-1 31b97787): 61.35 kB
  *  + 0.05 kB.
- *  61,400 → 61,460 B (G341, no start-chunk source changed): phase-1 8214eddf measures 61,400 B gzip, the branch 61,403 B,
- *  both 173,248 B raw: the start chunk names the lazy chunks and the Find index by their hashed file names, which the
- *  parser's and the index's changes renamed, and the new names gzip 3 B differently (as G313f1). 61,403 B + 0.05 kB,
- *  rounded up to the next 0.01 kB.
  *  61,460 → 61,700 B (R281): the store sheet. Its model, view, words and key reading ride in lazy chunks (views/storeSheet.svelte.ts
  *  in Vars' chunk, SheetCells.svelte with the sheet's view, sheetKeys.ts storeKey, i18n/enStore.ts); what stays is Store ▶
  *  opening it (route.ts run, App.svelte openStore and the row actions' `stored`), the sheet's disarm on a key, the store
@@ -507,9 +500,6 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  (`drag`, so a drag never grows the matrix) and the entry holding the field chunk's `Grown` (made with the field,
  *  passed to runOnField, cleared when a line is set). The merge base 68e296cf measures 61.77 kB gzip (174.36 kB raw), the
  *  branch 61.85 kB (174.55 kB raw): 61.85 kB + 0.05 kB.
- *  61,900 → 61,970 B (G308, as G322): no app file changed; Giac patch 0048 changes the engine build, so the engine worker's
- *  hashed name and the chunk names that follow it gzip differently. The same tree measures 61,899 B gzip with phase-1's
- *  engine and 61,917 B with the patched one (174,781 B raw both): 61,917 B + 0.05 kB.
  *  61,970 → 62,040 B (R224): the wide layout. Its look is CSS (App.svelte's `@media` block, outside the JS); what stays in
  *  the chunk is the condition (views/wide.ts), its matchMedia in App.svelte's onMount and `canFold` reading it (no results
  *  mode side by side). svelte/reactivity's MediaQuery cost 0.17 kB more, so a plain matchMedia. The merge base 4ee33b66
@@ -630,8 +620,11 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  field's load, a sheet's open or a key on an open sheet rides in the chunk that path already waited for (state/jobRun.ts −310 B,
  *  entry/fieldUp.ts −140 B, apps/shellSheets.ts −281 B, sheetKeys.ts sheetPress and sheetLetter −202 B, calc/portKeys.ts −189 B).
  *  G792 (fix round 1, a cut; the pin stays): patch 0066's engine hash took the chunk past the pin; Session.setFmtMode and
- *  setFixDecimals, which only the lazy Mode sheet calls, moved to state/modeSets.ts (−60 B gzip before the merge with R930). */
-export const START_PIN_GZIP = 61_880;
+ *  setFixDecimals, which only the lazy Mode sheet calls, moved to state/modeSets.ts (−60 B gzip before the merge with R930).
+ *  61,880 → 60,670 B (A272, the measure changed, not the code): gzip and brotli hold the hashed file names fixed (hashFree), so a new
+ *  lazy-chunk, Find-index or engine hash no longer moves the pin (the hash-only notes above, G313f1, G341, G308, are in git log -L).
+ *  Phase-1 5812dc91's start files: 61,798 B gzip real, 60,612 B held (172.71 kB raw). 60,612 B + 0.05 kB, rounded up to 10 B. */
+export const START_PIN_GZIP = 60_670;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its
