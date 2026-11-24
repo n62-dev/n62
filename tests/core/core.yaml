@@ -382,7 +382,7 @@ cases:
   - id: c43
     area: matrix
     title: "det from Find (Math, d e t, Enter): det of [[1,2],[3,4]]"
-    keys: [math, x, frac, div, enter, {tmpl: matrix22}, d1, right, d2, right, d3, right, d4, right, right, enter]
+    keys: [math, {down: x}, frac, div, enter, {tmpl: matrix22}, d1, right, d2, right, d3, right, d4, right, right, enter]
     expect: { result: "-2", mark: "=" }
     value: "-2"
     source: derived

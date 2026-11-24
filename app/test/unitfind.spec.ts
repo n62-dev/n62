@@ -39,7 +39,7 @@ async function typeFind(page: Page, text: string): Promise<void> {
   for (const ch of text.toLowerCase()) {
     const id = LETTER.get(ch);
     if (!id) throw new Error(`no key types ${ch}`);
-    if (/^d\d$/.test(id)) await flick(page, id, "down");
+    if (/^d\d$/.test(id) || id === "x") await flick(page, id, "down"); // a digit picks, x types x (R889): the flick types the letter
     else await tap(page, [id]);
   }
 }

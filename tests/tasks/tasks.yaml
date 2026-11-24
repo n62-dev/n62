@@ -168,7 +168,7 @@ tasks:
     source: oracle    # mean = 981/100 and sum of squares = 3/1000 exactly; roots by mpmath 1.3.0, 40 digits
     baseline:
       note: "a short search, not a proof: the readings in a list (Shift + 8; 9.80 typed 9.8) stored in x once (▶ x), then mean(x) by m e a (Find's first hit after three letters) and stddevp(x) by s (a flick down on 9) t d; Home shows the last two rows"
-      keys: [shift, d8, d9, dot, d8, d1, comma, d9, dot, d7, d9, comma, d9, dot, d8, d3, comma, d9, dot, d8, comma, d9, dot, d8, d2, comma, d9, dot, d7, d8, comma, d9, dot, d8, d4, comma, d9, dot, d8, d1, comma, d9, dot, d8, comma, d9, dot, d8, d2, right, shift, emark, x, enter, math, neg, frac, vars, enter, x, enter, math, {down: d9}, div, x, enter, x, enter]
+      keys: [shift, d8, d9, dot, d8, d1, comma, d9, dot, d7, d9, comma, d9, dot, d8, d3, comma, d9, dot, d8, comma, d9, dot, d8, d2, comma, d9, dot, d7, d8, comma, d9, dot, d8, d4, comma, d9, dot, d8, d1, comma, d9, dot, d8, comma, d9, dot, d8, d2, right, shift, emark, x, enter, math, neg, frac, vars, enter, x, enter, math, {down: d9}, div, {down: x}, enter, x, enter]
       text: ["9.81", "0.0182574185835"]
     compare: { g2_virtual_calc: null, phone_calculator: null }
 
