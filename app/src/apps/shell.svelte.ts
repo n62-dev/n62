@@ -210,7 +210,7 @@ export class AppShell {
     return !this.entryEdited && (a?.undo?.(this.view) ?? false);
   }
   /** R145: where a ☰ sheet's ⚙ goes (and the ⚙ key over any sheet, R887): Settings as a level of the sheet (R49), else, before the
-   *  Mode code is in, Mode › Settings. */
+   *  Mode code is in, the Settings root (openSettings, R927). */
   readonly toSettings = (): SubMenu | (() => void) => this.settingsMenu?.() ?? (() => this.openSettings?.());
 
   // ---- sheets (docs/05 3.1)
@@ -254,9 +254,9 @@ export class AppShell {
     return true;
   }
   /** Open a list of items over the view (a long press on a history row): same sheet and keys as the Menu key.
-   *  `settings`: the ⚙ in its title row opens Settings (R145). */
-  showMenu(title: string, items: readonly MenuItem[], opts?: { remember?: boolean; filterable?: boolean; at?: string; settings?: boolean; credits?: readonly CreditBlock[]; unc?: UncHead; loading?: () => Promise<void> | null }): void {
-    this.openSheet((m) => new m.Sheet(`list:${title}`, title, () => items, { ...opts, settings: opts?.settings ? this.toSettings : undefined }));
+   *  `settings`: the ⚙ in its title row opens Settings (R145). `id`: the sheet's id, else `list:<title>`. */
+  showMenu(title: string, items: readonly MenuItem[], opts?: { remember?: boolean; filterable?: boolean; at?: string; settings?: boolean; credits?: readonly CreditBlock[]; unc?: UncHead; loading?: () => Promise<void> | null; id?: string }): void {
+    this.openSheet((m) => new m.Sheet(opts?.id ?? `list:${title}`, title, () => items, { ...opts, settings: opts?.settings ? this.toSettings : undefined }));
   }
   /** Find (R4a): its categories, searched by the letters typed (Sheet id "find"; route.ts gives it docs/04 3.7's keys). */
   showFind(title: string, categories: readonly MenuItem[], search: (q: string) => readonly MenuItem[]): void {

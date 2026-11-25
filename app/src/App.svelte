@@ -253,14 +253,18 @@
     tips: showTips, chooseFor: (id: string, layer: Layer): void => openFind({ id, layer }), data: withClip }; // data: Settings › Data (R38a, R38b; as a hold on a history row: waits for the clipboard and Mode code if the sheet opened before they came; no import of its own in the start chunk)
   /** Settings as the ☰ menus' last row opens it (R49): one per session, its rows read the settings on every draw. */
   let settingsMenu: SubMenu | undefined;
-  /** A user key that holds Settings, or a ☰ menu's last row before the Mode code is in: Mode › Settings, on its first
-   *  row (R49, docs/05 3.4). `slot` (R705, an empty free key): Settings › Your keys, on that slot's row. */
+  /** The ⚙ key, a user key that holds Settings, or a ☰ menu's ⚙ before the Mode code is in: the Settings root, on its row 1, Mode
+   *  (R49, R927, docs/05 3.4). `slot` (R705, an empty free key): Settings › Your keys, on that slot's row. */
   function openSettings(slot?: FindSlot): void {
     onModeSheet((m) => {
-      shell.showMenu(t("mode.title"), m.modeItems(session, settingsEnv), { remember: false, at: "settings" }); // R901: the pick stays (a look at Settings changes nothing behind it)
-      shell.sheet?.enter(); // its submenu: a level on top
+      showSettings(m, "mode");
       if (slot) m.toSlot(shell.sheet, slot); // R705: on into Your keys
     });
+  }
+  /** R927: the Settings root (sheet id `settings`, Sheet.settingsOpen), on row `at`; Mode in it opens on `modeAt`. R901: the pick
+   *  stays (a look at Settings changes nothing behind it). */
+  function showSettings(m: ModeSheetCode, at: string, modeAt?: string): void {
+    shell.showMenu(t("key.settings"), m.settingsSections(session, settingsEnv, modeAt), { remember: false, at, id: "settings" }); // (the id: Sheet SETTINGS_SHEET, not imported: the sheet code is lazy)
   }
   // Android back is Esc for the open sheet (R21b, R49): it goes back one level, and the root closes. Each level it goes
   // back takes a new history entry for the level now on top.
@@ -274,10 +278,12 @@
     });
   });
   /** A tap on the bar's format and digits chip (`at`: the row to start on), an app's ☰ › Mode, or a user key that holds
-   *  Mode: the Mode sheet. Without `at` it starts on Angle, so Mode, ▶, Enter always switches the angle unit. */
-  function openMode(at?: string): void {
+   *  Mode: Settings › Mode (R927: the root with Mode pushed, so back walks up the tree). Without `at` it starts on Angle, so
+   *  Mode, ▶, Enter always switches the angle unit. */
+  function openMode(at = "angle"): void {
     onModeSheet((m) => {
-      shell.showMenu(t("mode.title"), m.modeItems(session, settingsEnv), { remember: false, at }); // R901: the pick stays, as for Settings
+      showSettings(m, "mode", at);
+      shell.sheet?.enterAt("mode");
     });
   }
   /** Run `open` at once when the lists are loaded; else after the load, with every key meanwhile waiting in the queue

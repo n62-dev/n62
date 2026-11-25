@@ -300,7 +300,7 @@ export interface SheetOptions {
   /** A stored matrix's grid in place of rows (see Level.grid). */
   grid?: MatrixGrid;
   /** R145: where the ⚙ in the title row goes, read when it is tapped: Settings as a level of this sheet, or (before its
-   *  code is in) a function that opens Mode › Settings. Absent: no ⚙. */
+   *  code is in) a function that opens the Settings root. Absent: no ⚙. */
   settings?: () => SubMenu | (() => void);
 }
 
@@ -311,6 +311,8 @@ const STAY: Picked = { kind: "stay" };
 /** R725: the Chars sheet (Shift + Vars): a grid drawn over the view like a list that takes letters, so the keypad's digit keys
  *  stay uncovered, and whose digit keys pick a cell of the row with the focus (Level.digits). */
 const CHARS_SHEET = "chars";
+/** R927: the id of the sheet whose root is Settings (App.svelte showSettings). */
+export const SETTINGS_SHEET = "settings";
 
 export class Sheet {
   /** Names the sheet for the remembered pick: `apps`, `menu:<place>`, `list:<title>`. */
@@ -349,9 +351,9 @@ export class Sheet {
   get hasSettings(): boolean {
     return this.settings !== undefined && this.levels.length === 1;
   }
-  /** R887: Settings is a level of this sheet already (Mode's row, the head's ⚙ or the ⚙ key opened it). */
+  /** R887: Settings is a level of this sheet already (the head's ⚙ or the ⚙ key opened it), or its root (R927: ⚙, the chip). */
   get settingsOpen(): boolean {
-    return this.levels.some((l, i) => i > 0 && l.memo.endsWith("/settings"));
+    return this.id === SETTINGS_SHEET || this.levels.some((l, i) => i > 0 && l.memo.endsWith("/settings"));
   }
   /** R145: the ⚙ (or an empty ☰): Settings as the next level, or run what opens it (the run item is never drawn: no label).
    *  `to` (R887, the ⚙ key): the shell's Settings, on any sheet and level; by default the head's, on the root of a sheet that has it. */

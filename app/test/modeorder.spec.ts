@@ -3,7 +3,7 @@
 // first in Mode, no Settings row in Mode. ⚙ (the key, a user key that holds Settings, a ☰ menu's ⚙) opens the Settings root; the
 // `STD 12 ▾` chip opens Settings › Mode on Format, so back walks up the tree. The fake engine.
 import { expect, test, type Page } from "@playwright/test";
-import { open, sheet, sheetKey, tap } from "./helpers.ts";
+import { open, sheet, tap } from "./helpers.ts";
 
 const title = (page: Page) => page.getByTestId("sheet-title");
 const row = (page: Page, id: string) => sheet(page).locator(`[role="menuitem"][data-id="${id}"]`);
@@ -48,8 +48,9 @@ for (const [w, h] of [[360, 740], [412, 915]] as const)
       await settingsRoot(page);
     });
 
-    test("the chip opens Settings › Mode on Format; Esc, ◀ or ‹ goes to the Settings root on row 1, a second one closes", async ({ page }) => {
-      for (const up of [() => tap(page, ["esc"]), () => sheetKey(page, ["left"]), () => sheet(page).getByRole("button", { name: "Back" }).tap()]) {
+    // (◀ on a Mode row steps its value, as every value row's ◀ does: each Mode row has one)
+    test("the chip opens Settings › Mode on Format; Esc, ‹ or Android back goes to the Settings root on row 1, a second one closes", async ({ page }) => {
+      for (const up of [() => tap(page, ["esc"]), () => page.evaluate(() => history.back()), () => sheet(page).getByRole("button", { name: "Back" }).tap()]) {
         await page.getByTestId("chip-format").tap();
         await expect(title(page)).toHaveText("Settings › Mode");
         expect(await rowIds(page)).toEqual(MODE);

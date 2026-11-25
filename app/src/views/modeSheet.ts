@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// The Mode sheet's list and Settings, its next level (docs/05 3.4 with section 7; R49). Mode (one sheet, sheet.svelte.ts)
-// holds what changes in a session: angle, format, digits, entry, the preset (R89). Settings holds what is set once, in sections: the
-// Format key's cycle, the key vibration, the counters. A row with a value is changed in place: ◀ ▶ step it, a digit key
+// Settings and Mode, its row 1 (docs/05 3.4 with section 7; R49, R927: Settings is the top level). Mode (a level of the sheet,
+// sheet.svelte.ts) holds what changes in a session: the preset (R89), angle, format, digits, entry. Settings holds what is set once,
+// in sections: the Format key's cycle, the key vibration, the counters. A row with a value is changed in place: ◀ ▶ step it, a digit key
 // or a tap steps it forward; in Mode Enter closes, in Settings it stays. No native <select> or number input: the keypad
 // drives all of it.
 import type { MenuItem, SubMenu, ValueOption } from "../apps/types.ts";
@@ -74,10 +74,11 @@ function presets(values: readonly number[], get: () => number, set: (n: number) 
   }));
 }
 
-/** The Mode sheet's rows. The ids are what `at` of the sheet asks for (a tap on a status chip). */
+/** Mode's rows (R927: Preset first, no Settings row: Mode is Settings' row 1). The ids are what `at` asks for (a tap on a status chip). */
 export function modeItems(session: Session, env: SettingsEnv = {}): MenuItem[] {
   const s = session.settings;
   return [
+    presetRow(session, env), // R89: row 1, the active preset (R927: "Preset at the top, then the rest")
     {
       id: "angle",
       label: modeText("mode.angle"),
@@ -111,9 +112,13 @@ export function modeItems(session: Session, env: SettingsEnv = {}): MenuItem[] {
       },
       adjust: (by) => session.setEntry(cycle(ENTRIES, s.entry, by)),
     },
-    presetRow(session, env), // R89: row 5, the active preset; Settings is row 6
-    { id: "settings", label: t("key.settings"), submenu: settingsMenu(session, env) },
   ];
+}
+
+/** R927: the Mode row's value, as the status line's chips say it: `STD 12 RAD`. */
+function modeValue(session: Session): string {
+  const s = session.settings;
+  return `${s.format.toUpperCase()} ${s.digits} ${s.angle.toUpperCase()}`;
 }
 
 /** R705: Settings open on top (App.svelte openSettings for an empty free key, `layer` the one it was pressed in): on into Your keys,
@@ -123,8 +128,9 @@ export function toSlot(sheet: Sheet | null, slot: { id: string; layer: Layer }):
   if (sheet?.enterAt("keys")) sheet.goKey(slot.id, slot.layer === "shift" ? "shift" : "primary");
 }
 
-/** Settings (R49, docs/05 3.4): the next level of the pick sheet, from Mode's last row and the ⚙ in every ☰
- *  menu's title row (AppShell.toSettings, R145). Its title joins the path (`Mode › Settings › Numbers`); each section opens on its first row. */
+/** Settings (R49, docs/05 3.4): the next level of the open sheet from the ⚙ in every ☰ menu's title row (AppShell.toSettings,
+ *  R145) and the ⚙ key over a sheet (R887). Its title joins the path (`Home menu › Settings › Numbers`); each section opens on its
+ *  first row, Mode on Angle. */
 export function settingsMenu(session: Session, env: SettingsEnv = {}): SubMenu {
   return { title: t("key.settings"), items: settingsSections(session, env), remember: false };
 }
@@ -141,15 +147,16 @@ function section(id: string, title: string, items: MenuItem[], value?: () => str
   };
 }
 
-/** Settings' sections, in their fixed order, each at most seven rows: Appearance (R50e), Numbers, Key vibration, Your
- *  keys (R4b), Data (R38a), Counters, Help and about (R87). A section whose package has not landed is left out; each
- *  of those packages adds its own in its place, so a section's digit moves until the first release. A tick (`selected`
- *  with `run`) is a switch and stays; a row with `adjust` steps with ◀ ▶ and stays on Enter; a row with a value only is
- *  information. */
-export function settingsSections(session: Session, env: SettingsEnv = {}): MenuItem[] {
+/** Settings' rows, in their fixed order: Mode (R927, row 1: its value `STD 12 RAD`; it opens on row `modeAt`), then the sections,
+ *  each at most seven rows: Appearance (R50e), Numbers, Key vibration, Your keys (R4b), Data (R38a), Counters, Help and about
+ *  (R87). A section whose package has not landed is left out; each of those packages adds its own in its place, so a section's
+ *  digit moves until the first release. A tick (`selected` with `run`) is a switch and stays; a row with `adjust` steps with
+ *  ◀ ▶ and stays on Enter; a row with a value only is information. */
+export function settingsSections(session: Session, env: SettingsEnv = {}, modeAt = "angle"): MenuItem[] {
   const s = session.settings;
   const off = () => !s.haptics.on;
   return [
+    section("mode", t("mode.title"), modeItems(session, env), () => modeValue(session), modeAt),
     section("appearance", modeText("settings.appearance"), appearanceItems(session), () => `${familyOf(s.look.family).name} · ${lookText(`appearance.brightness.${s.look.brightness}`)}`, "theme"),
     section("numbers", modeText("settings.numbers"), numbersItems(session), () => s.fmtCycle.map((m) => m.toUpperCase()).join(" ")),
     section(
