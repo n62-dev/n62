@@ -5,6 +5,9 @@
 
 /** The most characters of a copied text the notice names; the whole is on the clipboard. */
 export const NAMED_MAX = 24;
+/** The most characters the digit groups are laid on: groupDigits' integer pattern is quadratic in a run's length (a
+ *  10⁵-digit Exact copy took seconds), and the notice names 24 at most. Only a run of more crossing it groups off. */
+const GROUP_SPAN = 1000;
 
 /** The notice's two forms: the whole text (or a cut that is not a number's digits), and a number's start with its count. */
 export interface NoticeWords {
@@ -79,8 +82,9 @@ const chars = (s: string): string[] => [...s];
 export function copiedNotice(copied: string, words: NoticeWords, o: NoticeOptions = {}): string {
   const group = o.group ?? ((s: string) => s);
   const text = flat(copied);
-  const whole = group(text);
-  if (chars(whole).length <= NAMED_MAX) return words.what.replace("{what}", whole);
+  const groupStart = (s: string): string => group(chars(s).slice(0, GROUP_SPAN).join("")); // groups only add characters
+  const whole = groupStart(text);
+  if (chars(text).length <= NAMED_MAX && chars(whole).length <= NAMED_MAX) return words.what.replace("{what}", whole);
   const p = numberParts(text, o.decimalComma === true);
   if (p) {
     const n = significant(p);
@@ -89,7 +93,7 @@ export function copiedNotice(copied: string, words: NoticeWords, o: NoticeOption
     let k = Math.min(o.drawnDigits ?? n, n, NAMED_MAX); // no more digits fit the line (a 10⁵-digit Exact copy stays linear)
     while (k > 1 && chars(head(k)).length > NAMED_MAX) k--;
     if (k < n) {
-      const shown = head(k) + group(p.rest);
+      const shown = head(k) + groupStart(p.rest);
       const cut = chars(shown).length > NAMED_MAX ? `${chars(shown).slice(0, NAMED_MAX).join("").trimEnd()}…` : shown;
       return words.digits.replace("{n}", String(n)).replace("{what}", cut);
     }

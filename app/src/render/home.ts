@@ -24,16 +24,7 @@ export const groupSepFor = (sep: GroupSep | undefined, decimalComma: boolean | u
  * chips and Copy stay plain. R125f1: `both` false (the apostrophe, the comma) groups only the digits before the point.
  */
 export const groupDigits = (m: string, sep = "\\,", both = true): string =>
-  m.replace(/\d{5,}/g, (d, at: number) => (at ? (both ? d.replace(/(\d{3})(?=\d)/g, (g) => g + sep) : d) : groupFromRight(d, sep)));
-
-/** Digits in threes counted from the right; linear (R904: `\B(?=(\d{3})+$)` scanned to the end at each digit, so a
- *  10⁵-digit integer took seconds). */
-function groupFromRight(d: string, sep: string): string {
-  const head = d.length % 3 || 3;
-  let out = d.slice(0, head);
-  for (let i = head; i < d.length; i += 3) out += sep + d.slice(i, i + 3);
-  return out;
-}
+  m.replace(/\d{5,}/g, (d, at: number) => (at ? (both ? d.replace(/(\d{3})(?=\d)/g, (g) => g + sep) : d) : d.replace(/\B(?=(\d{3})+$)/g, () => sep)));
 
 /** R40: a real part's mantissa as drawn, with its uncertain digits muted (render/uncMute.ts muter, a chunk of its own). */
 export type Mute = (m: string, f: FormattedNumber) => string;
