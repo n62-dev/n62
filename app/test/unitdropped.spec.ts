@@ -48,6 +48,41 @@ test.describe("R902: a line whose units were dropped says so when entered in Hom
     await leave(page);
   });
 
+  test("control: the noted line entered, 7 2 Enter again has no note (the slots stay kept, the note was for the left line)", async ({ page }) => {
+    await tap(page, ["d7", "d2", "shift", "tmpl"]);
+    await up(page);
+    await tap(page, ["d4", "d9", "div", "d3"]);
+    await leave(page);
+    await tap(page, ["enter"]);
+    await expect(lastRow(page).getByTestId("unit-dropped")).toHaveText("unit dropped: Home has no units");
+    await tap(page, ["d7", "d2", "enter"]);
+    await expect(page.locator("article.item")).toHaveCount(2);
+    await expect(lastRow(page)).toHaveAttribute("data-status", "done");
+    await expect(lastRow(page).locator(".result")).toContainText("72");
+    await expect(page.getByTestId("unit-dropped")).toHaveCount(1); // the first row's only
+  });
+
+  test("control: k m ÷ s, Eval, Store ▶ in X, then 7 2 Enter in Home has no note; the units key on 72 still brings km/s back", async ({ page }) => {
+    await tap(page, ["d7", "d2", "shift", "tmpl"]);
+    await up(page);
+    await tap(page, ["d4", "d9", "div", "d3", "enter"]); // Eval: 72 km/s
+    await expect(page.getByTestId("unit-unit")).toHaveText("km/s");
+    await tap(page, ["shift", "emark"]); // Store ▶: the view leaves, the line holds the result's chip
+    await page.waitForFunction(() => window.n62.unitView === undefined);
+    const store = page.getByTestId("store");
+    await store.locator('[data-id="name:X"]').tap();
+    await expect(store).toBeHidden();
+    await expect(page.locator('[data-status="done"]')).toHaveCount(2); // the unit row, then the store row
+    await tap(page, ["d7", "d2", "enter"]);
+    await expect(page.locator('[data-status="done"]')).toHaveCount(3);
+    await expect(lastRow(page).locator(".result")).toContainText("72");
+    await expect(lastRow(page).getByTestId("unit-dropped")).toHaveCount(0); // (the store row's note is R63's, its chip's unit)
+    await tap(page, ["d7", "d2", "shift", "tmpl"]);
+    await up(page);
+    expect(await slotText(page, "u1")).toBe("k:m / s");
+    await leave(page);
+  });
+
   test("control: a line never in the unit view has no note", async ({ page }) => {
     await tap(page, ["d7", "d3", "enter"]);
     await expect(lastRow(page)).toHaveAttribute("data-status", "done");

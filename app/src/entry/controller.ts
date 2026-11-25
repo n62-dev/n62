@@ -9,6 +9,7 @@ import type { AngleUnit } from "../calc/port.ts";
 import { mathlive } from "../render/mathlive.svelte.ts";
 import type { Where } from "./appValue.ts";
 import { ANS_CHIP, constChip, resChip } from "./macros.ts";
+import { dropLeft } from "../units/kept.ts"; // R902: an edit or clear drops the unit view's left line
 
 /** How an insert goes on the field (R746): as given (false), a result as drawn (true), or an exact result's chip (entry/oneTerm.ts resultOnLine). */
 type Term = boolean | Chip;
@@ -151,6 +152,7 @@ export class EntryController {
     return pruneChips(this.table, this.value);
   }
   clear(): void {
+    dropLeft(); // R902: the unit view's left line is gone (Store ▶, Enter, Esc)
     this.recalledIn = null;
     this.queue = [];
     this.pendingValue = undefined;
@@ -166,6 +168,7 @@ export class EntryController {
   /** Put a previous entry back on the line, with the values of its chips. `recalledIn`: the row reads the angle and ran in this mode (R265). */
   set(latex: string, chips: ChipTable = {}, recalledIn: AngleUnit | null = null): void {
     this.touched = true;
+    dropLeft(); // R902
     this.onEdit();
     this.recalledIn = recalledIn;
     latex = this.adopt(latex, chips);
@@ -202,6 +205,7 @@ export class EntryController {
   insert(latex: string, term: Term = false, consts?: ChipTable): void {
     this.touched = true;
     this.recalledIn = null;
+    dropLeft(); // R902
     this.onEdit();
     if (!this.mf) return void this.queue.push({ kind: "put", latex, term, ...(consts ? { consts } : {}) }); // R298: in its place among the queued keys
     this.put(latex, term, consts);
@@ -248,12 +252,13 @@ export class EntryController {
     this.touched = true;
     if (!this.mf) {
       this.recalledIn = null;
+      dropLeft(); // R902
       this.queue.push(a);
       return;
     }
     const before = this.mf.value;
     this.onField?.(this.mf, a, this.grown, this.decimalComma, this.shell);
-    if (this.mf.value !== before) this.recalledIn = null; // (a cursor key leaves the recall as it was)
+    if (this.mf.value !== before) (this.recalledIn = null), dropLeft(); // (a cursor key leaves the recall, and R902's left line, as they were)
   }
 
   /** R279: Select (`grow`) or Deselect on the line (entry/grow.ts); false where the key does nothing. */

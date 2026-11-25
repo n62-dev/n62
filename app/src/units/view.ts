@@ -15,7 +15,7 @@ import { shownOf, type Shown, type UnitFormat } from "./result.ts";
 import type { CellLeg } from "./userCells.svelte.ts";
 import { SlotModel, type PadAction, type Reading, type SlotCatalogue } from "./slot.ts";
 import type { Quantity, UnitError, UnitRequest, UnitSlot } from "./types.ts";
-import { kept } from "./kept.ts"; // the slots a line keeps, by its LaTeX (Home reads them too, R902)
+import { kept, leaveLine } from "./kept.ts"; // the slots a line keeps, by its LaTeX (Home reads them too, R902)
 
 export { shownOf, type Shown } from "./result.ts";
 
@@ -517,8 +517,10 @@ export class UnitView {
   /** Esc: the line keeps its slots. */
   keep(): void {
     const slots = this.filled();
-    if (Object.keys(slots).length) kept.set(this.line, slots);
+    const any = Object.keys(slots).length > 0;
+    if (any) kept.set(this.line, slots);
     else kept.delete(this.line);
+    leaveLine(any ? this.line : undefined); // R902: the note on this line's Enter, while it stands unchanged
   }
 
   /** The complete, filled slots and end slot by prompt id. */

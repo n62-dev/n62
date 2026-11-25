@@ -39,7 +39,7 @@ import { storedReader } from "./storedLoad.ts";
 export { loadTidy } from "./tidyLoad.ts";
 import type { Copies, RemovedKind, RemovedRows } from "./removedRows.ts";
 import type { UnitRow } from "../units/types.ts";
-import { kept as keptSlots } from "../units/kept.ts";
+import { takeLeft } from "../units/kept.ts";
 import type { WordSetting } from "./wordSetting.ts";
 import { isBarSlot, type BarSlot } from "../apps/registry.ts";
 
@@ -447,6 +447,7 @@ export class Session {
     const kept = pruneChips(chips, latex);
     const table: ChipTable = ans ? { ...kept, [ANS_KEY]: ans } : kept;
     const id = this.nextId++;
+    const dropped = takeLeft(latex) && view === "home"; // R902: the line the unit view left with slots, unchanged (units/kept.ts)
     list.push({
       id,
       uid: rowUid(id), // G211
@@ -459,7 +460,7 @@ export class Session {
       ...(Object.keys(kept).length ? { chips: kept } : {}),
       ...(typedIn ? { typedIn } : {}), // R265 (the caller passes it only when it differs from the mode on show)
       ...(usesAns && ans ? { ans } : {}), // G213f1: not in `chips` (a recall resolves Ans again); the line and the store keep value and exact
-      ...(view === "home" && keptSlots.has(latex) ? { unitDropped: true as const } : {}), // R902: the line's slots, left with Esc (units/kept.ts)
+      ...(dropped ? { unitDropped: true as const } : {}), // R902
       startedAt: performance.now(),
     });
     // Read and write through the proxy in the list from here on.
