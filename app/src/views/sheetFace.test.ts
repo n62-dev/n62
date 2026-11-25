@@ -3,7 +3,7 @@
 // included. The control: sheetFace says dead exactly when the sheet's job for the key (sheetJob, the one route.ts calls) is `none`.
 import { describe, expect, it } from "vitest";
 import { keyboard, type Key, type Layer } from "../keyboard/keyboard.ts";
-import { sheetFace, sheetJob, type SheetCtx } from "./sheetKeys.ts";
+import { pastedName, sheetFace, sheetJob, type SheetCtx } from "./sheetKeys.ts";
 
 const key = (id: string): Key => {
   const k = keyboard.byId.get(id);
@@ -144,5 +144,26 @@ describe("control: dimmed exactly when the sheet's job is none", () => {
                   n++;
                 }
     expect(n).toBeGreaterThan(1000);
+  });
+});
+
+describe("R900: the Paste key (Shift + Deselect) in a list whose filter takes a pasted name (Find, Vars, Store in; not Memory)", () => {
+  it("a tap with Shift and a flick up are `paste`, drawn lit; without `paste` (Memory, the other sheets) Find dims it and Store in sends it to the line", () => {
+    for (const kind of ["find", "store"] as const) {
+      expect(sheetJob(key("deselect"), ctx(kind, { paste: true }), SHIFT, undefined), kind).toEqual({ kind: "paste" });
+      expect(sheetJob(key("deselect"), ctx(kind, { paste: true }), NO, "shift"), kind).toEqual({ kind: "paste" });
+      expect(face("deselect", ctx(kind, { paste: true }), SHIFT, "shift"), kind).toEqual({ dead: false });
+    }
+    expect(sheetJob(key("deselect"), ctx("find"), SHIFT, undefined)).toEqual({ kind: "none" }); // Memory: R816's to come
+    expect(sheetJob(key("deselect"), ctx("store"), SHIFT, undefined)).toEqual({ kind: "line" }); // the store sheet before R900
+    expect(sheetJob(key("deselect"), ctx("find", { paste: true }), NO, undefined)).not.toEqual({ kind: "paste" }); // Deselect alone is no Paste
+  });
+  it("pastedName: the first line, trimmed, when it is a name (a letter, then letters, digits, _; at most 32 characters)", () => {
+    expect(pastedName("ZZ")).toBe("ZZ");
+    expect(pastedName(" erfc \nmore")).toBe("erfc");
+    expect(pastedName("T_1\r\n")).toBe("T_1");
+    expect(pastedName("ΔT2")).toBe("ΔT2");
+    expect(pastedName("a".repeat(32))).toBe("a".repeat(32));
+    for (const no of ["a".repeat(33), "1+2", "12", "_x", "a b", "", "x²", "2.5"]) expect(pastedName(no), no).toBeUndefined();
   });
 });
