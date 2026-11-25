@@ -262,28 +262,29 @@ describe("the judge, entry by entry (G797; made-up oracles for its rules)", () =
   });
 });
 
-// Red on phase-1 394e7413: the sweep built no matrix, so none of these ran. Through the real engine they are G790's product (right since
-// G790 merged: it must pass), G622's inverse and rank, and G792's sin (right since patch 0066, G792f1: it must pass in RAD and DEG); each
-// failure is a known row naming its package.
+// Red on phase-1 394e7413: the sweep built no matrix, so none of these ran. Through the real engine they are G790's product and G622's
+// inverse and rank (right since G790 and G622 merged: they must pass), and G792's sin (right since patch 0066, G792f1: it must pass in
+// RAD and DEG); a failure would be a known row naming its package.
 describe.skipIf(!giacAvailable())("the pinned hunt inputs through Home (G797, real Giac)", () => {
-  it("lists G622's inverse and rank as failures, each a known row with its package; G790's product and G792's sin pass", async () => {
+  it("passes G790's product, G622's inverse and rank and G792's sin; no failure is left", async () => {
     const runs: Run[] = runsOf(20261021, 0, false, { matrices: 1 }).filter((r) => MATRIX_PINNED.some((c) => c.latex === r.latex));
     expect(runs.length).toBe(MATRIX_PINNED.length + 1); // the sin also in DEG
     const oracles = oracleFor(runs, pythonFor(repo, mainCheckout), oraclePy);
     const { judged } = await sweep(runs, oracles, 6000);
     const failures = sweepFailures(judged);
     const byLatex = (l: string): string[] => failures.filter((f) => f.id.endsWith(` ${l}`)).map((f) => f.check);
-    expect(byLatex(MATRIX_PINNED[0]!.latex)).toEqual([]);
-    expect(judged.find((j) => j.latex === MATRIX_PINNED[0]!.latex)!.verdict.kind).toBe("ok");
-    expect(byLatex(MATRIX_PINNED[1]!.latex).length).toBe(1);
-    expect(byLatex(MATRIX_PINNED[2]!.latex)).toEqual(["part"]); // rank 0 with = where it is 2
+    for (const c of MATRIX_PINNED.slice(0, 3)) {
+      expect(byLatex(c.latex)).toEqual([]);
+      expect(judged.find((j) => j.latex === c.latex)!.verdict.kind).toBe("ok");
+    }
     expect(byLatex(MATRIX_PINNED[3]!.latex)).toEqual([]); // RAD and DEG: real, right digits (patch 0066)
     expect(judged.filter((j) => j.latex === MATRIX_PINNED[3]!.latex).map((j) => j.verdict.kind)).toEqual(["ok", "ok"]);
+    expect(failures).toEqual([]);
     const known = loadKnown(repo, false).gate;
     for (const f of failures) {
       const k = known.find((r) => r.id === f.id && r.check === f.check);
       expect(k, f.id).toBeDefined();
-      expect(k!.package).toBe("G622");
+      expect(["G622", "G792"]).toContain(k!.package);
     }
   }, 120_000);
 });

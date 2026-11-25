@@ -139,7 +139,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| B6b | [G622](packages/G622.md) float pivots relative to the matrix (G622f2, pass 239) | gorge, Opus | `p1/gorge-floatrref` | – |
+| B6b | G622 float pivots relative to the matrix (G622f2, pass 239) | gorge, Opus | `p1/gorge-floatrref` | – |
 | B6c | [A273](packages/A273.md) the family tests' nightly runs after each pass | annabell, Sonnet | `p1/annabell-familynightly` | – |
 | B6d | [G802](packages/G802.md) exp of a 3×3 float matrix kills the engine | gorge, Opus | `p1/gorge-matexpstack` | – |
 | B6h | [G799](packages/G799.md) marks and Copy agree | gorge, Opus | `p1/gorge-markagree` | – |

@@ -251,6 +251,17 @@ const CANARIES: [string, string, RegExp, string][] = [
   // G790 (F475), patch 0064: mmult_atranb's sparse loop skips a left entry with is_zero(acur,context0), an absolute 1e-12 at any Digits
   // (and matrix_density counts zeros the same way), so a left factor of floats below 1e-12 gave the zero matrix at Digits 40
   ["0064-mmult-tiny-float-factor.patch", "giac-2.1.0/src/vecteur.cc", /const gen & acur=\*it;\s*if \(is_zero\(acur,context0\)\)\{\s*int p=1;\s*\+\+it;\s*for \(; \(it!=itend\) && is_zero\(\*it,context0\);/, "double a_density=matrix_density(a),b_density=matrix_density(btran);"],
+  // G622 (F436), patch 0068: linear_combination, the row operation of mrref at Digits > 14, keeps a cancelled MPFR entry (trim tests
+  // doubles only) and rref_reduce's pivot test is is_exactly_zero, so the cancelled pivot of a singular float matrix was a pivot
+  // (rank(evalf([[1,2,3],[4,5,6],[7,8,9]])) = 0 at Digits 15, rref the identity, ker [])
+  ["0068-float-rref-cancelled-pivot.patch", "giac-2.1.0/src/vecteur.cc", /if \(is_one\(c\)\)\{\s*for \(;jt1!=it1end;\+\+jt1,\+\+it2\)\{\s*\*jt1=trim\(c1\*\(\*jt1\)\+c2\*\(\*it2\),c1,eps\);/, "void linear_combination(const gen & c1,const vecteur & v1,const gen & c2,const vecteur & v2,const gen & c,const gen & cinv,vecteur & v,double eps,int cstart){"],
+  // ... is_blockmatrix (under det and inv) splits at entries is_zero takes for 0, 1e-12 at any scale (det(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]])) = 1e-13)
+  ["0068-float-rref-cancelled-pivot.patch", "giac-2.1.0/src/vecteur.cc", /if \(is_zero\(ai\[j\]\) && is_zero\(\(\*a\[j\]\._VECTptr\)\[i\]\)\)/, "bool is_blockmatrix(const matrice & a,vector<int> & p){"],
+  // ... and mrref's det-only path, after that split, returns the first block's det alone when is_zero takes it for 0 (F479:
+  // det(evalf([[2*10^-13,0],[0,3*10^-13]])) = 2e-13)
+  ["0068-float-rref-cancelled-pivot.patch", "giac-2.1.0/src/vecteur.cc", /det=mdet\(a1,contextptr\);\s*if \(is_zero\(det\)\)\s*return 1;/, "if (rref_or_det_or_lu==-1){ /* det only */"],
+  // ... and _rank counts the rows of mrref's result that are not is_zero (pivots below 1e-12: rank(evalf([[1,1],[1,1+10^-20]])) = 0 at Digits 40)
+  ["0068-float-rref-cancelled-pivot.patch", "giac-2.1.0/src/misc.cc", /mr=mrref\(mr,contextptr\);\s*int r=int\(mr\.size\(\)\);\s*for \(;r;--r\)\{\s*if \(!is_zero\(mr\[r-1\]\)\)/, "gen _rank(const gen & args,GIAC_CONTEXT){"],
   // G793, G793f1, patch 0065: _lcm returns lcm(a,b) = normal(a/gcd(a,b))*b as it comes, the sign of the product, for integers and
   // fractions of integers alike (lcm(-4,6) = -12, lcm(-4) = -4, lcm(1/2,-1/3) = -1, lcm(-1/2) = -1/2)
   ["0065-lcm-integers-positive.patch", "giac-2.1.0/src/usual.cc", /if \(args\.type!=_VECT\)\s*return args;[\s\S]{0,300}?return apply\(\*it,\*\(it\+1\),lcm\);\s*gen res\(\*it\);\s*for \(\+\+it;it!=itend;\+\+it\)\s*res=lcm\(res,\*it\);\s*return res;/, "gen _lcm(const gen & args,GIAC_CONTEXT){"],

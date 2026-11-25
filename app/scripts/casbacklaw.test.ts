@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // G798: casback's laws that need no oracle. The judge of a law on made-up sides (no engine), the law builders, and the hunt's hand
 // cases through Home on the real engine: G790's product and G793's lcm (right since patches 0064 and 0065: red on an engine before them,
-// key 4361f213c1035daa), G622's inverse, linsolve and rank and G791's hamdist (red on phase-1: each a known row naming its package).
+// key 4361f213c1035daa), G622's inverse, linsolve and rank (right since patch 0068: red on phase-1 0da1ddc6, key 0badb9dd3cbfb5e2) and
+// G791's hamdist (a known row naming its package).
 import { beforeAll, describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -127,21 +128,19 @@ describe.skipIf(!giacAvailable())("the hunt's hand cases through Home (G798, rea
     expect(packageOf(l)).toBeUndefined();
   });
 
-  it("G622: inv(c·A) = inv(A)/c fails at c = 10^-13 with ⚠ 14 claimed, a known row", () => {
+  it("G622: inv(c·A) = inv(A)/c holds at c = 10^-13 (red before patch 0068: ⚠ 14 on a wrong inverse), no known row", () => {
     const l = pick(matrixLaws(m3!.a, m3!.b, m3!.col, 3), "inv d30: \\operatorname{inv}\\left(10^{-13}");
-    const v = run(l);
-    expect(v.status).toBe("wrong");
-    expect(v.detail).toContain("⚠14");
-    expect(packageOf(l)).toBe("G622");
+    expect(run(l).status).toBe("ok");
+    expect(packageOf(l)).toBeUndefined();
   });
 
-  it("G622: linsolve(c·A, c·b) = linsolve(A, b) fails at c = 10^-13, and rank(c·A) = rank(A) on a singular A at c = 10^7", () => {
+  it("G622: linsolve(c·A, c·b) = linsolve(A, b) holds at c = 10^-13, and rank(c·A) = rank(A) on a singular A at c = 10^7 (red before patch 0068)", () => {
     const lin = pick(matrixLaws(m2!.a, m2!.b, m2!.col, 2), "linsolve d30: \\operatorname{linsolve}\\left(10^{-13}");
-    expect(run(lin).status).toBe("wrong");
-    expect(packageOf(lin)).toBe("G622");
+    expect(run(lin).status).toBe("ok");
+    expect(packageOf(lin)).toBeUndefined();
     const rank = pick(matrixLaws(singular!.a, singular!.b, singular!.col, 3), "rank d12: \\operatorname{rank}\\left(10^{7}");
-    expect(run(rank).status).toBe("wrong"); // rank(approx(A)) is 0 with = (G622); scaled by 10^7 it is 2
-    expect(packageOf(rank)).toBe("G622");
+    expect(run(rank).status).toBe("ok"); // before patch 0068 rank(approx(A)) was 0 with =, scaled by 10^7 it was 2
+    expect(packageOf(rank)).toBeUndefined();
   });
 
   it("det(c·A) = c^n·det(A) passes where a side marks ⚠ 0 (an honest mark is not a wrong answer)", () => {
