@@ -311,8 +311,9 @@ export class FunctionApp implements AppInstance {
     return tableCsv(header, rows, o);
   }
   private textOptions(): TextOptions {
-    const s = this.host.settings; // G796: a ⚠ cell copies the digits it shows
-    return s.decimalMark === "comma" ? { decimalComma: true, digits: s.digits } : { digits: s.digits };
+    const s = this.host.settings; // G796f1: a ⚠ cell copies the digits it shows (fmtPoint's format: FIX's decimals never apply)
+    const display = { format: s.format, digits: s.digits };
+    return s.decimalMark === "comma" ? { decimalComma: true, display } : { display };
   }
   private csvCell(c: Cell | undefined, copyFull: (i: CopySource, o?: TextOptions) => string | undefined, o: TextOptions): string {
     if (!c || !c.ok) return "";

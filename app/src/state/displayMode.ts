@@ -174,9 +174,18 @@ function polarShown(r: NumericResult, m: FmtMode, ctx: DisplayContext): { value:
 }
 
 /** The mode a result is drawn in, once the global setting stands in for none. */
-function baseMode(mode: FmtMode | undefined, ctx: DisplayContext): "std" | "sci" | "eng" | "pfx" | "fix" {
+function baseMode(mode: FmtMode | undefined, ctx: { format: NumberFormat }): "std" | "sci" | "eng" | "pfx" | "fix" {
   return mode === "fix" || mode === "sci" || mode === "eng" || mode === "std" || mode === "pfx" ? mode : ctx.format;
 }
+
+/** The format a number of `r` is drawn with in `mode`, before only its confirmed digits are kept: the base notation, the
+ *  input's own digits (`evalf(e,n)`) or the setting, FIX's decimals (absent: 4, as an app's Num view draws). markFor's,
+ *  and Copy's count of the digits a warned row draws (G796f1, clipboard/text.ts). */
+export function drawnFormat(r: { facts?: { digits?: number } }, mode: FmtMode | undefined, ctx: DrawnSettings): FormatOptions {
+  return { format: BASE[baseMode(mode, ctx)], digits: r.facts?.digits ?? ctx.digits, fixed: ctx.fixDecimals };
+}
+/** The settings drawnFormat reads (DisplayContext's; an app passes its own, without FIX's decimals). */
+export type DrawnSettings = { format: NumberFormat; digits: number; fixDecimals?: number };
 
 /**
  * A result drawn in `mode` (undefined: the global setting). Undefined when the item has no number.
@@ -254,8 +263,7 @@ export function markFor(r: NumericResult, mode: FmtMode | undefined, ctx: Displa
   const p = precisionOf(r);
   if (!p) return null;
   const m = mode ?? ctx.format;
-  const base = baseMode(mode, ctx);
-  const o: FormatOptions = { format: BASE[base], digits: r.facts?.digits ?? ctx.digits, fixed: ctx.fixDecimals };
+  const o = drawnFormat(r, mode, ctx);
   let info: MarkInfo | null;
   if ((m === "frac" || m === "mixed") && r.rational && r.value) info = p.exact && !p.warn && !p.inexact ? { mark: "=" } : markOf(p, o);
   else {

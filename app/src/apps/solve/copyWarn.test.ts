@@ -17,10 +17,10 @@ interface Inner {
   setFromResult(name: string, display: string, warn?: boolean): void;
   keepFull(name: string, display: string, r: typeof ROOT): Promise<void>;
 }
-const make = (digits: number): { app: SolveApp; copied: string[]; chips: Chip[] } => {
+const make = (digits: number, format = "std"): { app: SolveApp; copied: string[]; chips: Chip[] } => {
   const copied: string[] = [];
   const chips: Chip[] = [];
-  const settings = { ...defaultHomeSettings, digits };
+  const settings = { ...defaultHomeSettings, digits, format };
   const h = {
     calc: { ready: async () => undefined },
     settings,
@@ -32,8 +32,8 @@ const make = (digits: number): { app: SolveApp; copied: string[]; chips: Chip[] 
   } as unknown as AppHost;
   return { app: new SolveApp(h), copied, chips };
 };
-const solved = async (digits: number): Promise<ReturnType<typeof make>> => {
-  const m = make(digits);
+const solved = async (digits: number, format = "std"): Promise<ReturnType<typeof make>> => {
+  const m = make(digits, format);
   const inner = m.app as unknown as Inner;
   m.app.unknowns = ["x"];
   inner.setFromResult("x", ROOT.display, true);
@@ -64,5 +64,11 @@ describe("G796: a ⚠ Solve root keeps its 40 confirmed digits, Copy writes what
     const { app, copied } = await solved(8);
     await app.copyValue("x");
     expect(copied).toEqual(["1.4142136"]);
+  });
+  it("G796f1: SCI 4 (fmtValue's 1.414E0): Copy writes its 4 digits", async () => {
+    const { app, copied } = await solved(4, "sci");
+    expect(app.fmtValue("x")).toBe("1.414E0");
+    await app.copyValue("x");
+    expect(copied).toEqual(["1.414"]);
   });
 });

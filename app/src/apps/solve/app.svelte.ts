@@ -205,7 +205,8 @@ export class SolveApp implements AppInstance {
     const k = this.known(name);
     if (this.warned[name] !== true || !k.facts) return full;
     const { copyFull } = await import("../../clipboard/impl.ts");
-    return copyFull(numberSource(full, { full: k.value, facts: k.facts }), { digits: this.host.settings.digits }) ?? full;
+    const s = this.host.settings; // G796f1: the format and digits fmtValue draws it with
+    return copyFull(numberSource(full, { full: k.value, facts: k.facts }), { display: { format: s.format, digits: s.digits } }) ?? full;
   }
   private settling: Promise<void> = Promise.resolve();
   /** Waits for keepFull; a failed copy load leaves the stored value as the known. */

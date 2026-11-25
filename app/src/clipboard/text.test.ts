@@ -441,7 +441,7 @@ describe("G796: Copy of a row nobody checked copies what it shows", () => {
   });
   it("the shown digits follow the setting (TextOptions.digits) and the input's own (evalf(e,20))", () => {
     const w = done({ full: CBRT2, value: cbrt2, facts: { exact: false, reliableDigits: 30, warn: "unaudited" } });
-    expect(copyFull(w, { digits: 8 })).toBe("1.259921");
+    expect(copyFull(w, { display: { format: "std", digits: 8 } })).toBe("1.259921");
     expect(copyFull({ ...w, facts: { ...w.facts!, digits: 20 } })).toBe("1.2599210498948731648");
   });
   it("a warn row's lower count still bounds it (5 confirmed: 5)", () => {
