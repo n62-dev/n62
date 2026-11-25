@@ -44,10 +44,10 @@
   outline-color: var(--line);
   outline-offset: -1.5px;
 }
-/* the Shift legend sits on the key's top edge, so the outline above ran through its letters (R792, K5): 2.5 px down clears
-   it (at 2 px the M of Mat still met the outline's rounded corner). A translate, so no box, face or Alpha legend moves */
+/* the Shift legend sits on the key's top edge, so the outline above ran through its letters (R792, K5): --legend-drop down
+   clears it. A translate, so no box, face or Alpha legend moves */
 :root[data-contrast="high"] .shiftlegend {
-  translate: 0 2.5px;
+  translate: 0 var(--legend-drop);
 }
 /* the four arrow zones are transparent rectangles over the round pad: no outline of their own, so the pad (the rule above)
    reads as one round key (R141) */
