@@ -99,8 +99,24 @@ describe("not checkable in doubles (G805; the rule in check.ts's header)", () =>
     expect(checkSimplification("original", "answer", shown({ answer: 2.0039e87, original: 2.004e87 }), probe).status).toBe("wrong");
     expect(checkSimplification("original", "answer", shown({ answer: 2.00392368e87, original: 2.00392369e87 }), probe).status).toBe("wrong");
     expect(checkSimplification("original", "answer", shown({ answer: 0.5, original: 0.50001 }), probe).status).toBe("wrong");
-    // a point that agrees beside one that is dropped: the check holds
-    expect(checkSimplification("cosh(x)", "cosh(x)", at, probe, phase).status).toBe("ok");
+  });
+  it("a point dropped past 10 digits makes the check a skip beside points that agree, and a wrong one beside points that differ", () => {
+    // the original is 10^20·cosh(x); the answer is it times (1 + 3e-11) at x=0.55 only (a gap of about 3.5e9, past TOL but past 10
+    // digits: dropped), the same elsewhere: a skip, not ok (check.ts sameAt)
+    const nudged = (bad: Record<string, number>): At => (e, x) => {
+      const c = at("cosh(x)", x);
+      const o = c === null ? null : 1e20 * c;
+      return e === "answer" && o !== null ? o * (1 + (bad[x] ?? 0)) : e === "original" ? o : at(e, x);
+    };
+    const one = checkSimplification("original", "answer", nudged({ "0.55": 3e-11 }), probe, phase);
+    expect(one.status).toBe("skip");
+    expect(one.detail).toMatch(/^the sides differ only past 10 digits at x=0\.55 /);
+    // the same dropped point, and another point really differs (in its fifth digit): wrong, naming that point
+    const two = checkSimplification("original", "answer", nudged({ "0.55": 3e-11, "0.8": 1e-4 }), probe, phase);
+    expect(two.status).toBe("wrong");
+    expect(two.detail).toMatch(/at x=0\.8$/);
+    // and with the differing point first in POINTS' order (0.3 before 0.55): still wrong
+    expect(checkSimplification("original", "answer", nudged({ "0.3": 1e-4, "0.55": 3e-11 }), probe, phase).status).toBe("wrong");
   });
 });
 

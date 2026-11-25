@@ -25,7 +25,7 @@ import { generate } from "../../tools/probes/sweep/gen.ts";
 import { compileDefinition } from "../src/apps/function/compile.ts";
 import { SETS, loadSet, tarballPath } from "../../tools/probes/giaccheck/suite.ts";
 import { checkBack, checkLaw, fromCorpus, generated, integerLawSet, LAW_MATRICES_PINNED, matrixLaws, type At, type Entries, type LawShown, type Phase, type Probe, type Question } from "../../tools/probes/casback/check.ts";
-import type { ParseNode } from "../src/engine/bridge.ts";
+import { phaseReader, realAt } from "../../tools/probes/casback/engine.ts";
 import { generateLawMatrices } from "../../tools/probes/sweep/gen.ts";
 import { shownOf } from "../../tools/probes/sweep/shown.ts";
 import { defaultHomeSettings } from "../src/engine/homeEval.ts";
@@ -50,39 +50,15 @@ const host = new EngineHost(loaded.giac, loaded.bridge);
 const cas = (input: string): string => host.cas(input, defaultCasSettings).result.text;
 // P20: kinds and list entries come from Giac's bridge (bridge-3), not from a regex or a bracket loop over its text.
 const UNRESOLVED_HEADS: ReadonlySet<string> = new Set(["int", "integrate", "solve", "undef", "="]);
-const REAL = new Set(["integer", "rational", "float", "symbolic"]);
-const at: At = (expr, x) => {
-  const v = loaded.bridge.value(`subs(${expr},x=${x})`, [12]);
-  const p = v.at?.["12"];
-  if (!REAL.has(v.kind) || !p || p.length !== 1) return null;
-  const [re, im] = p[0]!;
-  const r = Number(re);
-  return Number(im) === 0 && Number.isFinite(r) ? r : null;
-};
+const at: At = realAt(loaded.bridge);
 const entries: Entries = (text) => {
   const v = loaded.bridge.value(text, []);
   return v.kind === "list" && v.elements ? v.elements : null;
 };
 
-// G805: the largest |argument| of sin, cos, tan, sec, csc or cot in an expression at x (check.ts's rule): the value's tree (bridge-3) finds
-// each such node, and its argument is Giac's own part of the expression, `(expr)[i]…[j][1]` (children as op() splits a part, from 1).
-// Asked only at a point where the sides differ, so it costs nothing on the questions that agree.
-const PERIODIC: ReadonlySet<string> = new Set(["sin", "cos", "tan", "sec", "csc", "cot"]);
-const phase: Phase = (expr, x) => {
-  const tree = loaded.bridge.value(expr, [], true).tree;
-  if (!tree) return null;
-  let top = 0;
-  const walk = (n: ParseNode, path: string): void => {
-    if (n[0] !== 1) return;
-    if (PERIODIC.has(n[1]) && n[3].length === 1) {
-      const v = at(`(${expr})${path}[1]`, x);
-      if (v !== null) top = Math.max(top, Math.abs(v));
-    }
-    n[3].forEach((k, i) => walk(k, `${path}[${i + 1}]`));
-  };
-  walk(tree, "");
-  return top;
-};
+// G805: the largest |argument| of a periodic function at x (check.ts's rule; tools/probes/casback/engine.ts), asked only at a point where
+// the sides differ, so it costs nothing on the questions that agree.
+const phase: Phase = phaseReader(loaded.bridge, at);
 
 const probe: Probe = (text) => ({
   kind: loaded.bridge.value(text, []).kind,
