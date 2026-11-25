@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // G64: the check-back kinds on fixed answers, with a small JS evaluator standing in for Giac (no engine: the stage itself is scripts/casback.ts).
 import { describe, expect, it } from "vitest";
-import { checkAntiderivative, checkFactorisation, checkSimplification, checkSolutions, fromCorpus, generated, type At, type Entries, type Probe } from "../../tools/probes/casback/check.ts";
+import { checkAntiderivative, checkFactorisation, checkSimplification, checkSolutions, fromCorpus, generated, type At, type Entries, type Phase, type Probe } from "../../tools/probes/casback/check.ts";
 
 /** Rewrites diff(F,x) into D(x=>F) (balanced parentheses), the rest into JS. */
 function js(e: string): string {
@@ -68,6 +68,55 @@ describe("check back", () => {
     expect(checkSimplification("ln(x^2)", "2*ln(x)", at, probe).status).toBe("wrong");
     expect(checkSimplification("ln(x^2)", "2*ln(abs(x))", at, probe).status).toBe("ok");
     expect(checkSimplification("ln(x)", "ln(x)+1", at, probe).status).toBe("wrong");
+  });
+});
+
+describe("not checkable in doubles (G805; the rule in check.ts's header)", () => {
+  /** Stands in for the bridge's tree walk: the argument of the first tan, sin or cos (one without brackets inside), by the JS evaluator. */
+  const phase: Phase = (e, x) => {
+    const m = /\b(?:tan|sin|cos)\(([^()]*)\)/.exec(e);
+    return m ? Math.abs(at(m[1]!, x) ?? 0) : 0;
+  };
+  it("drops a point where a periodic function's argument passes 10^8 (A273's nightly: tan(x/6.02e-15), 9.1e13 at x=0.55)", () => {
+    // in doubles the two spellings of one argument round apart: the evaluator gives two unrelated tangents (Giac's: 2.04 and -22.8)
+    expect(checkSimplification("tan(x/6.02e-15)", "tan(50000000000000000/301*x)", at, probe).status).toBe("wrong");
+    const v = checkSimplification("tan(x/6.02e-15)", "tan(50000000000000000/301*x)", at, probe, phase);
+    expect(v.status).toBe("skip");
+    expect(v.detail).toMatch(/^a periodic function's argument is \d\.\d\de\+13 at x=(0\.3|0\.55|0\.8|-0\.7), past 10\^8$/);
+    // under 10^8 a wrong answer still fails, with or without the phase reader
+    expect(checkSimplification("tan(x/6.02e-5)", "tan(x/6.02e-5)+1e-3", at, probe, phase).status).toBe("wrong");
+    expect(checkSimplification("tan(x)", "tan(2*x)", at, probe, phase).status).toBe("wrong");
+    // and a solution whose residual holds such a phase is not checkable either
+    expect(checkSolutions("tan(x/6.02e-15)=0", "[0.55]", at, entries, probe, phase).status).toBe("skip");
+  });
+  it("drops a point where the sides differ only past 10 digits at their size (cosh(sinh(3!)): 2.00392368114e87 against …115e87)", () => {
+    // what Giac's 12-digit evaluation gave at every point (A273's nightly, seed 20782)
+    const shown = (vals: Record<string, number>): At => (e) => vals[e] ?? null;
+    const giac = shown({ answer: 2.00392368114e87, original: 2.00392368115e87 });
+    expect(checkSimplification("original", "answer", giac, probe).status).toBe("skip");
+    expect(checkSimplification("original", "answer", giac, probe).detail).toMatch(/differ only past 10 digits/);
+    // a difference in the first ten digits still fails, at any size
+    expect(checkSimplification("original", "answer", shown({ answer: 2.0039e87, original: 2.004e87 }), probe).status).toBe("wrong");
+    expect(checkSimplification("original", "answer", shown({ answer: 2.00392368e87, original: 2.00392369e87 }), probe).status).toBe("wrong");
+    expect(checkSimplification("original", "answer", shown({ answer: 0.5, original: 0.50001 }), probe).status).toBe("wrong");
+  });
+  it("a point dropped past 10 digits makes the check a skip beside points that agree, and a wrong one beside points that differ", () => {
+    // the original is 10^20·cosh(x); the answer is it times (1 + 3e-11) at x=0.55 only (a gap of about 3.5e9, past TOL but past 10
+    // digits: dropped), the same elsewhere: a skip, not ok (check.ts sameAt)
+    const nudged = (bad: Record<string, number>): At => (e, x) => {
+      const c = at("cosh(x)", x);
+      const o = c === null ? null : 1e20 * c;
+      return e === "answer" && o !== null ? o * (1 + (bad[x] ?? 0)) : e === "original" ? o : at(e, x);
+    };
+    const one = checkSimplification("original", "answer", nudged({ "0.55": 3e-11 }), probe, phase);
+    expect(one.status).toBe("skip");
+    expect(one.detail).toMatch(/^the sides differ only past 10 digits at x=0\.55 /);
+    // the same dropped point, and another point really differs (in its fifth digit): wrong, naming that point
+    const two = checkSimplification("original", "answer", nudged({ "0.55": 3e-11, "0.8": 1e-4 }), probe, phase);
+    expect(two.status).toBe("wrong");
+    expect(two.detail).toMatch(/at x=0\.8$/);
+    // and with the differing point first in POINTS' order (0.3 before 0.55): still wrong
+    expect(checkSimplification("original", "answer", nudged({ "0.3": 1e-4, "0.55": 3e-11 }), probe, phase).status).toBe("wrong");
   });
 });
 
