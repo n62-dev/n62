@@ -34,6 +34,14 @@ const OLD_N62 = {
   light: { bg: "#f4f6f6", panel: "#e8eded", line: "#b9c6c6", "key-num": "#ffffff", "key-op": "#e6ecec", "key-fn": "#e6ecec", "key-ctl": "#e6ecec", "key-nav": "#e6ecec", "key-enter": "#1b2122", "on-enter": "#ffffff", text: "#0b1213", "text-dead": "#687474", muted: "#44504f", shift: "#a14600", alpha: "#2e706e", error: "#aa241d", "chip-bg": "#d6e8e6", approx: "#286160", warn: "#725400", pick: "#b9d6d4", focus: "#2e706e", "key-on": "#2e706e", "on-key-on": "#ffffff", "key-text": "#0b1213", "key-muted": "#44504f", "key-text-dead": "#687474", "key-shift": "#a14600", "key-alpha": "#2e706e", "key-pfx": "#d9e9e8", "on-error": "#ffffff", "on-shift": "#ffffff", "on-alpha": "#ffffff", "on-key-shift": "#ffffff", "on-key-alpha": "#ffffff" },
 } as const;
 
+/** R933 (owner, 2026-11-24): Black & White Light's four non-digit fills darken until they stand --key-num's contrast to the
+ *  keypad less 0.05; Alpha #2e706e falls to 4.26:1 on them and darkens to its 4.5 floor, Shift then moves from it as R140 holds
+ *  them apart, and the prefix cells follow the new colours (withPfx). Dark is not part of R933. Every other role is phase-1's. */
+const R933_MOVED: Record<"dark" | "light", Record<string, string>> = {
+  dark: {},
+  light: { "key-op": "#d9dfdf", "key-fn": "#d9dfdf", "key-ctl": "#d9dfdf", "key-nav": "#d9dfdf", alpha: "#2c6b69", "key-alpha": "#2c6b69", shift: "#9c4400", "key-shift": "#9c4400", "key-pfx": "#cfe2e2" },
+};
+
 describe("R153: N62 in teal", () => {
   it("the families are n62, bw, solarized, named N62, Black & White, Solarized", () => {
     expect(FAMILIES.map((f) => f.id)).toEqual(["n62", "bw", "solarized"]);
@@ -68,10 +76,10 @@ describe("R153: N62 in teal", () => {
       if (!c.high) for (const r of ["bg", "line", "key-fn"]) expect(oklch(t[r] as string)[0], r).toBeGreaterThanOrEqual(0.02);
     });
   for (const b of ["dark", "light"] as const)
-    it(`Black & White ${b} is phase-1's N62 ${b}, role for role`, () => {
+    it(`Black & White ${b} is phase-1's N62 ${b}, role for role (but R933's moves, named)`, () => {
       const { t } = theme({ family: "bw", brightness: b, high: false, plain: false });
       const { ring: _ring, "key-edge": _edge, "key-disc": _pad, "mark-faint": _mark, sel: _sel, "on-sel": _onSel, edge: _accent, ...old } = t; // R872's --edge (the teal the prefix cells keep beside a white or black Enter), R154's --ring, R156's --key-edge, R873's --key-disc, R157's --mark-faint and R274's --sel and --on-sel are new; every other role is phase-1's
-      expect(old).toEqual(OLD_N62[b]);
+      expect(old).toEqual({ ...OLD_N62[b], ...R933_MOVED[b] });
     });
 });
 

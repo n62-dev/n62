@@ -464,11 +464,11 @@ export const padArrowsFloor = (c: Combo): number => (c.high ? undefined : PAD_AR
  * kept: OKLab a and b) away from the keypad's --panel, lighter in a dark combination and darker in a light one, until it stands
  * KEY_DISC_APART from it with the arrows still at 4.5:1 on it. Set last, from the final colours.
  */
-function withKeyDisc(t: Palette, c: Combo): Palette {
+function withKeyDisc(t: Palette, c: Combo, ctl = get(t, "key-ctl")): Palette {
   const panel = get(t, "panel");
   const dark = c.brightness === "dark";
   const ok = (x: string): boolean => cr(x, panel) >= KEY_DISC_APART && lum(x) > lum(panel) === dark && cr(mix(x, get(t, "key-text"), PAD_ARROWS), x) >= padArrowsFloor(c);
-  const [L, a, b] = oklabOf(get(t, "key-ctl")) as [number, number, number];
+  const [L, a, b] = oklabOf(ctl) as [number, number, number];
   for (let i = 0; i <= 400; i++) {
     const x = oklabHex([L + (dark ? i : -i) * 0.0025, a, b]);
     if (ok(x)) return { ...t, "key-disc": x };
@@ -513,6 +513,42 @@ function withMarkFaint(t: Palette): Palette {
   throw new Error(`theme-gen: no --mark-faint between ${bg} and ${muted}`);
 }
 
+/**
+ * R933 (owner, 2026-11-24, on the Fairphone): in these looks the keys that are not number keys sat almost on the keypad's
+ * --panel (Keypad.svelte .pad; --key-op 1.02:1 from it, the digits 1.15 to 1.18). Each of the four other fills that stands
+ * nearer --panel than --key-num's contrast to it less KEY_FILL_SLACK darkens ("a touch darker"; its OKLCH lightness, hue and
+ * chroma kept, as withKeyDisc), the nearest step first, until it stands that far below --panel (Solarized Light's --key-nav, a
+ * hair above --panel, crosses it; Black & White Light's Plain keys already stand so above it and stay). A key legend that falls below
+ * its floor on the new fills moves as base() moves it (Black & White Light's teal Alpha); High contrast is not moved.
+ */
+export const KEY_FILL_LOOKS: readonly string[] = ["solarized dark", "solarized light", "bw light"];
+export const KEY_FILL_SLACK = 0.05;
+function withKeyFills(t: Palette): Palette {
+  const panel = get(t, "panel");
+  const min = cr(get(t, "key-num"), panel) - KEY_FILL_SLACK;
+  const o: Palette = { ...t };
+  const rest = KEYS.slice(1);
+  for (const k of rest) {
+    if (cr(get(t, k), panel) >= min) continue;
+    const [L, a, b] = oklabOf(get(t, k)) as [number, number, number];
+    for (let i = 1; i <= 400; i++) {
+      const c = oklabHex([L - i * 0.0025, a, b]);
+      if (lum(c) < lum(panel) && cr(c, panel) >= min) {
+        o[k] = c;
+        break;
+      }
+    }
+  }
+  const fills = getAll(o, rest);
+  for (const [r, floor] of [["text", 4.5], ["shift", 4.5], ["alpha", 4.5], ["text-dead", 3]] as const) {
+    const split = isSplit(t, r);
+    const v = ensure(get(t, keyOf(r)), fills, floor, split ? lightKeyInk(t) : lightInk(t));
+    o[keyOf(r)] = v;
+    if (!split) o[r] = v;
+  }
+  return o;
+}
+
 export interface Combo {
   family: string;
   brightness: Brightness;
@@ -534,9 +570,12 @@ export function theme(c: Combo): { t: Palette; fixes: [string, string, string][]
   let o = t;
   if (c.plain) o = plain(o, PLAIN_TWO_TONE.includes(c.family));
   if (c.high) o = highContrast(o);
+  // R933: the round pad keeps the fill R873 gave it, from --key-ctl before the move
+  const ctl = get(o, "key-ctl");
+  if (!c.high && KEY_FILL_LOOKS.includes(`${c.family} ${c.brightness}`)) o = withKeyFills(o);
   if (!c.plain) o = withLayersApart(o, c.high);
   o = withEnter(o, c);
-  return { t: withKeyDisc(withMarkFaint(withKeyEdge(withRing(withOnLayer(withOnError(withSel(withPfx(withPick(o, c.high), c.high, c.plain), c.high), dark)), c.high), dark)), c), fixes };
+  return { t: withKeyDisc(withMarkFaint(withKeyEdge(withRing(withOnLayer(withOnError(withSel(withPfx(withPick(o, c.high), c.high, c.plain), c.high), dark)), c.high), dark)), c, ctl), fixes };
 }
 
 // --- the audit: every pair the app draws (docs/archive/shifts/2026-10-18-themes-report.md section 2) ---
