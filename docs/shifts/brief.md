@@ -137,7 +137,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | B5d | A275 the pre-flight checks the package's Docs step (coord; owner, 2026-11-25: top of lane B) | annabell, Sonnet | `p1/annabell-docsstep` | – |
 | B6i | [G800](packages/G800.md) a unit sweep | gorge, Opus | `p1/gorge-unitsweep` | R885 |
 | B6k | [G796](packages/G796.md) Copy of an unchecked row | gorge, Opus | `p1/gorge-copywarn` | – |
-| B6l | [G801](packages/G801.md) a constant's own unit (J·s) | gorge, Opus | `p1/gorge-constunit` | – |
+| B6l | G801 a constant's own unit (J·s) | gorge, Opus | `p1/gorge-constunit` | – |
 | B7 | [G405](packages/G405.md) solve keeps close real roots | gorge, Opus | `p1/gorge-closeroots` | – |
 | B8 | [G404](packages/G404.md) G358's climb on every path | gorge, Opus | `p1/gorge-climball` | – |
 | B9 | [G403](packages/G403.md) a tiny constant raises the check's start | gorge, Opus | `p1/gorge-tinyconst` | – |
