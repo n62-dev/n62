@@ -368,6 +368,32 @@ describe("formatConfirmed: only confirmed digits are shown", () => {
   });
 });
 
+describe("G795: FIX of a value whose integer part is longer than its confirmed digits", () => {
+  const v = (s: string) => decimalFromString(s)!;
+  const FIX4: FormatOptions = { format: "FIX", digits: 12, fixed: 4 };
+  // oracle (mpmath, 55 digits): exp(100) = 26881171418161354484126255515800135873611118.77374192242; the engine confirmed 40
+  const exp100 = { value: { re: v("26881171418161354484126255515800135873611118.77374192242"), im: ZERO_VALUE }, exact: false, reliableDigits: 40 };
+  it("falls back to SCI at fixed + 1 = 5 significant digits, as a tiny value does, and every digit shown is confirmed: ≈", () => {
+    expect(formatComplex(exp100.value, confirmedOptions(exp100.value, 40, FIX4)).text).toBe("2.6881E43");
+    expect(formatConfirmed(exp100, FIX4)).toBe("2.6881E43");
+    expect(markOf(exp100, FIX4)).toEqual({ mark: "≈" });
+  });
+  it("fewer confirmed digits than fixed + 1: the fallback shows those, ⚠ n of the 5 it asks for", () => {
+    const f = { ...exp100, reliableDigits: 3 };
+    expect(formatConfirmed(f, FIX4)).toBe("2.69E43");
+    expect(markOf(f, FIX4)).toEqual({ mark: "⚠", n: 3, of: 5 });
+  });
+  it("controls: an exact long integer stays in FIX; an integer part within the confirmed digits keeps its decimals", () => {
+    const two100 = { value: { re: v("1267650600228229401496703205376"), im: ZERO_VALUE }, exact: true, reliableDigits: null };
+    expect(formatConfirmed(two100, FIX4)).toBe("1267650600228229401496703205376.0000");
+    expect(markOf(two100, FIX4)).toEqual({ mark: "=" });
+    // derived: sqrt(2) = 1.41421356237309504880…, × 10^15
+    const r2 = { value: { re: v("1414213562373095.04880168872"), im: ZERO_VALUE }, exact: false, reliableDigits: 20 };
+    expect(formatConfirmed(r2, { ...FIX4, fixed: 2 })).toBe("1414213562373095.05");
+    expect(markOf(r2, { ...FIX4, fixed: 2 })).toEqual({ mark: "≈" });
+  });
+});
+
 describe("confirmedDigits: the agreement check (docs/04 2.4 rule 2)", () => {
   const v = (s: string) => decimalFromString(s)!;
   it("two evaluations of sqrt(2) at 40 and 60 digits confirm 39 digits", () => {
