@@ -7,6 +7,8 @@
 // (the hunt's hand matrices and G797's leaves, at Digits 12 and 30); integers 0, 7, 12, 2^31 ± 1, 2^63 ± 1, 2^70 give lcm and gcd of any
 // signs = those of the absolute values, ≥ 0, hamdist(a,b) = hamdist(−a−1,−b−1), b·iquo(a,b) + irem(a,b) = a. A broken law fails only
 // where both sides claim their digits (=, ≈, ⚠ n); a bare ⚠ passes.
+// G805: the points are compared in doubles, so a point where the sides differ is not checkable when a periodic function's argument passes
+// 10^8 there (`phase` below reads it) or when they differ only past 10 digits at their size (check.ts's header has the rule).
 //   node scripts/casback.ts                       # the gate stage: fixed seed, CASBACK_COUNT generated questions (default 120), 6 law matrices, exit 1 on a new failure or past 30 s
 //   node scripts/casback.ts --nightly [--seed N] [--count N] [--laws N]   # rotating seed, default 1200 questions and 60 law matrices, report only (FINDING: not a known row)
 // Known failures: tests/golden/casback-known.yaml (id = the question or the law, check = its kind or `law`, package = the open backlog id). Environment: GIAC_OUT.
@@ -22,7 +24,8 @@ import { invariantsStage, type InvariantFailure, type KnownFailure } from "./inv
 import { generate } from "../../tools/probes/sweep/gen.ts";
 import { compileDefinition } from "../src/apps/function/compile.ts";
 import { SETS, loadSet, tarballPath } from "../../tools/probes/giaccheck/suite.ts";
-import { checkBack, checkLaw, fromCorpus, generated, integerLawSet, LAW_MATRICES_PINNED, matrixLaws, type At, type Entries, type LawShown, type Probe, type Question } from "../../tools/probes/casback/check.ts";
+import { checkBack, checkLaw, fromCorpus, generated, integerLawSet, LAW_MATRICES_PINNED, matrixLaws, type At, type Entries, type LawShown, type Phase, type Probe, type Question } from "../../tools/probes/casback/check.ts";
+import { phaseReader, realAt } from "../../tools/probes/casback/engine.ts";
 import { generateLawMatrices } from "../../tools/probes/sweep/gen.ts";
 import { shownOf } from "../../tools/probes/sweep/shown.ts";
 import { defaultHomeSettings } from "../src/engine/homeEval.ts";
@@ -47,19 +50,15 @@ const host = new EngineHost(loaded.giac, loaded.bridge);
 const cas = (input: string): string => host.cas(input, defaultCasSettings).result.text;
 // P20: kinds and list entries come from Giac's bridge (bridge-3), not from a regex or a bracket loop over its text.
 const UNRESOLVED_HEADS: ReadonlySet<string> = new Set(["int", "integrate", "solve", "undef", "="]);
-const REAL = new Set(["integer", "rational", "float", "symbolic"]);
-const at: At = (expr, x) => {
-  const v = loaded.bridge.value(`subs(${expr},x=${x})`, [12]);
-  const p = v.at?.["12"];
-  if (!REAL.has(v.kind) || !p || p.length !== 1) return null;
-  const [re, im] = p[0]!;
-  const r = Number(re);
-  return Number(im) === 0 && Number.isFinite(r) ? r : null;
-};
+const at: At = realAt(loaded.bridge);
 const entries: Entries = (text) => {
   const v = loaded.bridge.value(text, []);
   return v.kind === "list" && v.elements ? v.elements : null;
 };
+
+// G805: the largest |argument| of a periodic function at x (check.ts's rule; tools/probes/casback/engine.ts), asked only at a point where
+// the sides differ, so it costs nothing on the questions that agree.
+const phase: Phase = phaseReader(loaded.bridge, at);
 
 const probe: Probe = (text) => ({
   kind: loaded.bridge.value(text, []).kind,
@@ -114,7 +113,7 @@ for (const l of laws) {
 }
 for (const q of questions) {
   const answer = cas(q.input);
-  const v = checkBack(q, answer, at, entries, probe);
+  const v = checkBack(q, answer, at, entries, probe, phase);
   if (v.status === "skip") skipped++;
   else {
     checked++;

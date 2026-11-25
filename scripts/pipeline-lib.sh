@@ -406,10 +406,11 @@ flake_log() {
   return 0
 }
 _lib_log() { if declare -F log >/dev/null; then log "$*"; fi; }
-# A273: the family tests' nightly runs (pipeline.sh nightly <n>): <name>:<script in app/>; each runs as `node <script> --nightly` and prints
+# A273: the family tests' nightly runs (pipeline.sh nightly <n>): <name>:<script in app/> [its options]; each runs as `node <script> --nightly [options]`, prints
 # a last line `<TOOL> NIGHTLY: ...` with its runs (`N runs` or `N checked`), failures (`N failures` or `N failed`), the new ones (`N not in the
-# known files` or `; N new` at the end) and `seed S`; G799 and G800 add theirs here, one line each, printing such a line.
-NIGHTLY_TOOLS=(sweep:scripts/sweep.ts casback:scripts/casback.ts)
+# known files` or `; N new` at the end) and `seed S`; G805: viewsweep (G799's checks; its runs are its comparisons) at count 300 (178.5 s on
+# 2026-11-25, seed 20782; its default 600 ran past 600 s with 30 engine hangs and crashes, near the 1200 s limit); G800 adds its own here.
+NIGHTLY_TOOLS=(sweep:scripts/sweep.ts casback:scripts/casback.ts "viewsweep:scripts/viewsweep.ts --count 300")
 # nightly_counts <output file>: "<runs> <known> <new> <seed>" from the tool's last NIGHTLY line (known = failures - new), else fails.
 nightly_counts() {
   local l runs failed new seed

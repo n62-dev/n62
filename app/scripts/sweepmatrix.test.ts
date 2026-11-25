@@ -220,6 +220,43 @@ describe("the oracle's matrices (G797; mpmath matrix, inverse, det, lu_solve, ex
     expect(out.filter((o) => o.kind === "value").length).toBeGreaterThan(15);
     expect(out.filter((o) => o.kind === "novalue").length).toBeGreaterThan(0);
   }, 120_000);
+
+  it("an expm is never singular (G805): rank n, det e^trace, an inverse and a solution, on the nightly's rows (source: derived, det e^A = e^tr A)", () => {
+    // the five rank rows, the two det rows, the inv and linsolve rows of A273's first nightly (phase-1 90b03389), as gen.ts writes them
+    const rank = [
+      "MAT([[mpf('2.5'),FACT(10)],[mpf('5'),FACT(10)]])",
+      "APPROX(MAT([[mpf('0.001'),E,mpf('1.5e22')],[E,mpf('2'),mpf('2')],[mpf('1'),mpf('12'),mpf('5')]]))",
+      "SMUL(POW(mpf('10'),mpf('3')),MAT([[mpf('7'),mpf('9.81'),PI],[mpf('10'),mpf('7'),E],[mpf('10'),mpf('3.7'),mpf('1.05')]]))",
+      "SMUL(POW(mpf('10'),mpf('8')),MAT([[mpf('6.02e8'),FACT(3)],[mpf('2'),mpf('7')]]))",
+      "APPROX(SMUL(POW(mpf('10'),mpf('14')),MAT([[mpf('12'),mpf('10'),mpf('0')],[mpf('2e-15'),mpf('0.3'),FACT(7)],[mpf('10'),mpf('0.001'),PI]])))",
+    ];
+    const D1 = "MAT([[E,FACT(7)],[mpf('1'),mpf('6.02e8')]])";
+    const D2 = "MAT([[mpf('7'),mpf('2.5'),mpf('3')],[mpf('2.5'),mpf('0'),FACT(3)],[mpf('10'),mpf('3.7'),FACT(7)]])";
+    const o = oracle([
+      ...rank.map((m) => `RANK(EXPM(${m}))`),
+      `DET(EXPM(${D1}))`,
+      "exp((E)+(mpf('6.02e8')))", // its trace
+      `DET(EXPM(${D2}))`,
+      "exp(mpf('5047'))", // 7 + 0 + 7!
+      "INV(EXPM(MAT([[FACT(3),mpf('1')],[PI,FACT(10)]])))",
+      "LINSOLVE(EXPM(MAT([[mpf('2e-8'),mpf('0.001')],[E,mpf('6.02e3')]])),MAT([[mpf('3.7')],[mpf('1.05')]]))",
+      // a diagonal: the inverse of e^D is e^-D, entry by entry against the scalar exp
+      "INV(EXPM(MAT([[mpf('1'),mpf('0')],[mpf('0'),mpf('-2.5')]])))",
+      "exp(mpf('-1'))",
+      "exp(mpf('2.5'))",
+      `MMUL(INV(EXPM(${M})),EXPM(${M}))`, // the identity
+    ]);
+    const re = (x: Oracle | undefined): string => (x?.kind === "value" ? x.re : `(${x?.kind})`);
+    expect(o.slice(0, 5).map(re)).toEqual(["2.0", "3.0", "3.0", "2.0", "3.0"]);
+    expect(re(o[5])).toMatch(/^1\.93326949645131386268356913\d*e\+261445279$/); // the nightly showed 1.9332694964513138626835691389E261445279
+    expect(re(o[5])).toBe(re(o[6]));
+    expect(re(o[7])).toMatch(/^7\.6603773891036977340346550\d*e\+2191$/); // shown 7.660377389103697734034655062E2191
+    expect(re(o[7])).toBe(re(o[8]));
+    expect(o[9]).toMatchObject({ kind: "matrix", rows: 2, cols: 2 });
+    expect(o[10]).toMatchObject({ kind: "matrix", rows: 2, cols: null });
+    expect(cells(o[11]!, 50)).toEqual([re(o[12]).slice(0, 50), "0.0", "0.0", re(o[13]).slice(0, 50)]);
+    expect(cells(o[14]!, 100).map(Number)).toEqual([1, 0, 0, 1]);
+  }, 120_000);
 });
 
 const num = (re: string, im?: string): ComplexValue => ({ re: decimalFromString(re) ?? ZERO_VALUE, im: im === undefined ? ZERO_VALUE : (decimalFromString(im) ?? ZERO_VALUE) });
