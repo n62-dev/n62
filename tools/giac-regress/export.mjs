@@ -657,6 +657,8 @@ export const PATCHED_IDS = new Map([
   // G802 (F481): the division of a matrix holding an MPFR float and exp(1) overflowed the stack (patch 0069); the scalar inv rows
   ["g802-inv-exp-approx-entry-scaled-00", "0069-vector-mpfr-arith-recursion.patch"],
   ["g802-home-inv-exp-approx-entry-scaled-00-40", "0069-vector-mpfr-arith-recursion.patch"],
+  // G804: Zeta of a complex argument right at 40 digits (patch 0070 sizes Eta's series by the precision; ⚠ rows before it, not exported)
+  ["g140-zeta-half+i-over-2^300-30", "0070-vector-entry-mpfr-precision.patch"], ["g140-zeta-half+i-plus-pi-30", "0070-vector-entry-mpfr-precision.patch"],
 ]);
 // G122: Giac's exact answer is right (patch 0014), but pc()'s evalf of it at Digits 40 cancels the digits of a large k*pi
 // (asin(cos(30!)) = -pi/2+30!-k*pi with k of 32 digits keeps about 7, -pi/2+10^50-k*pi none); Home raises the precision
