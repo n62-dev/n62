@@ -3,7 +3,7 @@
 // texts are the package's; the uncertainty of G is CODATA's 0.00015E-11 as the index writes it.
 import { describe, expect, it } from "vitest";
 import type { HistoryItem } from "../state/session.svelte.ts";
-import type { MarkInfo } from "../engine/format.ts";
+import { decimalFromString, markOf, ZERO_VALUE, type MarkInfo } from "../engine/format.ts";
 import { uncText, whyLine } from "./whyLine.ts";
 
 const item = (over: Partial<HistoryItem>): HistoryItem =>
@@ -71,6 +71,12 @@ describe("whyLine", () => {
     expect(line(item({ facts: facts({ warn: "unchecked", why: { existsUnchecked: true } }) }), { mark: "⚠", warn: "unchecked" })).toBe("⚠ the check that this value exists did not finish");
     expect(line(item({}), { mark: "⚠", warn: "unchecked" })).toBe("⚠ not checked");
     expect(line(item({}), { mark: "⚠" })).toBe("⚠ fewer digits confirmed than shown");
+  });
+  it("G795: the count is the drawn form's digits: FIX 4 of 123.456789 asks for 7, not the digits setting's 12", () => {
+    const f = { value: { re: decimalFromString("123.456789")!, im: ZERO_VALUE }, exact: false, reliableDigits: 5 };
+    const i = item({ facts: facts({ reliableDigits: 5, digits: 12 }) });
+    expect(line(i, markOf(f, { format: "FIX", digits: 12, fixed: 4 }))).toBe("⚠ 5 of 7 digits confirmed");
+    expect(line(i, markOf(f, { format: "STD", digits: 12 }))).toBe("⚠ 5 of 12 digits confirmed");
   });
   it("G50: a complex function the audit does not cover is named", () => {
     const i = item({ facts: facts({ warn: "unaudited", why: { unaudited: ["atan"] } }) });

@@ -353,3 +353,43 @@ test("G785: Home, a b/c on 5 (no other form) is a dead press, the double pulse a
   await expect(lastText(page)).toHaveAttribute("data-text", "5");
   expect(await page.evaluate(() => window.n62.entry.empty)).toBe(true);
 });
+
+// G795: FIX of a value whose integer part is longer than its confirmed digits falls back to SCI at fixed + 1 significant
+// digits, as a too-small value does (G2 item 60). Oracle (mpmath): exp(100) = 2.68811714181613544841…E43.
+/** Home, Fmt key cycle STD FIX, `decimals` decimals; `keys` tapped, the row's STD text checked. */
+async function fixRow(page: Page, decimals: number, keys: string[], std: string): Promise<void> {
+  await open(page, "");
+  await ready(page);
+  await page.evaluate((d) => {
+    const s = window.n62.session;
+    s.settings.fmtCycle = ["std", "fix"];
+    s.settings.fixDecimals = d;
+    s.save();
+  }, decimals);
+  await tap(page, keys);
+  await expect(lastText(page)).toHaveAttribute("data-text", std);
+}
+
+test("G795: exp(100), Fmt to FIX 4: 2.6881E43 with ≈, never ⚠ 40 and 40 digits", async ({ page }) => {
+  await fixRow(page, 4, ["shift", "ln", "d1", "d0", "d0", "enter"], "2.68811714182E43");
+  await expect(markOfLast(page)).toHaveText("≈");
+  await tap(page, ["fmt"]);
+  await expect(lastText(page)).toHaveAttribute("data-text", "2.6881E43");
+  await expect(markOfLast(page)).toHaveText("≈");
+});
+
+test("G795 controls: 2^100 FIX 4 stays the exact integer with =; sqrt(2)·10^15 FIX 2 keeps its decimals", async ({ page }) => {
+  await fixRow(page, 4, ["d2", "pow", "d1", "d0", "d0", "enter"], "1.26765060023E30");
+  await tap(page, ["fmt"]);
+  await expect(lastText(page)).toHaveAttribute("data-text", "1267650600228229401496703205376.0000");
+  await expect(markOfLast(page)).toHaveText("=");
+  await page.evaluate(() => {
+    window.n62.session.settings.fixDecimals = 2;
+    window.n62.session.save();
+  });
+  await tap(page, ["shift", "sq", "d2", "right", "mul", "d1", "d0", "pow", "d1", "d5", "enter"]);
+  await expect(lastText(page)).toHaveAttribute("data-text", "1.41421356237E15");
+  await tap(page, ["fmt"]);
+  await expect(lastText(page)).toHaveAttribute("data-text", "1414213562373095.05");
+  await expect(markOfLast(page)).toHaveText("≈");
+});

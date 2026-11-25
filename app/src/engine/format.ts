@@ -45,6 +45,9 @@ export interface FormatOptions {
   fixed?: number;
   /** FIX only: significant digits of the scientific fallback (default fixed + 1); confirmedOptions sets it (G36). */
   sciDigits?: number;
+  /** FIX only: a value whose integer part has more digits than this (its confirmed digits) is drawn in the SCI fallback
+   *  too (G795); confirmedOptions and markOf set it from reliableDigits. */
+  sciAbove?: number;
   /** PFX only: keep the mantissa's trailing zeros as ENG does (the σ line's two digits, 9.0 G). */
   keepZeros?: boolean;
 }
@@ -139,11 +142,10 @@ function eng(v: DecimalValue, n: number): FormattedNumber {
   return { neg: r.neg, mantissa, exponent: e3 };
 }
 
-/** FIX: a non-zero value whose every shown decimal would be 0 falls back to SCI with f decimals (G2 item 60: 4.7ᴇ-6 → 4.7000ᴇ-6). */
-function fix(v: DecimalValue, f: number, sciDigits: number = f + 1): FormattedNumber {
-  const r = fixPlain(v, f);
-  if (!isZero(v) && /^0(\.0*)?$/.test(r.mantissa)) return sci(v, sciDigits);
-  return r;
+/** FIX: a value that falls back (fixFallsBack) is drawn in SCI with f decimals (G2 item 60: 4.7ᴇ-6 → 4.7000ᴇ-6). */
+function fix(v: DecimalValue, o: FormatOptions): FormattedNumber {
+  const f = o.fixed ?? 4;
+  return fixFallsBack(v, o) ? sci(v, o.sciDigits ?? f + 1) : fixPlain(v, f);
 }
 
 function fixPlain(v: DecimalValue, f: number): FormattedNumber {
@@ -194,7 +196,7 @@ export function formatReal(v: DecimalValue, o: FormatOptions): FormattedNumber {
     case "ENG":
       return eng(v, o.digits);
     case "FIX":
-      return fix(v, o.fixed ?? 4, o.sciDigits);
+      return fix(v, o);
   }
 }
 
@@ -334,6 +336,8 @@ export interface MarkInfo {
   mark: Mark;
   /** ⚠ with fewer confirmed digits than the format asks for: how many are confirmed (and shown). */
   n?: number;
+  /** FIX's ⚠ n only: the significant digits the form asks for (whyLine's "n of …"; other formats ask for `digits`, G795). */
+  of?: number;
   warn?: PrecisionWarn;
 }
 
@@ -344,9 +348,16 @@ function digitsShown(v: DecimalValue, o: FormatOptions): number {
   return Math.max(1, v.exp + 1 + (o.fixed ?? 4));
 }
 
-/** FIX shows a non-zero v in scientific notation (every shown decimal would be 0). */
+/** FIX shows a non-zero v in scientific notation: every shown decimal would be 0, or its integer part is longer than
+ *  its confirmed digits (`sciAbove`, G795: exp(100) in FIX 4 is 2.6881E43, never 44 digits of which 40 are confirmed). */
 function fixFallsBack(v: DecimalValue, o: FormatOptions): boolean {
-  return o.format === "FIX" && !isZero(v) && /^0(\.0*)?$/.test(fixPlain(v, o.fixed ?? 4).mantissa);
+  if (o.format !== "FIX" || isZero(v)) return false;
+  return (o.sciAbove !== undefined && v.exp + 1 > o.sciAbove) || /^0(\.0*)?$/.test(fixPlain(v, o.fixed ?? 4).mantissa);
+}
+
+/** `o` with FIX's fallback for an integer part longer than the confirmed digits (G795); other formats unchanged. */
+function withConfirmedFix(o: FormatOptions, reliableDigits: number | null): FormatOptions {
+  return o.format === "FIX" && reliableDigits !== null ? { ...o, sciAbove: Math.max(1, reliableDigits) } : o;
 }
 
 /** The text in format `o` is exactly v: nothing non-zero is cut off. */
@@ -360,28 +371,26 @@ function shownExactly(v: DecimalValue, o: FormatOptions): boolean {
 
 /**
  * The format options that show only confirmed digits of `value`: `o` itself when every digit it shows is confirmed,
- * otherwise fewer significant digits (FIX: fewer decimals; SCI when not even the integer part is confirmed).
+ * otherwise fewer significant digits (FIX: fewer decimals; the SCI fallback when not even the integer part is confirmed).
  * One reliable digit is the least shown (a ⚠ 0 value still shows its leading digit, with the mark saying so).
  */
-export function confirmedOptions(value: ComplexValue, reliableDigits: number | null, o: FormatOptions): FormatOptions {
-  if (reliableDigits === null) return o;
+export function confirmedOptions(value: ComplexValue, reliableDigits: number | null, asked: FormatOptions): FormatOptions {
+  if (reliableDigits === null) return asked;
   const n = Math.max(1, reliableDigits);
+  const o = withConfirmedFix(asked, reliableDigits);
   const parts = [value.re, value.im].filter((v) => !isZero(v));
   if (parts.every((v) => digitsShown(v, o) <= n)) return o;
   if (o.format !== "FIX") return { ...o, digits: Math.min(o.digits, n) };
-  // Parts in the SCI fallback show sciDigits = n digits; only the others bound `fixed`. Lowering it can push a part
-  // into the fallback, so repeat until nothing changes (G36).
+  // Parts in the SCI fallback show sciDigits = n digits; only the others bound `fixed`, and their integer parts fit in n
+  // (sciAbove), so it never goes below 0. Lowering it can push a part into the fallback, so repeat until nothing changes (G36).
   let fixed = o.fixed ?? 4;
   for (;;) {
     let next = fixed;
     for (const v of parts) if (!fixFallsBack(v, { ...o, fixed })) next = Math.min(next, n - (v.exp + 1));
-    if (next === fixed || next < 0) {
-      fixed = next;
-      break;
-    }
+    if (next === fixed) break;
     fixed = next;
   }
-  return fixed >= 0 ? { ...o, fixed, sciDigits: Math.min(n, (o.fixed ?? 4) + 1) } : { ...o, format: "SCI", digits: n };
+  return { ...o, fixed, sciDigits: Math.min(n, (o.fixed ?? 4) + 1) };
 }
 
 const RANK: Record<Mark, number> = { "⚠": 0, "≈": 1, "=": 2 };
@@ -389,8 +398,10 @@ const RANK: Record<Mark, number> = { "⚠": 0, "≈": 1, "=": 2 };
 function weakest(a: MarkInfo, b: MarkInfo): MarkInfo {
   if (RANK[a.mark] !== RANK[b.mark]) return RANK[a.mark] < RANK[b.mark] ? a : b;
   if (a.mark !== "⚠") return a;
-  const n = a.n === undefined ? b.n : b.n === undefined ? a.n : Math.min(a.n, b.n);
-  return { mark: "⚠", ...(n === undefined ? {} : { n }), ...((a.warn ?? b.warn) ? { warn: a.warn ?? b.warn } : {}) };
+  // the fewer confirmed digits, with the count its form asks for (both are ⚠ here), and either's warning
+  const p = a.n === undefined ? b : b.n === undefined || a.n <= b.n ? a : b;
+  const warn = a.warn ?? b.warn;
+  return warn ? { ...p, warn } : p;
 }
 
 /**
@@ -417,11 +428,12 @@ export function markOf(f: PrecisionFacts, o: FormatOptions): MarkInfo | null {
   // G325f1: compared with reliableDigits itself: a value with none confirmed is drawn with one digit (confirmedOptions),
   // which is not confirmed either, so ⚠ 0, never ≈ (acos(sqrt(-2)*10^-330-2) showed ≈ 5-7E2*i); a zero shown too
   const rd = f.reliableDigits;
-  if (rd !== null && (rd < 1 || parts.some((p) => digitsShown(p, o) > rd))) {
-    return { mark: "⚠", n: Math.max(0, rd), ...(f.warn ? { warn: f.warn } : {}) };
-  }
+  // G795: FIX judged as drawn, an integer part longer than the confirmed digits in the SCI fallback
+  const oc = withConfirmedFix(o, rd);
+  const shown = Math.max(0, ...parts.map((p) => digitsShown(p, oc)));
+  if (rd !== null && (rd < 1 || shown > rd)) return { mark: "⚠", n: Math.max(0, rd), ...(oc.format === "FIX" && shown ? { of: shown } : {}), ...(f.warn ? { warn: f.warn } : {}) };
   if (f.warn) return { mark: "⚠", warn: f.warn };
-  if (f.exact && parts.every((p) => shownExactly(p, o))) return { mark: "=" };
+  if (f.exact && parts.every((p) => shownExactly(p, oc))) return { mark: "=" };
   return { mark: "≈" };
 }
 
