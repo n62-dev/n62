@@ -1490,6 +1490,64 @@ out="$(preflight_lint "$pl")" || fail "A83: preflight_lint refuses a branch with
 git -C "$pl" checkout -q -b p1/y phase-1; echo c > "$pl/c.txt"; git -C "$pl" add -A
 git -C "$pl" -c user.name=t -c user.email=t@t commit -q -m 'report(Y): c' -m $'- **Done:** x.\n- **Tests:** typecheck 0.\n- **Not done:** nothing.'
 out="$(preflight_lint "$pl")" || fail "A83: preflight_lint refuses a report written as brief section 2's bullet list: $out"
+# A275: the Docs step's files. The bundle's task section names the docs files the package must change (a numbered `**Docs:**` line, or
+# `Docs:` in a free-text task); each must be in the branch's diff against phase-1, or covered by a `Docs not changed: <path>: <why>` line
+# of a report commit; backlog.md is never required; a name that resolves to no file is ignored.
+dl="$tmp/dl"; mkdir -p "$dl/docs/shifts/packages"; git init -q -b phase-1 "$dl"
+for f in docs/05-ui-plan.md docs/04-architecture.md docs/decisions.md docs/backlog.md docs/README.md; do echo base > "$dl/$f"; done
+echo base > "$dl/src.txt"; git -C "$dl" add -A; gc "$dl" base; git -C "$dl" checkout -q -b p1/d
+dspec() { printf '# Pipeline run 1: X1 for ron on branch p1/d\n\n## Task\n%s\n\n## Files the task names (first 400 lines each; read more yourself if you need it)\nnone\n\n## Your report (brief section 2)\nDocs: docs/04 is in the report text, not the task\n' "$1" > "$tmp/dspec"; echo "$tmp/dspec"; }
+dwork() { echo "$RANDOM" >> "$dl/$1"; git -C "$dl" add -A; gc "$dl" "work $1"; }
+dreport() { git -C "$dl" -c user.name=t -c user.email=t@t commit -q --allow-empty -m 'report(X1): x' -m "$(printf -- '- **Done:** x.\n- **Tests:** none.\n%s' "$1")"; }
+dwork src.txt; dreport ""
+step3='1. Tests first.
+2. The change.
+3. **Docs:** docs/05:142 says what the line shows (plain) and when the note comes.
+**Done when:** it works.'
+out="$(docs_step_lint "$dl" "$(dspec "$step3")")"; rc=$?
+[[ $rc -ne 0 && "$out" == 'lint: the Docs step names docs/05-ui-plan.md and the branch does not change it' ]] || fail "A275: a Docs step naming docs/05 and a branch without it is not one lint line (rc $rc): $out"
+dwork docs/05-ui-plan.md
+out="$(docs_step_lint "$dl" "$(dspec "$step3")")" || fail "A275: the same branch with docs/05 changed fails: $out"
+# two files named, one changed: one line, for the other (docs/decisions.md by its bare name)
+step2='3. **Docs:** docs/05 3.1 "Fill the screen" gets the row; decisions.md: R832'"'"'s line rewritten in place (owner, 2026-11-23).'
+out="$(docs_step_lint "$dl" "$(dspec "$step2")")"; rc=$?
+[[ $rc -ne 0 && "$out" == 'lint: the Docs step names docs/decisions.md and the branch does not change it' ]] || fail "A275: docs/05 changed, decisions.md named: not one line for docs/decisions.md (rc $rc): $out"
+# the same step with the number-less form, the full file name, and an unchanged docs/04 named by its number and by its name
+out="$(docs_step_lint "$dl" "$(dspec '**Docs:** docs/04 2.6 and docs/README.md; docs/05-ui-plan.md: a clause.')")"
+[[ "$(wc -l <<<"$out")" -eq 2 ]] && grep -qx 'lint: the Docs step names docs/04-architecture.md and the branch does not change it' <<<"$out" && grep -qx 'lint: the Docs step names docs/README.md and the branch does not change it' <<<"$out" || fail "A275: docs/04 by number and docs/README.md by path are not two lines: $out"
+# nothing required: "none", no Docs step, an empty task
+for t in '3. **Docs:** none.' '**Docs:** none' 'No docs step here: change src.txt.'; do
+  out="$(docs_step_lint "$dl" "$(dspec "$t")")" || fail "A275: '$t' fails: $out"
+done
+docs_step_lint "$dl" "$tmp/no-such-spec" >/dev/null || fail "A275: a missing bundle fails the lint"
+# a free-text task (a FIX prompt): the sentence after `Docs:`, up to its end
+free='While a name prompt is up, a tap on a history row picks the row. Make a tap outside the prompt'"'"'s line a dead press. Docs: one clause in docs/05 3.4 at Presets, that a tap outside the name line is the dead press (R918, R921f1). Tests: red first.'
+git -C "$dl" checkout -q -b p1/e phase-1; dwork src.txt; dreport ""
+out="$(docs_step_lint "$dl" "$(dspec "$free")")"; rc=$?
+[[ $rc -ne 0 && "$out" == 'lint: the Docs step names docs/05-ui-plan.md and the branch does not change it' ]] || fail "A275: a free-text task with Docs: docs/05 and no docs change passes (rc $rc): $out"
+free2='Docs: one clause in docs/05 3.4. The report names docs/04 too.'
+out="$(docs_step_lint "$dl" "$(dspec "$free2")")"
+grep -q 'docs/04' <<<"$out" && fail "A275: a name after the Docs sentence's end is required: $out"
+# the way out: a report line for that file, for that file only
+git -C "$dl" checkout -q -b p1/f phase-1; dwork docs/05-ui-plan.md
+dreport 'Docs not changed: docs/decisions.md: the file is at its budget (brief section 2).'
+out="$(docs_step_lint "$dl" "$(dspec "$step2")")" || fail "A275: a 'Docs not changed: docs/decisions.md: <reason>' line does not cover decisions.md: $out"
+out="$(docs_step_lint "$dl" "$(dspec '3. **Docs:** docs/04 2.6; decisions.md: a line.')")"; rc=$?
+[[ $rc -ne 0 && "$out" == 'lint: the Docs step names docs/04-architecture.md and the branch does not change it' ]] || fail "A275: the way out for decisions.md covered docs/04 as well (rc $rc): $out"
+git -C "$dl" checkout -q -b p1/g phase-1; dwork src.txt; dreport 'Docs not changed: docs/decisions.md'
+docs_step_lint "$dl" "$(dspec '3. **Docs:** decisions.md: a line.')" >/dev/null && fail "A275: a 'Docs not changed:' line with no reason covers a file"
+# backlog.md is never required; a name that is no file is ignored; a file named with a :line or 's
+git -C "$dl" checkout -q -b p1/h phase-1; dwork src.txt; dreport ""
+out="$(docs_step_lint "$dl" "$(dspec '3. **Docs:** docs/backlog.md: tick the line; backlog.md again; docs/99 and docs/nothing.md do not exist.')")" || fail "A275: backlog.md or a name that is no file is required: $out"
+# A124: a round that failed only on this lint is free, as a docs failure is
+printf '## docsstep failed (full log: /x/preflight-0-docsstep.log)\n1:lint: the Docs step names docs/05-ui-plan.md and the branch does not change it\n' > "$tmp/ds.fail"
+round_free "$tmp/ds.fail" 0 0 || fail "A275: a round that failed only on the Docs step is not free"
+round_free "$tmp/ds.fail" 1 0 && fail "A275: a Docs step round with an audit FIX is free"
+round_free "$tmp/ds.fail" 0 2 && fail "A275: a third free round is free"
+printf '## docsstep failed (x)\n## typecheck failed (x)\n' > "$tmp/ds2.fail"; round_free "$tmp/ds2.fail" 0 0 && fail "A275: docsstep with typecheck is free"
+printf '## lint failed (x)\n' > "$tmp/ds3.fail"; round_free "$tmp/ds3.fail" 0 0 && fail "A275: the report/patch lint became free"
+grep -qF 'docsstep) docs_step_lint "$wt" "$bundle"' "$here/pipeline.sh" && grep -qF 'for name in lint docsstep docs typecheck size' "$here/pipeline.sh" || fail "A275: pipeline.sh does not run docs_step_lint in the pre-flight"
+grep -qF 'the Docs step' "$here/pipeline.sh" || fail "A275: the dry run's pre-flight line does not name the Docs step"
 # (c) the log line names the excerpt's first failing line (120 characters); the excerpt finds docs-check's and the lint's lines
 eval "$(sed -n '/^excerpt() {/,/^}/p' "$here/pipeline.sh")"
 printf 'warning (untracked, not counted): x\nbudget: docs/backlog.md is 20.1 kB, over 20 kB\ndocs FAILED (1): 3 links\n' > "$tmp/dl.log"
