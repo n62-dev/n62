@@ -41,9 +41,9 @@ before the HP layout because the slot kinds are fixed. The headlines and the cap
 | | 15–16 | E: 72.25 kg × g₀ | `708.5304625 N` |
 | Free & offline | 17 | s6: e^(iπ) | `= -1` |
 
-A tap on the bar's 12 ▾ chip opens the Digits list (4, 6, 8, 10, 12, 15, 20, 25, 30): `9` picks 30. Each
+A tap on the bar's STD 12 ▾ chip opens Settings › Mode; `4` opens its Digits list (4, 6, 8, 10, 12, 15, 20, 25, 30), `9` picks 30. Each
 clip starts from a cleared app, so K sets 30 digits in its setup. The whole video is in the **N62** theme, the teal family
-(owner, 2026-11-07; R153): every setup starts with Mode, 6 (Settings), 1 (Appearance), 1 (Theme), 1 (N62) and four
+(owner, 2026-11-07; R153): every setup starts with ⚙ (the Settings root), 2 (Appearance), 1 (Theme), 1 (N62) and three
 Esc, as a theme pick keeps the sheet open; s11 gets it from s10's replay. A cleared app is in N62 already; the pick
 holds a phone left in another theme.
 

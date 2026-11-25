@@ -90,7 +90,7 @@ test("a set tap with an empty Shift slot: Shift + the key opens its Shift row", 
 test.describe("controls", () => {
   test("inside Your keys a free key still goes to its own row (set or empty)", async ({ page }) => {
     await page.evaluate(() => window.n62.userKeys.set("u1", "primary", { label: "Home", action: { special: "home" } }));
-    await tap(page, ["help", "d5"]); // Mode, Settings, Your keys
+    await tap(page, ["help", "d5"]); // ⚙: Settings, Your keys
     await expect(title(page)).toHaveText("Settings › Your keys");
     await tap(page, ["u3"]);
     await expect(mactive(page)).toHaveAttribute("data-id", "u3:primary");
