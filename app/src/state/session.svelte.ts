@@ -39,6 +39,7 @@ import { storedReader } from "./storedLoad.ts";
 export { loadTidy } from "./tidyLoad.ts";
 import type { Copies, RemovedKind, RemovedRows } from "./removedRows.ts";
 import type { UnitRow } from "../units/types.ts";
+import { takeLeft } from "../units/kept.ts";
 import type { WordSetting } from "./wordSetting.ts";
 import { isBarSlot, type BarSlot } from "../apps/registry.ts";
 
@@ -148,7 +149,7 @@ export interface HistoryItem {
   settingReset?: true;
   /** R63: a unit-view result (units/row.ts): its request, Quantity summary and chip. Read back unchecked (see UnitRow). */
   units?: UnitRow;
-  /** R63: a unit result's chip (Ans too) went into the input; Home has no units: a line under the result says so (G782: not for a ratio unit's, entered as its pure number). */
+  /** R63: a unit result's chip (Ans too) went into the input, or R902 the line kept unit slots (left with Esc); Home has no units: a line under the result says so (G782: not for a ratio unit's, entered as its pure number). */
   unitDropped?: true;
   /** G211: the row's identity across runs (never `id`, results.ts rowUid); its job's Giac text, angle, digits, word (R194); `at`: finished. */
   uid?: string;
@@ -446,6 +447,7 @@ export class Session {
     const kept = pruneChips(chips, latex);
     const table: ChipTable = ans ? { ...kept, [ANS_KEY]: ans } : kept;
     const id = this.nextId++;
+    const dropped = takeLeft(latex) && view === "home"; // R902: the line the unit view left with slots, unchanged (units/kept.ts)
     list.push({
       id,
       uid: rowUid(id), // G211
@@ -458,6 +460,7 @@ export class Session {
       ...(Object.keys(kept).length ? { chips: kept } : {}),
       ...(typedIn ? { typedIn } : {}), // R265 (the caller passes it only when it differs from the mode on show)
       ...(usesAns && ans ? { ans } : {}), // G213f1: not in `chips` (a recall resolves Ans again); the line and the store keep value and exact
+      ...(dropped ? { unitDropped: true as const } : {}), // R902
       startedAt: performance.now(),
     });
     // Read and write through the proxy in the list from here on.

@@ -5,6 +5,7 @@
 import type { MathfieldElement } from "mathlive";
 import type { EntryController } from "./controller.ts";
 import { makeField, putText } from "./field.ts";
+import { dropLeft } from "../units/kept.ts";
 export { Grown, putText, runOnField, SelectChain } from "./field.ts";
 
 /** R930 (a start-chunk cut, out of EntryController): the entry line's field, made once MathLive and this chunk are in
@@ -33,6 +34,7 @@ export async function fieldFor(c: EntryController, Field: typeof MathfieldElemen
   mf.addEventListener("input", () => {
     c.touched = true;
     c.recalledIn = null;
+    dropLeft(); // R902: an edit: the unit view's left line is not on it any more
     c.onEdit();
   });
 }
