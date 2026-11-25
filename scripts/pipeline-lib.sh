@@ -67,11 +67,11 @@ merge_failure_reason() {
 }
 
 # ---- A124: free fix rounds ----
-# docs_size_only <failure file>: succeeds when the file's "## <check> failed" headings are all docs or size, and there is one (a lint,
+# docs_size_only <failure file>: succeeds when the file's "## <check> failed" headings are all docs, docsstep (A275) or size, and there is one (a lint,
 # typecheck, vitest, e2e, golden, red-first or shell failure in it makes the round an ordinary one).
 docs_size_only() {
   local h; h="$(grep -E '^## [a-z0-9]+ failed' "$1" 2>/dev/null | awk '{ print $2 }' | sort -u || true)"
-  [[ -n "$h" ]] && ! grep -qvxE 'docs|size' <<<"$h"
+  [[ -n "$h" ]] && ! grep -qvxE 'docs|docsstep|size' <<<"$h"
 }
 # round_free <failure file> <audit asked for fixes: 0|1> <free rounds used>: succeeds when this fix round is free: the only failures are
 # docs or size, the audit asked for nothing, and fewer than two free rounds were used (a run has at most two; then it counts as any).
@@ -530,6 +530,44 @@ preflight_lint() {
     git -C "$wt" log -1 --format=%b "$c" | awk '/^[-#* ]*Done([^A-Za-z]|$)/{d=1} /^[-#* ]*Tests([^A-Za-z]|$)/{t=1} END{exit !(d && t)}' && { found=1; break; }
   done
   [[ $found -eq 1 ]] || { echo "lint: no report commit (brief section 2: end with a commit whose body is the report, with its Done: and Tests: lines)"; bad=1; }
+  return $bad
+}
+# A275: the third mechanical audit FIX: "the diff does not touch docs/05" (six FIXes in two days). docs_step_lint <worktree> <bundle>: the
+# files the task's Docs step names must be in the branch's diff against phase-1, or a report commit must say `Docs not changed: <path>: <why>`.
+# The step is the first task-section line that starts with an optional "N. " or "- " and **Docs:**, else the sentence after `Docs:` in the task text.
+# `docs/NN` (a :line, 's or a section after it; with or without -<name>.md) is the one docs/NN-*.md, `docs/<path>.md` itself, a bare
+# decisions.md docs/decisions.md; docs/backlog.md (a tick waits for the pass when the file is full) and a name that is no file are skipped.
+# Prints one "lint: ..." line per missing file; exit 1 when there is one. Its own pre-flight check, `docsstep`: docs_size_only counts it as docs.
+docs_step_text() {  # <bundle>: the Docs step's text (the task section only), or nothing
+  local t l
+  t="$(awk '/^## /{ on = ($0 == "## Task"); next } on' "$1" 2>/dev/null || true)"
+  l="$(grep -m1 -E '^(- |[0-9]+\. )?\*\*Docs:\*\*' <<<"$t" || true)"
+  [[ -n "$l" ]] || l="$(grep -m1 -oE 'Docs: .*' <<<"$t" | sed -E 's/\. [A-Z].*$//; s/\.$//' || true)"
+  printf '%s\n' "$l"
+}
+docs_step_files() {  # <worktree> <bundle>: the docs files the step names, one path a line, sorted
+  local wt="$1" t tok m
+  t="$(docs_step_text "$2")"; [[ -n "$t" ]] || return 0
+  ! grep -qiE '^(- |[0-9]+\. )?(\*\*)?Docs:(\*\*)? *none([^A-Za-z]|$)' <<<"$t" || return 0  # "none (docs/04 already says it)" names nothing to change
+  {
+    grep -oE 'docs/[A-Za-z0-9_./-]+' <<<"$t" | sed -E 's/[.-]+$//' | while IFS= read -r tok; do
+      if [[ "$tok" =~ ^docs/[0-9][0-9]$ ]]; then
+        m=( "$wt/$tok"-*.md ); [[ ${#m[@]} -eq 1 && -f "${m[0]}" ]] && echo "${m[0]#"$wt"/}"
+      elif [[ "$tok" == *.md && -f "$wt/$tok" ]]; then echo "$tok"; fi
+    done
+    grep -qE '(^|[^A-Za-z0-9_/.-])decisions\.md' <<<"$t" && echo docs/decisions.md
+  } | { grep -vxE 'docs/backlog\.md|docs/shifts/packages/.*' || true; } | sort -u
+}
+docs_step_lint() {  # <worktree> <bundle>
+  local wt="$1" f bad=0 changed bodies
+  changed="$(git -C "$wt" diff --name-only phase-1...HEAD 2>/dev/null || true)"
+  bodies="$(git -C "$wt" log --format=%b phase-1..HEAD 2>/dev/null || true)"
+  while IFS= read -r f; do
+    [[ -n "$f" ]] || continue
+    grep -qxF "$f" <<<"$changed" && continue
+    grep -qE "^[-*# ]*Docs not changed: $f: ." <<<"$bodies" && continue
+    echo "lint: the Docs step names $f and the branch does not change it"; bad=1
+  done < <(docs_step_files "$wt" "$2")
   return $bad
 }
 # first_failing_line <fail file>: the first line of the excerpt after the "## <check> failed" heading (grep's "N:" or "N-" taken off,
