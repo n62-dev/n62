@@ -44,10 +44,13 @@ async function swipeLast(p: Page): Promise<void> {
   await finger(p, "row:last", { dx: -0.6 * w, steps: 10, still: STILL_MS }); // lifted at rest: no fling to eat the next tap
   await expect(p.locator("article.item")).toHaveCount(n - 1); // (it slides out, then goes)
 }
-/** n finished Home rows (the fake engine echoes): 1, 2, … */
+/** n finished Home rows (the fake engine echoes): 1, 2, …, each done before the next Enter (R934: Enter is refused while a
+ *  row runs, so under load a late answer dropped a row: 1 of 2, 3 of 4) */
 async function rows(p: Page, n = 3): Promise<void> {
-  for (let i = 1; i <= n; i++) await tap(p, [`d${i}`, "enter"]);
-  await expect(p.locator('[data-status="done"]')).toHaveCount(n);
+  for (let i = 1; i <= n; i++) {
+    await tap(p, [`d${i}`, "enter"]);
+    await expect(p.locator('[data-status="done"]')).toHaveCount(i);
+  }
 }
 
 test.beforeEach(async ({ page }) => {

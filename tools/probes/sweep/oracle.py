@@ -10,6 +10,8 @@
 #   {"kind": "matrix", "rows": r, "cols": c, "cells": [{"re", "im"}, …]}   G797: a matrix (rows flattened; cols null for linsolve's list),
 #     each cell agreeing to 1e-45 of itself between the rungs, or below 10^-(hi-10) of the matrix at the higher rung (round-off of an exact 0: 0)
 #   {"kind": "novalue"}   a pole, a non-finite result; G797: inv of a singular matrix, linsolve of a singular system (no unique solution)
+#     G805: a matrix exponential is never singular (det e^a = e^tr a): RANK, DET, INV and LINSOLVE of an EXPM node give n, e^tr a at the
+#     rung's digits, e^-a and e^-a·b, never the SVD's verdict (its cut, 10^(15-dps) of the largest singular value, takes e^-3628800 for 0)
 #   {"kind": "skip", "reason": "..."}   unstable, an infinite intermediate under a finite value (G345), a convention (negative base to a non-integer power, 0^0), complex in DEG, too slow
 # Run: tests/golden/.venv/bin/python -I tools/probes/sweep/oracle.py < requests.json   (mpmath 1.3.0)
 import json, math, re as _re, signal, sys
@@ -201,8 +203,19 @@ def _deg(a):
     return a * (pi / 180) if DEG else a
 
 
+class Expm(matrix):
+    """G805: e^a, which remembers a: a matrix exponential is never singular (det e^a = e^tr a), so RANK, DET, INV and LINSOLVE take it
+    from a, not from e^a's singular values (an e^-3628800 one is below RANK's cut and read as round-off of 0)."""
+
+
 def EXPM(a):
-    return expm(a)
+    r = Expm(expm(a))
+    r.of = a
+    return r
+
+
+def _of(a):
+    return getattr(a, "of", None) if isinstance(a, Expm) else None  # an operation that keeps the class makes a new matrix: no `of`
 
 
 def SINM(a):
@@ -214,6 +227,8 @@ def COSM(a):
 
 
 def RANK(a):
+    if _of(a) is not None:
+        return mpf(a.rows)
     cplx = any(isinstance(a[i, j], mpc) for i in range(a.rows) for j in range(a.cols))
     sv = svd_c(a, compute_uv=False) if cplx else svd_r(a, compute_uv=False)
     top = max(fabs(x) for x in sv)
@@ -223,19 +238,29 @@ def RANK(a):
 
 
 def DET(a):
+    m = _of(a)
+    if m is not None:
+        return exp(sum(m[i, i] for i in range(m.rows)))
     return mpf(0) if RANK(a) < a.rows else mdet(a)
 
 
 def INV(a):
+    m = _of(a)
+    if m is not None:
+        return expm(-m)
     if RANK(a) < a.rows:
         raise ZeroDivisionError
     return inverse(a)
 
 
 def LINSOLVE(a, b):
-    if RANK(a) < a.rows:
+    m = _of(a)
+    if m is not None:
+        x = expm(-m) * b
+    elif RANK(a) < a.rows:
         raise ZeroDivisionError
-    x = lu_solve(a, b)
+    else:
+        x = lu_solve(a, b)
     return Vec(x[i, 0] for i in range(x.rows))
 
 

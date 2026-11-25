@@ -9,8 +9,11 @@
 // through Paste to the same value. Both at every point, on lists (an expression at -0.5, 0.3, 1), on G797's matrix trees and on the hunt's
 // pinned inputs (G794's CAS list, G796's fsolve row); the gate asks 20 lists and 12 matrices, --nightly 200 and 150.
 //   node scripts/viewsweep.ts                 # the gate stage: fixed seed, exit 1 on a new failure or a known one that now passes
-//   node scripts/viewsweep.ts --nightly [--seed N] [--count N]   # rotating seed, more trees, report only (exit 0)
-//   In pieces (G188; each under `tools/devlock.sh slice <name> …`, at most 10 minutes; count 300 takes longer):
+//   node scripts/viewsweep.ts --nightly [--seed N] [--count N]   # rotating seed, more trees, report only (exit 0); G805: a failure that is a
+//     known row prints `known (<package>)`, the others `FINDING`, and the last line `VIEWSWEEP NIGHTLY: <f> failures (<new> not in the known
+//     files); <c> runs (comparisons) of <e> expressions (seed <s>), …`, which `scripts/pipeline.sh nightly` logs (NIGHTLY_TOOLS, A273) at
+//     --count 300, inside its 1200 s limit: on 2026-11-25 (seed 20782) count 100 took 79 s, 300 took 178.5 s, 600 ran past 600 s (30 engine hangs and crashes)
+//   In pieces (G188; each under `tools/devlock.sh slice <name> …`, at most 10 minutes; count 600 takes longer):
 //     node scripts/viewsweep.ts --nightly --seed N --count N --part i/n   # the i-th of n slices of the expressions, in a fresh engine;
 //       its result goes to .tasks/viewsweep-part-<seed>-<count>-<i>of<n>.json (VIEWSWEEP_TASKS_DIR: another folder)
 //     node scripts/viewsweep.ts --join --seed N --count N                 # every part of that run (a missing one is named, exit 1): the findings and the summary line
@@ -64,10 +67,18 @@ const statsOf = (r: ViewSweepResult, secs: number): { stats: string; engines: st
   stats: `${r.cases} expressions (seed ${seed}), ${r.compared} comparisons, total ${secs.toFixed(1)} s`,
   engines: `${r.restarts} engine restarts, ${r.calls} Giac calls, heap up to ${(r.maxHeap / 2 ** 20).toFixed(0)} MB`,
 });
+// G805: a known row's failure prints as known (its package), the others as FINDING; the last line is the one `pipeline.sh nightly` reads
+// (nightly_counts: runs, failures, the new ones, the seed); its runs are the comparisons.
 const reportNightly = (r: ViewSweepResult, secs: number, parts = ""): never => {
-  const { stats, engines } = statsOf(r, secs);
-  for (const f of r.failures) console.log(`FINDING ${f.id} [${f.check}]: ${f.detail}`);
-  console.log(`VIEWSWEEP NIGHTLY: ${r.failures.length} findings; ${stats}; ${engines}${parts}`);
+  const { engines } = statsOf(r, secs);
+  const pkg = new Map(loadViewKnown(repo).map((k) => [`${k.id} ${k.check}`, k.package]));
+  let fresh = 0;
+  for (const f of r.failures) {
+    const p = pkg.get(`${f.id} ${f.check}`);
+    if (p === undefined) fresh++;
+    console.log(`${p === undefined ? "FINDING" : `known (${p})`} ${f.id} [${f.check}]: ${f.detail}`);
+  }
+  console.log(`VIEWSWEEP NIGHTLY: ${r.failures.length} failures (${fresh} not in the known files); ${r.compared} runs (comparisons) of ${r.cases} expressions (seed ${seed}), total ${secs.toFixed(1)} s; ${engines}${parts}`);
   return process.exit(0);
 };
 if (join) {

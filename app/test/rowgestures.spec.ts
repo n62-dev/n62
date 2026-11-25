@@ -6,7 +6,7 @@
 // row's bar keeps Store ▶ and Copy ›. Values are derived (2+3 = 5).
 import { expect, test, type Page } from "@playwright/test";
 import { finger, STILL_MS } from "./core-lib.ts";
-import { entryValue, open, setClipboard, tap, touch, useClipboardLock } from "./helpers.ts";
+import { entryValue, flick, open, setClipboard, tap, touch, useClipboardLock } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 test.describe.configure({ mode: "serial" });
@@ -39,12 +39,38 @@ async function swipe(page: Page, share: number, steps = 12): Promise<void> {
   await finger(page, "row:last", { dx: share * width, steps, ...(steps > 2 && { still: STILL_MS }) });
 }
 
+// R904 (owner, 2026-11-23): the notice names the text the clipboard got, not the row's drawing (6.022 140 76E23 drawn, 24 digits
+// written out copied); a short copy is named whole. Values derived: 6.02214076·10²³ written out; 72 typed with k m is 72 km.
+test("a hold on 6.02214076ᴇ23 names the 24 copied digits, not the drawn 6.022 140 76E23", async ({ page }) => {
+  await ready(page);
+  await enter(page, ["d6", "dot", "d0", "d2", "d2", "d1", "d4", "d0", "d7", "d6", "emark", "d2", "d3"]);
+  await setClipboard(page, "before");
+  await finger(page, "result:last", { ms: 700 });
+  await expect.poll(() => clipboard(page)).toBe("602214076000000000000000");
+  await expect(page.getByTestId("notice")).toHaveText("Copied 24 digits: 602 214 076…");
+});
+
+test("a hold on a short result (72 km) names the copy whole", async ({ page }) => {
+  await ready(page);
+  await tap(page, ["d7", "d2"]);
+  await flick(page, "tmpl", "up"); // the units key
+  await page.waitForFunction(() => window.n62.unitView !== undefined && document.querySelector('[data-pad="unit"]') !== null);
+  await tap(page, ["d4", "d9", "enter"]); // k m, Enter: the view's row 72 km in Home
+  await expect(page.getByTestId("unit-result")).toHaveAttribute("data-unit", "km");
+  await tap(page, ["esc"]);
+  await page.waitForFunction(() => window.n62.unitView === undefined);
+  await setClipboard(page, "before");
+  await finger(page, "result:last", { ms: 700 });
+  await expect.poll(() => clipboard(page)).toBe("72 km");
+  await expect(page.getByTestId("notice")).toHaveText("Copied: 72 km");
+});
+
 test("a hold on a result copies its full value and says so; no menu opens, the row is not picked", async ({ page }) => {
   await ready(page);
   await enter(page, ["d2", "add", "d3"], ["d1", "div", "d3"]);
   await setClipboard(page, "before");
   await finger(page, "result:last", { ms: 700 });
-  await expect(page.getByTestId("notice")).toHaveText("Copied: 0.333 333 333 333");
+  await expect(page.getByTestId("notice")).toHaveText("Copied 40 digits: 0.333 333 333 333…"); // R904: the copy's start and its count
   await expect.poll(() => clipboard(page)).toBe("0.3333333333333333333333333333333333333333"); // Copy: every confirmed digit to P (docs/04 2.6)
   await page.waitForTimeout(300);
   await expect(menu(page)).toHaveCount(0); // the nine-item menu on a hold is gone

@@ -61,13 +61,10 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
+| 888e7 | R934 a test's Enter waits for the row before it (pass 243) | ron, Opus | `p1/ron-enterwait` | – |
 | 888e7a | [R929](packages/R929.md) a constant shows its unit | ron, Opus | `p1/ron-constlabel` | G801 |
 | 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Opus | `p1/ron-keepline` | – |
-| 888e12a | R927 Settings on top; Mode its row 1, Preset first | ron, Opus | `p1/ron-modeorder` | R887, R901 |
-| 888e13 | [R902](packages/R902.md) a dropped unit says so | ron, Opus | `p1/ron-unitdropped` | – |
-| 888e14 | [R903](packages/R903.md) hold on the line copies | ron, Opus | `p1/ron-linehold` | – |
-| 888e15 | [R904](packages/R904.md) Copied notice tells the truth | ron, Opus | `p1/ron-copiednotice` | – |
-| 888e16 | [R905](packages/R905.md) a flick bubble stays on screen | ron, Opus | `p1/ron-bubbleclamp` | – |
+| 888e12a | [R927](packages/R927.md) Settings on top; Mode its row 1, Preset first: review-only, `--no-worker` (branch kept at ced6ff39, pass 243) | ron, Opus | `p1/ron-modeorder` | R887, R901, R934 |
 | 888e17 | [R906](packages/R906.md) legends clear of outlines | ron, Opus | `p1/ron-legendoutline` | – |
 | 888e18 | [R907](packages/R907.md) one face size on the unit pad | ron, Opus | `p1/ron-unitfacesize` | – |
 | 888e19 | [R908](packages/R908.md) prefix slot on legends | ron, Opus | `p1/ron-prefixcorner` | – |
@@ -134,9 +131,10 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| B5a | [G804](packages/G804.md) an exact entry beside a float in a matrix sum or product is a double (pass 241) | gorge, Opus | `p1/gorge-matmixdouble` | – |
-| B5b | [G805](packages/G805.md) the nightly lines count causes: judges and viewsweep (pass 241) | gorge, Opus | `p1/gorge-nightlyjudge` | – |
-| B5c | [A274](packages/A274.md) pipeline-lib.sh back under 800 lines (pass 241) | annabell, Sonnet | `p1/annabell-libsplit` | G805 |
+| B5a | G804 an exact entry beside a float in a matrix sum or product is a double (pass 241) | gorge, Opus | `p1/gorge-matmixdouble` | – |
+| B5b | G805 the nightly lines count causes: judges and viewsweep (pass 241) | gorge, Opus | `p1/gorge-nightlyjudge` | – |
+| B5c | A274 pipeline-lib.sh back under 800 lines (pass 241) | annabell, Sonnet | `p1/annabell-libsplit` | G805 |
+| B5d | [A275](packages/A275.md) the pre-flight checks the package's Docs step (coord; owner, 2026-11-25: top of lane B) | annabell, Sonnet | `p1/annabell-docsstep` | – |
 | B6i | [G800](packages/G800.md) a unit sweep | gorge, Opus | `p1/gorge-unitsweep` | R885 |
 | B6k | [G796](packages/G796.md) Copy of an unchecked row | gorge, Opus | `p1/gorge-copywarn` | – |
 | B6l | [G801](packages/G801.md) a constant's own unit (J·s) | gorge, Opus | `p1/gorge-constunit` | – |

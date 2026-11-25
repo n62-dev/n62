@@ -110,6 +110,7 @@
       picked = null; // a paste types too: it drops the pick (R147), so its buttons never cover the pasted text
       route.pasteText(ctx, text); // R114: Ctrl+V and every system paste take Paste's own path
     };
+    entry.onHold = (latex) => withClip((c) => void c.lineCopy(latex)); // R903: a hold on the line copies it, as on a row's input
     const loadFold = (): void => {
       void import("./keyboard/Fold.svelte").then((m) => (Fold = m.default), () => {}), session.taps.load(); // R53, R724; R320: the press counters (presses wait in the session's front)
       void import("./views/browserNote.ts").then((m) => m.browserNote(), () => {}); // R285: a browser that has not passed says so once (the chunk decides)

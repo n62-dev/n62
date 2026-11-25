@@ -33,8 +33,8 @@ describe("the matrix generator (G797)", () => {
     expect(sha(runsOf(20261021, 1000))).toBe("df26d42fcff7a461f9eb349d30e2a2c8f5b9f7247e3ae2fad67a9c5d5499ddca");
     const withM = runsOf(20261021, 1000, false, { matrices: 100 });
     expect(sha(withM.slice(0, 1187))).toBe("df26d42fcff7a461f9eb349d30e2a2c8f5b9f7247e3ae2fad67a9c5d5499ddca");
-    // the pinned inputs, the sin in RAD and DEG (G802 put two after it)
-    expect([...new Set(withM.slice(1187, 1187 + MATRIX_PINNED.length + 1).map((r) => r.latex))]).toEqual(MATRIX_PINNED.map((c) => c.latex));
+    // the pinned inputs, the two sins in RAD and DEG (G802 put two after the first, G804 the second)
+    expect([...new Set(withM.slice(1187, 1187 + MATRIX_PINNED.length + 2).map((r) => r.latex))]).toEqual(MATRIX_PINNED.map((c) => c.latex));
     expect(runsOf(20261021, 100, true, { matrices: 0 })).toEqual(runsOf(20261021, 100, true));
   });
 
@@ -84,6 +84,7 @@ describe("the matrix generator (G797)", () => {
     expect(cs.filter((c) => c.angle).every((c) => /\\(sin|cos)\\left/.test(c.latex))).toBe(true);
     expect(cs.find((c) => /^\\sin\\left\(\\begin/.test(c.latex)) ?? cs.find((c) => c.angle)).toBeDefined();
     expect(latexToGiac(MATRIX_PINNED[0]!.latex)).toBe("approx([[1,2],[3,4]]/10^13)*[[1],[1]]");
+    expect(latexToGiac(MATRIX_PINNED.at(-1)!.latex)).toBe("sin(pasdeg*(10^14*[[pi,2],[5,0.1]]+approx([[2,1.05],[4,2.1]])))"); // G804
   });
 
   it("keeps each matrix node's matrix-valued children for the shrink", () => {
@@ -219,6 +220,43 @@ describe("the oracle's matrices (G797; mpmath matrix, inverse, det, lu_solve, ex
     expect(out.filter((o) => o.kind === "value").length).toBeGreaterThan(15);
     expect(out.filter((o) => o.kind === "novalue").length).toBeGreaterThan(0);
   }, 120_000);
+
+  it("an expm is never singular (G805): rank n, det e^trace, an inverse and a solution, on the nightly's rows (source: derived, det e^A = e^tr A)", () => {
+    // the five rank rows, the two det rows, the inv and linsolve rows of A273's first nightly (phase-1 90b03389), as gen.ts writes them
+    const rank = [
+      "MAT([[mpf('2.5'),FACT(10)],[mpf('5'),FACT(10)]])",
+      "APPROX(MAT([[mpf('0.001'),E,mpf('1.5e22')],[E,mpf('2'),mpf('2')],[mpf('1'),mpf('12'),mpf('5')]]))",
+      "SMUL(POW(mpf('10'),mpf('3')),MAT([[mpf('7'),mpf('9.81'),PI],[mpf('10'),mpf('7'),E],[mpf('10'),mpf('3.7'),mpf('1.05')]]))",
+      "SMUL(POW(mpf('10'),mpf('8')),MAT([[mpf('6.02e8'),FACT(3)],[mpf('2'),mpf('7')]]))",
+      "APPROX(SMUL(POW(mpf('10'),mpf('14')),MAT([[mpf('12'),mpf('10'),mpf('0')],[mpf('2e-15'),mpf('0.3'),FACT(7)],[mpf('10'),mpf('0.001'),PI]])))",
+    ];
+    const D1 = "MAT([[E,FACT(7)],[mpf('1'),mpf('6.02e8')]])";
+    const D2 = "MAT([[mpf('7'),mpf('2.5'),mpf('3')],[mpf('2.5'),mpf('0'),FACT(3)],[mpf('10'),mpf('3.7'),FACT(7)]])";
+    const o = oracle([
+      ...rank.map((m) => `RANK(EXPM(${m}))`),
+      `DET(EXPM(${D1}))`,
+      "exp((E)+(mpf('6.02e8')))", // its trace
+      `DET(EXPM(${D2}))`,
+      "exp(mpf('5047'))", // 7 + 0 + 7!
+      "INV(EXPM(MAT([[FACT(3),mpf('1')],[PI,FACT(10)]])))",
+      "LINSOLVE(EXPM(MAT([[mpf('2e-8'),mpf('0.001')],[E,mpf('6.02e3')]])),MAT([[mpf('3.7')],[mpf('1.05')]]))",
+      // a diagonal: the inverse of e^D is e^-D, entry by entry against the scalar exp
+      "INV(EXPM(MAT([[mpf('1'),mpf('0')],[mpf('0'),mpf('-2.5')]])))",
+      "exp(mpf('-1'))",
+      "exp(mpf('2.5'))",
+      `MMUL(INV(EXPM(${M})),EXPM(${M}))`, // the identity
+    ]);
+    const re = (x: Oracle | undefined): string => (x?.kind === "value" ? x.re : `(${x?.kind})`);
+    expect(o.slice(0, 5).map(re)).toEqual(["2.0", "3.0", "3.0", "2.0", "3.0"]);
+    expect(re(o[5])).toMatch(/^1\.93326949645131386268356913\d*e\+261445279$/); // the nightly showed 1.9332694964513138626835691389E261445279
+    expect(re(o[5])).toBe(re(o[6]));
+    expect(re(o[7])).toMatch(/^7\.6603773891036977340346550\d*e\+2191$/); // shown 7.660377389103697734034655062E2191
+    expect(re(o[7])).toBe(re(o[8]));
+    expect(o[9]).toMatchObject({ kind: "matrix", rows: 2, cols: 2 });
+    expect(o[10]).toMatchObject({ kind: "matrix", rows: 2, cols: null });
+    expect(cells(o[11]!, 50)).toEqual([re(o[12]).slice(0, 50), "0.0", "0.0", re(o[13]).slice(0, 50)]);
+    expect(cells(o[14]!, 100).map(Number)).toEqual([1, 0, 0, 1]);
+  }, 120_000);
 });
 
 const num = (re: string, im?: string): ComplexValue => ({ re: decimalFromString(re) ?? ZERO_VALUE, im: im === undefined ? ZERO_VALUE : (decimalFromString(im) ?? ZERO_VALUE) });
@@ -267,10 +305,11 @@ describe("the judge, entry by entry (G797; made-up oracles for its rules)", () =
 // inverse and rank (right since G790 and G622 merged: they must pass), and G792's sin (right since patch 0066, G792f1: it must pass in
 // RAD and DEG); a failure would be a known row naming its package. G802: the last two (e^ of the scaled 3×3 and the scaled 2×2
 // alone) are right since patch 0069; on phase-1 a1843b9b the 2×2 killed the engine (a crash row) and the 3×3 passed (Home reads 0.1 exactly).
+// G804: the sin of 10^14·π beside a float is right since patch 0070 (on phase-1 ec6ab5b1 it showed ≈ 0.503227563163 for -0.0273161725944).
 describe.skipIf(!giacAvailable())("the pinned hunt inputs through Home (G797, real Giac)", () => {
-  it("passes G790's product, G622's inverse and rank, G792's sin and G802's matrices; no failure is left", async () => {
+  it("passes G790's product, G622's inverse and rank, G792's sin, G802's matrices and G804's sin; no failure is left", async () => {
     const runs: Run[] = runsOf(20261021, 0, false, { matrices: 1 }).filter((r) => MATRIX_PINNED.some((c) => c.latex === r.latex));
-    expect(runs.length).toBe(MATRIX_PINNED.length + 1); // the sin also in DEG
+    expect(runs.length).toBe(MATRIX_PINNED.length + 2); // the two sins also in DEG
     const oracles = oracleFor(runs, pythonFor(repo, mainCheckout), oraclePy);
     const { judged } = await sweep(runs, oracles, 6000);
     const failures = sweepFailures(judged);

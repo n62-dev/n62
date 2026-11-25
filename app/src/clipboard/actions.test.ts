@@ -122,7 +122,7 @@ describe("ClipActions row buttons and the hold", () => {
     await vi.waitFor(() => expect(clip()).toBe("1/3"));
     expect(acted).toEqual(["copy"]);
   });
-  // R832 round 2: each of Copy ›'s first three rows names what it copied in the notice (the shown text, grouped as the row draws it)
+  // R832 round 2, R904: each of Copy ›'s first three rows names what it copied in the notice (the copied text, grouped as the row draws it)
   it("Copy › Full value, As shown and Exact each name the copy in the notice", async () => {
     const { c, item } = make();
     const rows = c.copyItem(item).submenu?.items ?? [];
@@ -133,7 +133,7 @@ describe("ClipActions row buttons and the hold", () => {
       c.notice = null;
       return n;
     };
-    expect(await say("full")).toBe("Copied: 0.333\u2009333\u2009333\u2009333"); // (what the row shows; the clipboard holds 1/3)
+    expect(await say("full")).toBe("Copied: 1/3"); // R904: what the clipboard holds, not the row's 0.333 333 333 333
     expect(await say("shown")).toBe("Copied: 0.333\u2009333\u2009333\u2009333");
     expect(await say("exact")).toBe("Copied: 1/3");
   });
@@ -183,7 +183,7 @@ describe("ClipActions keyCopy (Shift + Select, R723)", () => {
     const long = [row("0.3333333333333333333333333333333333333333")];
     const l = make(long);
     l.c.keyCopy(vi.fn(), long[0] as never);
-    await vi.waitFor(() => expect(l.say()).toBe("Copied: 0.333\u2009333\u2009333\u2009333\u2009333\u200933…")); // grouped as the row draws it (thin spaces, U+2009), 24 characters, then …
+    await vi.waitFor(() => expect(l.say()).toBe("Copied 40 digits: 0.333\u2009333\u2009333\u2009333\u2009333\u20093…")); // R904: the count; grouped as the row draws it (thin spaces, U+2009), cut to 24 characters
   });
   it("R832f2: a row drawn as ⚠ (no digit confirmed) writes nothing and the notice says so, not the digit it hides", async () => {
     const rows = [row("0.001")];

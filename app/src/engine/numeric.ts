@@ -662,7 +662,7 @@ export function agreedFacts(facts: readonly (ElementFacts | null)[], digits: num
   const under = underflowAt !== undefined && leadingZero.some((z, k) => z && underflowAt(k));
   return facts.map((f, k) => {
     if (f) return f;
-    // G140: a double at P or P + 20 (Giac's evalf of Zeta((1+2*i)/2) is one at any Digits) agrees with itself, so its
+    // G140: a double at P or P + 20 (Giac's evalf of Psi(1+i) is one at any Digits) agrees with itself, so its
     // two precisions confirm nothing: the facts of an unaudited double, as Giac's numeric integration has them.
     if (isDouble(A[k]!, B[k]!) || B[k]!.double) return doubleFacts(A[k]!, B[k]!, { re: A[k]!.re, im: A[k]!.im });
     let leading = leadingZero[k]! && !under;
@@ -1029,7 +1029,7 @@ function readAtDouble(giac: Giac, text: string, shape: Shape, digits: number): P
 }
 
 /** G782 fix round 2 (G140): the facts of the elements of `at` (a float path's read at W or above) that are a double: one
- *  that is Giac's own double at the double's precision too (BesselJ, Zeta) keeps its facts; one that differs from it
+ *  that is Giac's own double at the double's precision too (BesselJ, Psi of a complex argument) keeps its facts; one that differs from it
  *  confirms only the digits the two share, as floatFacts' unaudited branch counts them (student_icdf(i,0.5) is
  *  -1.8888…E-19 at 14 digits, -1.9042…E-19 at 30, noise from the 10th digit on each call: 2 digits, as the exact path,
  *  not 12 of noise); a difference in the double's last two digits is its own rounding and changes nothing. `atDouble`

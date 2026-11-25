@@ -69,7 +69,15 @@ describe("the view sweep's engine runs in a worker thread (G188)", () => {
     });
     expect(out.status, out.stderr).toBe(0);
     expect(out.stdout).toMatch(/^FINDING (rad|deg) .* \[crash\]: RuntimeError: memory access out of bounds/m);
-    expect(out.stdout).toMatch(/^VIEWSWEEP NIGHTLY: \d+ findings; \d+ expressions \(seed 7\), \d+ comparisons, total [\d.]+ s; [1-9]\d* engine restarts/m);
+    expect(out.stdout).toMatch(/^VIEWSWEEP NIGHTLY: \d+ failures \(\d+ not in the known files\); \d+ runs \(comparisons\) of \d+ expressions \(seed 7\), total [\d.]+ s; [1-9]\d* engine restarts/m);
+    // G805: the line `scripts/pipeline.sh nightly` reads (pipeline-lib.sh nightly_counts): runs, known, new, seed; every crash is new here
+    const file = resolve(scratch, "viewsweep-nightly.out");
+    writeFileSync(file, out.stdout);
+    const counts = spawnSync("bash", ["-c", 'source scripts/pipeline-lib.sh && nightly_counts "$1"', "_", file], { cwd: resolve(here, "../.."), encoding: "utf8" });
+    expect(counts.status, counts.stderr).toBe(0);
+    const findings = out.stdout.split("\n").filter((l) => l.startsWith("FINDING ")).length;
+    const runs = /; (\d+) runs \(comparisons\)/.exec(out.stdout)?.[1];
+    expect(counts.stdout.trim()).toBe(`${runs} 0 ${findings} 7`);
   }, 130_000);
 });
 
