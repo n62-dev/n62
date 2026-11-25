@@ -119,6 +119,8 @@ export interface FieldEvents {
   sheet(): boolean;
   /** R922: the dead press (docs/05 3.7), a press all the same (R107). */
   dead(): void;
+  /** R903: a hold on the line (lineTouch.ts) copies `latex`: the selection it had, else the whole line. */
+  hold(latex: string): void;
 }
 
 /**
@@ -198,7 +200,7 @@ export async function makeField(Field: typeof MathfieldElement, host: HTMLElemen
     on.enter(ev.repeat);
   });
   settleClick(mf);
-  lineTouch(mf, mf.parentElement ?? mf, (dx) => scrollLine(mf, dx));
+  lineTouch(mf, mf.parentElement ?? mf, (dx) => scrollLine(mf, dx), (latex) => on.hold(latex));
   return mf;
 }
 
