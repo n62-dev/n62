@@ -82,11 +82,13 @@ function elementsOf(text: string): string[][] {
   return inner.split(",").map((e) => e.match(/\d+(?:\.\d*)?(?:[eE][-+]?\d+)?|\.\d+/g) ?? []);
 }
 
-/** The digits Copy may write of a value with these facts: on a row nobody checked (a bare ⚠: the mark claims no digit, whatever the
- *  agreement count says; fsolve's row has 13) the shown digits; else its confirmed count, or no bound when nothing is in doubt. */
-function copyBound(reliable: number | null | undefined, unchecked: boolean, shown: number): number | null {
-  if (unchecked) return shown;
-  return reliable !== null && reliable !== undefined ? Math.max(1, reliable) : null;
+/** The digits Copy may write of a value with these facts: its confirmed count, or no bound when nothing is in doubt; on a row nobody
+ *  checked (a ⚠ with a warning, or a bare ⚠) never more than the shown digits either (fsolve's row has an agreement count of 13 and
+ *  12 shown: 12), and a warned row's lower count still bounds it (5 confirmed: 5). `shown`: the bound is the shown digits. */
+function copyBound(reliable: number | null | undefined, unchecked: boolean, shown: number): { b: number; shown: boolean } | null {
+  const counted = reliable !== null && reliable !== undefined ? Math.max(1, reliable) : null;
+  if (!unchecked) return counted === null ? null : { b: counted, shown: false };
+  return counted !== null && counted < shown ? { b: counted, shown: false } : { b: shown, shown: true };
 }
 
 /** An exact rational n/d (d > 0) as BigInts. */
@@ -147,10 +149,10 @@ export function judgeCopy(row: Row, copied: string | undefined, ctx: DisplayCont
     if (row.value || els.length === counts.length) {
       for (const [k, nums] of (row.value ? [els.flat()] : els).entries()) {
         const count = counts[k];
-        const b = copyBound(count, unchecked, shown);
-        const over = b === null ? undefined : nums.find((x) => significantDigits(x) > b);
-        if (over !== undefined)
-          return `Copy writes ${significantDigits(over)} digits of ${over} where ${unchecked ? `${b} are shown and none is confirmed` : `${b} are confirmed`} (${m ? markText(m) : "no mark"} ${drawnText(row, ctx)}; copied ${copied})`;
+        const bound = copyBound(count, unchecked, shown);
+        const over = bound === null ? undefined : nums.find((x) => significantDigits(x) > bound.b);
+        if (bound && over !== undefined)
+          return `Copy writes ${significantDigits(over)} digits of ${over} where ${bound.shown ? `${bound.b} are shown and none is confirmed` : `${bound.b} are confirmed`} (${m ? markText(m) : "no mark"} ${drawnText(row, ctx)}; copied ${copied})`;
       }
     }
   }

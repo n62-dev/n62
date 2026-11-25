@@ -4,7 +4,8 @@
 # F66: x/x has no value at x = 0, and Home refuses it there (G168: a division by an exact 0), but Giac simplifies x/x to 1 first: Num shows the number, the plot evaluator has NaN
 # (CAS, asked with 0 in place of x since G799, refuses as Home does).
 # G799 (copy): G796, Copy of a ⚠ row nobody checked (fsolve, factorial, cosh, det, ln of a negative, sin of a matrix: unaudited) writes up to the agreement count's
-# digits (13 to 39) where 12 are shown; F484, Copy of a CAS fraction drawn in DEG writes its text (-15/2), which Paste refuses, where docs/04 2.6 has its digits.
+# digits (13 to 39) where 12 are shown; F484, Copy of a CAS fraction drawn in DEG writes its text (-15/2), which Paste refuses, where docs/04 2.6 has its digits
+# (family 1; its backlog line is in G799's fix-round report, run 1588: backlog.md was full).
 known:
   - { id: "rad 0 x\\times \\frac{x}{x}", check: plot, package: F66 }
   - { id: "rad 0 x\\times \\frac{x}{x}", check: num, package: F66 }

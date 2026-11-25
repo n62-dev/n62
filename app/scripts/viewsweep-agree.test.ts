@@ -73,6 +73,11 @@ describe("Copy keeps its word (G799)", () => {
     const live = homeRow({ ok: true, display: "1.25992104989", approximate: true, value: real("1.259921049894899169885320588946342468262"), full: "1.259921049895", facts: { exact: false, reliableDigits: 13, warn: "unaudited", why: { unaudited: ["fsolve"] } } })!;
     expect(judgeCopy(live, "1.259921049895", ctx)).toMatch(/^Copy writes 13 digits of 1\.259921049895 where 12 are shown and none is confirmed \(⚠ 1\.25992104989; /);
   });
+  it("a warned row with fewer confirmed digits than shown copies no more than those (audit of run 1588)", () => {
+    const warned = home("0.66667", twoThirds, { exact: false, reliableDigits: 5, warn: "unaudited" });
+    expect(judgeCopy(warned, "0.666666666667", ctx)).toMatch(/^Copy writes 12 digits of 0\.666666666667 where 5 are confirmed \(⚠ /);
+    expect(judgeCopy(warned, "0.66667", ctx)).toBeNull();
+  });
   it("a counted row copies its confirmed digits and no more; a sure float every kept digit", () => {
     const counted = home("1.2599210499", "1.259921049894873", { exact: false, reliableDigits: 11 });
     expect(judgeCopy(counted, "1.2599210499", ctx)).toBeNull();
