@@ -66,7 +66,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 888e12a | [R927](packages/R927.md) Settings on top; Mode its row 1, Preset first | ron, Opus | `p1/ron-modeorder` | R887, R901 |
 | 888e13 | R902 a dropped unit says so | ron, Opus | `p1/ron-unitdropped` | – |
 | 888e14 | R903 hold on the line copies | ron, Opus | `p1/ron-linehold` | – |
-| 888e15 | [R904](packages/R904.md) Copied notice tells the truth | ron, Opus | `p1/ron-copiednotice` | – |
+| 888e15 | R904 Copied notice tells the truth | ron, Opus | `p1/ron-copiednotice` | – |
 | 888e16 | [R905](packages/R905.md) a flick bubble stays on screen | ron, Opus | `p1/ron-bubbleclamp` | – |
 | 888e17 | [R906](packages/R906.md) legends clear of outlines | ron, Opus | `p1/ron-legendoutline` | – |
 | 888e18 | [R907](packages/R907.md) one face size on the unit pad | ron, Opus | `p1/ron-unitfacesize` | – |

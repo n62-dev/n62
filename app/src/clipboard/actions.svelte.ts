@@ -15,6 +15,7 @@ import { groupSepFor } from "../render/home.ts";
 import { tooLongToInsert, tooLongToInsertNote } from "../render/longInsert.ts";
 import { copyExact } from "./exact.ts";
 import { whyLine } from "./whyLine.ts";
+import { copiedNotice, drawnDigits } from "./noticeText.ts";
 import { entryText } from "./plaintext.ts";
 import type { ClipboardPort } from "./port.ts";
 import type { CopySource, NameSeen, TextOptions } from "./text.ts";
@@ -31,8 +32,6 @@ const impl = () => import("./impl.ts");
 const pasteUnit = () => import("./pasteUnit.ts");
 
 const NOTICE_MS = 2200;
-/** R832: the most characters of a copied text the notice names ("Copied: 0.333 333 333 333"); the whole is on the clipboard. */
-const NAMED_MAX = 24;
 /** G784f1: the last text a Copy wrote that holds a name (a stand-in as its letter, `2*i` from the name i), which Paste refuses.
  *  In localStorage, so a relaunch keeps it; no kv record, so no backup holds it. */
 export const COPIED_NAME = "n62.copiedName";
@@ -145,12 +144,14 @@ export class ClipActions {
   copyRaw(text: string | undefined, done: string = tc("clip.copied"), one = false): Promise<boolean> {
     return this.serial(() => this.put(text, done, one));
   }
-  /** R832: "Copied: <what>", the text on one line (a long one cut with …). */
-  private named(what: string): string {
-    const chars = [...what.replace(/[ \t\r\n]+/g, " ").trim()]; // (not \s: the thin space of the digit groups stays)
-    return tc("clip.copiedWhat").replace("{what}", chars.length > NAMED_MAX ? `${chars.slice(0, NAMED_MAX).join("")}…` : chars.join(""));
+  /** R832, R904: "Copied: <copied>" on one line; a long copy shows its start, a number's digits cut where the row's `shown` text
+   *  ends, "Copied 40 digits: 0.333 333 333 333…" (noticeText.ts). `grouped`: in digit groups as the row draws them. */
+  private named(copied: string, shown?: string, grouped = false): string {
+    const words = { what: tc("clip.copiedWhat"), digits: tc("clip.copiedDigits") };
+    const drawn = shown === undefined ? undefined : drawnDigits(shown);
+    return copiedNotice(copied, words, { group: grouped ? (t) => this.grouped(t) : undefined, drawnDigits: drawn, decimalComma: this.decimalComma() });
   }
-  /** R832: a shown result as the row draws it, the digits in groups (R55, R125: the setting's separator), for a notice. */
+  /** R832: a text as the row draws it, the digits in groups (R55, R125: the setting's separator), for a notice. */
   private grouped(text: string): string {
     const ctx = this.session.displayContext();
     return groupMarked(text, groupSepFor(ctx.groupSep, ctx.decimalComma), ctx.decimalComma === true);
@@ -242,7 +243,8 @@ export class ClipActions {
     if (this.noNumber(i)) return this.refuseNoDigit();
     const shown = i && m ? m.copyShownText(this.session.display(i).text) : "";
     const seen: NameSeen = { name: false }; // G784f1
-    return this.put(i && m ? m.copyFull(source(i), this.opts, seen) : undefined, named && i && m ? this.named(this.grouped(shown)) : undefined, named, seen.name);
+    const text = i && m ? m.copyFull(source(i), this.opts, seen) : undefined;
+    return this.put(text, named && text ? this.named(text, shown, true) : undefined, named, seen.name); // R904: the copied text, not the drawing
   }
   /** `named` (R832): the notice names the copy (the bar's rows, Shift + Select, a hold). */
   copyShown(item?: HistoryItem, named = false): Promise<boolean> {
@@ -251,7 +253,7 @@ export class ClipActions {
       if (this.noNumber(i)) return this.refuseNoDigit();
       const seen: NameSeen = { name: false }; // G784f1
       const text = i ? (await impl()).copyShownText(this.session.display(i).text, seen) : undefined; // G784: the letters, not i_
-      return this.put(text, named && text ? this.named(this.grouped(text)) : undefined, named, seen.name);
+      return this.put(text, named && text ? this.named(text, text, true) : undefined, named, seen.name);
     });
   }
   copyExact(item?: HistoryItem, named = false): Promise<boolean> {
