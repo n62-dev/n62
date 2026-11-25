@@ -457,6 +457,10 @@ console.log("known (G94) rad home 1 x [crash]: z");
 console.log("FINDING rad cas 0.3 \\sin\\left(x\\right) [mark]: w");
 console.log("VIEWSWEEP NIGHTLY: 3 failures (2 not in the known files); 1180 runs (comparisons) of 600 expressions (seed 20417), total 400.0 s; 3 engine restarts, 90000 Giac calls, heap up to 300 MB");
 STUB
+# G805: viewsweep runs at the count NIGHTLY_TOOLS gives it (a whole run at its default 600 passes the 1200 s limit), after --nightly
+vs_count="$(printf '%s\n' "${NIGHTLY_TOOLS[@]}" | sed -n 's/^viewsweep:scripts\/viewsweep\.ts --count \([0-9][0-9]*\)$/\1/p')"
+[[ -n "$vs_count" && "$vs_count" -lt 600 ]] || fail "G805: NIGHTLY_TOOLS does not run viewsweep with a --count under 600: ${NIGHTLY_TOOLS[*]}"
+grep -qF "node scripts/viewsweep.ts --nightly --count $vs_count) = viewsweep" <<<"$("$script" nightly 3 --dry-run 2>&1)" || fail "G805: the nightly dry run does not show viewsweep's --count"
 git -C "$nt" add -A; gc "$nt" init; git -C "$nt" branch phase-1
 ntrun() { (cd "$nt" && PATH="$sb/bin:$PATH" GIAC_OUT="$nt/engine" NT_CALLS="$nt/calls" N62_NIGHTLY_WAIT=2 "$@" "$script" nightly 7 2>&1); }
 out="$(ntrun env)"; rc=$?
@@ -465,7 +469,7 @@ for want in 'NIGHTLY 7 sweep: 25000 runs, 2 known, 1 new (seed 42)' 'NIGHTLY 7 c
   grep -qF -- "$want" "$nt/.coord/log.md" || fail "A273: the log lacks '$want': $(cat "$nt/.coord/log.md")"
   grep -qF -- "$want" <<<"$out" || fail "A273: the RESULT line lacks '$want': $out"
 done
-[[ "$(wc -l < "$nt/calls")" -eq 3 && "$(grep -c '^sweep --nightly in .*/app giac ' "$nt/calls")" -eq 1 && "$(grep -c '^casback --nightly in .*/app giac ' "$nt/calls")" -eq 1 && "$(grep -c '^viewsweep --nightly in .*/app giac ' "$nt/calls")" -eq 1 ]] || fail "A273: each tool is not run once with --nightly in the phase-1 tree's app: $(cat "$nt/calls")"
+[[ "$(wc -l < "$nt/calls")" -eq 3 && "$(grep -c '^sweep --nightly in .*/app giac ' "$nt/calls")" -eq 1 && "$(grep -c '^casback --nightly in .*/app giac ' "$nt/calls")" -eq 1 && "$(grep -c "^viewsweep --nightly --count $vs_count in .*/app giac " "$nt/calls")" -eq 1 ]] || fail "A273: each tool is not run once with --nightly in the phase-1 tree's app: $(cat "$nt/calls")"
 grep -q "giac $nt/engine\$" <<<"$(head -n1 "$nt/calls")" || fail "A273: the tools do not get the shared GIAC_OUT: $(cat "$nt/calls")"
 nrep="$(ls "$nt"/.tasks/nightly-*-7.md 2>/dev/null | head -n1)"
 [[ -n "$nrep" ]] && grep -q 'FINDING angle 12' "$nrep" && ! grep -q 'known (G79' "$nrep" || fail "A273: .tasks/nightly-<date>-7.md is missing or does not hold the findings that are not known rows: $(cat "$nrep" 2>/dev/null)"

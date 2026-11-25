@@ -11,8 +11,9 @@
 //   node scripts/viewsweep.ts                 # the gate stage: fixed seed, exit 1 on a new failure or a known one that now passes
 //   node scripts/viewsweep.ts --nightly [--seed N] [--count N]   # rotating seed, more trees, report only (exit 0); G805: a failure that is a
 //     known row prints `known (<package>)`, the others `FINDING`, and the last line `VIEWSWEEP NIGHTLY: <f> failures (<new> not in the known
-//     files); <c> runs (comparisons) of <e> expressions (seed <s>), …`, which `scripts/pipeline.sh nightly` logs (NIGHTLY_TOOLS, A273)
-//   In pieces (G188; each under `tools/devlock.sh slice <name> …`, at most 10 minutes; count 300 takes longer):
+//     files); <c> runs (comparisons) of <e> expressions (seed <s>), …`, which `scripts/pipeline.sh nightly` logs (NIGHTLY_TOOLS, A273) at
+//     --count 300, inside its 1200 s limit: on 2026-11-25 (seed 20782) count 100 took 79 s, 300 took 178.5 s, 600 ran past 600 s (30 engine hangs and crashes)
+//   In pieces (G188; each under `tools/devlock.sh slice <name> …`, at most 10 minutes; count 600 takes longer):
 //     node scripts/viewsweep.ts --nightly --seed N --count N --part i/n   # the i-th of n slices of the expressions, in a fresh engine;
 //       its result goes to .tasks/viewsweep-part-<seed>-<count>-<i>of<n>.json (VIEWSWEEP_TASKS_DIR: another folder)
 //     node scripts/viewsweep.ts --join --seed N --count N                 # every part of that run (a missing one is named, exit 1): the findings and the summary line

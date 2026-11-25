@@ -434,7 +434,7 @@ if [[ "${1:-}" == "nightly" ]]; then
     integ="$(integ_dir)"; : "${integ:=$main/.claude/worktrees/phase-1}"
     echo "DRY RUN: nightly step $n: ${NIGHTLY_TOOLS[*]%%:*} from $integ/app on GIAC_OUT=$GIAC_OUT; output in $run"
     echo "1. before each tool: tools/devlock.sh acquire host-cpu nightly-$n ${N62_NIGHTLY_WAIT:-1800} (waits logged), released after it; busy past the wait: NIGHTLY $n: SKIPPED (host-cpu)"
-    for t in "${NIGHTLY_TOOLS[@]}"; do echo "2. (cd $integ/app && timeout -k 60 $tmax node ${t#*:} --nightly) = ${t%%:*}, at most $tmax s"; done
+    for t in "${NIGHTLY_TOOLS[@]}"; do read -ra targs <<<"${t#*:}"; echo "2. (cd $integ/app && timeout -k 60 $tmax node ${targs[0]} --nightly${targs[1]:+ ${targs[*]:1}}) = ${t%%:*}, at most $tmax s"; done
     echo "3. log: - HH:MM pipeline nightly $n: NIGHTLY $n <tool>: <runs> runs, <known> known, <new> new (seed <s>)  or  NIGHTLY $n <tool>: FAILED (<first line>); the report $out_md"
     echo "never failed (exit 0)"; echo "RESULT nightly $n: DRY RUN"; exit 0
   fi
@@ -444,14 +444,14 @@ if [[ "${1:-}" == "nightly" ]]; then
   { echo "# Nightly family tests $n, $(date +%F) $(date +%H:%M), phase-1 $sha"; echo; echo "The findings that are not known rows, by tool."; } > "$out_md"
   lines=()
   for t in "${NIGHTLY_TOOLS[@]}"; do
-    name="${t%%:*}"; script="${t#*:}"; f="$run/$name.out"; rc=0
+    name="${t%%:*}"; read -ra targs <<<"${t#*:}"; f="$run/$name.out"; rc=0  # G805: <script> [its own options after --nightly]
     # host-cpu per tool, so the checks of other runs get it between the tools; busy past the wait: the step ends
     if ! N62_CPU_WAIT="${N62_NIGHTLY_WAIT:-1800}" host_cpu_take "nightly-$n" "pipeline nightly $n:"; then
       line="NIGHTLY $n: SKIPPED (host-cpu)"; log "pipeline nightly $n: $line"; lines+=("$line")
       { echo; echo "## $name"; echo; echo "$line"; } >> "$out_md"; break
     fi
     ts=$SECONDS
-    own_sh 'cd "$1/app" && timeout -k 60 "$2" node "$3" --nightly' "$integ" "${N62_NIGHTLY_TIMEOUT:-1200}" "$script" > "$f" 2>&1 < /dev/null || rc=$?
+    own_sh 'cd "$1/app" && timeout -k 60 "$2" node "$3" --nightly "${@:4}"' "$integ" "${N62_NIGHTLY_TIMEOUT:-1200}" "${targs[@]}" > "$f" 2>&1 < /dev/null || rc=$?
     first="$(grep -m1 -vE '^[[:space:]]*$' "$f" | cut -c1-160 || true)"
     if [[ $rc -eq 0 ]] && cnt="$(nightly_counts "$f")"; then
       read -r nruns nknown nnew nseed <<<"$cnt"; line="NIGHTLY $n $name: $nruns runs, $nknown known, $nnew new (seed $nseed)"
