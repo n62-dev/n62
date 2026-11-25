@@ -1423,3 +1423,6 @@ Synchronous `calc.cas` through Asyncify (amended D6), the runtime limits, the vi
 
 ### 2026-10-12 ⌫ auto-repeat timings (assumed, to judge by feel)
 ⌫ fires on touch, repeats after 400 ms, then every 60 ms, in the layer of the first press (held Shift+⌫ keeps deleting forward). Added with K2; the hold-and-drag cursor itself was removed by P11. Why: ron's defaults, nothing measured. Would change on the owner's verdict on a device.
+
+### 2026-11-22 Bulk resets ask once (R857); one-slot clears do not
+Reset all your keys, Reset the unit pad cells and the three Reset the counter rows arm on the first pick (R281's ask: the armed label, the row in `--error`, a note naming what goes); Empty this slot and Back to the default clear at once. A digit key arms the reset and never runs it (R281's rule: every key but Enter disarms first; pass 230); Enter or a second tap runs it. Rule: docs/05 3.4.

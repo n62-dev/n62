@@ -139,6 +139,7 @@ Cost: one `evalf` more (about 1 ms, desktop) per irrational or float result.
 ### 2.7 Decision: SI prefix display, and prefix entry
 
 - **Display:** a format `PFX` beside ENG: as ENG, the exponent replaced by f p n µ m (none) k M G T P (10⁻¹⁵…10¹⁵); `µ` is U+00B5. Outside it, ENG. Built: the prefix is `\class{pfx}{\mathrm{k}}` in the accent colour; ENG keeps trailing zeros, PFX drops them; the rest as it stood: [archive](archive/04-built-2026-11.md) section 15.
+- **FIX:** n decimals; a non-zero value falls back to SCI with n decimals (n + 1 significant digits) when every shown decimal would be 0 (G2 item 60: 4.7ᴇ-6 → 4.7000ᴇ-6) or its integer part is longer than its confirmed digits (G795: `exp(100)` in FIX 4 → `≈ 2.6881E43`).
 - **Entry:** none in Home: a prefix is entered in the unit view's prefix cells (P11, docs/05 §7.2), and Enter in Home refuses a prefix picked in Find. Letters typed with Alpha stay variables (`4.7k` parses as `4.7*k`), so a variable `k` and the prefix k never collide.
 
 ### 2.8 Decision: reuse through chips and Ans
