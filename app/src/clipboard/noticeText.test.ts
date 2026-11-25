@@ -37,4 +37,17 @@ describe("copiedNotice (R904)", () => {
   it("a long text that is not a number is cut with …, no count", () => {
     expect(named("x^2+2*x*y+y^2+3*x*y^2-sin(x)")).toBe("Copied: x^2+2*x*y+y^2+3*x*y^2-si…");
   });
+  it("a fraction, a complex or a ± σ is not one number: cut with …, no count (the count would leave digits out)", () => {
+    // 2^100/3: 31 digits over 3, 32 on the clipboard; the complex holds 80.
+    expect(named("1267650600228229401496703205376/3")).toBe("Copied: 1 267 650 600 228 229 40…");
+    const third = "0." + "3".repeat(40);
+    expect(named(`${third}+0.${"6".repeat(40)}*i`, "0.333333333333")).toBe("Copied: 0.333 333 333 333 333 33…");
+    expect(named(`${third} ± 1.2 m²`, "0.333333333333")).toBe("Copied: 0.333 333 333 333 333 33…");
+  });
+  it("a 10⁵-digit Exact copy (no drawing) is named at once", () => {
+    const big = "7" + "1".repeat(99_999);
+    const t0 = performance.now();
+    expect(named(big)).toBe("Copied 100000 digits: 711 111 111 111 111 111…");
+    expect(performance.now() - t0).toBeLessThan(1000);
+  });
 });

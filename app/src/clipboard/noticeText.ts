@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R904: the "Copied" notice names the text that went on the clipboard, not the row's drawing (R832 named the drawing, so
-// a 40-digit copy read as 12 digits). A long copy shows its start on one line: a number cut after as many significant
-// digits as the row draws (R832's look), its digit count in front; any other text cut at NAMED_MAX characters.
+// a 40-digit copy read as 12 digits). A long copy shows its start on one line: a number (with a unit or none) cut after as
+// many significant digits as the row draws (R832's look), its digit count in front; any other text cut at NAMED_MAX characters.
 
 /** The most characters of a copied text the notice names; the whole is on the clipboard. */
 export const NAMED_MAX = 24;
@@ -31,11 +31,16 @@ interface NumberParts {
   rest: string;
 }
 
-/** A text that starts with a plain real (`-0.333…`, `6.02E23`, `72 km`), as its parts; else null. */
+/** After the number, only a unit (` km`, ` °C`): a fraction, a complex or a ` ± σ` holds more digits than the count would say. */
+const UNIT_TAIL = /^ [\p{L}°]/u;
+
+/** A text that is one plain real (`-0.333…`, `6.02E23`), with a unit or not (`72 km`), as its parts; else null. */
 function numberParts(text: string, decimalComma: boolean): NumberParts | null {
   const mark = decimalComma ? "," : "\\.";
   const m = new RegExp(`^(-?)(\\d+)(?:${mark}(\\d+))?(E[-+]?\\d+)?(.*)$`, "s").exec(text);
-  return m ? { sign: m[1] ?? "", int: m[2] ?? "", frac: m[3], exp: m[4] ?? "", rest: m[5] ?? "" } : null;
+  const rest = m?.[5] ?? "";
+  if (!m || (rest !== "" && !UNIT_TAIL.test(rest))) return null;
+  return { sign: m[1] ?? "", int: m[2] ?? "", frac: m[3], exp: m[4] ?? "", rest };
 }
 
 /** The significant digits of a number (its leading zeros dropped; a zero counts one). */
@@ -81,7 +86,7 @@ export function copiedNotice(copied: string, words: NoticeWords, o: NoticeOption
     const n = significant(p);
     const mark = o.decimalComma ? "," : ".";
     const head = (k: number): string => group(`${p.sign}${cutDigits(p, k, mark)}${k < n ? "…" : ""}${p.exp}`);
-    let k = Math.min(o.drawnDigits ?? n, n);
+    let k = Math.min(o.drawnDigits ?? n, n, NAMED_MAX); // no more digits fit the line (a 10⁵-digit Exact copy stays linear)
     while (k > 1 && chars(head(k)).length > NAMED_MAX) k--;
     if (k < n) {
       const shown = head(k) + group(p.rest);
