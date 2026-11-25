@@ -454,7 +454,8 @@ class LayerSweep {
       const home = await lsettle(this.page);
       if (home.line !== this.taken && !home.where.startsWith("prompt:")) why.push(`Home's line ${this.taken} → ${home.line} (back at Home)`);
     }
-    if (why.length > 0) this.bad.set(`${this.def.name} ${id}`, why.join("; "));
+    const was = this.bad.get(`${this.def.name} ${id}`); // (what the case itself found on its way)
+    if (why.length > 0) this.bad.set(`${this.def.name} ${id}`, [...(was ? [was] : []), ...why].join("; "));
     const now = await lsnap(this.page);
     if (now.where !== this.root.where || now.place !== this.root.place || now.mods !== this.root.mods || (!this.def.prompt && now.line !== this.taken)) await this.reset();
     else if (this.def.prompt && now.line !== this.root.line) await this.page.evaluate((l) => window.n62.entry.set(l), this.root.line); // (a typed name is let go: the next case starts from the empty name)
@@ -502,6 +503,18 @@ test.describe("R921: every input channel against the sheets and the name prompt"
       s.taken = def.pre;
       await s.start();
 
+      if (def.prompt) {
+        // F374, first (a fresh name): a name typed, then Undo more often than it has steps, never walks into Home's line
+        await s.fire("undo-walk", async () => {
+          await page.keyboard.press("z");
+          for (let i = 1; i <= 3; i++) {
+            await tap(page, ["undo"]);
+            const l = await page.evaluate(() => window.n62.entry.value);
+            if (l.length >= 2 && s.taken.startsWith(l)) s.bad.set(`${def.name} undo-walk`, `Undo ${i}: the name line shows Home's ${l}`);
+          }
+        }, "list");
+      }
+
       // what follows the focus: a system paste, Ctrl+V's keydown, a hardware `!`, µ, Select all + cut, Ctrl+Z
       await s.fire("paste", () => paste(page, "5"));
       await s.fire("hw:ctrl+v", () => page.keyboard.press("Control+V"));
@@ -512,13 +525,6 @@ test.describe("R921: every input channel against the sheets and the name prompt"
         await page.keyboard.press("Control+X");
       });
       await s.fire("hw:undo", () => page.keyboard.press("Control+Z"), def.acts("undo") ? "list" : "stay"); // (Ctrl+Z is the Undo key)
-      if (def.prompt) {
-        // F374: a name typed, then Undo more often than it has steps, never walks into Home's line
-        await s.fire("undo-walk", async () => {
-          await page.keyboard.press("z");
-          for (let i = 0; i < 3; i++) await tap(page, ["undo"]);
-        }, "list");
-      }
 
       // keys: every key of the keypad, one press each (Esc last, as a leave)
       const ids = await page.locator("[data-key]").evaluateAll((els) => [...new Set(els.map((e) => e.getAttribute("data-key") ?? ""))]);
