@@ -1,4 +1,4 @@
-# Upstream: giac 2.1.0 gen.cc sym_add, sym_sub, sym_mult, rdiv and rpn.cc _division: when one operand is an MPFR float (or a complex with MPFR parts) the other is brought to its precision with accurate_evalf, which leaves a product or a quotient of a symbolic constant symbolic (pi/10^11, 10^14*pi, 2*exp(1)); the callers then took has_evalf's value at the context's Digits. Vector and matrix arithmetic (addvecteur, subvecteur, multvecteur, mmult) calls the scalar operators with context0, whose Digits is the default (12), so such an entry beside an MPFR float was a double at any Digits: [[pi]]/10^11+evalf([[30000000]]) = [[30000000.0]] at Digits 30 (right 30000000.0000000000314159265359; the scalar pi/10^11+evalf(30000000) was right), 10^14*[[pi,2],[5,0.1]]+approx([[2,1.05],[4,2.1]]) lost 10^14*pi past its 16th digit (sin of it off by 0.03), and the rank of a float matrix times 10^-11*[[pi,...]] read a rounded product as full rank. Now the new accurate_evalf_value takes such an operand's value at the MPFR operand's own precision (has_evalf at bits2digits(prec) Digits, put back after, an error too); a vector keeps accurate_evalf's result (patch 0069), and a value with no float stays as it was.
+# Upstream: giac 2.1.0 gen.cc sym_add, sym_sub, sym_mult, rdiv and rpn.cc _division: when one operand is an MPFR float (or a complex with MPFR parts) the other is brought to its precision with accurate_evalf, which leaves a product or a quotient of a symbolic constant symbolic (pi/10^11, 10^14*pi, 2*exp(1)); the callers then took has_evalf's value at the context's Digits. Vector and matrix arithmetic (addvecteur, subvecteur, multvecteur, mmult) calls the scalar operators with context0, whose Digits is the default (12), so such an entry beside an MPFR float was a double at any Digits: [[pi]]/10^11+evalf([[30000000]]) = [[30000000.0]] at Digits 30 (right 30000000.0000000000314159265359; the scalar pi/10^11+evalf(30000000) was right), 10^14*[[pi,2],[5,0.1]]+approx([[2,1.05],[4,2.1]]) lost 10^14*pi past its 16th digit (sin of it off by 0.03), and the rank of a float matrix times 10^-11*[[pi,...]] read a rounded product as full rank. Now the new accurate_evalf_value takes such an operand's value at the MPFR operand's own precision (has_evalf at bits2digits(prec) Digits, put back after, an error too); a vector keeps accurate_evalf's result (patch 0069), and a value with no float stays as it was. And usual.cc Eta (under Zeta) summed its alternating series with the terms of 16 digits for any argument, so Zeta of a complex MPFR argument was right to about 20 digits at any Digits; a double met inside the sum hid it, which the change above removes (Zeta(1/2+i) at Digits 40 and 60 agreed on wrong digits from the 20th): an MPFR argument now takes the terms its precision needs.
 # Changed by Pascaline contributors, 2026-11-25
 --- a/src/gen.cc
 +++ b/src/gen.cc
@@ -190,3 +190,21 @@
  	  if (accurate_evalf_is_number(a2))
  	    return a2/b;
  	}
+--- a/src/usual.cc
++++ b/src/usual.cc
+@@ -10309,6 +10309,15 @@
+ 	return gentypeerr(contextptr);
+       double y=absdouble(ix._DOUBLE_val);
+       int ndigits=16; // FIXME? use decimal_digits;
++#ifdef HAVE_LIBMPFR
++      // N62 (G804): an MPFR s takes the terms its precision needs. With 16 digits' terms Eta (so Zeta) of a complex
++      // MPFR argument was right to about 20 digits at any Digits; a double met inside hid it until patch 0070 (gen.cc
++      // accurate_evalf_value) kept the sum MPFR, and then Zeta(1/2+i) at 40 and 60 digits agreed on wrong digits.
++      if (s.type==_REAL)
++	ndigits=giacmax(ndigits,bits2digits(mpfr_get_prec(s._REALptr->inf))+2);
++      if (s.type==_CPLX && s._CPLXptr->type==_REAL)
++	ndigits=giacmax(ndigits,bits2digits(mpfr_get_prec(s._CPLXptr->_REALptr->inf))+2);
++#endif
+       double n=(std::log10(3*(1+2*y)*std::exp(y*M_PI/2))+ndigits)/std::log10(3.+std::sqrt(8.));
+       if (is_inf(n))
+ 	return gensizeerr(contextptr);
