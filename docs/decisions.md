@@ -8,6 +8,7 @@ Phase 0 (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md). This fil
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
 - **G784, Paste of a copied name:** Copy writes the letters (`2*i`, `r*a*i*n*b*o*w`, `β*2`); Paste reads one number, so a product of names is refused, and `2*i` copied from the name i came back as the constant i, another value (principle 3): G784f1 (pass 231) refuses a text N62 copied from a row with a stand-in. Recommended: keep Paste a number reader, so a copied name does not paste back; reading expressions is its own package (the letter i against the constant i needs a rule first).
+- **G622f2, a singular float inv:** Recommended: refuse, as exact inv does. `inv(approx(10^-9*[[2.5,2E8,e],[2.5,π,2E-3],[5,2E8+π,e+2E-3]]))` is 1E14–1E22 noise, row 3 ≈.
 - **R779, the drag after the arrow keys, on the Fairphone:** Chromium touch emulation could not reproduce "drag, arrow keys, drag" (linetouch.spec.ts, R779 cases, green on phase-1 too); lineTouch.ts now ends a stale touch (a new first finger, a lift off the line). Does the drag work on the Fairphone 6 after it? If not, record `adb` pointer events (down/move/up/cancel with ids) for the sequence.
 
 ## Decided proposals
@@ -197,7 +198,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R87:** no ISC or UIUC text in `LICENSES/`: yaml is build-time only, Emscripten's runtime ships under MIT (THIRD_PARTY.md). Would change if: a shipped part needs another licence's text.
 - **G116, the sweep oracle:** on atanh's cut it takes Giac's side (+π/2·i for a real x > 1), and an argument on a cut within noise is a skip. Would change if: a case shows Giac off the textbook side.
 - **G798, what a law's side claims:** `=` its exact value, `≈` every shown digit, `⚠ n` n digits (as the sweep's judge reads it), a bare `⚠` or `⚠ 0` nothing; so G622's inverse with ⚠ 14 on a wrong matrix fails its law. Would change if: the owner reads "with ⚠ on either side it passes" as every ⚠.
-- **G798's det rows (pass 239):** F479's family joins G622 (patch 0066 splits det's blocks and tests its double pivot); G622f2 runs casback. Would change if: det rows stay after it.
+- **G798's det rows (pass 239):** F479's rows join G622; patch 0068 fixed them (seed 20781: 3 → 0). Would change if: they return.
 - **Start chunk room (owner, 2026-11-09):** a package over the pin raises it as docs/04 8.3 says; one over the 63 kB budget gets a cut, never an allowance. Would change if: the owner moves the budget.
 - **R918, the unit view's entries budget (owner, 2026-11-24):** 42.6 kB, for the history-tap guard (0.59 kB). Would change if: the owner wants it cut.
 - **R872, R873 contrast (owner, 2026-11-24):** N62 Light HC Enter stays 2.79:1 (its label 7:1); Solarized's pad arrows stay 4.03 and 4.28:1. Would change if: the owner's look on the phone says otherwise.
