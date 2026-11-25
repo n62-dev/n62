@@ -29,7 +29,7 @@
 #                           A33: the core list on the night's device ($ANDROID_SERIAL): test APK of phase-1's HEAD, install, tools/core-device.sh;
 #                           logs `CORE DEVICE <p>/<a> (known <k>, new <ids or none>) on <sha>`; skips (DEVICE SKIPPED), never fails
 #   scripts/pipeline.sh nightly <n> [--dry-run]
-#                           A273: the family tests' nightly runs (NIGHTLY_TOOLS: sweep, casback) on phase-1's engine under host-cpu, each at most 20 min;
+#                           A273: the family tests' nightly runs (NIGHTLY_TOOLS: sweep, casback, viewsweep) on phase-1's engine under host-cpu, each at most 20 min;
 #                           logs `NIGHTLY <n> <tool>: <runs> runs, <known> known, <new> new (seed <s>)` or `NIGHTLY <n> <tool>: FAILED (<first line>)`,
 #                           `NIGHTLY <n>: SKIPPED (host-cpu)`; report .tasks/nightly-<date>-<n>.md; never fails
 #   scripts/pipeline.sh flakes <n> [--dry-run]
