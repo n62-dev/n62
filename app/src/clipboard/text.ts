@@ -5,6 +5,7 @@
 import {
   DECIMAL_KEEP,
   decimalFromString,
+  formatConfirmed,
   isZero,
   roundSignificant,
   type ComplexValue,
@@ -14,6 +15,7 @@ import {
   type PrecisionWarn,
 } from "../engine/format.ts";
 import { decimalFromRational } from "../engine/rational.ts";
+import { defaultHomeSettings } from "../engine/homeDefaults.ts";
 import { mapNames } from "../engine/giacPrintStart.ts";
 import { isStandIn, typedName } from "../engine/standIns.ts";
 import type { ChipTable } from "../input/chips.ts";
@@ -51,9 +53,14 @@ export interface CopySource {
   units?: { input?: unknown; text?: unknown; unit?: unknown; unc?: { text?: unknown }; latex?: unknown };
 }
 
-/** Text options: `decimalComma` writes `,` for the decimal point (the Settings option, docs/04 section 6.2). */
+/** Text options: `decimalComma` writes `,` for the decimal point (the Settings option, docs/04 section 6.2); `digits` the
+ *  digits setting the rows are shown with (G796: what a row nobody checked may copy; absent: the default, 12); `kept` (the
+ *  session format, state/sessionLine.ts) a warned row's value too with every digit within its count, as the chips matched
+ *  against it hold it (Copy as Python's links, G213; the line carries the warning and the count itself). */
 export interface TextOptions {
   decimalComma?: boolean;
+  digits?: number;
+  kept?: boolean;
 }
 
 /** Plain notation from 1E-4 up to (not including) 1E21, else `d.ddd…E±k` (docs/04 section 2.6). */
@@ -88,10 +95,26 @@ export function complexText(v: ComplexValue, n: number, o: TextOptions = {}): st
   return isZero(v.re) ? `${v.im.neg ? "-" : ""}${ims}` : `${re}${sign}${ims}`;
 }
 
-/** How many significant digits of a result may be copied: all that were kept (40), or the confirmed ones. */
-function copyDigits(i: CopySource): number {
-  const r = i.facts?.reliableDigits;
-  return r === null || r === undefined ? DECIMAL_KEEP : Math.max(1, Math.min(r, DECIMAL_KEEP));
+/** G796: a row nobody checked (a bare ⚠) is copied to its shown digits, except in the session format (`kept`). */
+const cutToShown = (i: CopySource, o: TextOptions): boolean => i.facts?.warn !== undefined && !o.kept;
+
+/** The significant digits a row shows: the input's own (CAS `evalf(e,n)`), else the digits setting. */
+const shownDigits = (i: CopySource, o: TextOptions): number => Math.max(1, i.facts?.digits ?? o.digits ?? defaultHomeSettings.digits);
+
+/** How many significant digits of a value may be copied: all that were kept (40), or the confirmed ones (`r`); G796: on a
+ *  row nobody checked (a bare ⚠, `facts.warn`) no more than it shows, whatever its agreement count (fsolve's is 13). */
+function copyDigits(i: CopySource, o: TextOptions, r = i.facts?.reliableDigits): number {
+  const n = r === null || r === undefined ? DECIMAL_KEEP : Math.max(1, Math.min(r, DECIMAL_KEEP));
+  return cutToShown(i, o) ? Math.min(n, shownDigits(i, o)) : n;
+}
+
+/** G796: a warned list or matrix as its full text with each element cut to copyDigits; undefined: not one, or an element
+ *  without a value (then the engine's text, as before). */
+function warnedItems(i: CopySource, o: TextOptions): string | undefined {
+  const f = i.facts;
+  if (!f?.items || !cutToShown(i, o)) return undefined;
+  const items = f.items.map((it) => ({ ...it, reliableDigits: copyDigits(i, o, it.reliableDigits) }));
+  return formatConfirmed({ ...f, items }, { format: "STD", digits: DECIMAL_KEEP }) ?? undefined;
 }
 
 /**
@@ -151,14 +174,15 @@ function valueFull(i: CopySource, o: TextOptions, seen?: NameSeen): string | und
   if (f !== undefined && /^-?\d+$/.test(f)) return f; // an exact integer, however long
   // A real the engine wrote as digits (CAS floats too): its confirmed digits, in the notation of docs/04 2.6.
   const dec = f !== undefined && !i.fullExact ? decimalFromString(f.replace("E", "e")) : null;
-  if (dec) return realText(dec, copyDigits(i), o);
+  // G796: a warned row is cut from its kept value, never from `full` already rounded to its count (13 → 12 would round twice)
+  if (dec) return realText(cutToShown(i, o) && i.value && isZero(i.value.im) ? i.value.re : dec, copyDigits(i, o), o);
   // An exact fraction: its 40 digits rounded from the 41st (the value kept only 40, cut).
   if (i.rational && i.value && isZero(i.value.im)) {
     const q = decimalFromRational(BigInt(i.rational.n), BigInt(i.rational.d), DECIMAL_KEEP + 1);
     return realText(q, DECIMAL_KEEP, o);
   }
-  if (i.value) return complexText(i.value, copyDigits(i), o);
-  return engineText(f ?? i.text, o, seen); // (R57) a list or an expression the engine wrote
+  if (i.value) return complexText(i.value, copyDigits(i, o), o);
+  return engineText(warnedItems(i, o) ?? f ?? i.text, o, seen); // (R57) a list or an expression the engine wrote
 }
 
 import { copyExact } from "./exact.ts";

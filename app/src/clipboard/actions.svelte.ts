@@ -77,8 +77,11 @@ export class ClipActions {
     this.decimalComma = decimalComma;
   }
 
+  /** The decimal mark, and the digits setting the rows are shown with (G796: a row nobody checked copies no more). */
   private get opts(): TextOptions {
-    return this.decimalComma() ? { decimalComma: true } : {};
+    const digits = this.session.settings?.digits; // a stand-in session without settings: the default (12)
+    const o: TextOptions = digits === undefined ? {} : { digits };
+    return this.decimalComma() ? { ...o, decimalComma: true } : o;
   }
 
   /** The tail of the chain: every clipboard operation starts when the one before it has finished, ok or not, so a quick
