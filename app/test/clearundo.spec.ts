@@ -147,7 +147,7 @@ test("Clear while a job runs: its row stays, Esc stops it, and the rows come bac
   await tap(page, ["shift", "esc"]);
   await expect(rows(page)).toHaveCount(1);
   await expect(page.locator('[data-status="pending"]')).toHaveCount(1);
-  await tap(page, ["d3", "enter"]); // refused while the job runs: the line keeps it
+  await tap(page, ["d3", "enter"], { busyEnter: true }); // refused while the job runs: the line keeps it
   expect(await entryValue(page)).toBe("3");
   await tap(page, ["esc"]); // stops the job, the line stays
   await expect(page.locator('[data-status="cancelled"]')).toHaveCount(1);
