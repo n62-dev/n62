@@ -64,8 +64,8 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 888e7a | [R929](packages/R929.md) a constant shows its unit | ron, Opus | `p1/ron-constlabel` | G801 |
 | 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Opus | `p1/ron-keepline` | – |
 | 888e12a | [R927](packages/R927.md) Settings on top; Mode its row 1, Preset first | ron, Opus | `p1/ron-modeorder` | R887, R901 |
-| 888e13 | [R902](packages/R902.md) a dropped unit says so | ron, Opus | `p1/ron-unitdropped` | – |
-| 888e14 | [R903](packages/R903.md) hold on the line copies | ron, Opus | `p1/ron-linehold` | – |
+| 888e13 | R902 a dropped unit says so | ron, Opus | `p1/ron-unitdropped` | – |
+| 888e14 | R903 hold on the line copies | ron, Opus | `p1/ron-linehold` | – |
 | 888e15 | [R904](packages/R904.md) Copied notice tells the truth | ron, Opus | `p1/ron-copiednotice` | – |
 | 888e16 | [R905](packages/R905.md) a flick bubble stays on screen | ron, Opus | `p1/ron-bubbleclamp` | – |
 | 888e17 | [R906](packages/R906.md) legends clear of outlines | ron, Opus | `p1/ron-legendoutline` | – |

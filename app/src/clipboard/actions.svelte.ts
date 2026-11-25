@@ -207,6 +207,11 @@ export class ClipActions {
       if (item.status === "done" && !this.noNumber(item)) this.ops.acted?.("copy");
       return this.copy(item, true);
     }
+    return this.lineCopy(latex); // the input's plain text, as the entry line's
+  }
+  /** R727, R903: the entry line's selection or whole line (`latex`) as plain text, for Shift + Select and a hold on the line;
+   *  counted and named as a hold on a row's input (R832: the notice names it). */
+  lineCopy(latex: string): Promise<boolean> {
     this.ops.acted?.("copy");
     const text = entryText(latex, this.opts);
     return this.copyRaw(text, text ? this.named(text) : undefined, true);
@@ -220,12 +225,7 @@ export class ClipActions {
   keyCopy(dead: () => void, row?: HistoryItem, letGo?: () => void, lit: PickPart = "row"): void {
     const mf = this.shell.app === null || this.shell.showsEntry ? this.entry.field : null;
     const selection = mf && !mf.selectionIsCollapsed ? mf.getValue(mf.selection, "latex") : "";
-    if (selection) {
-      this.ops.acted?.("copy"); // as a hold on an input counts, and copies its plain text
-      const text = entryText(selection, this.opts);
-      void this.copyRaw(text, text ? this.named(text) : undefined, true); // R832: the notice names it
-      return;
-    }
+    if (selection) return void this.lineCopy(selection);
     letGo?.(); // no selection: the picked row is let go (R723)
     if (lit === "input" && row && row.status !== "pending" && this.shell.app === null) return void this.holdCopy(row, "input", this.inputLatex(row)); // R832: the lit input, as a hold on it
     const i = this.shell.app === null ? this.target(row) : undefined;
