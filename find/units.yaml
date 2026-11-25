@@ -237,3 +237,38 @@ constants:
     StdT: { value: "273.15", unit: K, title: "Standard temperature", names: ["standard temperature", "stp temperature"], source: derived }
     StdP: { value: "101325", unit: Pa, title: "Standard pressure", names: ["standard pressure", "stp pressure"], source: derived }
   skipCategories: ["Conversion factors for energy equivalents", "Particle Mass in u", "Particle Mass in MeV*c^(-2)"]
+  # ownUnit (G801): the unit an engineer writes for a constant, the unit view's result unit without an end slot (after a
+  #   named or single-base SI unit, before the base form; app/src/units/build.ts constUnits). NIST's CODATA 2022 unit
+  #   column (allascii.txt) as Find unit ids with powers, only where it differs from the index's base form (`unit`). Each
+  #   id must have the factor exactly 1, and the product the constant's dimension (the generator fails otherwise), so no
+  #   digit or mark can change. Ours where NIST differs: h and N_A·h in J·s (NIST J Hz⁻¹: Hz is a frequency, not s⁻¹ of
+  #   an action); c_1L in W m² (NIST W m² sr⁻¹: sr is rad², which the dimension key of a constant does not carry); G_F in
+  #   J⁻² (NIST GeV⁻², not coherent); k_e (not in CODATA) in N m² C⁻², the unit of 1/(4π ε₀).
+  ownUnit:
+    Z_0: "ohm"
+    epsilon_0: "F m^-1"
+    mu_0: "N A^-2"
+    planck: "J s"
+    planck2pi: "J s"
+    mu_B: "J T^-1"
+    mu_N: "J T^-1"
+    G_0: "S"
+    inverse_conductance_quantum: "ohm"
+    k_e: "N m^2 C^-2"
+    q_e: "C"
+    K_J: "Hz V^-1"
+    K_J90: "Hz V^-1"
+    phi_0: "Wb"
+    R_K: "ohm"
+    R_K90: "ohm"
+    fermi_coupling: "J^-2"
+    Ha_constant: "J"
+    eV_constant: "J"
+    k_B: "J K^-1"
+    faraday: "C mol^-1"
+    c_1: "W m^2"
+    c_1L: "W m^2"
+    gas_constant: "J mol^-1 K^-1"
+    molar_planck: "J s mol^-1"
+    sigma: "W m^-2 K^-4"
+    StdP: "Pa"

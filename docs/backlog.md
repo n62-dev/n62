@@ -35,7 +35,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 ## Tasks
 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
-- **F378, F379 (owner's bug list 4, 2026-11-23; `../drafts/2026-11-23-owner-bugs4/`).** F378 ✓ (R926: one back closes an app to Home or CAS); A271's double back next. F379 ✓ (R925). Point 5 ✓ (R924).
+- **F378, F379 (owner's bug list 4, 2026-11-23; `../drafts/2026-11-23-owner-bugs4/`).** F378 ✓ (R926: one back closes an app to Home or CAS); A271's double back next. F379 ✓ (R925). Point 3: the result in the constant's own unit ✓ (G801, h in J·s); the muted label R929. Point 5 ✓ (R924).
 - **F366–F377 (layers study 2026-11-23, sandra + sofia; `../drafts/2026-11-23-layers-study/`).** Input leaks through a layer over Home: all but F369 ✓ (R898, R915, R917–R919, R921f1, R922). F369 (⌄ folds the keys under the view): no package, nothing is lost. The net: `layers.spec.ts`, its known list per F id (R916 R921 ✓).
 - **Owner-style hunt 2026-11-23 (h1, h2; sofia CONFIRMED).** Open in packages R895, R896, R899, R907–R914; h1 #2, #4, #5 and h2 #2–#4, #9, #10, #12–#16 ✓ (R892–R906, R931, R932).
 - **F236 (ron, R338).** history-first.spec.ts "engine not ready: the newest five rows" counts 20 renders against 15 under load: 4 failures on 11-12/13, none before. Find the extra re-format; a looser bound is no fix. G224f1 raised it to 20 (da18fc18): the fix sets 15 again.
