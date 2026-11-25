@@ -21,6 +21,7 @@ const clip = {
   "clip.csv": "Copy table as CSV",
   "clip.copied": "Copied",
   "clip.copiedWhat": "Copied: {what}",
+  "clip.copiedDigits": "Copied {n} digits: {what}",
   "clip.copiedTable": "Copied the table as CSV",
   "clip.nothing": "Nothing to copy",
   "clip.noDigit": "No digit confirmed",
