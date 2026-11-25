@@ -139,7 +139,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| B5a | [G804](packages/G804.md) an exact entry beside a float in a matrix sum or product is a double (pass 241) | gorge, Opus | `p1/gorge-matmixdouble` | – |
+| B5a | G804 an exact entry beside a float in a matrix sum or product is a double (pass 241) | gorge, Opus | `p1/gorge-matmixdouble` | – |
 | B5b | [G805](packages/G805.md) the nightly lines count causes: judges and viewsweep (pass 241) | gorge, Opus | `p1/gorge-nightlyjudge` | – |
 | B5c | [A274](packages/A274.md) pipeline-lib.sh back under 800 lines (pass 241) | annabell, Sonnet | `p1/annabell-libsplit` | G805 |
 | B6i | [G800](packages/G800.md) a unit sweep | gorge, Opus | `p1/gorge-unitsweep` | R885 |
