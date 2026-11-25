@@ -18,6 +18,7 @@ import { PRESET_GROUPS, PresetError, presetsFor, type GroupValues, type Preset, 
 import type { Session } from "../state/session.svelte.ts";
 import { familyOf } from "../theme/lookView.ts";
 import { openLayer } from "../input/backLayerFront.ts";
+import { guardTaps } from "../input/tapGuard.ts";
 import { tick } from "svelte";
 
 type Family = Parameters<typeof familyOf>[0];
@@ -31,6 +32,8 @@ export interface PresetsHost {
   data?(run: (c: ClipActions) => void | Promise<void>): void;
   /** R776: a name prompt locks Alpha in lower case while it is open (true) and lets it go at its end (false); App.svelte's session. */
   alpha?(on: boolean): void;
+  /** R921f1: the dead press's pulse, for a tap outside the name's line. */
+  dead?(): void;
 }
 const say = (host: PresetsHost, message: string): void => host.data?.((c) => c.say(message));
 
@@ -167,24 +170,30 @@ export function nameFrom(latex: string): string {
 /** A name as the line takes it (rename starts from the old name). */
 const nameLatex = (name: string): string => name.replace(/[\\{}]/g, "").replace(/ /g, "\\ ");
 
-/** R919 (F375): Android back ends a prompt as Esc does. Its layer opens a tick later, after the one App.svelte's effect
- *  opens for the Alpha lock the prompt starts (R776), so it lies on top and one back ends both: `cancel` lets Alpha go.
- *  The result releases it when the prompt ends some other way. */
-function backEnds(host: PresetsHost, prompt: EntryPrompt): () => void {
+/** The prompt as a layer over Home (docs/04 5.5), from its start to `release`. R919 (F375): Android back ends it as Esc does. Its
+ *  back layer opens a tick later, after the one App.svelte's effect opens for the Alpha lock the prompt starts (R776), so it
+ *  lies on top and one back ends both: `cancel` lets Alpha go. R921f1: a tap on the screen outside the name's line is the dead
+ *  press while no sheet is over the prompt (Chars, R725), as under the unit view (R918, input/tapGuard.ts): no pick, no row
+ *  bar, nothing on the line; a hold on a row still copies. The result releases both when the prompt ends some other way. */
+function layerOf(host: PresetsHost, prompt: EntryPrompt): () => void {
   let off = false;
   let release: (() => void) | undefined;
   void tick().then(() => {
     if (!off && host.shell?.prompt === prompt) release = openLayer(() => prompt.cancel());
   });
+  const shell = host.shell;
+  const own = typeof document === "undefined" ? null : document.querySelector(".entry");
+  const untap = shell && own ? guardTaps(own, () => host.dead?.(), () => shell.prompt === prompt && shell.sheet === null) : () => {};
   return () => {
     off = true;
     release?.();
+    untap();
   };
 }
 
 /** The sheet has closed: the entry line takes a name under its label, and every key goes to it first. Enter offers the
  *  name to `save` (a refusal is the notice, and the line stays for another try); Esc cancels; C empties the name only,
- *  never the history nor the kept line (R123: the line's own clear would drop it, main.ts onClear); the space key types a space; a key or a tap that goes elsewhere (a sheet, a place) cancels first. Either way the
+ *  never the history nor the kept line (R123: the line's own clear would drop it, main.ts onClear); the space key types a space; a key or a tap that goes elsewhere (a sheet, a place: the bar) cancels first, a tap on the screen outside the line is the dead press (R921f1). Either way the
  *  line then holds what it held before. `read` turns the line's LaTeX into the text offered (R201: a unit's text, ownUnitsText.ts).
  *  R776: a name prompt (not `plain`, the unit form's fields) locks Alpha in lower case at its start, says "Type a name. Enter saves,
  *  Esc cancels." for as long as it is open, and lets Alpha go at its end. */
@@ -217,7 +226,7 @@ export function askName(host: PresetsHost, start: string, save: (name: string) =
     },
   };
   shell.prompt = hold;
-  const holdBack = backEnds(host, hold);
+  const holdBack = layerOf(host, hold);
   void entry.fieldUp.then(() => {
     if (shell.prompt !== hold) return;
     shell.prompt = null;
@@ -272,7 +281,7 @@ function nameNow(host: PresetsHost, start: string, save: (name: string) => void,
     },
   };
   shell.prompt = prompt;
-  const back = backEnds(host, prompt);
+  const back = layerOf(host, prompt);
   entry.set(nameLatex(start));
   entry.freshUndo?.(); // R898: Undo stops at the name the prompt starts with, never the line it set aside
   // a tap that goes elsewhere ends the name as Esc does: a sheet opens, or another app or view (the place name, Plot).
