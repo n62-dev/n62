@@ -342,8 +342,8 @@ test("F40: Shift + Alpha shows and types lower case; Alpha alone capitals; the l
   await expect(face("vars")).not.toHaveText("a");
 });
 
-// R905: the bubble is clamped to the screen as the key pop is (keypop.spec.ts): at 360 px Esc, Deselect and Paste up
-// drew it past the right edge, Vars and ᴇ up past the left one. Every key, up and down; a cancel fires nothing.
+// R905: the bubble is clamped to the screen as the key pop is (keypop.spec.ts): on phase-1 at 360 px Esc up, Redo down and
+// Deselect up and down drew it past the right edge, Vars and ᴇ up past the left one. Every key, up and down; a cancel fires nothing.
 for (const [width, height] of [[360, 740], [412, 915]] as const)
   test(`R905: at ${width} px every key's flick bubble, up and down, lies inside the screen`, async ({ page }) => {
     await page.setViewportSize({ width, height });
@@ -351,18 +351,20 @@ for (const [width, height] of [[360, 740], [412, 915]] as const)
     const ids = await page.locator(".pad [data-key]").evaluateAll((els) => els.filter((e) => (e as HTMLElement).offsetParent !== null).map((e) => e.getAttribute("data-key") ?? ""));
     const out: string[] = [];
     let seen = 0;
-    for (const id of ids)
+    for (const id of ids) {
+      const f = await touch(page, id);
       for (const dy of [-35, 35]) {
-        const f = await touch(page, id);
-        await f.move(0, dy, 2);
+        // up, then down in the same touch: the text and so the width change on the same bubble
+        await f.move(0, dy, dy < 0 ? 2 : 1); // (one step down: through the middle would close the bubble)
         await page.evaluate(() => new Promise((r) => requestAnimationFrame(r)));
         const b = (await bubble(page).count()) ? await bubble(page).boundingBox() : null;
-        await f.cancel();
-        await expect(bubble(page)).toHaveCount(0);
         if (!b) continue;
         seen++;
         if (b.x < 0 || b.x + b.width > width) out.push(`${id} ${dy < 0 ? "up" : "down"}: ${b.x}–${b.x + b.width}`);
       }
+      await f.cancel();
+      await expect(bubble(page)).toHaveCount(0);
+    }
     expect(seen).toBeGreaterThan(60);
     expect(out).toEqual([]);
   });

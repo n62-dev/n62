@@ -189,10 +189,10 @@
     popEl = el;
     pop = { x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop, text, variable: typed(target as Key) === undefined && typesVariable(act(target as Key)) };
   }
-  // the pop and the flick bubble stay inside the pad's width (a key at the edge; R905: one clamp for both), measured once drawn, before it is painted
-  const clampLeft = (node: HTMLElement | undefined, x: number | undefined): void => {
-    const half = Math.ceil(node?.getBoundingClientRect().width ?? 0) / 2; // (the real width rounded up, on the layout grid: offsetWidth let a bubble out by a fraction of a px)
-    if (node && x !== undefined && padEl) node.style.left = `${Math.min(Math.max(x, half), padEl.clientWidth - half)}px`;
+  // the pop and the flick bubble stay inside the pad's width (a key at the edge; R905: one clamp), measured once drawn, before it is painted (+1: offsetWidth is rounded)
+  const clampLeft = (node: HTMLElement | undefined, x = 0): void => {
+    const half = ((node?.offsetWidth ?? 0) + 1) / 2;
+    if (node && padEl) node.style.left = `${Math.min(Math.max(x, half), padEl.clientWidth - half)}px`;
   };
   $effect(() => clampLeft(popNode, pop?.x));
   $effect(() => clampLeft(bubbleNode, bubble?.x));
