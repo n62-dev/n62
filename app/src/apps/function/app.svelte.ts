@@ -282,7 +282,7 @@ export class FunctionApp implements AppInstance {
     const c = l?.cell;
     if (!c?.ok || !c.value) return; // (a NaN or a value the engine did not give: nothing to take)
     const { copyFull } = await import("../../clipboard/impl.ts");
-    const full = copyFull(numberSource(c.display, c));
+    const full = copyFull(numberSource(c.display, c), { kept: true }); // every confirmed digit, as c.facts claims (G796)
     if (full === undefined) return;
     this.host.toHome(answerShown(this.fmtPoint(c), c.facts, this.host.settings.decimalMark === "comma"), answerChip(full, c.facts));
   }
@@ -311,7 +311,8 @@ export class FunctionApp implements AppInstance {
     return tableCsv(header, rows, o);
   }
   private textOptions(): TextOptions {
-    return this.host.settings.decimalMark === "comma" ? { decimalComma: true } : {};
+    const s = this.host.settings; // G796: a ⚠ cell copies the digits it shows
+    return s.decimalMark === "comma" ? { decimalComma: true, digits: s.digits } : { digits: s.digits };
   }
   private csvCell(c: Cell | undefined, copyFull: (i: CopySource, o?: TextOptions) => string | undefined, o: TextOptions): string {
     if (!c || !c.ok) return "";
