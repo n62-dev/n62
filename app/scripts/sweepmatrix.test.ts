@@ -33,8 +33,8 @@ describe("the matrix generator (G797)", () => {
     expect(sha(runsOf(20261021, 1000))).toBe("df26d42fcff7a461f9eb349d30e2a2c8f5b9f7247e3ae2fad67a9c5d5499ddca");
     const withM = runsOf(20261021, 1000, false, { matrices: 100 });
     expect(sha(withM.slice(0, 1187))).toBe("df26d42fcff7a461f9eb349d30e2a2c8f5b9f7247e3ae2fad67a9c5d5499ddca");
-    // the pinned inputs, the sin in RAD and DEG (G802 put two after it)
-    expect([...new Set(withM.slice(1187, 1187 + MATRIX_PINNED.length + 1).map((r) => r.latex))]).toEqual(MATRIX_PINNED.map((c) => c.latex));
+    // the pinned inputs, the two sins in RAD and DEG (G802 put two after the first, G804 the second)
+    expect([...new Set(withM.slice(1187, 1187 + MATRIX_PINNED.length + 2).map((r) => r.latex))]).toEqual(MATRIX_PINNED.map((c) => c.latex));
     expect(runsOf(20261021, 100, true, { matrices: 0 })).toEqual(runsOf(20261021, 100, true));
   });
 
@@ -84,6 +84,7 @@ describe("the matrix generator (G797)", () => {
     expect(cs.filter((c) => c.angle).every((c) => /\\(sin|cos)\\left/.test(c.latex))).toBe(true);
     expect(cs.find((c) => /^\\sin\\left\(\\begin/.test(c.latex)) ?? cs.find((c) => c.angle)).toBeDefined();
     expect(latexToGiac(MATRIX_PINNED[0]!.latex)).toBe("approx([[1,2],[3,4]]/10^13)*[[1],[1]]");
+    expect(latexToGiac(MATRIX_PINNED.at(-1)!.latex)).toBe("sin(pasdeg*(10^14*[[pi,2],[5,0.1]]+approx([[2,1.05],[4,2.1]])))"); // G804
   });
 
   it("keeps each matrix node's matrix-valued children for the shrink", () => {
@@ -267,10 +268,11 @@ describe("the judge, entry by entry (G797; made-up oracles for its rules)", () =
 // inverse and rank (right since G790 and G622 merged: they must pass), and G792's sin (right since patch 0066, G792f1: it must pass in
 // RAD and DEG); a failure would be a known row naming its package. G802: the last two (e^ of the scaled 3×3 and the scaled 2×2
 // alone) are right since patch 0069; on phase-1 a1843b9b the 2×2 killed the engine (a crash row) and the 3×3 passed (Home reads 0.1 exactly).
+// G804: the sin of 10^14·π beside a float is right since patch 0070 (on phase-1 ec6ab5b1 it showed ≈ 0.503227563163 for -0.0273161725944).
 describe.skipIf(!giacAvailable())("the pinned hunt inputs through Home (G797, real Giac)", () => {
-  it("passes G790's product, G622's inverse and rank, G792's sin and G802's matrices; no failure is left", async () => {
+  it("passes G790's product, G622's inverse and rank, G792's sin, G802's matrices and G804's sin; no failure is left", async () => {
     const runs: Run[] = runsOf(20261021, 0, false, { matrices: 1 }).filter((r) => MATRIX_PINNED.some((c) => c.latex === r.latex));
-    expect(runs.length).toBe(MATRIX_PINNED.length + 1); // the sin also in DEG
+    expect(runs.length).toBe(MATRIX_PINNED.length + 2); // the two sins also in DEG
     const oracles = oracleFor(runs, pythonFor(repo, mainCheckout), oraclePy);
     const { judged } = await sweep(runs, oracles, 6000);
     const failures = sweepFailures(judged);
