@@ -302,8 +302,8 @@ const screens: Record<string, (page: Page) => Promise<void>> = {
     await sheet(page, "Mode");
   },
   "Settings level": async (page) => {
-    await tap(page, ["d1", "@mode", "d6"]);
-    await sheet(page, "Mode › Settings");
+    await tap(page, ["d1", "help"]);
+    await sheet(page, "Settings");
   },
   "Solve Num after an edit (c44)": async (page) => {
     await tap(page, ["@place", "d4", "@symb", "x", "shift", "ln", "x", "right", "shift", "dot", "d5", "enter", "@num"]);

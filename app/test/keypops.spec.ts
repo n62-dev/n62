@@ -30,9 +30,9 @@ const watch = (page: Page): Promise<void> =>
   });
 const drawn = (page: Page) => page.evaluate(() => (window as unknown as { __drawn: { pop: number; bubble: number } }).__drawn);
 
-/** Mode › Settings › Appearance, the switch toggled by its digit (row 6), and the sheet closed again. */
+/** Settings › Appearance, the switch toggled by its digit (row 6), and the sheet closed again. */
 async function toggle(page: Page): Promise<void> {
-  await tap(page, ["@mode", "d6", "d1", "d6"]);
+  await tap(page, ["help", "d2", "d6"]);
   for (let i = 0; i < 4 && (await sheet(page).count()) > 0; i++) await tap(page, ["esc"]);
   await expect(sheet(page)).toHaveCount(0);
 }
@@ -58,7 +58,7 @@ test.beforeEach(async ({ page }) => {
 
 test("Appearance: Key pop-ups is a switch after Key shadows with its line, on at a first start; seven rows (R932: Find opens full screen last)", async ({ page }) => {
   expect(await pops(page)).toBe(true);
-  await tap(page, ["@mode", "d6", "d1"]);
+  await tap(page, ["help", "d2"]);
   const ids = await sheet(page).getByRole("menuitem").evaluateAll((els) => els.map((e) => e.getAttribute("data-id")));
   expect(ids).toEqual(["theme", "brightness", "contrast", "plain", "shadow", "pops", "findFull"]);
   await expect(row(page, "pops").locator(".label")).toHaveText("Key pop-ups");

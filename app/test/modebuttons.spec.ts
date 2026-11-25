@@ -65,7 +65,7 @@ test.describe("by touch", () => {
     await expect(title(page)).toHaveText("Mode › Significant digits");
     await expect(sheet(page).locator('[data-id="12"]')).toHaveAttribute("data-selected", "true");
     await sheetKey(page, ["left"]);
-    await expect(title(page)).toHaveText("Mode");
+    await expect(title(page)).toHaveText("Settings › Mode");
     await tap(page, ["esc"]);
     await expect(sheet(page)).toHaveCount(0);
     await page.getByTestId("chip-format").tap();

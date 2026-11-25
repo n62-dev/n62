@@ -12,8 +12,8 @@ const row = (page: Page, id: string) => sheet(page).locator(`[data-id="${id}"]`)
 /** Settings › Numbers › Word (Mode's row 6, section 2, row 7), as a user opens it: Numbers holds seven rows, so the two
  *  settings are the two rows of its Word level. */
 async function numbers(page: Page): Promise<void> {
-  await tap(page, ["@mode", "d6", "d2"]);
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings › Numbers");
+  await tap(page, ["help", "d3"]);
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Numbers");
   await tap(page, ["d7"]);
   await expect(page.getByTestId("sheet-title")).toContainText("Word");
 }
@@ -32,7 +32,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("Settings › Numbers › Word shows Word size (8 16 32 64, 64 picked) and Signed (off)", async ({ page }) => {
-  await tap(page, ["@mode", "d6", "d2"]);
+  await tap(page, ["help", "d3"]);
   await expect(row(page, "word")).toContainText("64 · unsigned"); // the Numbers row says it
   await tap(page, ["d7"]);
   await expect(row(page, "bits")).toContainText(/Word size/i);

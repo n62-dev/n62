@@ -56,7 +56,7 @@ const groupsRow = (page: Page) => page.getByTestId("menu").locator('[data-id="gr
 async function numbers(page: Page): Promise<void> {
   await page.getByTestId("chip-format").tap();
   await tap(page, ["d6", "d2"]);
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings › Numbers");
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Numbers");
 }
 
 test("Settings › Numbers › Digit groups › ’: 123456789 is drawn 123’456’789; Copy, the entry line and a chip have no groups", async ({ page }) => {

@@ -8,13 +8,13 @@ const ready = (page: Page) => page.waitForFunction(() => window.n62.session.engi
 
 /** The Mode sheet (format chip, ▲), 5, then a section of Settings (R49, R50e: 2 Numbers, 3 Key vibration). */
 async function openSettings(page: Page, section: "d2" | "d3"): Promise<void> {
-  await tap(page, ["@mode", "d6", section]);
-  await expect(page.getByTestId("sheet-title")).toHaveText(section === "d2" ? "Mode › Settings › Numbers" : "Mode › Settings › Key vibration");
+  await tap(page, ["help", section]);
+  await expect(page.getByTestId("sheet-title")).toHaveText(section === "d2" ? "Settings › Numbers" : "Settings › Key vibration");
 }
 /** The Mode sheet (format chip, ▲; Shift + Apps before R15c2). */
 async function openMode(page: Page): Promise<void> {
   await tap(page, ["@mode"]);
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode");
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Mode");
 }
 /** Settings is three levels deep: Esc goes back one each. */
 const closeSettings = async (page: Page) => {

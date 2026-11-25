@@ -162,20 +162,20 @@ async function backEnds(p: Page, name: string, after?: () => Promise<void>): Pro
 
 test("(g) Mode › Presets › Save: back ends the name prompt and its Alpha lock at once; a second back leaves", async ({ page }) => {
   await tap(page, ["d7", "add", "d1"]);
-  await tap(page, ["@mode", "d5", "d1"]);
+  await tap(page, ["@mode", "d1", "d1"]);
   await backEnds(page, "Preset name");
 });
 
 test("(h) a preset's Rename: back ends the prompt as Esc would; the name is kept", async ({ page }) => {
-  await tap(page, ["@mode", "d5", "d1"]); // Save, as Lab
+  await tap(page, ["@mode", "d1", "d1"]); // Save, as Lab
   await expect(label(page)).toHaveText("Preset name");
   await page.keyboard.type("Lab");
   await page.keyboard.press("Enter");
   await expect(label(page)).toHaveCount(0);
   await tap(page, ["d7", "add", "d1"]);
-  await tap(page, ["@mode", "d5", "d3", "d1", "d7", "d1"]); // Edit › Lab › Rename or delete › Rename
+  await tap(page, ["@mode", "d1", "d3", "d1", "d7", "d1"]); // Edit › Lab › Rename or delete › Rename
   await backEnds(page, "Preset name", async () => {
-    await tap(page, ["@mode", "d5", "d3"]); // Edit: the preset is still Lab (not Labz, not gone)
+    await tap(page, ["@mode", "d1", "d3"]); // Edit: the preset is still Lab (not Labz, not gone)
     await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Presets › Edit");
     await expect(sheet(page).getByRole("menuitem").locator(".label")).toHaveText(["Lab"]);
     await tap(page, ["esc", "esc", "esc"]);
@@ -192,7 +192,7 @@ test("(i) Settings › Sync › Device name: back ends the prompt", async ({ pag
   });
   await open(page);
   await tap(page, ["d7", "add", "d1"]);
-  await tap(page, ["@mode", "d6", "d5"]);
+  await tap(page, ["help", "d6"]);
   await menuRow(page, "sync").tap();
   await menuRow(page, "device").tap();
   await backEnds(page, "Device name");
@@ -200,7 +200,7 @@ test("(i) Settings › Sync › Device name: back ends the prompt", async ({ pag
 
 test("(j) a field of the unit form (no Alpha lock): back ends it, the line is as it was", async ({ page }) => {
   await tap(page, ["d7", "add", "d1"]);
-  await tap(page, ["@mode", "d6", "d4"]);
+  await tap(page, ["help", "d5"]);
   await menuRow(page, "units").tap();
   await menuRow(page, "new").tap();
   await menuRow(page, "name").tap();
@@ -216,7 +216,7 @@ test("(j) a field of the unit form (no Alpha lock): back ends it, the line is as
 
 test("control (R919): Esc in a name prompt ends it and Alpha; back then leaves", async ({ page }) => {
   await tap(page, ["d7", "add", "d1"]);
-  await tap(page, ["@mode", "d5", "d1"]);
+  await tap(page, ["@mode", "d1", "d1"]);
   await expect(label(page)).toHaveText("Preset name");
   await tap(page, ["d2", "esc"]);
   await expect(label(page)).toHaveCount(0);

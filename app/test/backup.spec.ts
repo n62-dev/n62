@@ -22,9 +22,9 @@ test("Settings › Data › Save a backup saves the envelope with every present 
   await page.evaluate(() => window.n62.userKeys.set("u1", "primary", { label: "Home", action: { special: "home" } }));
   await page.waitForTimeout(900); // the writes are debounced and asynchronous
 
-  await tap(page, ["@mode", "d6"]);
+  await tap(page, ["help"]);
   await page.getByTestId("menu").locator('[data-id="data"]').tap();
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings › Data");
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Data");
   await page.getByTestId("menu").locator('[data-id="backup"]').tap();
   await expect(page.getByTestId("notice")).toHaveText("Backup saved");
   const file = await savedText(page);
@@ -63,9 +63,9 @@ test("Save a backup works when the sheet opened before the clipboard code arrive
     await route.continue();
   });
   await open(page, "engine=fake");
-  await tap(page, ["@mode", "d6"]);
+  await tap(page, ["help"]);
   await page.getByTestId("menu").locator('[data-id="data"]').tap();
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings › Data");
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Data");
   const download = page.waitForEvent("download");
   await page.getByTestId("menu").locator('[data-id="backup"]').tap();
   release();
@@ -80,8 +80,8 @@ test("Settings › Counters › Export the counts saves n62-counts/1 with the pr
   await savePicker(page, "fake");
   await open(page, "");
   await tap(page, ["d7", "d7", "shift", "sin"]); // d7 twice; Shift, then sin in the Shift layer
-  await tap(page, ["@mode", "d6", "d6"]);
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings › Counters");
+  await tap(page, ["help", "d7"]);
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Counters");
   await page.getByTestId("menu").locator('[data-id="export"]').tap();
   await expect(page.getByTestId("notice")).toHaveText("Counts saved");
   const file = await savedText(page);

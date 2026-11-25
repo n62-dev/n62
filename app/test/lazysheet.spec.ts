@@ -155,7 +155,7 @@ test("Settings opened again after the sheet chunk failed once answers Down and E
   fail = false;
   await page.evaluate(() => window.n62.shell.openSettings?.());
   const settings = page.getByTestId("menu");
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings");
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings");
   const active = settings.locator('[data-active="true"]');
   await expect(active).toHaveAttribute("data-id", "appearance");
   await sheetKey(page, ["down"]); // the keys go through sheetPress, which reads them with the sheet chunk's keys

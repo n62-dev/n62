@@ -121,7 +121,7 @@ test("R891: a Your units field closes the form, the line takes its value in sigh
   await page.setViewportSize({ width: 360, height: 740 });
   await open(page);
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await tap(page, ["@mode", "d6", "d4"]);
+  await tap(page, ["help", "d5"]);
   await page.getByTestId("menu").locator('[role="menuitem"][data-id="units"]').tap();
   await page.getByTestId("menu").locator('[role="menuitem"][data-id="new"]').tap();
   await expect(page.getByTestId("sheet-title")).toHaveText("New unit");

@@ -76,9 +76,9 @@ test("Esc: stops a running job, goes back a sheet level, drops a pick, closes Se
   // Settings (R49, a level of the sheet): Esc goes back one level, the root closes
   await page.getByTestId("chip-format").tap();
   await page.getByTestId("menu").locator('[data-id="settings"]').tap();
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings");
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings");
   await tap(page, ["esc"]);
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode");
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Mode");
   await tap(page, ["esc"]);
   await expect(page.getByTestId("menu")).toHaveCount(0);
   // otherwise it clears the line; a hardware Escape is the same key

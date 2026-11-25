@@ -154,8 +154,8 @@ test.describe("a key drawn dead: no click, no look, the double pulse", () => {
     expect(await entryValue(page)).not.toBe(""); // (the cell is inserted)
   });
   test("Settings › Your keys: a free key goes to its row, with the feedback", async ({ page }) => {
-    await tap(page, ["@mode", "d6", "d4"]);
-    await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings › Your keys");
+    await tap(page, ["help", "d5"]);
+    await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Your keys");
     expect(await press(page, "u1")).toMatchObject(LIVE);
     await expect(sheet(page).locator('[data-active="true"]')).toHaveAttribute("data-id", "u1:primary");
   });
@@ -197,7 +197,7 @@ test.describe("a key drawn dead: no click, no look, the double pulse", () => {
     await tap(page, ["shift"]);
     expect(await press(page, "help"), "Help").toEqual(DEAD); // Shift + the ⚙ key (R863): Help needs the entry line
     expect(await press(page, "help"), "Settings").toMatchObject(LIVE); // the ⚙ key's tap: Settings, in Plot too
-    await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings");
+    await expect(page.getByTestId("sheet-title")).toHaveText("Settings");
   });
   test("on Home Help (Shift + the ⚙ key) is live (R863)", async ({ page }) => {
     await tap(page, ["d1", "d2", "shift"]);
@@ -229,11 +229,11 @@ test.describe("a key drawn dead: no click, no look, the double pulse", () => {
 
 test("Settings › Key vibration › Key click: a switch, off; it survives a relaunch", async ({ page }) => {
   await open(page);
-  await tap(page, ["@mode", "d6", "d3"]);
+  await tap(page, ["help", "d4"]);
   await expect(row(page, "click")).toHaveAttribute("data-selected", "false");
   await row(page, "click").tap();
   await expect(row(page, "click")).toHaveAttribute("data-selected", "true");
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings › Key vibration"); // the sheet stays
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Key vibration"); // the sheet stays
   expect(await page.evaluate(() => window.n62.session.settings.haptics)).toMatchObject({ on: false, click: true });
   await page.waitForTimeout(1300); // the store writes are asynchronous
   await page.reload();
@@ -258,7 +258,7 @@ test("the click goes into a preset's Key vibration group and into a backup", asy
   expect(group.held).toMatchObject({ click: true });
   expect(group.after).toBe(true);
   await page.waitForTimeout(900);
-  await tap(page, ["@mode", "d6", "d5"]);
+  await tap(page, ["help", "d6"]);
   await row(page, "backup").tap();
   await expect(page.getByTestId("notice")).toHaveText("Backup saved");
   const b = JSON.parse((await savedText(page))?.text ?? "{}") as { parts: Record<string, { value: { haptics?: { click?: boolean } } }> };

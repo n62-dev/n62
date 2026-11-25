@@ -12,7 +12,7 @@ const angle = (page: Page) => page.evaluate(() => window.n62.session.settings.an
 test("the STD chip opens Mode", async ({ page }) => {
   await open(page);
   await page.getByTestId("chip-format").tap();
-  await expect(title(page)).toHaveText("Mode");
+  await expect(title(page)).toHaveText("Settings › Mode");
 });
 
 test("the chip's Mode has Significant digits as the next row after Format (R785)", async ({ page }) => {
@@ -34,7 +34,7 @@ test("the STD chip, 6 opens Settings (row 6 since R89)", async ({ page }) => {
   await open(page);
   await page.getByTestId("chip-format").tap();
   await sheetKey(page, ["d6"]);
-  await expect(title(page)).toHaveText("Mode › Settings");
+  await expect(title(page)).toHaveText("Settings");
 });
 
 test("Deselect's Shift legend reads Paste and fits its face in every theme family; Fmt has none", async ({ page }) => {

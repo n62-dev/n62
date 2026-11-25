@@ -47,16 +47,16 @@ const OPENERS: Record<string, (page: Page) => Promise<void>> = {
     await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Significant digits");
   },
   "mode settings": async (page) => {
-    await tap(page, ["@mode", "d6"]);
-    await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings");
+    await tap(page, ["help"]);
+    await expect(page.getByTestId("sheet-title")).toHaveText("Settings");
   },
   "mode settings appearance": async (page) => {
-    await tap(page, ["@mode", "d6", "d1"]);
-    await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings › Appearance");
+    await tap(page, ["help", "d2"]);
+    await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Appearance");
   },
   "mode settings numbers": async (page) => {
-    await tap(page, ["@mode", "d6", "d2"]);
-    await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings › Numbers");
+    await tap(page, ["help", "d3"]);
+    await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Numbers");
   },
   tmpl: (page) => tap(page, ["tmpl"]),
   "shift 6": (page) => tap(page, ["shift", "d6"]),

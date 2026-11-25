@@ -23,8 +23,8 @@ async function pickFirst(page: Page): Promise<void> {
 
 test("R901: ▲▲, ⚙, Esc Esc: the first row is still picked, its buttons up", async ({ page }) => {
   await pickFirst(page);
-  await tap(page, ["help"]); // the ⚙ key: Mode › Settings
-  await expect(title(page)).toHaveText("Mode › Settings");
+  await tap(page, ["help"]); // the ⚙ key: the Settings root
+  await expect(title(page)).toHaveText("Settings");
   await tap(page, ["esc", "esc"]);
   await expect(title(page)).toHaveCount(0);
   await expect(picked(page)).toHaveCount(1);
@@ -35,7 +35,7 @@ test("R901: ▲▲, ⚙, Esc Esc: the first row is still picked, its buttons up"
 test("R901: ▲▲, the Mode chip, Esc: the first row is still picked", async ({ page }) => {
   await pickFirst(page);
   await tap(page, ["@mode"]);
-  await expect(title(page)).toHaveText("Mode");
+  await expect(title(page)).toHaveText("Settings › Mode");
   await tap(page, ["esc"]);
   await expect(title(page)).toHaveCount(0);
   await expect(picked(page)).toHaveCount(1);

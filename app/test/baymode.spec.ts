@@ -39,7 +39,7 @@ for (const width of [360, 392, 412] as const)
       await expect(page.getByTestId("chip-digits")).toHaveCount(0);
       await expect(page.getByTestId("chip-format")).toHaveText("STD 12 ▾");
       await page.getByTestId("chip-format").tap();
-      await expect(page.getByTestId("sheet-title")).toHaveText("Mode");
+      await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Mode");
       await expect(active(page)).toHaveAttribute("data-id", "format");
       await expect(active(page).locator("xpath=following-sibling::*[1]")).toHaveAttribute("data-id", "digits");
       await sheet(page).locator('[data-id="format"] [aria-pressed]', { hasText: "SCI" }).tap();
@@ -72,7 +72,7 @@ for (const width of [360, 392, 412] as const)
       expect(ids[ids.length - 1]).toBe("mode");
       expect(ids.length).toBe(10); // Mode is the tenth row of Plot's ☰ with or without an answer
       await tap(page, ["d0"]);
-      await expect(page.getByTestId("sheet-title")).toHaveText("Mode");
+      await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Mode");
       expect(await fits(page)).toEqual([]);
     });
 
@@ -80,7 +80,7 @@ for (const width of [360, 392, 412] as const)
       await tap(page, ["@plot"]);
       await inApp(page);
       await tap(page, ["@mode"]); // in an app: ☰ and Mode
-      await expect(page.getByTestId("sheet-title")).toHaveText("Mode");
+      await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Mode");
       await sheet(page).locator('[data-id="format"] [aria-pressed]', { hasText: "PFX" }).tap();
       await tap(page, ["@home"]);
       await expect(page.getByTestId("chip-format")).toHaveText("PFX 12 ▾");

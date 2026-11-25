@@ -99,8 +99,8 @@ test.describe("412 × 915: a tap on the history outside the sheet closes it", ()
     });
   }
   test("Mode › Settings (a tall level): it closes too", async ({ page }) => {
-    await tap(page, ["@mode", "d6"]);
-    await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings");
+    await tap(page, ["help"]);
+    await expect(page.getByTestId("sheet-title")).toHaveText("Settings");
     await tapHistory(page);
     await expect(sheet(page)).toHaveCount(0);
   });
@@ -110,7 +110,7 @@ test.describe("360 × 740: a sheet that fills the view leaves no history to tap 
   test.use({ viewport: { width: 360, height: 740 } });
   const FULL: Record<string, (page: Page) => Promise<void>> = {
     Mode: (page) => tap(page, ["@mode"]),
-    "Mode › Settings": (page) => tap(page, ["@mode", "d6"]),
+    "Settings": (page) => tap(page, ["help"]),
     "Plot ☰": async (page) => {
       await tap(page, ["@symb", "@plot"]);
       await page.getByTestId("menu-button").tap();
@@ -166,10 +166,10 @@ test("a held ⌫ over a short sheet leaves it open and the line as it was", asyn
 });
 
 test("Esc on screen goes back one level from a submenu, then closes the root", async ({ page }) => {
-  await tap(page, ["@mode", "d6"]); // Mode › Settings
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings");
+  await tap(page, ["help"]); // the Settings root
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings");
   await page.locator('[data-key="esc"]').tap();
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode");
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Mode");
   await page.locator('[data-key="esc"]').tap();
   await expect(sheet(page)).toHaveCount(0);
 });
@@ -194,10 +194,10 @@ test("Find and Vars keep typing letters from the keypad (Tmpl is c, Vars is a)",
 });
 
 test("Settings › Your keys: an on-screen U1 goes to its row, the sheet stays", async ({ page }) => {
-  await tap(page, ["@mode", "d6", "d4"]);
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings › Your keys");
+  await tap(page, ["help", "d5"]);
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Your keys");
   await page.locator('[data-key="u1"]').tap();
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings › Your keys");
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Your keys");
   await expect(sheet(page).locator('[data-active="true"]')).toHaveAttribute("data-id", "u1:primary");
 });
 

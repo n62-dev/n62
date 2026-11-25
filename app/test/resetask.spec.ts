@@ -33,8 +33,8 @@ async function yourKeys(page: Page): Promise<void> {
     window.n62.userKeys.set("u1", "primary", { label: "Home", action: { special: "home" } });
     window.n62.userKeys.set("u3", "primary", { label: "CAS", action: { special: "cas" } });
   });
-  await tap(page, ["@mode", "d6", "d4"]);
-  await expect(title(page)).toHaveText("Mode › Settings › Your keys");
+  await tap(page, ["help", "d5"]);
+  await expect(title(page)).toHaveText("Settings › Your keys");
 }
 
 for (const [w, h] of [[412, 915], [360, 740]] as const)
@@ -58,7 +58,7 @@ for (const [w, h] of [[412, 915], [360, 740]] as const)
       expect([await placeOf(page, "u1"), await placeOf(page, "u3")]).toEqual([null, null]);
       await expect(label(page, "reset")).toHaveText("Reset all your keys");
       await expect(row(page, "reset")).not.toHaveAttribute("data-armed", "true");
-      await expect(title(page)).toHaveText("Mode › Settings › Your keys");
+      await expect(title(page)).toHaveText("Settings › Your keys");
     });
 
     test("armed, then another row, ‹, ◀ or a key disarms: nothing cleared, the label is back", async ({ page }) => {
@@ -72,13 +72,13 @@ for (const [w, h] of [[412, 915], [360, 740]] as const)
       // ‹ itself: armed, out to Settings and back in
       await row(page, "reset").tap();
       await sheet(page).getByRole("button", { name: "Back" }).tap();
-      await expect(title(page)).toHaveText("Mode › Settings");
+      await expect(title(page)).toHaveText("Settings");
       await tap(page, ["d4"]);
       await expect(label(page, "reset")).toHaveText("Reset all your keys");
       // ◀ as a key
       await row(page, "reset").tap();
       await tap(page, ["left"]);
-      await expect(title(page)).toHaveText("Mode › Settings");
+      await expect(title(page)).toHaveText("Settings");
       await tap(page, ["d4"]);
       await expect(label(page, "reset")).toHaveText("Reset all your keys");
       // a key (▲)
@@ -101,7 +101,7 @@ for (const [w, h] of [[412, 915], [360, 740]] as const)
       expect(await placeOf(page, "u1")).toBe("home");
       await tap(page, ["enter"]);
       expect([await placeOf(page, "u1"), await placeOf(page, "u3")]).toEqual([null, null]);
-      await expect(title(page)).toHaveText("Mode › Settings › Your keys");
+      await expect(title(page)).toHaveText("Settings › Your keys");
     });
 
     test("Empty this slot still clears on one tap (control)", async ({ page }) => {
@@ -113,7 +113,7 @@ for (const [w, h] of [[412, 915], [360, 740]] as const)
     });
 
     test("Reset the unit pad cells: one tap arms and names the cells, a second gives the defaults back", async ({ page }) => {
-      await tap(page, ["@mode", "d6", "d4"]);
+      await tap(page, ["help", "d5"]);
       await row(page, "unitcells").tap();
       await expect(title(page)).toHaveText("Settings › Your keys › Unit pad cells");
       const first = (await value(page, "u1:primary").textContent()) ?? "";
@@ -135,8 +135,8 @@ for (const [w, h] of [[412, 915], [360, 740]] as const)
 
     test("Counters' Reset the counter asks once: the counts stay after one tap, read 0 after two", async ({ page }) => {
       await tap(page, ["shift", "shift", "alpha", "alpha"]);
-      await tap(page, ["@mode", "d6", "d6"]);
-      await expect(title(page)).toHaveText("Mode › Settings › Counters");
+      await tap(page, ["help", "d7"]);
+      await expect(title(page)).toHaveText("Settings › Counters");
       await expect(value(page, "taps")).toHaveText("2 / 2");
       await row(page, "reset").tap();
       await expect(value(page, "taps")).toHaveText("2 / 2");
@@ -155,7 +155,7 @@ for (const [w, h] of [[412, 915], [360, 740]] as const)
         const b = await window.n62.session.uses("bar-uses");
         b.countTap("bar.angle", Date.now());
       });
-      await tap(page, ["@mode", "d6", "d6"]);
+      await tap(page, ["help", "d7"]);
       await row(page, "uses").tap();
       await row(page, "results").tap();
       await expect(value(page, "swipe")).toHaveText("2");

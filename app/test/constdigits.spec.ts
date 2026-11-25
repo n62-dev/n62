@@ -118,7 +118,7 @@ test("a tap on the row shows its σ line, a second hides it; with Muted digits a
   await lastMark(page).tap();
   await expect(sigma).toHaveCount(0);
   // Settings › Numbers › Uncertainty (row 4): a digit steps the value row to Muted digits
-  await tap(page, ["@mode", "d6", "d2", "d4"]);
+  await tap(page, ["help", "d3", "d4"]);
   await expect(page.getByTestId("menu").locator('[data-id="uncertainty"]').getByTestId("sheet-value")).toHaveText("Muted digits");
   await tap(page, ["esc", "esc", "esc"]);
   await expect(page.getByTestId("menu")).toHaveCount(0);
@@ -126,13 +126,13 @@ test("a tap on the row shows its σ line, a second hides it; with Muted digits a
   await expect(muted(page)).toHaveCount(1); // the digits stay muted
   await expect(sigma).toHaveCount(0);
   // a preset holds it (Numbers): saved with Muted digits, applied after a change back
-  await tap(page, ["@mode", "d5"]);
+  await tap(page, ["@mode", "d1"]);
   await page.getByTestId("menu").locator('[role="menuitem"][data-id="save"]').tap();
   await expect(page.getByTestId("entry-label")).toHaveText("Preset name");
   await tap(page, ["emark", "enter"]); // the name "p" (the ᴇ key's Alpha letter, locked in lower case, R776)
   await expect(page.getByTestId("notice")).toHaveText("Saved p");
   await page.evaluate(() => (window.n62.session.settings.uncertainty = "sigma"));
-  await tap(page, ["@mode", "d5"]);
+  await tap(page, ["@mode", "d1"]);
   await page.getByTestId("menu").locator('[role="menuitem"][data-id="p1"]').tap();
   await expect.poll(() => page.evaluate(() => window.n62.session.settings.uncertainty)).toBe("muted");
   await page.waitForTimeout(800); // the store write is debounced

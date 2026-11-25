@@ -238,8 +238,8 @@ test.describe("the user cells", () => {
   });
 
   test("Settings › Your keys › Unit pad cells sets a leg from Find, empties it, and gives it its default back", async ({ page }) => {
-    await tap(page, ["@mode", "d6", "d4"]);
-    await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings › Your keys");
+    await tap(page, ["help", "d5"]);
+    await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Your keys");
     await page.locator('[role="menuitem"][data-id="unitcells"]').tap();
     await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Your keys › Unit pad cells");
     const leg = (id: string) => page.locator(`[role="menuitem"][data-id="${id}"]`);
@@ -260,7 +260,7 @@ test.describe("the user cells", () => {
     await emptyOf(page);
     // empty the tap in Settings: the cell is a "+" and opens Find
     await tap(page, ["esc"]);
-    await tap(page, ["@mode", "d6", "d4"]);
+    await tap(page, ["help", "d5"]);
     await page.locator('[role="menuitem"][data-id="unitcells"]').tap();
     await leg("u1:primary").tap();
     await page.locator('[role="menuitem"][data-id="empty"]').tap();
@@ -276,7 +276,7 @@ test.describe("the user cells", () => {
     await emptyOf(page);
     // back to the default
     await tap(page, ["esc"]);
-    await tap(page, ["@mode", "d6", "d4"]);
+    await tap(page, ["help", "d5"]);
     await page.locator('[role="menuitem"][data-id="unitcells"]').tap();
     await leg("u1:primary").tap();
     await page.locator('[role="menuitem"][data-id="default"]').tap();
