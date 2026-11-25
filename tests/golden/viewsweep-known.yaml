@@ -47,6 +47,5 @@ known:
   - { id: "rad [-0.5,0.3,1] \\ln\\left(x\\right)", check: copy, package: G796 }
   - { id: "rad [-0.5,0.3,1] \\log\\left(x\\right)", check: copy, package: G796 }
   - { id: "rad [-0.5,0.3,1] x\\times \\ln\\left(x\\right)", check: copy, package: G796 }
-  - { id: "rad matrix \\operatorname{det}\\left(\\operatorname{inv}\\left(10^{0}\\times \\begin{pmatrix}2&0\\\\5&\\pi\\end{pmatrix}\\right)\\right)", check: copy, package: G796 }
   - { id: "rad matrix \\sin\\left(\\operatorname{approx}\\left(\\begin{pmatrix}0&1\\\\-1&0\\end{pmatrix}\\right)\\right)", check: copy, package: G796 }
   - { id: "rad pinned \\operatorname{fsolve}\\left(x^{3}-2=0,x\\right)", check: copy, package: G796 }

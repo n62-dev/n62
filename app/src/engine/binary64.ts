@@ -38,7 +38,7 @@ function nextDouble(x: number, up: boolean): number {
 
 /**
  * G140 (be-9): the double `v` is, a part Giac printed with `n` digits (`v` read with them, partValue), when it is exactly a
- * binary64 rounded to n digits: Giac's MPFR value of Zeta((1+2*i)/2) at 60 digits is the double's exact binary expansion,
+ * binary64 rounded to n digits: Giac's `evalf(Psi(1+i),60)` is the double's exact binary expansion,
  * then zeros, so its two precisions agree with each other and confirm nothing. Exact BigInt arithmetic on the double
  * nearest `v` (and its two neighbours): a plain dyadic test misses magnitudes below about 1E-3 or above 1E60, whose
  * expansion is longer than the print. Null for a zero, fewer digits than say anything about a double, or a double with a

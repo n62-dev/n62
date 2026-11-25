@@ -1,0 +1,232 @@
+# Upstream: giac 2.1.0 gen.cc sym_add, sym_sub, sym_mult, rdiv and rpn.cc _division: when one operand is an MPFR float (or a complex with MPFR parts) the other is brought to its precision with accurate_evalf, which leaves a product or a quotient of a symbolic constant symbolic (pi/10^11, 10^14*pi, 2*exp(1)); the callers then took has_evalf's value at the context's Digits. Vector and matrix arithmetic (addvecteur, subvecteur, multvecteur, mmult) calls the scalar operators with context0, whose Digits is the default (12), so such an entry beside an MPFR float was a double at any Digits: [[pi]]/10^11+evalf([[30000000]]) = [[30000000.0]] at Digits 30 (right 30000000.0000000000314159265359; the scalar pi/10^11+evalf(30000000) was right), 10^14*[[pi,2],[5,0.1]]+approx([[2,1.05],[4,2.1]]) lost 10^14*pi past its 16th digit (sin of it off by 0.03), and the rank of a float matrix times 10^-11*[[pi,...]] read a rounded product as full rank. Now the new accurate_evalf_value takes such an operand's value at the larger of the MPFR operand's precision and the context's Digits (has_evalf at max(bits2digits(prec), Digits), put back after, an error too), so a scalar caller never works below Digits (usual.cc _round(x,n) multiplies x by an MPFR 10^n of 60 bits); a vector keeps accurate_evalf's result (patch 0069), and a value with no float stays as it was. And usual.cc Eta (under Zeta) summed its alternating series with the terms of 16 digits for any argument, so Zeta of a complex MPFR argument was right to about 20 digits at any Digits; a double met inside the sum hid it, which the change above removes (Zeta(1/2+i) at Digits 40 and 60 agreed on wrong digits from the 20th): an MPFR argument now takes the terms its precision needs, each a number ((k+1)^-s with k+1 an MPFR float), not a symbolic substitution.
+# Changed by Pascaline contributors, 2026-11-25
+--- a/src/gen.cc
++++ b/src/gen.cc
+@@ -2524,6 +2524,37 @@
+     return g.is_approx() && (g.type!=_VECT || is_fully_numeric(g));
+   }
+ 
++  // N62 (G804): accurate_evalf leaves a product or a quotient of a symbolic constant symbolic (pi/10^11 becomes
++  // pi_mpfr*1e-11, no number), and the callers then went on with has_evalf's value at the context's Digits. Vector and
++  // matrix arithmetic (addvecteur, multvecteur, mmult) calls them with context0, whose Digits is the default, so such an
++  // entry beside an MPFR float was a double: [[pi]]/10^11+evalf([[30000000]]) = [[30000000.0]] at Digits 30 (the scalar
++  // sum was right), 10^14*[[pi]]+evalf([[2]]) lost 10^14*pi's digits past the 16th. accurate_evalf_value takes the
++  // value at the larger of the MPFR operand's precision (nbits) and the context's Digits (_round(x,n)'s 60-bit 10^n keeps
++  // x at Digits); a vector keeps accurate_evalf's result (G802), and a value with no float stays as it was.
++  gen accurate_evalf_value(const gen & g,int nbits,GIAC_CONTEXT){
++    gen res=accurate_evalf(g,nbits);
++    if (g.type==_VECT || accurate_evalf_is_number(res))
++      return res;
++    int save=decimal_digits(contextptr);
++    set_decimal_digits(giacmax(bits2digits(nbits),save),contextptr);
++    gen v;
++    bool ok=false;
++#ifndef NO_STDEXCEPT
++    try {
++#endif
++      ok=has_evalf(g,v,1,contextptr);
++#ifndef NO_STDEXCEPT
++    } catch (...) {
++      set_decimal_digits(save,contextptr);
++      throw;
++    }
++#endif
++    set_decimal_digits(save,contextptr);
++    if (ok && v.is_approx())
++      return v;
++    return res;
++  }
++
+   gen evalf(const gen & e,int level,const context * contextptr){ 
+     return e.evalf(level,contextptr); 
+   }
+@@ -5163,7 +5194,7 @@
+ 	    b2=convert_interval(b,mpfi_get_prec(ptr->infsup),contextptr);
+ 	  else
+ #endif	  
+-	    b2=accurate_evalf(b,mpfr_get_prec(a._REALptr->inf));
++	    b2=accurate_evalf_value(b,mpfr_get_prec(a._REALptr->inf),contextptr);
+ 	  if (accurate_evalf_is_number(b2))
+ 	    return a+b2;
+ 	}
+@@ -5174,7 +5205,7 @@
+ 	    b2=convert_interval(b,mpfi_get_prec(ptr->infsup),contextptr);
+ 	  else
+ #endif	  
+-	    b2=accurate_evalf(b,mpfr_get_prec(a._CPLXptr->_REALptr->inf));
++	    b2=accurate_evalf_value(b,mpfr_get_prec(a._CPLXptr->_REALptr->inf),contextptr);
+ 	  if (accurate_evalf_is_number(b2))
+ 	    return a+b2;
+ 	}
+@@ -5193,7 +5224,7 @@
+ 	    a2=convert_interval(a,mpfi_get_prec(ptr->infsup),contextptr);
+ 	  else
+ #endif	  
+-	    a2=accurate_evalf(a,mpfr_get_prec(b._REALptr->inf));
++	    a2=accurate_evalf_value(a,mpfr_get_prec(b._REALptr->inf),contextptr);
+ 	  if (accurate_evalf_is_number(a2))
+ 	    return a2+b;
+ 	}
+@@ -5204,7 +5235,7 @@
+ 	    a2=convert_interval(a,mpfi_get_prec(ptr->infsup),contextptr);
+ 	  else
+ #endif	  
+-	    a2=accurate_evalf(a,mpfr_get_prec(b._CPLXptr->_REALptr->inf));
++	    a2=accurate_evalf_value(a,mpfr_get_prec(b._CPLXptr->_REALptr->inf),contextptr);
+ 	  if (accurate_evalf_is_number(a2))
+ 	    return a2+b;
+ 	}
+@@ -5796,7 +5827,7 @@
+       if (has_evalf(b,b1,1,contextptr) && (b.type!=b1.type || b!=b1)){
+ #ifdef HAVE_LIBMPFR
+ 	if (a.type==_REAL){
+-	  gen b2=accurate_evalf(b,mpfr_get_prec(a._REALptr->inf));
++	  gen b2=accurate_evalf_value(b,mpfr_get_prec(a._REALptr->inf),contextptr);
+ 	  if (accurate_evalf_is_number(b2))
+ 	    return a-b2;
+ 	}
+@@ -5809,7 +5840,7 @@
+       if (has_evalf(a,a1,1,contextptr) && (a.type!=a1.type || a!=a1)){
+ #ifdef HAVE_LIBMPFR
+ 	if (a.type==_REAL){
+-	  gen a2=accurate_evalf(a,mpfr_get_prec(b._REALptr->inf));
++	  gen a2=accurate_evalf_value(a,mpfr_get_prec(b._REALptr->inf),contextptr);
+ 	  if (accurate_evalf_is_number(a2))
+ 	    return a2-b;
+ 	}
+@@ -7626,7 +7657,7 @@
+ 	    b2=convert_interval(b,mpfi_get_prec(ptr->infsup),contextptr);
+ 	  else
+ #endif	  
+-	    b2=accurate_evalf(b,mpfr_get_prec(a._REALptr->inf));
++	    b2=accurate_evalf_value(b,mpfr_get_prec(a._REALptr->inf),contextptr);
+ 	  if (b2.is_approx())
+ 	    return (*a._REALptr)*b2;
+ 	}
+@@ -7637,7 +7668,7 @@
+ 	    b2=convert_interval(b,mpfi_get_prec(ptr->infsup),contextptr);
+ 	  else
+ #endif	  
+-	    b2=accurate_evalf(b,mpfr_get_prec(a._CPLXptr->_REALptr->inf));
++	    b2=accurate_evalf_value(b,mpfr_get_prec(a._CPLXptr->_REALptr->inf),contextptr);
+ 	  if (b2.is_approx())
+ 	    return a*b2;
+ 	}
+@@ -7656,7 +7687,7 @@
+ 	    a2=convert_interval(a,mpfi_get_prec(ptr->infsup),contextptr);
+ 	  else
+ #endif	  
+-	    a2=accurate_evalf(a,mpfr_get_prec(b._REALptr->inf));
++	    a2=accurate_evalf_value(a,mpfr_get_prec(b._REALptr->inf),contextptr);
+ 	  if (a2.is_approx())
+ 	    return a2*b;
+ 	}
+@@ -7667,7 +7698,7 @@
+ 	    a2=convert_interval(a,mpfi_get_prec(ptr->infsup),contextptr);
+ 	  else
+ #endif	  
+-	    a2=accurate_evalf(a,mpfr_get_prec(b._CPLXptr->_REALptr->inf));
++	    a2=accurate_evalf_value(a,mpfr_get_prec(b._CPLXptr->_REALptr->inf),contextptr);
+ 	  if (a2.is_approx())
+ 	    return a2*b;
+ 	}
+@@ -8565,12 +8596,12 @@
+ 	if (has_evalf(b,b1,1,contextptr) && (b.type!=b1.type || b!=b1)){
+ #ifdef HAVE_LIBMPFR
+ 	if (a.type==_REAL){
+-	  gen b2=accurate_evalf(b,mpfr_get_prec(a._REALptr->inf));
++	  gen b2=accurate_evalf_value(b,mpfr_get_prec(a._REALptr->inf),contextptr);
+ 	  if (accurate_evalf_is_number(b2))
+ 	    return rdiv(a,b2,contextptr);
+ 	}
+ 	if (a.type==_CPLX && a._CPLXptr->type==_REAL){
+-	  gen b2=accurate_evalf(b,mpfr_get_prec(a._CPLXptr->_REALptr->inf));
++	  gen b2=accurate_evalf_value(b,mpfr_get_prec(a._CPLXptr->_REALptr->inf),contextptr);
+ 	  if (accurate_evalf_is_number(b2))
+ 	    return rdiv(a,b2,contextptr);
+ 	}
+@@ -8583,12 +8614,12 @@
+ 	if (has_evalf(a,a1,1,contextptr) && (a.type!=a1.type || a!=a1)){
+ #ifdef HAVE_LIBMPFR
+ 	  if (b.type==_REAL){
+-	    gen a2=accurate_evalf(a,mpfr_get_prec(b._REALptr->inf));
++	    gen a2=accurate_evalf_value(a,mpfr_get_prec(b._REALptr->inf),contextptr);
+ 	    if (accurate_evalf_is_number(a2))
+ 	      return rdiv(a2,b,contextptr);
+ 	  }
+ 	  if (b.type==_CPLX && b._CPLXptr->type==_REAL){
+-	    gen a2=accurate_evalf(a,mpfr_get_prec(b._CPLXptr->_REALptr->inf));
++	    gen a2=accurate_evalf_value(a,mpfr_get_prec(b._CPLXptr->_REALptr->inf),contextptr);
+ 	    if (accurate_evalf_is_number(a2))
+ 	      return rdiv(a2,b,contextptr);
+ 	  }
+--- a/src/gen.h
++++ b/src/gen.h
+@@ -506,6 +506,7 @@
+   vecteur accurate_evalf(const vecteur & v,int nbits);
+   // N62 (G802): true when g, a result of accurate_evalf, is a number or a vector of numbers only.
+   bool accurate_evalf_is_number(const gen & g);
++  gen accurate_evalf_value(const gen & g,int nbits,const context * contextptr);
+   std::string print_DOUBLE_(double d,GIAC_CONTEXT);
+   bool islogo(const gen & g);
+ 
+--- a/src/rpn.cc
++++ b/src/rpn.cc
+@@ -1076,7 +1076,7 @@
+       if (has_evalf(b,b1,1,contextptr) && b.type!=b1.type){
+ #ifdef HAVE_LIBMPFR
+ 	if (a.type==_REAL){
+-	  gen b2=accurate_evalf(b,mpfr_get_prec(a._REALptr->inf));
++	  gen b2=accurate_evalf_value(b,mpfr_get_prec(a._REALptr->inf),contextptr);
+ 	  if (accurate_evalf_is_number(b2))
+ 	    return (*a._REALptr)/b2;
+ 	}
+@@ -1089,7 +1089,7 @@
+       if (has_evalf(a,a1,1,contextptr) && a.type!=a1.type){
+ #ifdef HAVE_LIBMPFR
+ 	if (b.type==_REAL){
+-	  gen a2=accurate_evalf(a,mpfr_get_prec(b._REALptr->inf));
++	  gen a2=accurate_evalf_value(a,mpfr_get_prec(b._REALptr->inf),contextptr);
+ 	  if (accurate_evalf_is_number(a2))
+ 	    return a2/b;
+ 	}
+--- a/src/usual.cc
++++ b/src/usual.cc
+@@ -10309,9 +10309,37 @@
+ 	return gentypeerr(contextptr);
+       double y=absdouble(ix._DOUBLE_val);
+       int ndigits=16; // FIXME? use decimal_digits;
++#ifdef HAVE_LIBMPFR
++      // N62 (G804): an MPFR s takes the terms its precision needs. With 16 digits' terms Eta (so Zeta) of a complex
++      // MPFR argument was right to about 20 digits at any Digits; a double met inside hid it until patch 0070 (gen.cc
++      // accurate_evalf_value) kept the sum MPFR, and then Zeta(1/2+i) at 40 and 60 digits agreed on wrong digits.
++      if (s.type==_REAL)
++	ndigits=giacmax(ndigits,bits2digits(mpfr_get_prec(s._REALptr->inf))+2);
++      if (s.type==_CPLX && s._CPLXptr->type==_REAL)
++	ndigits=giacmax(ndigits,bits2digits(mpfr_get_prec(s._CPLXptr->_REALptr->inf))+2);
++#endif
+       double n=(std::log10(3*(1+2*y)*std::exp(y*M_PI/2))+ndigits)/std::log10(3.+std::sqrt(8.));
+       if (is_inf(n))
+ 	return gensizeerr(contextptr);
++#ifdef HAVE_LIBMPFR
++      // N62 (G804): with an MPFR s the terms are taken as numbers, (k+1)^-s with k+1 an MPFR float of the working
++      // precision, in alternate_series' recurrence: its symbolic substitution per term cost 0.6 ms a term at 200 digits.
++      if (!ndiff && ndigits>16){
++	int N=int(std::ceil(n)),nbits=digits2bits(ndigits);
++	if (N>1e6)
++	  return gensizeerr(contextptr);
++	gen d=normal((pow(3+2*sqrt(2,contextptr),N)+pow(3-2*sqrt(2,contextptr),N))/2,contextptr);
++	gen p=1;
++	gen c=d-p;
++	gen S=c;
++	for (int k=1;k<N;k++) {
++	  p=p*gen(k+N-1)*gen(k-N-1)/gen(k-inv(2,contextptr))/gen(k);
++	  c=-p-c;
++	  S=S+pow(accurate_evalf(gen(k+1),nbits),-s,contextptr)*c;
++	}
++	return (S/d).evalf(1,contextptr);
++      }
++#endif
+       identificateur idx(" ");
+       gen x(idx);
+       gen res=alternate_series(inv(pow(idx+1,s,contextptr),contextptr)*pow(-ln(idx+1,contextptr),ndiff,contextptr),idx,int(std::ceil(n)),contextptr);

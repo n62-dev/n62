@@ -36,7 +36,7 @@ for (const f of files) {
     const support = giac.eval("exponential(2,-1)").trim(); // patch 0007: 0 (stock Giac: 2*exp(2))
     const icdf = giac.eval("negbinomial_icdf(3,1/2,1/5)").trim(); // patch 0009: 1 (stock Giac: 0)
     isPatched = lnPi.startsWith("3.14159265358979323846264338328") && tanh.startsWith("1.0839233273386945434757520612") && reim === "2" && support === "0" && icdf === "1";
-    console.log(isPatched ? `${f}: these lines fail on stock giac_2.1.0-1; this build is the patched one (our patches 0003, 0005, 0006, 0007, 0009, 0010, 0011, 0012, 0013, 0014, 0015, 0016, 0017, 0018, 0019, 0020, 0021, 0022, 0023, 0024, 0025, 0026, 0027, 0028, 0029, 0030, 0031, 0032, 0033, 0034, 0035, 0036, 0037, 0038, 0040, 0041, 0042, 0043, 0044, 0045, 0046, 0047, 0048, 0050, 0051, 0052, 0053, 0054, 0056, 0057, 0058, 0062, 0063, 0064, 0065, 0066, 0067, 0068, 0069), every line must pass` : `${f}: stock build: patched lines expected to fail (ln(-pi) im ${lnPi}, tanh(1+i) re ${tanh})`);
+    console.log(isPatched ? `${f}: these lines fail on stock giac_2.1.0-1; this build is the patched one (our patches 0003, 0005, 0006, 0007, 0009, 0010, 0011, 0012, 0013, 0014, 0015, 0016, 0017, 0018, 0019, 0020, 0021, 0022, 0023, 0024, 0025, 0026, 0027, 0028, 0029, 0030, 0031, 0032, 0033, 0034, 0035, 0036, 0037, 0038, 0040, 0041, 0042, 0043, 0044, 0045, 0046, 0047, 0048, 0050, 0051, 0052, 0053, 0054, 0056, 0057, 0058, 0062, 0063, 0064, 0065, 0066, 0067, 0068, 0069, 0070), every line must pass` : `${f}: stock build: patched lines expected to fail (ln(-pi) im ${lnPi}, tanh(1+i) re ${tanh})`);
   }
   const t0 = performance.now();
   let pass = 0;
