@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { linkSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { test, type Locator, type Page } from "@playwright/test";
+import { errors, test, type Locator, type Page } from "@playwright/test";
 
 /** The bar's controls (R15c1, R15c2, R722), for keys that left the cluster: `@place` (Apps ▾, the Apps sheet), `@menu`
  *  (☰), `@symb` / `@plot` / `@num` (the view tab; from Home or CAS the last app is opened first from the Apps sheet, as
@@ -45,15 +45,36 @@ export async function sheetKey(page: Page, ids: string[]): Promise<void> {
   for (const id of ids) await page.evaluate((id) => window.n62.entry.onKey(id, undefined as never, false), id);
 }
 
+/** How long `tap` waits for a running row before an Enter (R934). */
+export const ENTER_WAIT_MS = 5000;
+
+/** Options of `tap`. `busyEnter`: press each Enter at once, a row running or not, for a spec that means Enter on a
+ *  running row (the app refuses it, session.submit; docs/05 3.5). */
+export type TapOptions = { busyEnter?: boolean };
+
+/** R934: wait (at most ENTER_WAIT_MS) until no row runs. With nothing running it returns at once. */
+async function rowsIdle(page: Page): Promise<void> {
+  try {
+    await page.waitForFunction(() => window.n62 === undefined || !window.n62.session.busy, undefined, { timeout: ENTER_WAIT_MS, polling: 20 });
+  } catch (e) {
+    if (!(e instanceof errors.TimeoutError)) throw e; // still running after the wait: Enter goes as before (the app refuses it)
+  }
+}
+
 /**
  * Tap keys by their id in spec/keyboard.yaml (d0..d9, div, frac, shift, enter, ...). A sheet is in the viewport and never
  * over the keys (R770), so every key is tapped where it is, a sheet open or not. An id that starts with `@` is a bar
  * control (statusTap).
+ * R934: an Enter after another key of the same call first waits for the row before it (rowsIdle): the app refuses
+ * Enter while a row runs, so `d1 enter d2 enter` lost its second row when the engine answered late (under load).
  */
-export async function tap(page: Page, ids: string[]): Promise<void> {
-  for (const id of ids) {
+export async function tap(page: Page, ids: string[], opts: TapOptions = {}): Promise<void> {
+  for (const [i, id] of ids.entries()) {
     if (id.startsWith("@")) await statusTap(page, id);
-    else await page.locator(`[data-key="${id}"]`).tap({ timeout: 3000 });
+    else {
+      if (id === "enter" && i > 0 && opts.busyEnter !== true) await rowsIdle(page);
+      await page.locator(`[data-key="${id}"]`).tap({ timeout: 3000 });
+    }
   }
 }
 

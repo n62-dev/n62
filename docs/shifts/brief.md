@@ -61,7 +61,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 888e7 | [R934](packages/R934.md) a test's Enter waits for the row before it (pass 243) | ron, Opus | `p1/ron-enterwait` | – |
+| 888e7 | R934 a test's Enter waits for the row before it (pass 243) | ron, Opus | `p1/ron-enterwait` | – |
 | 888e7a | [R929](packages/R929.md) a constant shows its unit | ron, Opus | `p1/ron-constlabel` | G801 |
 | 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Opus | `p1/ron-keepline` | – |
 | 888e12a | [R927](packages/R927.md) Settings on top; Mode its row 1, Preset first: review-only, `--no-worker` (branch kept at ced6ff39, pass 243) | ron, Opus | `p1/ron-modeorder` | R887, R901, R934 |
@@ -134,6 +134,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | B5a | G804 an exact entry beside a float in a matrix sum or product is a double (pass 241) | gorge, Opus | `p1/gorge-matmixdouble` | – |
 | B5b | G805 the nightly lines count causes: judges and viewsweep (pass 241) | gorge, Opus | `p1/gorge-nightlyjudge` | – |
 | B5c | A274 pipeline-lib.sh back under 800 lines (pass 241) | annabell, Sonnet | `p1/annabell-libsplit` | G805 |
+| B5d | [A275](packages/A275.md) the pre-flight checks the package's Docs step (coord; owner, 2026-11-25: top of lane B) | annabell, Sonnet | `p1/annabell-docsstep` | – |
 | B6i | [G800](packages/G800.md) a unit sweep | gorge, Opus | `p1/gorge-unitsweep` | R885 |
 | B6k | G796 Copy of an unchecked row | gorge, Opus | `p1/gorge-copywarn` | – |
 | B6l | [G801](packages/G801.md) a constant's own unit (J·s) | gorge, Opus | `p1/gorge-constunit` | – |
