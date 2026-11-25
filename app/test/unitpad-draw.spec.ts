@@ -154,6 +154,7 @@ test("every legend and face fits its key within the fit code's floor at 360 px",
 // on a digit, Torr 16 px on a control key). Every unit and prefix cell's face has one size before fit.ts shrinks a long one (its
 // inline size taken off for the reading), the digits' 20 px, in all three layers.
 test("every unit and prefix face has one size before fitting, in all three layers", async ({ page }) => {
+  const shrunk: string[] = [];
   for (const state of [[], ["shift"], ["alpha"]]) {
     await tap(page, state);
     const sizes = await page.evaluate(() => {
@@ -162,6 +163,7 @@ test("every unit and prefix face has one size before fitting, in all three layer
         const el = key.querySelector<HTMLElement>(".main");
         if (!el) continue;
         const fitted = el.style.fontSize;
+        if (fitted !== "" && parseFloat(fitted) < 20) (out["fitted"] ??= []).push(`${el.textContent}`);
         el.style.fontSize = "";
         const px = getComputedStyle(el).fontSize;
         el.style.fontSize = fitted;
@@ -169,11 +171,15 @@ test("every unit and prefix face has one size before fitting, in all three layer
       }
       return out;
     });
+    shrunk.push(...(sizes["fitted"] ?? []));
+    delete sizes["fitted"];
     const where = state.join("+") || "plain";
     expect(Object.values(sizes).flat().length, `${where}: the cells`).toBeGreaterThan(20);
     expect(Object.keys(sizes), `${where}: ${JSON.stringify(sizes)}`).toEqual(["20px"]);
     if (state.length) await tap(page, state); // off again
   }
+  // control: fit.ts still shrinks a long one (gal_US under Shift: 14.6 px at 360 px)
+  expect(shrunk, "fit.ts shrinks gal_US").toContain("gal_US");
 });
 
 // R803: the power keys read x², √x, x³, x⁴, ÷ and x⁻¹ (upright, as the main keypad's x²), whole at both phone widths

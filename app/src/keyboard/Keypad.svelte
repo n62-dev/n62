@@ -586,6 +586,11 @@
   .key[data-pad="prefix"] {
     background: var(--key-pfx);
   }
+  /* R907: a unit or prefix cell keeps its key's class (colour and gestures), not its size: every unit face is the digits'
+     20 px, whether a function (17 px) or control key (16 px) lies under it; fit.ts still shrinks a long one */
+  .key:is([data-pad="unit"], [data-pad="prefix"]) {
+    font-size: var(--fs-key);
+  }
   /* R866: the slot line (G_), drawn, never typed: text and spoken name stay the letter. An empty inline block sits on the baseline in
      any font; its negative margin hangs it out of the flow as ▾ hangs (fit.ts counts it), the face shifted left by half to stay
      centred. In the face's colour at 80 %, Plain keys too. σ (Shift + 1, a sheet) is no prefix: ▾ only. */
