@@ -40,11 +40,11 @@ cases:
   - { id: "u14", input: "1*{rad}", to: "deg", oracle: "180/pi", expect: "57.2957795131", mark: "≈", exact: "180/pi", si: "1", si_oracle: "F(1)", source: "oracle" }
   - { id: "u15", input: "3*{m}*4*{s}", oracle: "F(12)", expect: "12", mark: "=", exact: "12", dim: "m1s1", source: "derived" }
   - { id: "c01", input: "{=c}", oracle: "F(299792458)", expect: "299792458", mark: "=", exact: "299792458", dim: "m1s-1", source: "derived" }
-  - { id: "c02", input: "{=planck}", oracle: "F('6.62607015e-34')", expect: "6.62607015E-34", mark: "=", exact: "132521403/200000000000000000000000000000000000000000", dim: "kg1m2s-1", source: "derived" }
+  - { id: "c02", input: "{=planck}", oracle: "F('6.62607015e-34')", expect: "6.62607015E-34", mark: "=", exact: "132521403/200000000000000000000000000000000000000000", dim: "kg1m2s-1", unit: "J·s", source: "derived", note: "G801: the constant's own unit (CODATA), not kg·m²/s" }
   - { id: "c03", input: "{=N_A}", oracle: "F('6.02214076e23')", expect: "6.02214076E23", mark: "=", exact: "602214076000000000000000", dim: "mol-1", source: "derived" }
-  - { id: "c04", input: "{=k_B}", oracle: "F('1.380649e-23')", expect: "1.380649E-23", mark: "=", exact: "1380649/100000000000000000000000000000", dim: "K-1kg1m2s-2", source: "derived" }
+  - { id: "c04", input: "{=k_B}", oracle: "F('1.380649e-23')", expect: "1.380649E-23", mark: "=", exact: "1380649/100000000000000000000000000000", dim: "K-1kg1m2s-2", unit: "J/K", source: "derived", note: "G801: was kg·m²/(s²·K)" }
   - { id: "c05", input: "{=q_e}", oracle: "F('1.602176634e-19')", expect: "1.602176634E-19", mark: "=", exact: "801088317/5000000000000000000000000000", dim: "A1s1", source: "derived" }
-  - { id: "c06", input: "{=gas_constant}", oracle: "F('6.02214076e23')*F('1.380649e-23')", expect: "8.31446261815", mark: "≈", exact: "207861565453831/25000000000000", dim: "K-1kg1m2mol-1s-2", source: "oracle", note: "R = N_A·k exactly (SI 2019)" }
+  - { id: "c06", input: "{=gas_constant}", oracle: "F('6.02214076e23')*F('1.380649e-23')", expect: "8.31446261815", mark: "≈", exact: "207861565453831/25000000000000", dim: "K-1kg1m2mol-1s-2", unit: "J/(mol·K)", source: "oracle", note: "R = N_A·k exactly (SI 2019); G801: in J/(mol·K)" }
   - { id: "c07", input: "{=g_0}", oracle: "F('9.80665')", expect: "9.80665", mark: "=", exact: "196133/20000", dim: "m1s-2", source: "derived" }
   # --- the package's cases (brief G16) ---
   - { id: "d01", input: "72*{k:m / h}", to: "m / s", oracle: "F(72*1000,3600)", expect: "20", mark: "=", exact: "20", si: "20", si_oracle: "F(20)", source: "derived", note: "task t02" }
