@@ -2,7 +2,7 @@
 // R277 (owner, 2026-11-10): the entry line under a finger or a pen. A sideways drag scrolls the line and leaves the caret
 // and the selection as they were; a tap puts the caret at the touch point, settled to the next stop (R47); a hold
 // (HOLD_MS, within the slop) selects the term under the finger (term.ts), and the keys act on it as on any selection
-// (R17). A vertical move is R53's swipe (keyboard/foldSwipe.ts, on the line's box): it changes nothing here. A mouse
+// (R17); it copies the line, or the selection it had, as a hold on a history row's input copies that (R903, R276). A vertical move is R53's swipe (keyboard/foldSwipe.ts, on the line's box): it changes nothing here. A mouse
 // keeps MathLive's own click and drag selection. Capture listeners on the field's host (the page element it is in) run
 // before MathLive's own (the element's capture listener, which on a touch's lift put the caret a second time: R42, and
 // those in its shadow root) and after R53's on the line's box; they end the touch pointerdown there (no app listener
@@ -67,16 +67,22 @@ function tap(mf: MathfieldElement, x: number, y: number): void {
   focus(mf);
 }
 
-/** A hold: the term under the finger selected; on empty space or an operator the line stays as it was. */
-function hold(mf: MathfieldElement, x: number, y: number): void {
-  const r = termAt(mf, x, inBand(mf, y));
-  if (!r) return;
-  mf.selection = { ranges: [r] };
-  focus(mf);
+/** A hold: the term under the finger selected; on empty space or an operator the line stays as it was. R903: it copies
+ *  (`copy`, the latex) the selection the line had before it, which it keeps, else the whole line. */
+function hold(mf: MathfieldElement, x: number, y: number, copy: (latex: string) => void): void {
+  const had = mf.selectionIsCollapsed ? "" : mf.getValue(mf.selection, "latex");
+  const line = had || mf.value;
+  const r = had ? undefined : termAt(mf, x, inBand(mf, y));
+  if (r) {
+    mf.selection = { ranges: [r] };
+    focus(mf);
+  }
+  if (line) copy(line);
 }
 
-/** Listen on `host`, the element the field is in; `scroll(dx)` moves the line's content by dx px (field.ts's scrollLine). */
-export function lineTouch(mf: MathfieldElement, host: HTMLElement, scroll: (dx: number) => void): void {
+/** Listen on `host`, the element the field is in; `scroll(dx)` moves the line's content by dx px (field.ts's scrollLine);
+ *  `copy(latex)` copies what a hold takes (R903). */
+export function lineTouch(mf: MathfieldElement, host: HTMLElement, scroll: (dx: number) => void, copy: (latex: string) => void): void {
   let t: { id: number; x0: number; y0: number; x: number; mode: "wait" | "scroll" | "none" | "held"; timer: ReturnType<typeof setTimeout> } | undefined;
   const end = (): void => {
     if (t) clearTimeout(t.timer);
@@ -100,7 +106,7 @@ export function lineTouch(mf: MathfieldElement, host: HTMLElement, scroll: (dx: 
       const timer = setTimeout(() => {
         if (t?.id !== id || t.mode !== "wait") return;
         t.mode = "held";
-        hold(mf, x, y);
+        hold(mf, x, y, copy);
       }, HOLD_MS);
       t = { id, x0: x, y0: y, x, mode: "wait", timer };
     },

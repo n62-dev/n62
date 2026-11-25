@@ -70,6 +70,8 @@ export class EntryController {
   onPress: (repeat: boolean) => void = () => {};
   /** A system paste on the field (Ctrl+V, Shift+Insert, the context menu; R114): App.svelte runs the Paste key's path on its text. */
   onPaste: (text: string) => void = () => {};
+  /** R903: a hold on the line copies `latex` (its selection, else the whole line); App.svelte runs the clipboard code's lineCopy. */
+  declare onHold?: (latex: string) => void; // (declared, no initializer: no byte in the start chunk)
   /** The line was edited other than by a key of the keypad (R154): MathLive typing a character itself, a recalled row, an inserted result. */
   onEdit: () => void = () => {};
   /** The line was emptied (Enter, Esc, an app view): main.ts clears the kept line (R34). */
