@@ -17,9 +17,10 @@ const store = (page: Page) => page.getByTestId("store");
 const find = (page: Page) => page.getByTestId("find");
 const active = (page: Page) => find(page).locator('[role="menuitem"][data-active="true"]');
 const names = (page: Page) => page.evaluate(() => window.n62.session.userNames.map((u) => u.name).sort());
-/** The dead press: the double pulse alone (R777), a pair of vibrations after `before`. */
-const deadAfter = async (page: Page, before: number): Promise<void> => {
-  await expect.poll(async () => (await vibrations(page)).length - before).toBe(2);
+/** The dead press after `before`: the double pulse (R777). `read`: Paste in a sheet reads the clipboard after finger-down, so the
+ *  key gets its own press pulse first, then the double one (3); a key known dead at finger-down gets the double pulse alone (2). */
+const deadAfter = async (page: Page, before: number, read = true): Promise<void> => {
+  await expect.poll(async () => (await vibrations(page)).length - before).toBe(read ? 3 : 2);
 };
 
 test.beforeEach(async ({ page }) => {
@@ -121,7 +122,7 @@ test("controls: Memory's Paste stays a dead press with nothing typed (R816 to co
   await tap(page, ["shift"]);
   const v = (await vibrations(page)).length;
   await tap(page, ["deselect"]);
-  await deadAfter(page, v);
+  await deadAfter(page, v, false);
   await expect(find(page)).toBeVisible();
   await expect(find(page).getByTestId("sheet-filter")).toHaveCount(0);
   await tap(page, ["esc"]);

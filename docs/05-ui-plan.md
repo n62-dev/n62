@@ -37,7 +37,7 @@ Every sheet (Apps, every Menu, Mode, Settings, Tmpl, the Shift palettes, Find, V
 | Enter | Pick the highlighted item |
 | ▶ | Open a submenu (shown with `›`) |
 | ◀ or Esc | Back one level (submenus stack; the title shows the path, e.g. `Plot › Intersection`) |
-| Letter keys | Type-ahead filter, for lists longer than 10 items: a tap on a key that is not a digit types its letter (no Alpha press needed); a flick down types the letter on any key, digits included. The faces and the pop show the character a tap types there, in the case it types (R820, 3.6); a key that does nothing is dimmed |
+| Letter keys | Type-ahead filter, for lists longer than 10 items: a tap on a key that is not a digit types its letter (no Alpha press needed); a flick down types the letter on any key, digits included. The faces and the pop show the character a tap types there, in the case it types (R820, 3.6); a key that does nothing is dimmed. Paste (Shift + Deselect) in Find, Vars and Store in types the clipboard's first line into the filter when it is a name (a letter, then letters, digits, `_`; at most 32 characters), else it is a dead press and the sheet stays (R900; Memory's Paste is R816's) |
 | ☰, the place, Tmpl | Close the sheet they opened (the same control opens and closes it) |
 
 There is no hold-and-drag (P11); the sheet keys never mention it.

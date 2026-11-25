@@ -2,7 +2,7 @@
 // What a key does while a sheet is open (docs/05 3.1 with section 7). Shift and Alpha are ignored for picking: a key
 // is read by what it is, never by the layer, so no key goes through the sheet into the entry line (rule 4).
 import { actionFor, type Key, type Layer } from "../keyboard/keyboard.ts";
-import { deadPress, isSelect, layerOf, modsFor, special, type Mods, type RouteCtx } from "../keyboard/route.ts";
+import { deadPress, holdKeys, isSelect, layerOf, modsFor, special, type Mods, type RouteCtx } from "../keyboard/route.ts";
 
 export type SheetKey =
   | { kind: "move"; by: 1 | -1 }
@@ -23,6 +23,8 @@ export type SheetKey =
    *  its view tabs and a user key that holds Home, CAS, Apps, Menu or a view close it and go there). A user key that
    *  holds anything else does nothing in a sheet. */
   | { kind: "pass" }
+  /** R900, the Paste key in a list whose filter takes a pasted name (SheetCtx.paste): the clipboard's name is typed into it. */
+  | { kind: "paste" }
   /** Does nothing in a sheet. */
   | { kind: "none" }
   /** R281, the store sheet: the key types no name; the sheet closes and the key does its job on the line (Shift + 9's
@@ -141,9 +143,24 @@ export function storeKey(key: Key, shift: boolean, alpha: boolean, cas: boolean,
 }
 
 /** The open sheet as the keys read it (R820): its kind (`find`: Vars, Find and Memory; `store`; `other`: the rest), whether the open level
- *  takes letters (`filter`), how many rows it numbers, whether its query is empty, and whether the CAS view is under the keys (the
- *  store sheet's letter case, R58). */
-export type SheetCtx = { kind: "find" | "store" | "other"; filter: boolean; numbered: number; empty: boolean; cas: boolean };
+ *  takes letters (`filter`), how many rows it numbers, whether its query is empty, whether the CAS view is under the keys (the
+ *  store sheet's letter case, R58), and whether the Paste key types a pasted name into its filter (`paste`, Sheet.pastes, R900). */
+export type SheetCtx = { kind: "find" | "store" | "other"; filter: boolean; numbered: number; empty: boolean; cas: boolean; paste?: boolean };
+
+/** R900: the Paste key (Shift + Deselect, R723), by a tap with its modifiers or a flick's layer; a free key holding it does nothing in a sheet. */
+const isPaste = (key: Key, mods: Mods, layer: Layer | undefined): boolean => {
+  const a = key.user ? undefined : layer === undefined ? actionFor(key, mods.shift, mods.alpha) : key.actions[layer];
+  return a?.kind === "special" && a.name === "paste";
+};
+
+/** R900: the longest name the Paste key types into a filter. */
+const NAME_MAX = 32;
+/** R900: the name in a pasted text: its first line, trimmed, when it is a name (a letter, then letters, digits and `_`, at most
+ *  NAME_MAX characters); anything else (a number, a sum, a second word) is no name. */
+export function pastedName(text: string): string | undefined {
+  const line = (text.split(/\r\n|\n|\r/u)[0] ?? "").trim();
+  return [...line].length <= NAME_MAX && /^\p{L}[\p{L}0-9_]*$/u.test(line) ? line : undefined;
+}
 
 /** What a tap (`layer` undefined, with the modifiers `mods` it is pressed in) or a flick (`layer`) on a key does in the open sheet: the one
  *  choice among Find, Store and the other lists, which sheetAct acts on and the keypad draws (sheetFace). Shift and Alpha keep their job
@@ -151,6 +168,7 @@ export type SheetCtx = { kind: "find" | "store" | "other"; filter: boolean; numb
 export function sheetJob(key: Key, s: SheetCtx, mods: Mods, layer: Layer | undefined): SheetKey {
   const p = key.actions.primary;
   if (p?.kind === "special" && (p.name === "shift" || p.name === "alpha")) return { kind: "pass" };
+  if (s.paste && isPaste(key, mods, layer)) return { kind: "paste" };
   if (s.kind === "store") return storeKey(key, mods.shift, mods.alpha, s.cas, s.empty);
   // R887: the ⚙ key's tap opens Settings on the sheet; Shift + it is Help, which stays dead in a sheet (R863)
   if (p?.kind === "special" && p.name === "settings" && !key.user && (mods.shift || layer === "shift")) return { kind: "none" };
@@ -218,7 +236,7 @@ export function sheetAct(c: RouteCtx, key: Key, layer: Layer | undefined, mods?:
   // Alpha + Vars A, lower case in CAS, R58; a flick as its layer), so the typed path stores as before; a key that types no name goes on to
   // the line (`line`) with its Shift or Alpha, and one the sheet takes uses a one-shot Shift or Alpha up, as on the line
   const m = find ? { shift: c.session.shift, alpha: c.session.alpha } : (mods ?? modsFor(c, layer));
-  const k = sheetJob(key, { kind: find ? "find" : store ? "store" : "other", filter: level.filterable, numbered: level.numbered, empty: level.filter === "", cas: c.casKeys }, m, layer);
+  const k = sheetJob(key, { kind: find ? "find" : store ? "store" : "other", filter: level.filterable, numbered: level.numbered, empty: level.filter === "", cas: c.casKeys, paste: sheet.pastes }, m, layer);
   if (store && k.kind !== "line" && layer === undefined) c.session.clearModifiers();
   // in Find a one-shot Shift or Alpha is used up by the key it types (a lock stays, R889); elsewhere a sheet leaves it as it is
   if (find && ((c.session.shift && !c.session.shiftLock) || (c.session.alpha && !c.session.alphaLock))) c.session.clearModifiers();
@@ -259,6 +277,17 @@ export function sheetAct(c: RouteCtx, key: Key, layer: Layer | undefined, mods?:
       for (const ch of level.filter) c.entry.run({ kind: "type", text: ch });
       shell.closeSheet();
       return false;
+    case "paste":
+      // R900: the clipboard's name into the filter (Find's in lower case, as its letters type); no name, or the sheet gone meanwhile,
+      // is the dead press and the sheet stays. The keys pressed while it reads wait for it (holdKeys), so Paste, Enter picks the name.
+      c.withClip((x) =>
+        holdKeys(c, x.readText().then((text) => {
+          const name = text === null ? undefined : pastedName(text);
+          if (name !== undefined && shell.sheet === sheet && sheet.level === level && level.type(find ? name.toLowerCase() : name)) return;
+          if (text !== null) c.dead();
+        })),
+      );
+      return true;
     case "none":
       c.dead(); // R770: a key the sheet does not use is dead (docs/05 3.7); the sheet stays
       return true;

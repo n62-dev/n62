@@ -293,6 +293,14 @@ export class ClipActions {
   paste(text?: string): Promise<boolean> {
     return this.serial(() => this.pasteNow(text));
   }
+  /** R900: the clipboard's text for a sheet's name filter (the Paste key in Find, Vars, Store in); null, said, when it cannot be read. */
+  readText(): Promise<string | null> {
+    return this.serial(async () => {
+      const clip = await (await this.port()).readText();
+      if (clip === null) this.say(tc("clip.unavailable"));
+      return clip;
+    });
+  }
   /** ☰ → Paste, Home's and the apps' (R278f1): the paste, and the keys pressed meanwhile wait for it. */
   pasteHeld(): void {
     this.ops.hold?.(this.paste());
