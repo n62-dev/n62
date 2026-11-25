@@ -65,7 +65,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 888e7a | [R929](packages/R929.md) a constant shows its unit | ron, Opus | `p1/ron-constlabel` | G801 |
 | 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Opus | `p1/ron-keepline` | – |
 | 888e12a | R927 Settings on top; Mode its row 1, Preset first: review-only, `--no-worker` (branch kept at ced6ff39, pass 243) | ron, Opus | `p1/ron-modeorder` | R887, R901, R934 |
-| 888e17 | [R906](packages/R906.md) legends clear of outlines | ron, Opus | `p1/ron-legendoutline` | – |
+| 888e17 | R906 legends clear of outlines | ron, Opus | `p1/ron-legendoutline` | – |
 | 888e18 | [R907](packages/R907.md) one face size on the unit pad | ron, Opus | `p1/ron-unitfacesize` | – |
 | 888e19 | [R908](packages/R908.md) prefix slot on legends | ron, Opus | `p1/ron-prefixcorner` | – |
 | 888e20 | [R912](packages/R912.md) ▾ on Store | ron, Opus | `p1/ron-storemark` | – |
@@ -135,6 +135,12 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | B5b | G805 the nightly lines count causes: judges and viewsweep (pass 241) | gorge, Opus | `p1/gorge-nightlyjudge` | – |
 | B5c | A274 pipeline-lib.sh back under 800 lines (pass 241) | annabell, Sonnet | `p1/annabell-libsplit` | G805 |
 | B5d | A275 the pre-flight checks the package's Docs step (coord; owner, 2026-11-25: top of lane B) | annabell, Sonnet | `p1/annabell-docsstep` | – |
+| B5e | [A275f1](packages/A275f1.md) the worker may write its Docs step's files, runs size before its report (pipeline review; owner, 2026-11-25) | annabell, Sonnet | `p1/annabell-docsprompt` | – |
+| B5f | [A280](packages/A280.md) e2e runs when a file e2e reads outside app/ changes | annabell, Sonnet | `p1/annabell-e2eplan` | – |
+| B5g | [A276](packages/A276.md) an audit FIX stops the round's long checks | annabell, Sonnet | `p1/annabell-fixstops` | – |
+| B5h | [A279](packages/A279.md) trust:check in the pre-flight | annabell, Sonnet | `p1/annabell-trustpreflight` | A280 |
+| B5i | [A277](packages/A277.md) golden planned by its import closure | annabell, Sonnet | `p1/annabell-goldenclosure` | A276 |
+| B5j | [A278](packages/A278.md) measure e2e: built app against dev server | annabell, Sonnet | `p1/annabell-e2emeasure` | A277 |
 | B6i | [G800](packages/G800.md) a unit sweep | gorge, Opus | `p1/gorge-unitsweep` | R885 |
 | B6k | [G796](packages/G796.md) Copy of an unchecked row | gorge, Opus | `p1/gorge-copywarn` | – |
 | B6l | G801 a constant's own unit (J·s) | gorge, Opus | `p1/gorge-constunit` | – |
@@ -201,7 +207,7 @@ End with a commit whose message body is the report. The audit and the Opus pass 
   A test that passes on the old code is not a regression test: change it until it fails there, or list it under "Not done".
   Never run `app/scripts/behaviour-diff.ts` yourself: the audit runs it (A18; owner, 2026-10-22, after G76 lost 2 h to it).
 - **Numbers:** for example the start chunk size before and after, or timings.
-- **For shared files:** exact text for the backlog, decisions, THIRD_PARTY.md, docs/04, this brief. Never cut text you did not write to fit a docs budget: if a file is full, say so here and the Opus pass makes room.
+- **For shared files:** the files your package's Docs step names are changed on your branch (A275f1); exact text for any other: the backlog, decisions, THIRD_PARTY.md, docs/04, this brief. A Docs-step file at its budget: `Docs not changed: <path>: at its budget`, and its text here. Never cut text you did not write to fit a docs budget: if a file is full, say so here and the Opus pass makes room.
 - **Needs a decision:** anything left open.
 - **Not done:** what's missing.
 

@@ -63,6 +63,8 @@
   --stroke-mid: 1.5px;
   --stroke: 2px;
   --stroke-thick: 3px;
+  /* R792, R906: a Shift legend's drop off a key's outline (at 2 px the M of Mat still met the outline's rounded corner) */
+  --legend-drop: 2.5px;
   /* R154: the entry field's outline: at rest, and when it has news (Shift, Alpha, an error) */
   --ring-rest: 2.5px;
   --ring-on: 3.5px;
