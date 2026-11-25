@@ -178,7 +178,7 @@ test("(h) a preset's Rename: back ends the prompt as Esc would; the name is kept
     await tap(page, ["@mode", "d1", "d3"]); // Edit: the preset is still Lab (not Labz, not gone)
     await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Presets › Edit");
     await expect(sheet(page).getByRole("menuitem").locator(".label")).toHaveText(["Lab"]);
-    await tap(page, ["esc", "esc", "esc"]);
+    await tap(page, ["esc", "esc", "esc", "esc"]); // Edit, Presets, Mode, Settings (R927)
     await expect(sheet(page)).toHaveCount(0);
     await expect.poll(() => layer(page)).toBeUndefined();
   });

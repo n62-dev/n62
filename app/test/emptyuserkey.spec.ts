@@ -106,6 +106,6 @@ test.describe("controls", () => {
     await page.evaluate(() => window.n62.userKeys.set("u2", "primary", { label: "Settings", action: { special: "settings" } }));
     await tap(page, ["u2"]);
     await expect(title(page)).toHaveText("Settings");
-    await expect(mactive(page)).toHaveAttribute("data-id", "appearance");
+    await expect(mactive(page)).toHaveAttribute("data-id", "mode"); // R927: Mode is row 1
   });
 });

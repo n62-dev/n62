@@ -295,8 +295,7 @@ test.describe("Your keys", () => {
 
   test("by touch: rows set a place and a constant, and the key fires", async ({ page }) => {
     await start(page);
-    await page.getByTestId("chip-format").tap();
-    await mrow(page, "settings").tap();
+    await tap(page, ["help"]); // the Settings root (R927)
     await mrow(page, "keys").tap();
     await mrow(page, "u3:primary").tap();
     await mrow(page, "cas").tap();

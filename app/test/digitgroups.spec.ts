@@ -52,10 +52,9 @@ test("Copy gives the plain digits of a grouped result", async ({ page }) => {
 
 const NINE = ["d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9"];
 const groupsRow = (page: Page) => page.getByTestId("menu").locator('[data-id="groups"]');
-/** Settings › Numbers (Mode's row 6, then section 2), as a user opens it. */
+/** Settings › Numbers (⚙, then row 3; R927: Mode is row 1), as a user opens it. */
 async function numbers(page: Page): Promise<void> {
-  await page.getByTestId("chip-format").tap();
-  await tap(page, ["d6", "d2"]);
+  await tap(page, ["help", "d3"]);
   await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Numbers");
 }
 

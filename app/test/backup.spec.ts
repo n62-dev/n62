@@ -80,7 +80,8 @@ test("Settings › Counters › Export the counts saves n62-counts/1 with the pr
   await savePicker(page, "fake");
   await open(page, "");
   await tap(page, ["d7", "d7", "shift", "sin"]); // d7 twice; Shift, then sin in the Shift layer
-  await tap(page, ["help", "d7"]);
+  await tap(page, ["help"]);
+  await page.getByTestId("menu").locator('[data-id="counters"]').tap(); // (a tap: 7 would count a third d7)
   await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Counters");
   await page.getByTestId("menu").locator('[data-id="export"]').tap();
   await expect(page.getByTestId("notice")).toHaveText("Counts saved");
@@ -93,7 +94,7 @@ test("Settings › Counters › Export the counts saves n62-counts/1 with the pr
   expect(o.keys["d7:primary"]).toBe(2);
   expect(o.keys["sin:shift"]).toBe(1);
   expect(o.keys["shift:primary"]).toBe(1);
-  expect(o.keys["screen:button"] ?? 0).toBeGreaterThanOrEqual(1); // the Mode chip
+  expect(o.keys["help:primary"]).toBe(1); // the ⚙ key (R927: Settings' root; before, the Mode chip, a screen button)
   expect(Object.values(o.keys).reduce((a, b) => a + b, 0)).toBe(o.presses);
   const counts = Object.values(o.keys);
   expect(counts).toEqual([...counts].sort((a, b) => b - a));

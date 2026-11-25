@@ -80,7 +80,7 @@ test("STD 12 ▾ is one target and opens Mode on Format (R722, R785, R856)", asy
   await expect(page.getByTestId("chip-format")).toHaveText("STD 12 ▾"); // its ▾ inside the one target
   await page.getByTestId("chip-format").tap();
   await expect(sheet(page).locator('[role="menuitem"][data-active="true"]')).toHaveAttribute("data-id", "format");
-  await tap(page, ["esc"]);
+  await tap(page, ["esc", "esc"]); // (R927: up to Settings, then closed)
   await expect(sheet(page)).toBeHidden();
 });
 
