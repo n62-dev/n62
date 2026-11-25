@@ -15,6 +15,7 @@ import { shownOf, type Shown, type UnitFormat } from "./result.ts";
 import type { CellLeg } from "./userCells.svelte.ts";
 import { SlotModel, type PadAction, type Reading, type SlotCatalogue } from "./slot.ts";
 import type { Quantity, UnitError, UnitRequest, UnitSlot } from "./types.ts";
+import { kept } from "./kept.ts"; // the slots a line keeps, by its LaTeX (Home reads them too, R902)
 
 export { shownOf, type Shown } from "./result.ts";
 
@@ -47,8 +48,6 @@ export interface ViewHost {
 /** The active slot's look: drawn inline, since a class does not reach into the field's shadow root. */
 const ACTIVE = "background:var(--pick);border-radius:4px";
 
-/** The slots a line keeps (docs/04 4.3 "The way back": the units key shows them again), by the line's LaTeX. */
-const kept = new Map<string, Readonly<Record<string, UnitSlot>>>();
 
 /** R92: the line's text changed by a chip put on it from the units menu (a chip adds no slot, so the slot ids keep their
  *  order): the slots `from` kept go with the new text. */
