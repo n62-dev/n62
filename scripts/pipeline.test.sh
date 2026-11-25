@@ -1516,7 +1516,7 @@ out="$(docs_step_lint "$dl" "$(dspec "$step2")")"; rc=$?
 out="$(docs_step_lint "$dl" "$(dspec '**Docs:** docs/04 2.6 and docs/README.md; docs/05-ui-plan.md: a clause.')")"
 [[ "$(wc -l <<<"$out")" -eq 2 ]] && grep -qx 'lint: the Docs step names docs/04-architecture.md and the branch does not change it' <<<"$out" && grep -qx 'lint: the Docs step names docs/README.md and the branch does not change it' <<<"$out" || fail "A275: docs/04 by number and docs/README.md by path are not two lines: $out"
 # nothing required: "none", no Docs step, an empty task
-for t in '3. **Docs:** none.' '**Docs:** none' 'No docs step here: change src.txt.'; do
+for t in '3. **Docs:** none.' '**Docs:** none' '3. **Docs:** none (docs/04 4.3 already says the line is the value).' 'Fix it. Docs: none (G642 changes docs/05).' 'No docs step here: change src.txt.'; do
   out="$(docs_step_lint "$dl" "$(dspec "$t")")" || fail "A275: '$t' fails: $out"
 done
 docs_step_lint "$dl" "$tmp/no-such-spec" >/dev/null || fail "A275: a missing bundle fails the lint"
