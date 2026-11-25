@@ -6,6 +6,7 @@ import type { AppShell } from "../apps/shell.svelte.ts";
 import type { Session } from "../state/session.svelte.ts";
 import { ClipActions } from "./actions.svelte.ts";
 import type { ClipboardPort } from "./port.ts";
+import { decimalFromString, ZERO_VALUE } from "../engine/format.ts";
 
 describe("ClipActions order", () => {
   it("pastes the value a just-started copy wrote, not the old clipboard", async () => {
@@ -191,6 +192,17 @@ describe("ClipActions keyCopy (Shift + Select, R723)", () => {
     m.c.keyCopy(vi.fn(), rows[0] as never);
     await vi.waitFor(() => expect(m.say()).toBe("No digit confirmed"));
     expect(m.clip()).toBe("untouched");
+  });
+  it("G796f1: a warned row cycled to FIX copies the digits FIX 4 draws, read from the session's settings", async () => {
+    let clip = "";
+    const port: ClipboardPort = { writeText: async (t) => ((clip = t), true), readText: async () => clip, share: async () => false };
+    const full = "1.259921049894873164767210607278228350570"; // 2^(1/3), derived (Python decimal)
+    const r = { status: "done", latex: "x", full, value: { re: decimalFromString(full), im: ZERO_VALUE }, facts: { exact: false, reliableDigits: 13, warn: "unaudited" }, fmt: "fix" };
+    const settings = { format: "std", digits: 12, fixDecimals: 4 };
+    const session = { items: [r], settings, display: () => ({ text: "1.2599", latex: "" }), mark: () => ({ mark: "⚠", warn: "unaudited" }), displayContext: () => ({}) } as unknown as Session;
+    const c = new ClipActions(session, { app: null, showsEntry: true } as unknown as AppShell, {} as EntryController, { insert() {} }, port);
+    c.keyCopy(vi.fn(), r as never);
+    await vi.waitFor(() => expect(clip).toBe("1.2599"));
   });
   it("with no row given, the last finished row", async () => {
     const m = make([row("1/3"), row("2/3"), row("x", "error")]);
