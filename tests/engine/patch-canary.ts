@@ -274,6 +274,11 @@ const CANARIES: [string, string, RegExp, string][] = [
   // G802 (F481), patch 0069: rdiv (and sym_add, sym_sub, _division) takes accurate_evalf's result as converted when it is_approx, one
   // float entry for a vector, while exp(1) stays symbolic: [0.1,exp(1)]/2 at Digits 40 called rdiv with the same vector until the stack overflowed
   ["0069-vector-mpfr-arith-recursion.patch", "giac-2.1.0/src/gen.cc", /gen a2=accurate_evalf\(a,mpfr_get_prec\(b\._REALptr->inf\)\);\s*if \(a2\.is_approx\(\)\)\s*return rdiv\(a2,b,contextptr\);/, "if (a==b && a.type!=_REAL && b.type!=_REAL)"],
+  // G804 (F486), patch 0070: sym_add (and sym_sub, sym_mult, rdiv, _division) takes an operand accurate_evalf leaves symbolic (pi/10^11)
+  // at has_evalf's Digits, the default's under vector arithmetic's context0: [[pi]]/10^11+evalf([[30000000]]) = [[30000000.0]] at Digits 30
+  ["0070-vector-entry-mpfr-precision.patch", "giac-2.1.0/src/gen.cc", /b2=accurate_evalf\(b,mpfr_get_prec\(a\._REALptr->inf\)\);\s*if \(b2\.is_approx\(\)\)\s*return a\+b2;/, "gen sym_add(const gen & a,const gen & b,GIAC_CONTEXT){"],
+  // ... and Eta (under Zeta) sums its series with the terms of 16 digits at any precision (Zeta(1/2+i) right to about 20 digits at Digits 40)
+  ["0070-vector-entry-mpfr-precision.patch", "giac-2.1.0/src/usual.cc", /int ndigits=16; \/\/ FIXME\? use decimal_digits;\s*double n=/, "gen Eta(const gen & s,int ndiff,GIAC_CONTEXT){"],
 ];
 
 const tar = tarball(SOURCES.giac);

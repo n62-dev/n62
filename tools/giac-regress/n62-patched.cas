@@ -1010,6 +1010,12 @@ Digits:=40:; pc("g160-1e400-pow-sqrt-neg1-1e-3-30",'((10^400)^sqrt(-1-10^-3))',-
 // patch 0025-pow-root-extract-branch.patch
 // g160-neg-1e400-pow-i-over-1000-12 (precision.yaml, oracle)
 Digits:=40:; pc("g160-neg-1e400-pow-i-over-1000-12",'((-10^400)^(i/1000))',(603099479051/10^12)+(793730137385/10^12)*i,5/10^13+5/10^13);
+// patch 0070-vector-entry-mpfr-precision.patch
+// g140-zeta-half+i-over-2^300-30 (precision.yaml, oracle)
+Digits:=40:; pc("g140-zeta-half+i-over-2^300-30",'(Zeta(1/2+i)/2^300)',(706597373582931562906564528723/10^121)-(35448551322645006499786948929/10^119)*i,5/10^122+5/10^121);
+// patch 0070-vector-entry-mpfr-precision.patch
+// g140-zeta-half+i-plus-pi-30 (precision.yaml, oracle)
+Digits:=40:; pc("g140-zeta-half+i-plus-pi-30",'(Zeta(1/2+i)+pi)',(328552908066698229878703304976/10^29)-(72209974353167308912617513458/10^29)*i,5/10^30+5/10^31);
 // patch 0028-trunc-toward-zero.patch
 // g157-subst-trunc-x-neg-1.3 (precision.yaml, derived)
 Digits:=40:; pc("g157-subst-trunc-x-neg-1.3",'(subst(trunc(x),x=-13/10))',-1,5/10^12);
@@ -1784,6 +1790,15 @@ Digits:=40:; pc("g802-det-exp-approx-entry-scaled-40",'det(exp([[approx(1/10),ex
 // patch 0069-vector-mpfr-arith-recursion.patch
 // g802-plus-vector-approx-float-1-40 (oracle: mpmath)
 Digits:=40:; pc("g802-plus-vector-approx-float-1-40",'([approx(1/10),exp(1)]+approx(2))[1]',47182818284590452353602874713526624978/10^37,5/10^38);
+// patch 0070-vector-entry-mpfr-precision.patch
+// g804-add-matrix-pi-over-1e11-30 (derived: the exact value)
+Digits:=30:; pc("g804-add-matrix-pi-over-1e11-30",'(([[pi]]/10^11+evalf([[30000000]]))[0][0]-30000000)*10^11',pi,1/10^8);
+// patch 0070-vector-entry-mpfr-precision.patch
+// g804-sub-matrix-pi-over-1e11-30 (derived: the exact value)
+Digits:=30:; pc("g804-sub-matrix-pi-over-1e11-30",'(30000000-(evalf([[30000000]])-[[pi]]/10^11)[0][0])*10^11',pi,1/10^8);
+// patch 0070-vector-entry-mpfr-precision.patch
+// g804-mult-vector-approx-e-30 (derived: the exact value)
+Digits:=30:; pc("g804-mult-vector-approx-e-30",'((2*[approx(1/10),exp(1)])[1]-5)*10^14',(2*exp(1)-5)*10^14,1/10^8);
 // patch 0067-convert-subtype-integer.patch
 // g803-convert-129-2-half-refused (derived: no integer subtype; Parisse, 2026-11-24: "it should probably error")
 Digits:=40:; pasr:=0:; try { convert(129,2,1/2); } catch (err) { pasr:=1; }:; pc("g803-convert-129-2-half-refused",'pasr',1,1/10^30);
