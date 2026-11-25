@@ -372,3 +372,31 @@ describe("R872: Enter stands out", () => {
     for (const l of ["Enter on the keypad (non-text)", "Enter apart from Shift", "Enter apart from Alpha"]) expect(ls, l).toContain(l);
   });
 });
+
+// R933 (owner, 2026-11-24, on the Fairphone): in Solarized Dark, Solarized Light and Black & White Light the keys that are not
+// number keys stood too near "the background"; the number keys are fine; "a touch darker". The keys sit on the keypad's --panel
+// (Keypad.svelte .pad), so that is the background measured: on phase-1 --key-op stood 1.017, 1.016 and 1.011 from it, --key-num
+// 1.184, 1.153 and 1.182. Each of the four other fills is now at least --key-num's contrast to --panel minus 0.05, moved darker
+// (the owner's word, and the nearest side in all three); Black & White Light's Plain keys (its two neutral tones) already stood
+// 1.140 on the light side and stays. High contrast and the other looks are not part of R933.
+describe("R933: the non-digit keys stand off the keypad as the digit keys do", () => {
+  const SIDE: Record<string, "darker" | "lighter"> = { "solarized dark": "darker", "solarized light": "darker", "bw light": "darker", "bw light plain": "lighter", "solarized dark plain": "darker", "solarized light plain": "darker" };
+  for (const c of combos().filter((x) => !x.high && ["solarized dark", "solarized light", "bw light"].includes(`${x.family} ${x.brightness}`))) {
+    const side = SIDE[`${c.family} ${c.brightness}${c.plain ? " plain" : ""}`] as string;
+    it(`${selector(c)}: --key-op, --key-fn, --key-ctl and --key-nav at least --key-num's contrast to --panel minus 0.05, ${side} than --panel`, () => {
+      const { t } = theme(c);
+      const panel = t["panel"] as string;
+      const min = cr(t["key-num"] as string, panel) - 0.05;
+      for (const k of ["key-op", "key-fn", "key-ctl", "key-nav"]) {
+        const f = t[k] as string;
+        expect(cr(f, panel), `${k} ${f} on --panel ${panel}`).toBeGreaterThanOrEqual(min);
+        expect(lum(f) < lum(panel) ? "darker" : "lighter", `${k} ${f}`).toBe(side);
+      }
+    });
+  }
+  it("--key-num stays the family's own in those looks (the digit keys were fine)", () => {
+    expect(theme({ family: "solarized", brightness: "dark", high: false, plain: false }).t["key-num"]).toBe("#3d556f");
+    expect(theme({ family: "solarized", brightness: "light", high: false, plain: false }).t["key-num"]).toBe("#fffff4");
+    expect(theme({ family: "bw", brightness: "light", high: false, plain: false }).t["key-num"]).toBe("#ffffff");
+  });
+});
