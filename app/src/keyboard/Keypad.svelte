@@ -189,17 +189,19 @@
     popEl = el;
     pop = { x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop, text, variable: typed(target as Key) === undefined && typesVariable(act(target as Key)) };
   }
-  // the pop stays inside the pad's width (a key at the edge): measured once the pop is drawn, before it is painted
-  $effect(() => {
-    if (!pop || !popNode || !padEl) return;
-    const half = popNode.offsetWidth / 2;
-    popNode.style.left = `${Math.min(Math.max(pop.x, half), padEl.clientWidth - half)}px`;
-  });
+  // the pop and the flick bubble stay inside the pad's width (a key at the edge; R905: one clamp), measured once drawn, before it is painted (+1: offsetWidth is rounded)
+  const clampLeft = (node: HTMLElement | undefined, x = 0): void => {
+    const half = ((node?.offsetWidth ?? 0) + 1) / 2;
+    if (node && padEl) node.style.left = `${Math.min(Math.max(x, half), padEl.clientWidth - half)}px`;
+  };
+  $effect(() => clampLeft(popNode, pop?.x));
+  $effect(() => clampLeft(bubbleNode, bubble?.x));
 
   /** The bubble above a key while a flick is armed (P7 point 2): what the lift will fire, or ✕ for nothing. None while
    *  Key pop-ups is off (R163): the flick still fires. */
   let bubble = $state<{ x: number; y: number; dir: Flick; text: string; none: boolean; variable: boolean } | null>(null);
   let bubbleOwner: number | undefined;
+  let bubbleNode: HTMLDivElement | undefined = $state();
 
   /** What a flick on this key fires, as the bubble shows it (empty text: nothing). Mirrors App.svelte's press(). */
   function flickText(k: Key, dir: Flick): string {
@@ -448,6 +450,7 @@
       data-var={bubble.variable}
       style:left={`${bubble.x}px`}
       style:top={`${bubble.y}px`}
+      bind:this={bubbleNode}
       aria-hidden="true"
     >{bubble.text}</div>
   {/if}
