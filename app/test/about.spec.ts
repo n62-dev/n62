@@ -137,8 +137,8 @@ test("Why trust it (R174) at 360 × 740: the first line and the last are readabl
 test.describe("by touch", () => {
   test.beforeEach(async ({ page }) => {
     await open(page);
-    await page.getByTestId("chip-format").tap();
-    await row(page, "settings").tap();
+    await page.getByTestId("chip-format").tap(); // Settings › Mode (R927); ‹ up to Settings
+    await sheet(page).getByRole("button", { name: "Back" }).tap();
     await row(page, "help").tap();
   });
 

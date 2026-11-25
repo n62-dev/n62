@@ -21,22 +21,22 @@ async function pickFirst(page: Page): Promise<void> {
   await expect(rows(page).nth(0)).toHaveAttribute("data-selected", "true");
 }
 
-test("R901: ▲▲, ⚙, Esc Esc: the first row is still picked, its buttons up", async ({ page }) => {
+test("R901: ▲▲, ⚙, Esc: the first row is still picked, its buttons up", async ({ page }) => {
   await pickFirst(page);
-  await tap(page, ["help"]); // the ⚙ key: the Settings root
+  await tap(page, ["help"]); // the ⚙ key: the Settings root (R927)
   await expect(title(page)).toHaveText("Settings");
-  await tap(page, ["esc", "esc"]);
+  await tap(page, ["esc"]);
   await expect(title(page)).toHaveCount(0);
   await expect(picked(page)).toHaveCount(1);
   await expect(rows(page).nth(0)).toHaveAttribute("data-selected", "true");
   await expect(page.getByTestId("row-actions")).toBeVisible();
 });
 
-test("R901: ▲▲, the Mode chip, Esc: the first row is still picked", async ({ page }) => {
+test("R901: ▲▲, the Mode chip, Esc Esc: the first row is still picked", async ({ page }) => {
   await pickFirst(page);
   await tap(page, ["@mode"]);
   await expect(title(page)).toHaveText("Settings › Mode");
-  await tap(page, ["esc"]);
+  await tap(page, ["esc", "esc"]); // (R927: up to Settings, then closed)
   await expect(title(page)).toHaveCount(0);
   await expect(picked(page)).toHaveCount(1);
   await expect(rows(page).nth(0)).toHaveAttribute("data-selected", "true");

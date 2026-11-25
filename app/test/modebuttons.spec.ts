@@ -61,15 +61,15 @@ test.describe("by touch", () => {
 
   test("the chip, then Significant digits opens its list; 20 is one more tap; ◀ from that list goes up to Mode", async ({ page }) => {
     await page.getByTestId("chip-format").tap();
-    await tap(page, ["d3"]);
-    await expect(title(page)).toHaveText("Mode › Significant digits");
+    await tap(page, ["d4"]); // (R927: Preset is row 1)
+    await expect(title(page)).toHaveText("Settings › Mode › Significant digits");
     await expect(sheet(page).locator('[data-id="12"]')).toHaveAttribute("data-selected", "true");
     await sheetKey(page, ["left"]);
     await expect(title(page)).toHaveText("Settings › Mode");
-    await tap(page, ["esc"]);
+    await tap(page, ["esc", "esc"]);
     await expect(sheet(page)).toHaveCount(0);
     await page.getByTestId("chip-format").tap();
-    await tap(page, ["d3"]);
+    await tap(page, ["d4"]);
     await sheet(page).locator('[data-id="20"]').tap();
     await expect(sheet(page)).toHaveCount(0);
     expect(await setting(page, "digits")).toBe(20);
@@ -94,7 +94,7 @@ test.describe("by keys", () => {
     await expect(sheet(page)).toBeVisible();
     await sheetKey(page, ["left", "left"]);
     await expect(opt(page, "format", "pfx")).toHaveAttribute("aria-pressed", "true"); // round the end
-    await sheetKey(page, ["up", "d1"]); // Angle row: the digit steps it
+    await sheetKey(page, ["up", "d2"]); // Angle row: the digit steps it
     expect(await setting(page, "angle")).toBe("deg");
     await expect(sheet(page)).toBeVisible();
     await tap(page, ["enter"]);

@@ -260,10 +260,10 @@ test("keys typed while the Mode sheet's code loads wait for it, and are not type
   await expect(page.locator('[data-testid="result"]')).toHaveCount(0);
 });
 
-test("digits to 20: Mode, 3, 7", async ({ page }) => {
+test("digits to 20: Mode, 4, 7", async ({ page }) => {
   await open(page);
   await tap(page, ["@mode", "d4"]);
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Significant digits");
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Mode › Significant digits");
   await expect(active(page)).toHaveAttribute("data-id", "12"); // the current value is highlighted and marked
   await expect(sheet(page).locator('[data-id="12"]')).toHaveAttribute("data-selected", "true");
   await tap(page, ["d7"]);
@@ -294,28 +294,31 @@ test("the format and digits chip opens the Mode sheet on Format; ◀ ▶ change 
   expect(await page.evaluate(() => window.n62.session.settings.entry)).toBe("textbook");
 });
 
-test("Shift and Alpha do nothing while the Mode sheet is open, and Esc goes back one level, then closes", async ({ page }) => {
+test("Shift and Alpha do nothing while the Mode sheet is open, and Esc goes back one level each, then closes", async ({ page }) => {
   await open(page);
   await tap(page, ["@mode", "shift"]);
   await expect(active(page)).toHaveAttribute("data-id", "angle");
-  await tap(page, ["d3", "esc"]);
+  await tap(page, ["d4", "esc"]);
   await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Mode");
+  await tap(page, ["esc"]);
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings"); // R927: Mode is Settings' row 1
   await tap(page, ["esc"]);
   await expect(sheet(page)).toBeHidden();
 });
 
-test("the last row of the Mode sheet opens Settings as its next level, on its first row; Esc goes back, ☰ closes it", async ({ page }) => {
+test("the chip's Mode is a level of Settings (R927): Esc goes up to Settings, on its row 1; a section's tap opens it; ☰ closes it", async ({ page }) => {
   await open(page);
   await tap(page, ["help"]);
-  await expect(page.getByTestId("sheet-title")).toHaveText("Settings"); // R49: a level of the same sheet
-  await tap(page, ["esc"]);
-  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Mode");
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings");
   await tap(page, ["esc"]);
   await expect(sheet(page)).toBeHidden();
-  await page.getByTestId("chip-format").tap(); // by touch: a chip, then the last row
-  await sheet(page).locator('[data-id="settings"]').tap();
+  await page.getByTestId("chip-format").tap(); // by touch: a chip, then up to Settings
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Mode");
+  await sheet(page).getByRole("button", { name: "Back" }).tap();
   await expect(page.getByTestId("sheet-title")).toHaveText("Settings");
-  await expect(sheet(page).locator('[data-active="true"]')).toHaveAttribute("data-id", "appearance");
+  await expect(sheet(page).locator('[data-active="true"]')).toHaveAttribute("data-id", "mode");
+  await sheet(page).locator('[data-id="numbers"]').tap();
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Numbers");
   // the bar's ☰ stays uncovered: it closes the sheet it did not open (as on Mode)
   await page.getByTestId("menu-button").tap();
   await expect(sheet(page)).toBeHidden();

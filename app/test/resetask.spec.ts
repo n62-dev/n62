@@ -73,13 +73,13 @@ for (const [w, h] of [[412, 915], [360, 740]] as const)
       await row(page, "reset").tap();
       await sheet(page).getByRole("button", { name: "Back" }).tap();
       await expect(title(page)).toHaveText("Settings");
-      await tap(page, ["d4"]);
+      await tap(page, ["d5"]);
       await expect(label(page, "reset")).toHaveText("Reset all your keys");
       // ◀ as a key
       await row(page, "reset").tap();
       await tap(page, ["left"]);
       await expect(title(page)).toHaveText("Settings");
-      await tap(page, ["d4"]);
+      await tap(page, ["d5"]);
       await expect(label(page, "reset")).toHaveText("Reset all your keys");
       // a key (▲)
       await row(page, "reset").tap();
