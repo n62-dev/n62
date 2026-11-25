@@ -10,12 +10,15 @@ const rows = (p: Page) => p.locator("article.item");
 const picked = (p: Page) => p.locator('article.item[data-selected="true"]');
 const title = (p: Page) => p.getByTestId("sheet-title");
 
-/** Two rows, then ▲▲: the first (older) row picked. */
+/** Two rows, then ▲▲: the first (older) row picked. Each answer 400 ms late, as under load (run 1597's red). */
 async function pickFirst(page: Page): Promise<void> {
-  await open(page);
+  await open(page, "engine=fake&delay=400");
+  // each row done before the next Enter: Enter is refused while a row runs (session.submit), and under load the fake
+  // engine's answer can come after the next tap (run 1597 round 2: the second Enter was dropped, one row)
   await tap(page, ["d2", "enter"]);
+  await expect(page.locator('article.item[data-status="done"]')).toHaveCount(1);
   await tap(page, ["d3", "enter"]);
-  await expect(rows(page)).toHaveCount(2);
+  await expect(page.locator('article.item[data-status="done"]')).toHaveCount(2);
   await tap(page, ["up", "up"]);
   await expect(picked(page)).toHaveCount(1);
   await expect(rows(page).nth(0)).toHaveAttribute("data-selected", "true");
