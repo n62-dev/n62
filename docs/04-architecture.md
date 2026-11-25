@@ -121,7 +121,7 @@ Cost: one `evalf` more (about 1 ms, desktop) per irrational or float result.
 
 | What | Full value (Copy › 1; Shift + Select; a hold on a history row's result) | Copy › As shown | Copy › Exact | Copy › LaTeX |
 |---|---|---|---|---|
-| Home or CAS number | full value: every confirmed digit up to P (40), trailing zeros dropped, `.` (`,` with the decimal-comma setting), plain for 1E-4 ≤ \|x\| < 1E21, else `d.ddd…E±k` | display text, without the mark | Giac's exact text when it exists (`1/3`, `sqrt(2)`) | the result LaTeX; a row with no confirmed digit (⚠ n 0) copies nothing in Full value, As shown and LaTeX (the notice says "No digit confirmed"), Exact and Python unchanged |
+| Home or CAS number | full value: every confirmed digit up to P (40) (a row nobody checked, a bare ⚠, copies the digits it shows: the digits setting or its `evalf(e,n)`), trailing zeros dropped, `.` (`,` with the decimal-comma setting), plain for 1E-4 ≤ \|x\| < 1E21, else `d.ddd…E±k` | display text, without the mark | Giac's exact text when it exists (`1/3`, `sqrt(2)`) | the result LaTeX; a row with no confirmed digit (⚠ n 0) copies nothing in Full value, As shown and LaTeX (the notice says "No digit confirmed"), Exact and Python unchanged |
 | Complex | `a+b*i`, each part as above | yes | yes | yes |
 | List, matrix | `{a,b}`, `[[a,b],[c,d]]`, elements as above; with decimal comma `{1,5;2}`, `[[a;b];[c;d]]` | yes | yes | yes |
 | Solve root, analysis value | full value | yes | — | — |
