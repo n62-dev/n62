@@ -26,6 +26,7 @@ import { familyOf, FAMILIES, stepped } from "../theme/lookView.ts";
 import { yourKeysItems, yourKeysValue, type SettingsEnv } from "./yourKeys.ts";
 import { presetRow, switchedRow } from "./presetsView.svelte.ts";
 import type { Sheet } from "./sheet.svelte.ts";
+import type { AppShell } from "../apps/shell.svelte.ts";
 import type { Layer } from "../keyboard/keyboard.ts";
 import { wordStore } from "../state/cycleForms.ts";
 import type { WordStore } from "../state/wordStore.svelte.ts";
@@ -126,6 +127,14 @@ function modeValue(session: Session): string {
  *  chunk (its size pin). */
 export function toSlot(sheet: Sheet | null, slot: { id: string; layer: Layer }): void {
   if (sheet?.enterAt("keys")) sheet.goKey(slot.id, slot.layer === "shift" ? "shift" : "primary");
+}
+
+/** R927: the Settings root (App.svelte openSettings, openMode; Sheet.settingsOpen knows it by its title), on its row 1, Mode; with
+ *  `modeAt` (the chip, a user key that holds Mode) Mode is pushed on that row, so back walks up the tree. R901: the pick stays (a
+ *  look at Settings changes nothing behind it). In this chunk, not the start chunk (its size pin). */
+export function showSettings(shell: AppShell, session: Session, env: SettingsEnv, modeAt?: string): void {
+  shell.showMenu(t("key.settings"), settingsSections(session, env, modeAt), { remember: false, at: "mode" });
+  if (modeAt !== undefined) shell.sheet?.enterAt("mode");
 }
 
 /** Settings (R49, docs/05 3.4): the next level of the open sheet from the ⚙ in every ☰ menu's title row (AppShell.toSettings,

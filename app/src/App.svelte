@@ -257,14 +257,9 @@
    *  (R49, R927, docs/05 3.4). `slot` (R705, an empty free key): Settings › Your keys, on that slot's row. */
   function openSettings(slot?: FindSlot): void {
     onModeSheet((m) => {
-      showSettings(m, "mode");
+      m.showSettings(shell, session, settingsEnv);
       if (slot) m.toSlot(shell.sheet, slot); // R705: on into Your keys
     });
-  }
-  /** R927: the Settings root (sheet id `settings`, Sheet.settingsOpen), on row `at`; Mode in it opens on `modeAt`. R901: the pick
-   *  stays (a look at Settings changes nothing behind it). */
-  function showSettings(m: ModeSheetCode, at: string, modeAt?: string): void {
-    shell.showMenu(t("key.settings"), m.settingsSections(session, settingsEnv, modeAt), { remember: false, at, id: "settings" }); // (the id: Sheet SETTINGS_SHEET, not imported: the sheet code is lazy)
   }
   // Android back is Esc for the open sheet (R21b, R49): it goes back one level, and the root closes. Each level it goes
   // back takes a new history entry for the level now on top.
@@ -281,10 +276,7 @@
    *  Mode: Settings › Mode (R927: the root with Mode pushed, so back walks up the tree). Without `at` it starts on Angle, so
    *  Mode, ▶, Enter always switches the angle unit. */
   function openMode(at = "angle"): void {
-    onModeSheet((m) => {
-      showSettings(m, "mode", at);
-      shell.sheet?.enterAt("mode");
-    });
+    onModeSheet((m) => m.showSettings(shell, session, settingsEnv, at));
   }
   /** Run `open` at once when the lists are loaded; else after the load, with every key meanwhile waiting in the queue
    *  (decisions.md R8), so none of them lands on the line before the sheet is there. */

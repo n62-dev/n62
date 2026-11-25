@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R89 (docs/05 3.4, docs/archive/mockups/settings.html section 4): the presets in Mode. Mode's row 5 shows the active preset and
+// R89 (docs/05 3.4, docs/archive/mockups/settings.html section 4): the presets in Mode. Mode's row 1 (R927) shows the active preset and
 // what it holds; ◀ ▶ apply the previous or next one with the sheet open; a tap, a digit or Enter opens `Mode › Presets`
 // (the presets, Save, Edit ›). A preset's page holds its five ticks, Update and Rename or delete ›. A name is typed in the
 // entry line under the label "Preset name" (AppShell.prompt: route.ts gives it each key first, so Enter and Esc never
@@ -299,7 +299,7 @@ function switchTo(m: Presets, id: number, host: PresetsHost): void {
 
 const activeOf = (m: Presets): Preset | undefined => m.list.find((x) => x.id === m.active);
 
-/** Mode's row 5: the active preset's name (a dot after it once a held setting changed) and what it holds; ◀ ▶ apply
+/** Mode's row 1 (R927): the active preset's name (a dot after it once a held setting changed) and what it holds; ◀ ▶ apply
  *  the previous or next preset, round the ends; a tap, a digit or Enter lists them. */
 export function presetRow(session: Session, host: PresetsHost): MenuItem {
   void load(session, host);

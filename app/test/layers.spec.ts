@@ -139,10 +139,10 @@ async function focusChannels(s: Sweep, page: Page): Promise<void> {
 
 /** The keys whose press may open a sheet over the view (the view's own list): key id → the sheet it opens. A sheet any other
  *  key opens is a leak. */
-const SHEET_KEYS: Readonly<Record<string, string>> = { help: "settings", math: "find" }; // ⚙ = Settings (R927); Math = Find on units
+const SHEET_KEYS: Readonly<Record<string, string>> = { help: "list:Settings", math: "find" }; // ⚙ = Settings (R927); Math = Find on units
 
 /** The sheets a tap on the bar may open over the view: the format chip's, ☰'s, APP▾'s (the place picker). */
-const SHEET_TAPS: Readonly<Record<string, string>> = { format: "settings", menu: "list:Units", place: "apps" };
+const SHEET_TAPS: Readonly<Record<string, string>> = { format: "list:Settings", menu: "list:Units", place: "apps" };
 
 /** Opens the view again as the test first opened it (on the typed line; on the picked row). */
 type Reopen = () => Promise<void>;

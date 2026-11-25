@@ -72,8 +72,8 @@ test.beforeEach(async ({ page }) => {
 for (const [name, act] of CHANNELS) {
   test(`under Mode, ${name} is a dead press: the line 7+1, Mode stays`, async ({ page }) => {
     await page.getByTestId("chip-format").tap();
-    await expect.poll(() => sheetId(page)).toBe("settings"); // Settings › Mode (R927)
-    await deadUnder(page, act, "7+1", "settings");
+    await expect.poll(() => sheetId(page)).toBe("list:Settings"); // Settings › Mode (R927)
+    await deadUnder(page, act, "7+1", "list:Settings");
   });
 }
 
