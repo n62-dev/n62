@@ -342,11 +342,6 @@ export class Sheet {
   get level(): Level {
     return this.levels[this.levels.length - 1] as Level;
   }
-  /** R900: the Paste key types a pasted name into the open level's filter: Find, Vars and Store in, not Memory (its Paste is R816's). */
-  get pastes(): boolean {
-    const l = this.level;
-    return (this.id === "find" || this.id === "store") && l.filterable && l.digitPick === undefined && l.grid === undefined;
-  }
   get depth(): number {
     return this.levels.length;
   }

@@ -91,7 +91,9 @@ test("Find: Paste with erfc types the query erfc, its row highlighted; Enter put
   await setClipboard(page, "erfc");
   await tap(page, ["math"]);
   await expect(find(page)).toBeVisible();
-  await tap(page, ["shift", "deselect"]);
+  await tap(page, ["shift"]);
+  await expect(page.locator('[data-key="deselect"]')).not.toHaveAttribute("data-dead", "true"); // drawn as what it does there (R820)
+  await tap(page, ["deselect"]);
   await expect(find(page).getByTestId("sheet-filter")).toHaveText("erfc");
   await expect(active(page)).toContainText("erfc");
   await tap(page, ["enter"]);
@@ -120,6 +122,7 @@ test("controls: Memory's Paste stays a dead press with nothing typed (R816 to co
   await tap(page, ["shift", "math"]);
   await expect(find(page)).toBeVisible();
   await tap(page, ["shift"]);
+  await expect(page.locator('[data-key="deselect"]')).toHaveAttribute("data-dead", "true"); // Memory: dimmed, dead
   const v = (await vibrations(page)).length;
   await tap(page, ["deselect"]);
   await deadAfter(page, v, false);

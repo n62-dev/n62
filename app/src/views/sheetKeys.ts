@@ -3,6 +3,7 @@
 // is read by what it is, never by the layer, so no key goes through the sheet into the entry line (rule 4).
 import { actionFor, type Key, type Layer } from "../keyboard/keyboard.ts";
 import { deadPress, holdKeys, isSelect, layerOf, modsFor, special, type Mods, type RouteCtx } from "../keyboard/route.ts";
+import type { Sheet } from "./sheet.svelte.ts";
 
 export type SheetKey =
   | { kind: "move"; by: 1 | -1 }
@@ -144,8 +145,16 @@ export function storeKey(key: Key, shift: boolean, alpha: boolean, cas: boolean,
 
 /** The open sheet as the keys read it (R820): its kind (`find`: Vars, Find and Memory; `store`; `other`: the rest), whether the open level
  *  takes letters (`filter`), how many rows it numbers, whether its query is empty, whether the CAS view is under the keys (the
- *  store sheet's letter case, R58), and whether the Paste key types a pasted name into its filter (`paste`, Sheet.pastes, R900). */
-export type SheetCtx = { kind: "find" | "store" | "other"; filter: boolean; numbered: number; empty: boolean; cas: boolean; paste?: boolean };
+ *  store sheet's letter case, R58), and whether the Paste key types a pasted name into its filter (`paste`, R900; the keypad gives the
+ *  sheet itself, `of`, and pastes reads it here, so the start chunk carries no rule of its own). */
+export type SheetCtx = { kind: "find" | "store" | "other"; filter: boolean; numbered: number; empty: boolean; cas: boolean; paste?: boolean; of?: Sheet };
+
+/** R900: the Paste key types a pasted name into the open level's filter: Find, Vars and Store in, not Memory (its Paste is R816's)
+ *  nor a matrix grid's level. */
+export function pastes(sheet: Sheet): boolean {
+  const l = sheet.level;
+  return (sheet.id === "find" || sheet.id === "store") && l.filterable && !l.digitPick && !l.grid;
+}
 
 /** R900: the Paste key (Shift + Deselect, R723), by a tap with its modifiers or a flick's layer; a free key holding it does nothing in a sheet. */
 const isPaste = (key: Key, mods: Mods, layer: Layer | undefined): boolean => {
@@ -180,7 +189,7 @@ export function sheetJob(key: Key, s: SheetCtx, mods: Mods, layer: Layer | undef
  *  pop and the flick bubble show it); `dead`: the key does nothing there (drawn dimmed, its face kept). Any other job (a pick, ▲ ▼ ◀ ▶,
  *  Enter, Esc, ⌫, a key that passes or goes on to the line): the key's own face, lit. */
 export function sheetFace(key: Key, s: SheetCtx, mods: Mods, layer?: Layer): { text?: string; dead: boolean } {
-  const job = sheetJob(key, s, mods, layer);
+  const job = sheetJob(key, s.of ? { ...s, paste: pastes(s.of) } : s, mods, layer);
   if (job.kind === "letter") return { text: job.ch, dead: false };
   return { dead: job.kind === "none" };
 }
@@ -236,7 +245,7 @@ export function sheetAct(c: RouteCtx, key: Key, layer: Layer | undefined, mods?:
   // Alpha + Vars A, lower case in CAS, R58; a flick as its layer), so the typed path stores as before; a key that types no name goes on to
   // the line (`line`) with its Shift or Alpha, and one the sheet takes uses a one-shot Shift or Alpha up, as on the line
   const m = find ? { shift: c.session.shift, alpha: c.session.alpha } : (mods ?? modsFor(c, layer));
-  const k = sheetJob(key, { kind: find ? "find" : store ? "store" : "other", filter: level.filterable, numbered: level.numbered, empty: level.filter === "", cas: c.casKeys, paste: sheet.pastes }, m, layer);
+  const k = sheetJob(key, { kind: find ? "find" : store ? "store" : "other", filter: level.filterable, numbered: level.numbered, empty: level.filter === "", cas: c.casKeys, paste: pastes(sheet) }, m, layer);
   if (store && k.kind !== "line" && layer === undefined) c.session.clearModifiers();
   // in Find a one-shot Shift or Alpha is used up by the key it types (a lock stays, R889); elsewhere a sheet leaves it as it is
   if (find && ((c.session.shift && !c.session.shiftLock) || (c.session.alpha && !c.session.alphaLock))) c.session.clearModifiers();
