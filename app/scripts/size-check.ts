@@ -623,8 +623,12 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  setFixDecimals, which only the lazy Mode sheet calls, moved to state/modeSets.ts (−60 B gzip before the merge with R930).
  *  61,880 → 60,670 B (A272, the measure changed, not the code): gzip and brotli hold the hashed file names fixed (hashFree), so a new
  *  lazy-chunk, Find-index or engine hash no longer moves the pin (the hash-only notes above, G313f1, G341, G308, are in git log -L).
- *  Phase-1 5812dc91's start files: 61,798 B gzip real, 60,612 B held (172.71 kB raw). 60,612 B + 0.05 kB, rounded up to 10 B. */
-export const START_PIN_GZIP = 60_670;
+ *  Phase-1 5812dc91's start files: 61,798 B gzip real, 60,612 B held (172.71 kB raw). 60,612 B + 0.05 kB, rounded up to 10 B.
+ *  60,670 → 60,680 B (R901, Settings and Mode keep the picked row; the budget stays): phase-1 a1b3b033 holds 60,666 B, the branch
+ *  60,672 B (route.ts run lets settings and mode past historyKey as it lets fmt, +9 B; App.svelte drops two pick resets, −3 B).
+ *  A check inside historyKey measured 60,675 B, a regex or three compares 60,674-60,675 B, openSettings folded into openMode
+ *  60,675 B. Rounded up to 10 B. */
+export const START_PIN_GZIP = 60_680;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

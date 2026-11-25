@@ -257,8 +257,7 @@
    *  row (R49, docs/05 3.4). `slot` (R705, an empty free key): Settings › Your keys, on that slot's row. */
   function openSettings(slot?: FindSlot): void {
     onModeSheet((m) => {
-      picked = null;
-      shell.showMenu(t("mode.title"), m.modeItems(session, settingsEnv), { remember: false, at: "settings" });
+      shell.showMenu(t("mode.title"), m.modeItems(session, settingsEnv), { remember: false, at: "settings" }); // R901: the pick stays (a look at Settings changes nothing behind it)
       shell.sheet?.enter(); // its submenu: a level on top
       if (slot) m.toSlot(shell.sheet, slot); // R705: on into Your keys
     });
@@ -278,8 +277,7 @@
    *  Mode: the Mode sheet. Without `at` it starts on Angle, so Mode, ▶, Enter always switches the angle unit. */
   function openMode(at?: string): void {
     onModeSheet((m) => {
-      picked = null;
-      shell.showMenu(t("mode.title"), m.modeItems(session, settingsEnv), { remember: false, at });
+      shell.showMenu(t("mode.title"), m.modeItems(session, settingsEnv), { remember: false, at }); // R901: the pick stays, as for Settings
     });
   }
   /** Run `open` at once when the lists are loaded; else after the load, with every key meanwhile waiting in the queue
