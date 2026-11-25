@@ -5,8 +5,10 @@
 // ink may change with the outline. Ink, not the whole box: the box's top-left corner meets the outline's rounded corner,
 // which is the key's ground. Controls: no key face or Alpha legend moves with High contrast, a Shift legend moves only
 // down and its ink meets no face's ink. 412 and 360 px, N62 Dark and Light.
+// R906 (hunt 2026-11-23, h1 #5): a key that draws its own 1 px inset outline (a user key U1–U6, the unit view's U cells)
+// had the same crossing in normal contrast: the same ink test there, with that outline removed (--stroke-thin 0).
 import { expect, test, type Page } from "@playwright/test";
-import { open } from "./helpers.ts";
+import { flick, open } from "./helpers.ts";
 
 const set = (page: Page, brightness: "dark" | "light", contrast: "normal" | "high"): Promise<void> =>
   page.evaluate(
@@ -50,10 +52,10 @@ async function shot(page: Page, ...css: string[]): Promise<string> {
 /** Device pixels inside the Shift legends' boxes where `base` differs from `a` by more than `by[0]` in a channel and from
  *  `b` by more than `by[1]`. Ink is a pixel that hiding its text changes by more than 32 levels (a translated legend
  *  shifts the ground under its box by a few levels). */
-async function both(page: Page, base: string, a: string, b: string, by: [number, number]): Promise<number> {
+async function both(page: Page, base: string, a: string, b: string, by: [number, number], sel = ".shiftlegend", min = 21): Promise<number> {
   const pad = (await page.locator(".pad").boundingBox())!;
-  const legends = await boxes(page, ".shiftlegend");
-  expect(legends.length).toBeGreaterThan(20);
+  const legends = await boxes(page, sel);
+  expect(legends.length).toBeGreaterThanOrEqual(min);
   return page.evaluate(
     async ({ shots, by, legends, pad }) => {
       const decode = async (b64: string): Promise<ImageData> => {
@@ -111,6 +113,51 @@ for (const width of [412, 360]) {
       });
       // the moved legend touches no face: no pixel is ink of both (the boxes overlap already: a face's line box is taller)
       expect(await both(page, bare, await shot(page, NO_OUTLINE, NO_LEGEND), await shot(page, NO_OUTLINE, NO_FACE), [32, 32])).toBe(0);
+    });
+  }
+}
+
+/** R906: the inset outline of the user keys and the unit view's cells, gone; their drop shadow stays. */
+const NO_KEY_OUTLINE = ".pad .key { --stroke-thin: 0px !important; }";
+/** The Shift legends of the keys that draw that outline. */
+const OUTLINED = '.shiftlegend:is(.key[data-user] > *, .key[data-pad="user"] > *)';
+
+/** No ink of an outlined key's Shift legend changes with its outline, and that legend's ink meets no face's ink. */
+async function clear(page: Page, n: number): Promise<void> {
+  const bare = await shot(page, NO_KEY_OUTLINE);
+  const ink = await shot(page, NO_KEY_OUTLINE, NO_LEGEND);
+  expect(await both(page, bare, ink, await shot(page), [32, 0], OUTLINED, n)).toBe(0);
+  expect(await both(page, bare, ink, await shot(page, NO_KEY_OUTLINE, NO_FACE), [32, 32], OUTLINED, n)).toBe(0);
+}
+
+for (const width of [412, 360]) {
+  for (const brightness of ["dark", "light"] as const) {
+    test(`R906 normal contrast at ${width} px, N62 ${brightness}: a user key's outline crosses no Shift legend`, async ({ page }) => {
+      await page.setViewportSize({ width, height: width === 412 ? 915 : 800 });
+      await open(page);
+      await set(page, brightness, "normal");
+      await page.evaluate(() => {
+        window.n62.userKeys.set("u1", "primary", { label: "sinh", action: { insert: "\\sinh\\left(#0\\right)" } });
+        window.n62.userKeys.set("u1", "shift", { label: "asinh", action: { insert: "\\operatorname{asinh}\\left(#0\\right)" } });
+        window.n62.userKeys.set("u2", "shift", { label: "acosh", action: { insert: "\\operatorname{acosh}\\left(#0\\right)" } });
+      });
+      await expect(page.locator('[data-key="u1"]')).toHaveAttribute("data-user", "set");
+      await expect(page.locator('[data-key="u2"]')).toHaveAttribute("data-user", "empty");
+      await expect(page.locator('[data-key="u1"] .shiftlegend')).toHaveText("asinh");
+      await expect(page.locator('[data-key="u2"] .shiftlegend')).toHaveText("acosh");
+      await clear(page, 2);
+    });
+
+    test(`R906 normal contrast at ${width} px, N62 ${brightness}: the unit view's U cells' outline crosses no Shift legend`, async ({ page }) => {
+      await page.setViewportSize({ width, height: width === 412 ? 915 : 800 });
+      await open(page, "");
+      await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
+      await set(page, brightness, "normal");
+      await flick(page, "tmpl", "up");
+      await page.waitForFunction(() => window.n62.unitView !== undefined && document.querySelector('[data-pad="unit"]') !== null);
+      for (const [id, text] of [["u3", "l ton"], ["u4", "eV"], ["u6", "St"]])
+        await expect(page.locator(`.pad [data-key="${id}"][data-pad="user"] .shiftlegend`)).toHaveText(text!);
+      await clear(page, 3);
     });
   }
 }
