@@ -398,9 +398,10 @@ const RANK: Record<Mark, number> = { "⚠": 0, "≈": 1, "=": 2 };
 function weakest(a: MarkInfo, b: MarkInfo): MarkInfo {
   if (RANK[a.mark] !== RANK[b.mark]) return RANK[a.mark] < RANK[b.mark] ? a : b;
   if (a.mark !== "⚠") return a;
-  // the fewer confirmed digits, with the count its form asks for
-  const p = a.n === undefined ? b : b.n === undefined ? a : a.n <= b.n ? a : b;
-  return { mark: "⚠", ...(p.n === undefined ? {} : { n: p.n }), ...(p.of === undefined ? {} : { of: p.of }), ...((a.warn ?? b.warn) ? { warn: a.warn ?? b.warn } : {}) };
+  // the fewer confirmed digits, with the count its form asks for (both are ⚠ here), and either's warning
+  const p = a.n === undefined ? b : b.n === undefined || a.n <= b.n ? a : b;
+  const warn = a.warn ?? b.warn;
+  return warn ? { ...p, warn } : p;
 }
 
 /**
@@ -429,10 +430,8 @@ export function markOf(f: PrecisionFacts, o: FormatOptions): MarkInfo | null {
   const rd = f.reliableDigits;
   // G795: FIX judged as drawn, an integer part longer than the confirmed digits in the SCI fallback
   const oc = withConfirmedFix(o, rd);
-  if (rd !== null && (rd < 1 || parts.some((p) => digitsShown(p, oc) > rd))) {
-    const of = oc.format === "FIX" && parts.length ? { of: Math.max(...parts.map((p) => digitsShown(p, oc))) } : {};
-    return { mark: "⚠", n: Math.max(0, rd), ...of, ...(f.warn ? { warn: f.warn } : {}) };
-  }
+  const shown = Math.max(0, ...parts.map((p) => digitsShown(p, oc)));
+  if (rd !== null && (rd < 1 || shown > rd)) return { mark: "⚠", n: Math.max(0, rd), ...(oc.format === "FIX" && shown ? { of: shown } : {}), ...(f.warn ? { warn: f.warn } : {}) };
   if (f.warn) return { mark: "⚠", warn: f.warn };
   if (f.exact && parts.every((p) => shownExactly(p, oc))) return { mark: "=" };
   return { mark: "≈" };
