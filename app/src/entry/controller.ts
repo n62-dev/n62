@@ -252,7 +252,6 @@ export class EntryController {
     this.touched = true;
     if (!this.mf) {
       this.recalledIn = null;
-      dropLeft(); // R902
       this.queue.push(a);
       return;
     }
