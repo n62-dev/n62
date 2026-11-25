@@ -299,7 +299,7 @@ const screens: Record<string, (page: Page) => Promise<void>> = {
   },
   "Mode sheet open": async (page) => {
     await tap(page, ["d1", "@mode"]);
-    await sheet(page, "Mode");
+    await sheet(page, "Settings › Mode");
   },
   "Settings level": async (page) => {
     await tap(page, ["d1", "help"]);
@@ -324,8 +324,8 @@ const screens: Record<string, (page: Page) => Promise<void>> = {
 const resume: Record<string, string[]> = {
   "Tmpl sheet open": ["esc", "d3"],
   "Menu sheet open": ["esc", "d3"],
-  "Mode sheet open": ["esc", "d3"],
-  "Settings level": ["esc", "esc", "d3"],
+  "Mode sheet open": ["esc", "esc", "d3"],
+  "Settings level": ["esc", "d3"],
   "Function Plot": ["@home", "d3"],
 };
 

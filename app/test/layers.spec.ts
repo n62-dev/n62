@@ -139,10 +139,10 @@ async function focusChannels(s: Sweep, page: Page): Promise<void> {
 
 /** The keys whose press may open a sheet over the view (the view's own list): key id → the sheet it opens. A sheet any other
  *  key opens is a leak. */
-const SHEET_KEYS: Readonly<Record<string, string>> = { help: "list:Mode", math: "find" }; // ⚙ = Mode; Math = Find on units
+const SHEET_KEYS: Readonly<Record<string, string>> = { help: "settings", math: "find" }; // ⚙ = Settings (R927); Math = Find on units
 
 /** The sheets a tap on the bar may open over the view: the format chip's, ☰'s, APP▾'s (the place picker). */
-const SHEET_TAPS: Readonly<Record<string, string>> = { format: "list:Mode", menu: "list:Units", place: "apps" };
+const SHEET_TAPS: Readonly<Record<string, string>> = { format: "settings", menu: "list:Units", place: "apps" };
 
 /** Opens the view again as the test first opened it (on the typed line; on the picked row). */
 type Reopen = () => Promise<void>;
@@ -295,7 +295,7 @@ test.describe("R916: every input channel against the unit view", () => {
 });
 
 // R921 (part 2): the same rule for the other layers over Home: the sheets (Mode, ☰, Apps, Settings, Find, Vars, Memory, "Store 7 in")
-// and the name prompt (Mode › Presets › Save). Each is opened on Home's line with one history row and every channel of part 1 is
+// and the name prompt (Settings › Mode › Presets › Save). Each is opened on Home's line with one history row and every channel of part 1 is
 // fired at it: every key of the keypad, the taps (the history row, the line, the bar's controls), a system paste and Ctrl+V,
 // a hardware `!`, µ (MathLive's own text input), Ctrl+A Ctrl+X, Undo (the key and Ctrl+Z), Esc and back. One invariant: Home's
 // line and its history change only through the layer's own list (LayerDef.acts: its picks, Enter, ▶ and the keys that keep their
@@ -377,7 +377,7 @@ const LAYERS: readonly LayerDef[] = [
     pre: "7+1",
     open: async (page) => {
       await chip(page);
-      await tap(page, ["d5", "d1"]);
+      await tap(page, ["d1", "d1"]); // Settings › Mode › Presets › Save (R927: Preset is row 1)
     },
     acts: () => true,
     prompt: true,

@@ -16,11 +16,11 @@ test.beforeEach(async ({ page }) => {
   expect(await entryValue(page)).toBe("78");
 });
 
-/** The pick sheets of the task: Tmpl, Home's ☰, the Mode sheet (the format chip) and the Shift + 9 grid. */
+/** The pick sheets of the task: Tmpl, Home's ☰, Settings (the ⚙ key; R927: the format chip opens Settings › Mode) and the Shift + 9 grid. */
 const OPENERS: Record<string, (page: Page) => Promise<void>> = {
   tmpl: (page) => tap(page, ["tmpl"]),
   "home menu": (page) => tap(page, ["@menu"]),
-  mode: (page) => page.getByTestId("chip-format").tap(),
+  settings: (page) => tap(page, ["help"]),
   "shift 9": (page) => tap(page, ["shift", "d9"]),
 };
 /** An on-screen tap on a key the sheet does not use. */
@@ -98,9 +98,9 @@ test.describe("412 × 915: a tap on the history outside the sheet closes it", ()
       expect(await state(page)).toBe(before);
     });
   }
-  test("Mode › Settings (a tall level): it closes too", async ({ page }) => {
-    await tap(page, ["help"]);
-    await expect(page.getByTestId("sheet-title")).toHaveText("Settings");
+  test("Settings › Mode (the chip, a level): it closes too", async ({ page }) => {
+    await page.getByTestId("chip-format").tap();
+    await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Mode");
     await tapHistory(page);
     await expect(sheet(page)).toHaveCount(0);
   });
@@ -110,7 +110,7 @@ test.describe("360 × 740: a sheet that fills the view leaves no history to tap 
   test.use({ viewport: { width: 360, height: 740 } });
   const FULL: Record<string, (page: Page) => Promise<void>> = {
     Mode: (page) => tap(page, ["@mode"]),
-    "Settings": (page) => tap(page, ["help"]),
+    Settings: (page) => tap(page, ["help"]),
     "Plot ☰": async (page) => {
       await tap(page, ["@symb", "@plot"]);
       await page.getByTestId("menu-button").tap();
@@ -166,10 +166,10 @@ test("a held ⌫ over a short sheet leaves it open and the line as it was", asyn
 });
 
 test("Esc on screen goes back one level from a submenu, then closes the root", async ({ page }) => {
-  await tap(page, ["help"]); // the Settings root
-  await expect(page.getByTestId("sheet-title")).toHaveText("Settings");
-  await page.locator('[data-key="esc"]').tap();
+  await page.getByTestId("chip-format").tap(); // Settings › Mode (R927)
   await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Mode");
+  await page.locator('[data-key="esc"]').tap();
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings");
   await page.locator('[data-key="esc"]').tap();
   await expect(sheet(page)).toHaveCount(0);
 });
@@ -180,7 +180,7 @@ test("a hardware Enter picks in Tmpl, a hardware digit picks in a menu", async (
   await expect(sheet(page)).toHaveCount(0);
   expect(await entryValue(page)).not.toBe("78");
   await tap(page, ["@mode"]); // the Mode sheet on Angle
-  await page.keyboard.press("1"); // a digit steps its row's value: RAD → DEG
+  await page.keyboard.press("2"); // a digit steps its row's value: RAD → DEG (Angle is row 2, R927)
   await expect(page.getByTestId("chip-angle")).toHaveAttribute("data-angle", "deg");
 });
 
