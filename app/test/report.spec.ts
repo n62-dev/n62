@@ -37,7 +37,7 @@ async function stubOpen(page: Page, returns: "window" | "null"): Promise<void> {
 async function reportRow(page: Page): Promise<void> {
   await tap(page, ["d2", "add", "d3", "enter"]);
   await expect(page.locator('[data-status="done"]')).toHaveCount(1);
-  await tap(page, ["@mode", "d6"]);
+  await tap(page, ["help"]);
   const menu = page.getByTestId("menu");
   await menu.locator('[data-id="help"]').tap();
   await menu.locator('[data-id="report"]').tap();

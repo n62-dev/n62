@@ -257,8 +257,8 @@ test("Shift and Alpha taps stay as on the G2 (one-shot, Alpha twice locks) and a
   // the counter in Settings (since R15c2: Shift + a user key whose Shift slot is Settings), with its reset
   await page.evaluate(() => window.n62.userKeys.set("u1", "shift", { label: "Settings", action: { special: "settings" } }));
   await tap(page, ["shift", "u1"]);
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings");
-  await tap(page, ["d6"]); // R49: Counters, a section of the Settings level (the sixth since R38a: Data is fifth)
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings");
+  await tap(page, ["d7"]); // R49: Counters, a section of Settings (row 7 since R927: Mode is row 1)
   const value = (id: string) => page.getByTestId("menu").locator(`[data-id="${id}"]`).getByTestId("sheet-value");
   await expect(value("taps")).toHaveText("3 / 5"); // Shift / Alpha (R53: one row); the Shift that opened Settings counts too
   await expect(value("since")).toHaveText(/^\d{4}-\d\d-\d\d$/);
@@ -302,10 +302,10 @@ test("keys typed while an app loads keep their layer: Function, Shift, a user ke
   await page.getByTestId("apps").locator('[data-id="function"]').tap();
   await tap(page, ["shift", "u1"]);
   expect(await page.evaluate(() => window.n62.shell.loading)).toBe("function");
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode");
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Mode");
   release();
   await page.waitForFunction(() => window.n62.shell.app === "function" && window.n62.shell.loading === null);
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode");
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Mode");
 });
 
 test("a typed key waiting for the load keeps its layer, and a Shift pressed after it stays for the next key", async ({ page }) => {

@@ -72,7 +72,7 @@ for (const [name, ua] of [["Firefox", FIREFOX], ["Safari", SAFARI]] as const) {
 
     test("About names the engine and says not tested", async ({ page }) => {
       await open(page);
-      await tap(page, ["@mode", "d6", "d7", "d3"]);
+      await tap(page, ["help", "d8", "d3"]);
       const row = sheet(page).locator('[role="menuitem"][data-id="browser"]');
       await expect(row).toContainText(name === "Firefox" ? "Gecko" : "WebKit");
       await expect(row).toContainText("not tested");
@@ -92,7 +92,7 @@ test.describe("Chromium", () => {
 
   test("About names Blink and says tested", async ({ page }) => {
     await open(page);
-    await tap(page, ["@mode", "d6", "d7", "d3"]);
+    await tap(page, ["help", "d8", "d3"]);
     const row = sheet(page).locator('[role="menuitem"][data-id="browser"]');
     await expect(row).toContainText("Blink");
     await expect(row).toContainText("tested");

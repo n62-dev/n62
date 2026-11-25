@@ -491,7 +491,7 @@ test("every counter counts (uses: folds by a swipe, picks, each action while fol
   await expect(page.getByTestId("notice")).toHaveText(/^Copied: \d/);
   expect(await page.evaluate(async () => (await window.n62.session.uses()).state.counts["copy"])).toBe(1);
 
-  await tap(page, ["@mode", "d6"]); // Mode › Settings
+  await tap(page, ["help"]); // the Settings root
   await sheet(page).locator('[data-id="counters"]').tap();
   const row = sheet(page).locator('[data-id="uses"]');
   await expect(row).toContainText("Removal tests"); // R722: Results mode and the angle chip, a level each

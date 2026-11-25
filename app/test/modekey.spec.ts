@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R723 (owner, 2026-11-17): Mode has no key. It opens from the bar's STD (format) and 12 (digits) chips, a free key that
-// holds it, ‹ from Settings and a desktop chord (Alt + Shift + O); Shift + Deselect is Paste now (R322 is reversed).
+// holds it, Settings' row 1 (R927) and a desktop chord (Alt + Shift + O); Shift + Deselect is Paste now (R322 is reversed).
 // Shift + Fmt stays a reserved cell (docs/06 section 3b): no legend, dimmed in the Shift layer only, a dead press that counts
 // (R127). The Fmt key's tap is unchanged (fmt.spec.ts), and so is Deselect's (selectgrow.spec.ts).
 import { expect, test, type Page } from "@playwright/test";
@@ -12,14 +12,14 @@ const angle = (page: Page) => page.evaluate(() => window.n62.session.settings.an
 test("the STD chip opens Mode", async ({ page }) => {
   await open(page);
   await page.getByTestId("chip-format").tap();
-  await expect(title(page)).toHaveText("Mode");
+  await expect(title(page)).toHaveText("Settings › Mode");
 });
 
 test("the chip's Mode has Significant digits as the next row after Format (R785)", async ({ page }) => {
   await open(page);
   await page.getByTestId("chip-format").tap();
-  await tap(page, ["d3"]);
-  await expect(title(page)).toHaveText("Mode › Significant digits");
+  await tap(page, ["d4"]); // (R927: Preset is row 1)
+  await expect(title(page)).toHaveText("Settings › Mode › Significant digits");
 });
 
 test("the STD chip, ◀ to Angle (▲), ▶, Enter switches RAD → DEG", async ({ page }) => {
@@ -30,11 +30,11 @@ test("the STD chip, ◀ to Angle (▲), ▶, Enter switches RAD → DEG", async 
   await expect.poll(() => angle(page)).toBe("deg");
 });
 
-test("the STD chip, 6 opens Settings (row 6 since R89)", async ({ page }) => {
+test("the STD chip, Esc goes up to Settings, Mode its row 1 (R927)", async ({ page }) => {
   await open(page);
   await page.getByTestId("chip-format").tap();
-  await sheetKey(page, ["d6"]);
-  await expect(title(page)).toHaveText("Mode › Settings");
+  await sheetKey(page, ["esc"]);
+  await expect(title(page)).toHaveText("Settings");
 });
 
 test("Deselect's Shift legend reads Paste and fits its face in every theme family; Fmt has none", async ({ page }) => {

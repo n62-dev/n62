@@ -26,7 +26,7 @@ const panel = (page: Page) => page.locator('[role="menu"]').first();
 const OPENERS: Record<string, (page: Page) => Promise<void>> = {
   "☰": (page) => tap(page, ["@menu"]),
   "Mode (STD/12)": (page) => tap(page, ["@mode"]),
-  Settings: (page) => tap(page, ["@mode", "d6"]),
+  Settings: (page) => tap(page, ["help"]),
   Help: (page) => tap(page, ["sin", "d1", "shift", "help"]), // the help sheet of sin (Shift + the ⚙ key, R863)
   Apps: (page) => tap(page, ["@place"]),
   Tmpl: (page) => tap(page, ["tmpl"]),
@@ -130,7 +130,7 @@ for (const size of SIZES) {
       const rows = page.getByTestId("menu").getByRole("menuitem");
       const n = await rows.count();
       expect(n).toBeGreaterThan(3);
-      for (let i = 0; i < n - 1; i++) await page.locator('[data-key="down"]').tap();
+      for (let i = 0; i < n - 2; i++) await page.locator('[data-key="down"]').tap(); // from Angle, row 2 (R927: Preset is row 1)
       const last = rows.nth(n - 1);
       await expect(last).toHaveAttribute("data-active", "true");
       const [r, list] = [await last.boundingBox(), await box(page, '[data-testid="menu"] .list')];

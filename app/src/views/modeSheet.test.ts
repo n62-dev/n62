@@ -9,17 +9,17 @@ import { FakeCalc } from "../calc/fake.ts";
 import { Session } from "../state/session.svelte.ts";
 import { UserKeys } from "../keyboard/userKeys.svelte.ts";
 import { unitCells } from "../units/userCells.svelte.ts";
-import { modeItems, numbersItems } from "./modeSheet.ts";
+import { modeItems, numbersItems, settingsSections } from "./modeSheet.ts";
 import { lastPicks } from "./picks.ts";
 import { Sheet } from "./sheet.svelte.ts";
 import type { MenuItem } from "../apps/types.ts";
 
 let session: Session;
-const mode = (at?: string) => new Sheet("mode", "Mode", () => modeItems(session), { remember: false, at });
-/** Mode, 6, then the section numbered `n` (none: the Settings level). */
+/** Mode as the app opens it (App.svelte openMode: on Angle without `at`), alone. */
+const mode = (at = "angle") => new Sheet("mode", "Mode", () => modeItems(session), { remember: false, at });
+/** The Settings root (R927, App.svelte openSettings), then its row numbered `n` (1 Mode, 2 on the sections; none: the root). */
 const settings = (n?: number): Sheet => {
-  const s = mode();
-  s.pickNumber(6);
+  const s = new Sheet("settings", "Settings", () => settingsSections(session), { remember: false });
   if (n !== undefined) s.pickNumber(n);
   return s;
 };
@@ -52,7 +52,7 @@ describe("Mode sheet", () => {
     expect(byId(s, "entry")?.options?.map((o) => o.id)).toEqual(["textbook", "line"]);
     expect(byId(s, "digits")?.options).toBeUndefined();
     expect(byId(s, "digits")?.value).toBe("12");
-    expect(byId(s, "settings")?.options).toBeUndefined();
+    expect(byId(s, "settings")).toBeUndefined(); // R927: Mode is Settings' row 1, not the other way round
   });
   it("a tap on a value button sets it and closes the sheet; a digit still steps the row forward; Enter closes", () => {
     const s = mode("format");
@@ -61,14 +61,14 @@ describe("Mode sheet", () => {
     if (p.kind === "run") p.item.run?.();
     expect(session.settings.format).toBe("pfx");
     expect(marked(s)).toBe("pfx");
-    expect(s.pickNumber(2)).toEqual({ kind: "stay" }); // Format: forward, round the end
+    expect(s.pickNumber(3)).toEqual({ kind: "stay" }); // Format: forward, round the end
     expect(session.settings.format).toBe("std");
     expect(s.enter().kind).toBe("run");
     expect(s.pickOption(at(s, "format"), "nope")).toEqual({ kind: "stay" });
   });
   it("always opens on Angle, even after another row was picked last", () => {
     const s = mode();
-    s.pickNumber(3); // Digits: opens its list
+    s.pickNumber(4); // Digits: opens its list
     expect(mode().level.current?.id).toBe("angle");
   });
   it("a status chip opens it on its row", () => {
@@ -92,7 +92,7 @@ describe("Mode sheet", () => {
     expect(session.settings.digits).toBe(30);
     session.setDigits(12);
     const m = mode();
-    expect(m.pickNumber(3)).toEqual({ kind: "stay" });
+    expect(m.pickNumber(4)).toEqual({ kind: "stay" });
     expect(m.level.title).toBe("Significant digits");
     expect(m.level.current?.label).toBe("12");
     const p = m.pickNumber(7);
@@ -107,17 +107,21 @@ describe("Mode sheet", () => {
     expect(session.settings.entry).toBe("line");
     e.right();
     expect(session.settings.entry).toBe("textbook");
-    const s = mode("settings");
-    expect(s.level.current?.submenu).toBeDefined();
+    const s = settings();
+    expect(s.level.current?.id).toBe("mode");
     expect(s.enter()).toEqual({ kind: "stay" });
-    expect(s.path).toBe("Mode › Settings");
+    expect(s.path).toBe("Settings › Mode");
+    expect(s.level.items.map((x) => x.id)).toEqual(["preset", "angle", "format", "digits", "entry"]); // R927: Preset first, no Settings row
+    expect(s.level.current?.id).toBe("angle");
+    expect(s.back()).toBe(true);
+    expect(s.level.current?.id).toBe("mode");
   });
 });
 
 describe("Settings › Appearance (R50e)", () => {
   it("is the first section: Theme with its dots, Brightness, and the four switches with one line each (Key shadows: R156, Key pop-ups: R163)", () => {
-    const s = settings(1);
-    expect(s.path).toBe("Mode › Settings › Appearance");
+    const s = settings(2);
+    expect(s.path).toBe("Settings › Appearance");
     expect(s.level.items.map((x) => x.id)).toEqual(["theme", "brightness", "contrast", "plain", "shadow", "pops", "findFull"]);
     expect(s.level.items.length).toBeLessThanOrEqual(7); // a level of settings holds at most seven rows
     expect(byId(s, "theme")?.dots).toHaveLength(5);
@@ -128,7 +132,7 @@ describe("Settings › Appearance (R50e)", () => {
     expect(s.level.highlight).toBe(0); // R156: it opens on Theme, though Key shadows is ticked
   });
   it("▶ ◀ step the theme in place, round the ends; the sheet stays", () => {
-    const s = settings(1);
+    const s = settings(2);
     s.right();
     expect(session.settings.look.family).toBe("bw");
     expect(s.left()).toBe(true);
@@ -139,7 +143,7 @@ describe("Settings › Appearance (R50e)", () => {
   it("Enter, a digit or a tap on Theme lists the three; a pick keeps the sheet open and the page is told", () => {
     const seen: string[] = [];
     session.onLook = (l) => void seen.push(l.family);
-    const s = settings(1);
+    const s = settings(2);
     expect(s.enter()).toEqual({ kind: "stay" });
     expect(s.path).toBe("Settings › Appearance › Theme");
     expect(s.level.items.map((x) => x.label)).toEqual(["N62", "Black & White", "Solarized"]);
@@ -158,7 +162,7 @@ describe("Settings › Appearance (R50e)", () => {
     expect(s.path).toBe("Settings › Appearance › Theme");
   });
   it("Brightness steps System, Light, Dark; the switches toggle and stay", () => {
-    const s = settings(1);
+    const s = settings(2);
     s.level.highlight = at(s, "brightness");
     expect(byId(s, "brightness")?.value).toBe("System");
     s.right();
@@ -187,7 +191,7 @@ describe("Settings › Appearance (R50e)", () => {
     expect(pops).toEqual([false, true]);
   });
   it("R932: Find opens full screen is the last row, a switch off by default; a digit, Enter or a tap toggles it and stays", () => {
-    const s = settings(1);
+    const s = settings(2);
     expect(s.level.items.map((x) => x.id).at(-1)).toBe("findFull");
     expect(byId(s, "findFull")).toMatchObject({ label: "Find opens full screen", selected: false });
     expect(byId(s, "findFull")?.hint).toBeUndefined(); // one string, the label
@@ -205,26 +209,27 @@ describe("Settings › Appearance (R50e)", () => {
 describe("Settings, a level of the sheet (R49)", () => {
   it("has the sections built so far, in their fixed order, each with › and a value; it opens on its first row", () => {
     const s = settings();
-    expect(s.level.items.map((x) => x.id)).toEqual(["appearance", "numbers", "vibration", "counters", "help"]);
+    expect(s.level.items.map((x) => x.id)).toEqual(["mode", "appearance", "numbers", "vibration", "counters", "help"]);
     expect(s.level.items.every((x) => x.submenu)).toBe(true);
-    expect(s.level.items.map((x) => x.value)).toEqual(["N62 · System", "STD SCI ENG", "Off", "0 presses", undefined]);
-    s.pickNumber(4);
-    s.back();
+    expect(s.level.items.map((x) => x.value)).toEqual(["STD 12 RAD", "N62 · System", "STD SCI ENG", "Off", "0 presses", undefined]); // R927: Mode's as the chips say it
+    expect(s.level.current?.id).toBe("mode");
+    s.pickNumber(5);
+    s.level.highlight = 2;
     s.back();
     expect(s.enter()).toEqual({ kind: "stay" });
-    expect(s.level.current?.id).toBe("appearance"); // not the last pick
+    expect(s.level.current?.id).toBe("presses"); // not the last pick
   });
   it("a digit opens a section with the path in its title; ◀ or Esc goes back onto the same row", () => {
-    const s = settings(3);
-    expect(s.path).toBe("Mode › Settings › Key vibration");
+    const s = settings(4);
+    expect(s.path).toBe("Settings › Key vibration");
     expect(s.left()).toBe(false); // the switch has no value to step: ◀ goes back
     expect(s.back()).toBe(true);
     expect(s.level.current?.id).toBe("vibration");
     s.right();
-    expect(s.path).toBe("Mode › Settings › Key vibration");
+    expect(s.path).toBe("Settings › Key vibration");
   });
   it("Numbers: the Decimal mark row first (R57), the Fmt key cycle (R40: its five ticks a level of their own, the hint under the first), Decimals in Fixed stepped in place, and Uncertainty", () => {
-    const s = settings(2);
+    const s = settings(3);
     expect(s.level.items.map((x) => x.id)).toEqual(["mark", "fmtCycle", "decimals", "uncertainty", "marks", "groups", "word"]);
     expect(byId(s, "fmtCycle")?.value).toBe("STD SCI ENG");
     s.pickNumber(2);
@@ -238,7 +243,7 @@ describe("Settings, a level of the sheet (R49)", () => {
     expect(s.enter()).toEqual({ kind: "stay" }); // Enter on a value row stays in Settings
   });
   it("Decimal mark is a value row: Point by default; ◀ ▶ or a tap step it between Point and Comma, and the sheet stays (R57)", () => {
-    const s = settings(2);
+    const s = settings(3);
     expect(s.level.items[0]?.id).toBe("mark"); // the level's first row (the sheet opens on the first ticked row)
     s.level.highlight = at(s, "mark");
     expect(byId(s, "mark")?.value).toBe("Point");
@@ -254,12 +259,12 @@ describe("Settings, a level of the sheet (R49)", () => {
     expect(session.settings.decimalMark).toBe("comma");
   });
   it("a digit key on the Decimal mark row steps it and stays (Shift Deselect 6 2 1 reaches it by keys)", () => {
-    const s = settings(2);
+    const s = settings(3);
     expect(s.pickNumber(1)).toEqual({ kind: "stay" });
     expect(session.settings.decimalMark).toBe("comma");
   });
   it("a tick toggles on Enter or a pick, the sheet stays, and the cycle is never empty", () => {
-    const s = settings(2);
+    const s = settings(3);
     s.pickNumber(2); // Fmt key cycle ›
     const marked = () => s.level.items.filter((i) => i.selected).map((i) => i.id);
     expect(marked()).toEqual(["std", "sci", "eng"]);
@@ -270,7 +275,7 @@ describe("Settings, a level of the sheet (R49)", () => {
     expect(session.settings.fmtCycle).toEqual(["std", "sci", "eng"]);
   });
   it("Uncertainty (R40): Muted digits, σ on tap by default; ◀ ▶ or a tap step it to Muted digits and back, and the sheet stays", () => {
-    const s = settings(2);
+    const s = settings(3);
     s.level.highlight = at(s, "uncertainty");
     expect(byId(s, "uncertainty")?.value).toBe("Muted digits, σ on tap");
     s.right();
@@ -280,7 +285,7 @@ describe("Settings, a level of the sheet (R49)", () => {
     expect(session.settings.uncertainty).toBe("sigma");
   });
   it("Marks (R124): three buttons, Muted, ⚠ coloured and ⚠ + reason (the default); ◀ ▶ step them and the sheet stays; Numbers keeps at most seven rows", () => {
-    const s = settings(2);
+    const s = settings(3);
     expect(s.level.items.length).toBeLessThanOrEqual(7);
     expect(s.level.items.map((x) => x.id)).toEqual(["mark", "fmtCycle", "decimals", "uncertainty", "marks", "groups", "word"]);
     expect(byId(s, "marks")?.label).toBe("Marks");
@@ -298,7 +303,7 @@ describe("Settings, a level of the sheet (R49)", () => {
     expect(session.settings.marks).toBe("reason");
   });
   it("Word (R194): the row says the word and opens its level: the size as four buttons and Signed as a switch, both kept in wordStore.value", () => {
-    const s = settings(2);
+    const s = settings(3);
     expect(byId(s, "word")?.value).toBe("64 · unsigned");
     expect(wordStore.value).toBeUndefined(); // nothing set, nothing stored
     s.level.highlight = at(s, "word");
@@ -328,7 +333,7 @@ describe("Settings, a level of the sheet (R49)", () => {
     expect(words.value).toEqual({ bits: 16, signed: true });
   });
   it("Digit groups (R125): three buttons, the thin space (the default), the apostrophe and the comma; ◀ ▶ step them and the sheet stays", () => {
-    const s = settings(2);
+    const s = settings(3);
     expect(s.level.items.length).toBeLessThanOrEqual(7);
     expect(byId(s, "groups")?.label).toBe("Digit groups");
     expect(byId(s, "groups")?.options?.map((o) => o.label)).toEqual(["1\u2009234", "1’234", "1,234"]);
@@ -348,7 +353,7 @@ describe("Settings, a level of the sheet (R49)", () => {
     expect(byId(s, "groups")?.hint).toBeUndefined();
   });
   it("Digit groups under the decimal comma (R125): the comma's button is disabled, the row says why, a stored comma shows the thin space and stays stored", () => {
-    const s = settings(2);
+    const s = settings(3);
     session.settings.groupSep = "comma";
     session.setDecimalMark("comma");
     s.level.highlight = at(s, "groups");
@@ -371,24 +376,25 @@ describe("Settings, a level of the sheet (R49)", () => {
   });
   // Your keys (R4b) lists the 18 key slots and the unit pad as the mockup draws them, and each slot its 8 actions: a
   // list that scrolls, left out here (R40's report asks whether the rule covers it)
-  it("every Settings level has at most seven rows (docs/05 3.4), with every section the app can give, Your keys' lists aside", () => {
+  it("every Settings level below the root has at most seven rows (docs/05 3.4), with every section the app can give, Your keys' lists aside", () => {
     const userKeys = new UserKeys(fakeKv());
     const clip = { saveBackup: async () => {} } as unknown as ClipActions;
-    const s = new Sheet("mode", "Mode", () => modeItems(session, { userKeys, data: (run) => void run(clip) }), { remember: false });
-    s.pickNumber(6);
+    const s = new Sheet("settings", "Settings", () => settingsSections(session, { userKeys, data: (run) => void run(clip) }), { remember: false });
     const over: string[] = [];
     const walk = (title: string, items: readonly MenuItem[], depth: number): void => {
       if (items.length > 7) over.push(`${title}: ${items.length}`);
       if (depth < 2) for (const i of items) if (i.submenu && !i.submenu.text && i.id !== "keys") walk(`${title} › ${i.submenu.title}`, i.submenu.items, depth + 1);
     };
-    walk("Settings", s.level.items, 0);
+    expect(s.level.items.map((x) => x.id)).toEqual(["mode", "appearance", "numbers", "vibration", "keys", "data", "counters", "help"]); // R927: Mode and the seven sections
+    for (const i of s.level.items) if (i.submenu && i.id !== "keys" && i.id !== "mode") walk(`Settings › ${i.submenu.title}`, i.submenu.items, 1);
+    expect(byId(s, "mode")?.submenu?.items).toHaveLength(5); // (Mode's Digits list is a list of values, nine of them)
     expect(over).toEqual([]);
     expect(byId(s, "numbers")?.submenu?.items.map((x) => x.id)).toContain("uncertainty"); // with R40's row
     expect(byId(s, "numbers")?.submenu?.items.map((x) => x.id)).toContain("marks"); // and R124's
     expect(byId(s, "numbers")?.submenu?.items.map((x) => x.id)).toContain("groups"); // and R125's
   });
   it("Key vibration: the switch, then strength (the browser cannot set it), length and Try it follow", () => {
-    const s = settings(3);
+    const s = settings(4);
     expect(s.level.items.map((x) => x.id)).toEqual(["haptics", "strength", "ms", "try", "click"]);
     expect(byId(s, "ms")?.disabled).toBe(true);
     expect(byId(s, "try")?.disabled).toBe(true);
@@ -407,7 +413,7 @@ describe("Settings, a level of the sheet (R49)", () => {
     expect(s.pickNumber(4)).toEqual({ kind: "stay" }); // Try it
   });
   it("Key click (A66): a switch of its own, off, that works with the vibration off and stays on the sheet", () => {
-    const s = settings(3);
+    const s = settings(4);
     const row = byId(s, "click");
     expect(row?.selected).toBe(false);
     expect(row?.disabled).toBeFalsy();
@@ -420,7 +426,7 @@ describe("Settings, a level of the sheet (R49)", () => {
   });
   it("Counters: ▲ ▼ walk round the ends; an information row does nothing; Reset runs and stays", async () => {
     await session.taps.load(); // (R320: the counter is a lazy chunk)
-    const s = settings(4);
+    const s = settings(5);
     s.level.move(-1);
     expect(s.level.current?.id).toBe("reset");
     s.level.move(1);
@@ -443,7 +449,7 @@ describe("Help and about (R87)", () => {
 
   it("Desktop keys (R131) is a text built from spec/keyboard.yaml `desktop:`: every key that is not its own legend, and the actions", async () => {
     await import("../entry/hwkeys.ts"); // (the app loads it with MathLive; the level reads the map from it)
-    const s = settings(5);
+    const s = settings(6);
     await vi.waitFor(() => expect(s.level.items.length).toBeGreaterThan(0));
     expect(s.activate(at(s, "keys"))).toEqual({ kind: "stay" });
     expect(s.path).toBe("Settings › Help and about › Desktop keys");
@@ -455,8 +461,8 @@ describe("Help and about (R87)", () => {
   });
 
   it("is the fourth section; it holds Report a problem (R173), About, Why trust it (R174), Parts and Desktop keys (R131); those four open a level", () => {
-    const s = settings(5);
-    expect(s.path).toBe("Mode › Settings › Help and about");
+    const s = settings(6);
+    expect(s.path).toBe("Settings › Help and about");
     expect(s.level.items.map((x) => x.id)).toEqual(["report", "about", "trust", "parts", "keys"]);
     expect(byId(s, "report")?.label).toBe("Report a problem");
     expect(s.level.items.filter((x) => x.id !== "report").every((x) => x.submenu)).toBe(true);
@@ -466,7 +472,7 @@ describe("Help and about (R87)", () => {
     const { trustFacts } = await import("../../../tools/trust/facts.mts");
     const { trustSentences } = await import("../../../tools/trust/wording.mts");
     const f = trustFacts();
-    const s = settings(5);
+    const s = settings(6);
     expect(s.level.items.map((x) => x.id)).toContain("trust");
     expect(byId(s, "trust")?.label).toBe("Why trust it");
     s.pickNumber(at(s, "trust") + 1);
@@ -493,9 +499,8 @@ describe("Help and about (R87)", () => {
   it("Report a problem runs the clipboard code's reportProblem through the app's data hook (R173)", () => {
     const reported = vi.fn();
     const data = (run: (c: ClipActions) => void | Promise<void>): void => void run({ reportProblem: reported } as unknown as ClipActions);
-    const s = new Sheet("mode", "Mode", () => modeItems(session, { data }), { remember: false });
-    s.pickNumber(6);
-    s.pickNumber(6); // (with Data: Help and about is the sixth section)
+    const s = new Sheet("settings", "Settings", () => settingsSections(session, { data }), { remember: false });
+    s.pickNumber(7); // (with Data: Help and about is the sixth section, row 7)
     const p = s.activate(at(s, "report"));
     expect(p.kind).toBe("run");
     if (p.kind === "run") p.item.run?.();
@@ -504,9 +509,8 @@ describe("Help and about (R87)", () => {
 
   it("with the app's tips (R15c4) the first row shows the first-start tips again (the other test: without them there is no such row)", () => {
     const shown = vi.fn();
-    const s = new Sheet("mode", "Mode", () => modeItems(session, { tips: shown }), { remember: false });
-    s.pickNumber(6);
-    s.pickNumber(5); // (no Your keys or Data here: Help and about is the fifth section)
+    const s = new Sheet("settings", "Settings", () => settingsSections(session, { tips: shown }), { remember: false });
+    s.pickNumber(6); // (no Your keys or Data here: Help and about is the fifth section, row 6)
     expect(s.level.items.map((x) => x.id)).toEqual(["tips", "report", "about", "trust", "parts", "keys"]);
     expect(s.level.items[0]?.label).toBe("Show the first-start tips");
     const p = s.activate(0);
@@ -516,7 +520,7 @@ describe("Help and about (R87)", () => {
   });
 
   it("About: the version from package.json, the licence, the source URL; the licence opens its text", async () => {
-    const s = settings(5);
+    const s = settings(6);
     s.pickNumber(2);
     expect(s.path).toBe("Settings › Help and about › About"); // the last three levels
     await loaded(s);
@@ -530,7 +534,7 @@ describe("Help and about (R87)", () => {
   });
 
   it("Parts: a row per part of THIRD_PARTY.md; a single licence opens its text, a dual one a list of both", async () => {
-    const s = settings(5);
+    const s = settings(6);
     s.pickNumber(4);
     await loaded(s);
     const about = (await import("virtual:about")).default;
@@ -550,7 +554,7 @@ describe("Help and about (R87)", () => {
   });
 
   it("a text level pages with ▲ ▼ and goes back with ◀", async () => {
-    const s = settings(5);
+    const s = settings(6);
     s.pickNumber(2);
     await loaded(s);
     s.activate(at(s, "licence"));
@@ -567,20 +571,19 @@ describe("Settings › Your keys (R4b)", () => {
   const withKeys = () => {
     const userKeys = new UserKeys(fakeKv());
     const chosen: string[] = [];
-    const s = new Sheet("mode", "Mode", () => modeItems(session, { userKeys, chooseFor: (id, layer) => void chosen.push(`${id}:${layer}`) }), { remember: false });
-    s.pickNumber(6);
+    const s = new Sheet("settings", "Settings", () => settingsSections(session, { userKeys, chooseFor: (id, layer) => void chosen.push(`${id}:${layer}`) }), { remember: false });
     return { s, userKeys, chosen };
   };
 
   it("is the third section, between Key vibration and Counters, only where the app gives the slots", () => {
-    expect(withKeys().s.level.items.map((x) => x.id)).toEqual(["appearance", "numbers", "vibration", "keys", "counters", "help"]);
+    expect(withKeys().s.level.items.map((x) => x.id)).toEqual(["mode", "appearance", "numbers", "vibration", "keys", "counters", "help"]);
     expect(settings().level.items.map((x) => x.id)).not.toContain("keys");
   });
 
   it("lists U1–U6 in three layers and Reset all; a place sets a slot, Empty this slot gives it back", () => {
     const { s, userKeys } = withKeys();
     expect(byId(s, "keys")?.value).toBe("None set");
-    s.pickNumber(4);
+    s.pickNumber(5);
     const ids = s.level.items.map((x) => x.id);
     expect(ids).toHaveLength(21); // 18 slots, Unit pad cells (R24d), Your units (R201), Reset all
     expect(ids.slice(-3)).toEqual(["unitcells", "units", "reset"]);
@@ -601,7 +604,7 @@ describe("Settings › Your keys (R4b)", () => {
 
   it("Find… hands the slot to the app", () => {
     const { s, chosen } = withKeys();
-    s.pickNumber(4);
+    s.pickNumber(5);
     s.pickNumber(5); // U2 ⇧
     const p = s.pickNumber(1);
     if (p.kind === "run") p.item.run?.();
@@ -610,7 +613,7 @@ describe("Settings › Your keys (R4b)", () => {
 
   it("Unit pad cells (R24d): U1–U6 in three layers and a reset; a leg shows its unit, Find… hands it to the app as a cell, Empty and Back to the default set it", async () => {
     const { s, chosen } = withKeys();
-    s.pickNumber(4);
+    s.pickNumber(5);
     const at = (id: string): number => s.level.items.findIndex((x) => x.id === id);
     expect(byId(s, "unitcells")?.label).toBe("Unit pad cells");
     expect(byId(s, "unitcells")?.value).toBe("9 set"); // the nine default legs
@@ -655,7 +658,7 @@ describe("Settings › Your keys (R4b)", () => {
   it("a free key pressed while the slots are listed goes to its row in its layer; elsewhere it does nothing", () => {
     const { s } = withKeys();
     expect(s.goKey("u3", "primary")).toBe(false); // the Settings level lists no slots
-    s.pickNumber(4);
+    s.pickNumber(5);
     expect(s.goKey("u3", "shift")).toBe(true);
     expect(s.level.current?.id).toBe("u3:shift");
     expect(s.goKey("u6", "alpha")).toBe(true);
@@ -670,10 +673,9 @@ describe("Settings › Data (R38a)", () => {
     const userKeys = new UserKeys(fakeKv());
     resetUndoTime(null); // no kept copy of a restore (R38b)
     const clip = { saveBackup: async () => void saved.push("save") } as unknown as ClipActions;
-    const s = new Sheet("mode", "Mode", () => modeItems(session, { userKeys, data: (run) => void run(clip) }), { remember: false });
+    const s = new Sheet("settings", "Settings", () => settingsSections(session, { userKeys, data: (run) => void run(clip) }), { remember: false });
+    expect(s.level.items.map((x) => x.id)).toEqual(["mode", "appearance", "numbers", "vibration", "keys", "data", "counters", "help"]);
     s.pickNumber(6);
-    expect(s.level.items.map((x) => x.id)).toEqual(["appearance", "numbers", "vibration", "keys", "data", "counters", "help"]);
-    s.pickNumber(5);
     expect(s.level.items.map((x) => x.id)).toEqual(["backup", "restore", "library", "sync", "store"]); // R96: the store's line last
     const picked = s.activate(0);
     expect(picked.kind).toBe("run"); // not a switch: the sheet closes, the notice shows in the stage
@@ -686,13 +688,12 @@ describe("Settings › Data (R38a)", () => {
 describe("Settings › Counters › Export the counts (R127)", () => {
   it("is a row before Reset only where the app gives the file port; it saves the counts as they stand", async () => {
     await session.taps.load(); // (R320: the counter is a lazy chunk)
-    expect(settings(4).level.items.map((x) => x.id)).toEqual(["presses", "taps", "presets", "uses", "since", "reset"]);
+    expect(settings(5).level.items.map((x) => x.id)).toEqual(["presses", "taps", "presets", "uses", "since", "reset"]);
     const saved: string[] = [];
     const userKeys = new UserKeys(fakeKv());
     const clip = { saveCounts: async (counts: unknown) => void saved.push(JSON.stringify(counts)) } as unknown as ClipActions;
-    const s = new Sheet("mode", "Mode", () => modeItems(session, { userKeys, data: (run) => void run(clip) }), { remember: false });
-    s.pickNumber(6);
-    s.pickNumber(6); // Counters (Your keys and Data come first)
+    const s = new Sheet("settings", "Settings", () => settingsSections(session, { userKeys, data: (run) => void run(clip) }), { remember: false });
+    s.pickNumber(7); // Counters (Your keys and Data come first)
     expect(s.level.items.map((x) => x.id)).toEqual(["presses", "taps", "presets", "uses", "since", "export", "reset"]);
     session.taps.press("d7:primary");
     const picked = s.activate(at(s, "export"));
@@ -707,7 +708,7 @@ describe("Settings › Counters › Results mode (R53, R283: the handle is gone)
     session = new Session(new FakeCalc(), fakeKv([["uses", { counts: { "fold.handle": 5, "fold.swipe": 2 }, since: "2026-11-01" }]]));
     const c = await session.uses();
     await c.ready;
-    const s = settings(4);
+    const s = settings(5);
     expect(byId(s, "uses")?.value).toBe("7 folds");
     s.level.highlight = at(s, "uses");
     expect(s.enter()).toEqual({ kind: "stay" }); // R722: Removal tests › Results mode
@@ -733,7 +734,7 @@ describe("Settings › Counters › Removal tests › Angle chip (R722)", () => 
     const results = await session.uses();
     await results.ready;
     expect(results.state).toEqual({ counts: {}, since: "" }); // P16's 14 days do not start on an angle tap
-    const s = settings(4);
+    const s = settings(5);
     s.level.highlight = at(s, "uses");
     s.enter();
     expect(byId(s, "bar")?.value).toBe("1 of 2 undone");
@@ -760,7 +761,7 @@ describe("Settings › Counters: the three resets ask once (R857)", () => {
     await (await session.uses()).ready;
     await (await session.uses("bar-uses")).ready;
     session.taps.press(); // (a count starts the since)
-    const s = settings(4);
+    const s = settings(5);
     const counters = byId(s, "reset");
     expect(counters?.confirm?.label).toBe("Reset the counter?");
     expect(counters?.confirm?.note).toMatch(/^Clears the counts since \d{4}-\d\d-\d\d\. Tap again\.$/);

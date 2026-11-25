@@ -64,8 +64,8 @@ for (const width of [412, 360])
     await tap(page, ["redo"]);
     expect(await entryValue(page)).toBe("7\\times8");
     await tap(page, ["help"]);
-    await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings");
-    await tap(page, ["esc", "esc"]); // back to Mode, then closed (R49)
+    await expect(page.getByTestId("sheet-title")).toHaveText("Settings");
+    await tap(page, ["esc"]); // the Settings root: one Esc closes it (R927)
     await expect(sheet(page)).toBeHidden();
     await tap(page, ["esc", "shift", "help"]);
     await expect(page.getByTestId("find")).toBeVisible(); // nothing at the cursor: Help is Find (R197)
@@ -86,13 +86,13 @@ for (const width of [412, 360])
 
 test("R723, R785: Mode opens from the STD 12 ▾ chip and from a free key that holds it; Shift + Deselect does not open it", async ({ page }) => {
   await page.getByTestId("chip-format").tap();
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode");
-  await tap(page, ["esc"]);
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Mode");
+  await tap(page, ["esc", "esc"]); // (R927: up to Settings, then closed)
   await expect(sheet(page)).toBeHidden();
   await page.evaluate(() => window.n62.userKeys.set("u1", "primary", { label: "Mode", action: { special: "mode" } }));
   await tap(page, ["u1"]);
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode");
-  await tap(page, ["esc"]);
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Mode");
+  await tap(page, ["esc", "esc"]);
   await tap(page, ["shift", "deselect"]);
   await page.waitForTimeout(300);
   await expect(sheet(page)).toBeHidden();
@@ -200,18 +200,21 @@ test("the angle: one tap on its chip; Mode from the format chip, then the hardwa
   await page.getByTestId("chip-angle").tap();
   expect(await angle(page)).toBe("deg");
   await page.getByTestId("chip-format").tap();
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode");
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Mode");
   await sheetKey(page, ["up", "right", "enter"]);
   expect(await angle(page)).toBe("rad");
   await expect(sheet(page)).toBeHidden();
 });
 
-test("Settings: two taps (a chip, then Mode's last row); Esc goes back to Mode (R49)", async ({ page }) => {
+test("Settings: one tap on ⚙ (R863), Mode its row 1; the chip's Mode goes back to it by Esc (R927)", async ({ page }) => {
+  await tap(page, ["help"]);
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings");
+  await sheet(page).locator('[data-id="mode"]').tap();
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Mode");
+  await tap(page, ["esc", "esc"]);
   await page.getByTestId("chip-format").tap();
-  await sheet(page).locator('[data-id="settings"]').tap();
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings");
   await tap(page, ["esc"]);
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode");
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings");
 });
 
 test("Esc closes ☰'s menu, and clears the line; Undo brings it back", async ({ page }) => {
@@ -306,7 +309,7 @@ test("an empty free key is no dead press (R705): the key-down pulse, Your keys o
     await tap(page, [id]);
     await expect(active).toHaveAttribute("data-id", `${id}:primary`);
     await expect.poll(async () => (await vibrations(page)).length - before, id).toBe(1); // drawn live: one pulse, never the dead double (R777)
-    await tap(page, ["esc", "esc", "esc"]); // Your keys, Settings, Mode
+    await tap(page, ["esc", "esc"]); // Your keys, then the Settings root closes (R927)
     await expect(sheet(page)).toHaveCount(0);
   }
   await flick(page, "u2", "up"); // U2's Shift slot ships empty: its Shift row
@@ -353,7 +356,7 @@ test("a status tap while an app's code loads runs at once (decisions.md R8)", as
   expect(await app(page)).toBeNull();
   await expect(place(page)).toHaveAccessibleName(/^Place: Home\./);
   await page.getByTestId("chip-format").tap(); // a chip opens Mode at once too
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode");
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Mode");
   release();
   await page.waitForTimeout(500);
   expect(await app(page)).toBeNull(); // the late load does not take the place back

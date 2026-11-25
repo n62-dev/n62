@@ -249,8 +249,7 @@ test("max(1,5) in point mode gives 5; after Settings › Numbers › Decimal mar
   await tap(page, ["d1", "comma", "d5"]);
   await tap(page, ["enter"]);
   await resultIs(page, "5", 1);
-  await page.getByTestId("chip-format").tap();
-  await tap(page, ["d6", "d2"]);
+  await tap(page, ["help", "d3"]); // ⚙, Numbers (R927: Mode is row 1)
   const mark = page.getByTestId("menu").locator('[role="menuitem"][data-id="mark"]');
   await expect(mark.getByTestId("sheet-value")).toHaveText("Point");
   const active = page.getByTestId("menu").locator('[data-active="true"]');

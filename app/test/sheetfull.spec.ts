@@ -279,9 +279,9 @@ test("R892: at 360 × 740, Chars, a tap at the ‰ cell's centre-bottom types �
 // window, then the sheet's usual step. Vars, Units, Chars and every other sheet open small either way. Expected values come
 // from the rule.
 const findRow = (page: Page) => sheet(page).locator('[role="menuitem"][data-id="findFull"]');
-/** Mode › Settings › Appearance, the switch toggled by its digit (row 7), and the sheet closed again. */
+/** Settings › Appearance, the switch toggled by its digit (row 7), and the sheet closed again. */
 async function findFullToggle(page: Page): Promise<void> {
-  await tap(page, ["@mode", "d6", "d1", "d7"]);
+  await tap(page, ["help", "d2", "d7"]);
   for (let i = 0; i < 4 && (await sheet(page).count()) > 0; i++) await tap(page, ["esc"]);
   await expect(sheet(page)).toHaveCount(0);
 }
@@ -313,7 +313,7 @@ async function small(page: Page): Promise<void> {
 
 test("R932: Appearance ends with Find opens full screen, off at a first start; a tap toggles it and it survives a reload", async ({ page }) => {
   expect(await findFull(page)).toBe(false);
-  await tap(page, ["@mode", "d6", "d1"]);
+  await tap(page, ["help", "d2"]);
   const ids = await sheet(page).getByRole("menuitem").evaluateAll((els) => els.map((e) => e.getAttribute("data-id")));
   expect(ids.at(-1)).toBe("findFull");
   await expect(findRow(page).locator(".label")).toHaveText("Find opens full screen");

@@ -53,7 +53,7 @@ const SHEETS: [string, (p: Page) => Promise<void>][] = [
   ["apps", (p) => tap(p, ["@place"])],
   ["home menu", (p) => tap(p, ["@menu"])],
   ["mode", (p) => tap(p, ["@mode"])],
-  ["settings", (p) => tap(p, ["@mode", "d6"])],
+  ["settings", (p) => tap(p, ["help"])],
   ["tmpl", (p) => tap(p, ["tmpl"])],
   ["shift 6", (p) => tap(p, ["shift", "d6"])],
   ["shift 9", (p) => tap(p, ["shift", "d9"])],

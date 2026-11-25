@@ -288,7 +288,7 @@ describe("a numbered list cannot change unnoticed (altered copies of the lists)"
   });
   it("a row inserted before a pinned row moves it", () => {
     const p = problems(with_("settings", () => listSlots(["extra", ...rows("settings")])));
-    expect(p[0]).toBe('settings/1: pinned "appearance", now "extra" ("appearance" is at 2)');
+    expect(p[0]).toBe('settings/1: pinned "mode", now "extra" ("mode" is at 2)'); // (R927: Mode is Settings' row 1)
   });
   it("two rows swapped", () => {
     const r = rows("mode");

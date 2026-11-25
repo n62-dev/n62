@@ -39,9 +39,9 @@ const five = (page: Page): Promise<{ unit?: string; display?: string; error?: st
   }, REQ);
 
 async function dataSection(page: Page): Promise<void> {
-  await tap(page, ["@mode", "d6"]);
+  await tap(page, ["help"]);
   await page.getByTestId("menu").locator('[data-id="data"]').tap();
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings › Data");
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Data");
 }
 
 /** The key whose Alpha layer is a letter: Find types it on a flick down, on any key (docs/04 3.7), as unitfind.spec.ts. */

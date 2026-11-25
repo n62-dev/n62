@@ -136,7 +136,7 @@ test("the name prompt's hint covers no row: the last result's box and the hint's
   await tap(page, ["d2", "add", "d3", "enter"]);
   await expect(page.locator('[data-status="done"]')).toHaveCount(1);
   await tap(page, ["d4", "add", "d5"]);
-  await tap(page, ["@mode", "d5", "d1"]); // Presets › Save: the name prompt
+  await tap(page, ["@mode", "d1", "d1"]); // Presets › Save: the name prompt
   await expect(page.getByTestId("prompt-hint")).toBeVisible();
   const hint = await page.getByTestId("prompt-hint").boundingBox();
   const result = await lastResult(page).boundingBox();

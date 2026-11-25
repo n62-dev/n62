@@ -118,7 +118,7 @@ describe("R83 the Menu says whose it is", () => {
     expect(s.sheet?.path).toBe("Home menu");
   });
 
-  it("R145: before the Mode code is in the ⚙ opens Mode › Settings; a long-press list has no ⚙", () => {
+  it("R145, R927: before the Mode code is in the ⚙ opens the Settings root; a long-press list has no ⚙", () => {
     const s = shell();
     let opened = 0;
     s.openSettings = () => void opened++;
