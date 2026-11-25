@@ -406,6 +406,21 @@ flake_log() {
   return 0
 }
 _lib_log() { if declare -F log >/dev/null; then log "$*"; fi; }
+# A273: the family tests' nightly runs (pipeline.sh nightly <n>): <name>:<script in app/>; each runs as `node <script> --nightly` and prints
+# a last line `<TOOL> NIGHTLY: ...` with its runs (`N runs` or `N checked`), failures (`N failures` or `N failed`), the new ones (`N not in the
+# known files` or `; N new` at the end) and `seed S`; G799 and G800 add theirs here, one line each, printing such a line.
+NIGHTLY_TOOLS=(sweep:scripts/sweep.ts casback:scripts/casback.ts)
+# nightly_counts <output file>: "<runs> <known> <new> <seed>" from the tool's last NIGHTLY line (known = failures - new), else fails.
+nightly_counts() {
+  local l runs failed new seed
+  l="$(grep -E '^[A-Z]+ NIGHTLY: ' "$1" | tail -n1)" && [[ -n "$l" ]] || return 1
+  runs="$(grep -oE '[0-9]+ (runs|checked)' <<<"$l" | head -n1 | cut -d' ' -f1 || true)"
+  failed="$(grep -oE '[0-9]+ (failures|failed)' <<<"$l" | head -n1 | cut -d' ' -f1 || true)"
+  new="$(grep -oE '[0-9]+ not in the known files|; [0-9]+ new$' <<<"$l" | head -n1 | grep -oE '[0-9]+' || true)"
+  seed="$(grep -oE 'seed [0-9]+' <<<"$l" | head -n1 | cut -d' ' -f2 || true)"
+  [[ -n "$runs" && -n "$failed" && -n "$new" && -n "$seed" ]] || return 1
+  echo "$runs $((failed - new)) $new $seed"
+}
 # The shell tests (A47a): run by `pipeline.sh selftest` and by the check `shell`. N62_SELFTEST_TESTS (absolute paths) overrides.
 SELFTESTS=(scripts/pipeline.test.sh scripts/night.test.sh scripts/gc.test.sh tools/devlock.test.sh tools/manifest-backup.test.sh tools/release-gate.test.sh tools/release-guard.test.sh)
 # selftest_run <repo dir> <log>: runs each test (clean of the pipeline's own environment); prints "PASSED", or
