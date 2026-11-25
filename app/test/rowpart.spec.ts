@@ -93,14 +93,14 @@ for (const width of [412, 360]) {
       expect(await part(page)).toBe("result");
       await tap(page, KEYCOPY);
       await expect.poll(() => clipboard(page)).toBe(THIRD);
-      await expect(notice(page)).toHaveText("Copied: 0.333 333 333 333");
+      await expect(notice(page)).toHaveText("Copied 40 digits: 0.333 333 333 333…");
       await expect(notice(page)).toHaveCSS("white-space", "nowrap"); // one line
     });
 
     test("a hold copies the half under the finger and the notice says what", async ({ page }) => {
       await enter(page, ["d1", "div", "d3"]);
       await finger(page, "result:last", { ms: 700 });
-      await expect(notice(page)).toHaveText("Copied: 0.333 333 333 333");
+      await expect(notice(page)).toHaveText("Copied 40 digits: 0.333 333 333 333…");
       await expect.poll(() => clipboard(page)).toBe(THIRD);
       await finger(page, "input:last", { ms: 700 });
       await expect(notice(page)).toHaveText("Copied: 1/3");
