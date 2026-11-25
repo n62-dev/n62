@@ -62,6 +62,8 @@ const CASES: Want[] = [
   // h/c fits no constant's own unit: the base form
   { id: "h/c", input: "{=planck}/{=c}", unit: "kg·m", source: "derived" },
   { id: "alpha", input: "{=alpha}", unit: "", source: "derived" },
+  // the product of several constants' units only when shorter than the base form: R·T/p is m³/mol, not J/(mol·Pa)
+  { id: "RT/p", input: "{=gas_constant}*{=StdT}/{=StdP}", unit: "m³/mol", source: "derived" },
 ];
 
 describe.skipIf(!hasIndex)("G801: the index's own units", () => {
