@@ -231,7 +231,7 @@ const uncertainty = (c: RouteCtx, row?: HistoryItem): void => (sheetChunk.palett
 /** P4: Up on an empty entry line picks the last history row (Home/CAS); Up/Down walk the rows, Enter puts the picked
  *  result on the entry line (L5; an entry without a result puts its input back on an empty line, else the line stays, R273), ◀ on an
  *  empty line puts the entry back too, with chips (R720), Esc drops the pick, Menu acts
- *  on the picked row, Store ▶ stores it (R280). Shift + Select (Copy) keeps the pick when the line has a selection, Settings and Mode keep it (R901); any other key drops the pick and does its normal job. True: the key was used up here. */
+ *  on the picked row, Store ▶ stores it (R280). Shift + Select (Copy) keeps the pick when the line has a selection (run keeps it for Fmt, Settings and Mode, R901); any other key drops the pick and does its normal job. True: the key was used up here. */
 export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   const items = c.session.items;
   const n = items.length;
@@ -261,8 +261,6 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
     if (action.name === "copy") copyKey(c, items[picked]);
     return true;
   }
-  // R901: a look at Settings or Mode (⚙, a user key that holds either) keeps the pick, so Fmt and Copy act on it after Esc
-  if (action.kind === "special" && (action.name === "settings" || action.name === "mode")) return false;
   const item = items[picked];
   c.picked = null;
   if (isCmd("moveToPreviousChar") && item && c.entry.empty) {
@@ -507,7 +505,8 @@ export function run(c: RouteCtx, key: Key, mods: Mods): void {
     if (action.kind !== "special" && !abc) c.picked = null;
     return c.dead();
   }
-  if (shell.app === null && !cell && !abc && !(action.kind === "special" && action.name === "fmt") && historyKey(c, action)) return;
+  // R901: Fmt, and a look at Settings or Mode (⚙, the format chip, a user key), keep the pick: Fmt and Copy act on it after Esc
+  if (shell.app === null && !cell && !abc && !(action.kind === "special" && ["fmt", "settings", "mode"].includes(action.name)) && historyKey(c, action)) return;
   if (action.kind === "special") return special(c, action.name);
   if (shell.app !== null) {
     const dir = action.kind === "cmd" ? NAV[action.name] : undefined;
