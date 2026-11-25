@@ -426,3 +426,41 @@ describe("sessionCsv / sessionLatex (G232)", () => {
     expect(sessionLatex([g, ei, st, err], {}, CTX, "0.1.0")).not.toMatch(/\\(?:const|res|unit|pfx|ans|exponentialE|imaginaryI|blacktriangleright)(?![A-Za-z])/);
   });
 });
+
+// G796: a row nobody checked (a bare ⚠, `facts.warn`) copies no more digits than it shows (docs/04 2.6). Values derived:
+// 2^(1/3) = 1.2599210498948731647672106…, √2 = 1.4142135623730950488…, √3 = 1.7320508075688772935… (Python decimal, 50 digits).
+describe("G796: Copy of a row nobody checked copies what it shows", () => {
+  const CBRT2 = "1.259921049894873164767210607278228350570";
+  const cbrt2 = re(CBRT2);
+  it("a warn row with no count copies the 12 shown digits, not 40", () => {
+    expect(copyFull(done({ full: CBRT2, fullExact: false, value: cbrt2, facts: { exact: false, reliableDigits: null, warn: "unaudited" } }))).toBe("1.25992104989");
+  });
+  it("a warn row whose agreement count is 13 (fsolve's) still copies the 12 shown", () => {
+    expect(copyFull(done({ full: "1.259921049895", fullExact: false, value: cbrt2, facts: { exact: false, reliableDigits: 13, warn: "unaudited" } }))).toBe("1.25992104989");
+    expect(copyFull(done({ value: cbrt2, facts: { exact: false, reliableDigits: 13, warn: "unchecked" } }))).toBe("1.25992104989");
+  });
+  it("the shown digits follow the setting (TextOptions.digits) and the input's own (evalf(e,20))", () => {
+    const w = done({ full: CBRT2, value: cbrt2, facts: { exact: false, reliableDigits: 30, warn: "unaudited" } });
+    expect(copyFull(w, { digits: 8 })).toBe("1.259921");
+    expect(copyFull({ ...w, facts: { ...w.facts!, digits: 20 } })).toBe("1.2599210498948731648");
+  });
+  it("a warn row's lower count still bounds it (5 confirmed: 5)", () => {
+    expect(copyFull(done({ value: cbrt2, facts: { exact: false, reliableDigits: 5, warn: "unaudited" } }))).toBe("1.2599");
+  });
+  it("a warned list copies each element to the shown digits", () => {
+    const items = [
+      { value: re("1.414213562373095048801688724"), exact: false, reliableDigits: 13 },
+      { value: re("1.732050807568877293527446341"), exact: false, reliableDigits: 13 },
+    ];
+    const list = done({ text: "[1.41421356237,1.73205080757]", full: "[1.414213562373,1.732050807569]", facts: { exact: false, reliableDigits: null, warn: "unaudited", items } });
+    expect(copyFull(list)).toBe("[1.41421356237,1.73205080757]");
+    expect(copyFull({ ...list, facts: { ...list.facts!, warn: undefined } })).toBe("[1.414213562373,1.732050807569]");
+  });
+  it("controls: an exact row copies 40 digits, a counted row (⚠ 11 of 12) its 11, Copy exact unchanged", () => {
+    const third = done({ full: "1/3", fullExact: true, value: ratio(1n, 3n), rational: { n: "1", d: "3" }, facts: { exact: true, reliableDigits: null } });
+    expect(copyFull(third)).toBe("0." + "3".repeat(40));
+    expect(copyFull(done({ full: CBRT2, value: cbrt2, facts: { exact: false, reliableDigits: 11 } }))).toBe("1.2599210499");
+    expect(copyFull(done({ full: CBRT2, value: cbrt2, facts: { exact: false, reliableDigits: null } }))).toBe(CBRT2.replace(/0+$/, ""));
+    expect(copyExact(third)).toBe("1/3");
+  });
+});
