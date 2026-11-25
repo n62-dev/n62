@@ -4,8 +4,8 @@
 // history keeps of an engine result (state/resultItem.ts homeItem, casItem), its mark is the screen's (Session.mark: markFor), its
 // copy Copy's (clipboard/text.ts copyFull) and Paste's reading of it (clipboard/paste.ts), so a test feeds it fixed rows.
 //   Marks agree: Home and CAS of the same input carry the same kind of mark: `=` / none for exact, `≈` for a float, `⚠` for a warned
-//     value (docs/04 2.4, 2.9). A float drawn with no mark fails on either side. Asked as a float (CAS Shift+Enter, approx), CAS's `≈`
-//     beside Home's `=` agrees: the exact value was asked for as a float. CAS keeping an exact value Home draws as a decimal agrees.
+//     value (docs/04 2.4, 2.9). A float drawn with no mark fails on either side; CAS keeping an exact value Home draws as a decimal
+//     agrees. Both are asked the same text (`approx(…)` of it too, Shift+Enter in CAS): Giac's `approx(0)` is ⚠ unchecked in both.
 //   Copy keeps its word (docs/04 2.6): Copy writes no digit past the confirmed count, nor, on a row nobody checked (a bare ⚠), past the
 //     digits shown; an exact row's copy reads back through Paste to the same value (to its 40th digit). A row with no digit confirmed
 //     (⚠ 0) copies nothing (the Copy action refuses it), so it is not judged.
@@ -58,17 +58,14 @@ const said = (row: Row, ctx: DisplayContext): string => {
   return `${m ? markText(m) : "no mark"} ${drawnText(row, ctx)}`;
 };
 
-/**
- * Null when Home's and CAS's marks of the same input agree; else what differs. `approx`: CAS was asked for a float (Shift+Enter,
- * `approx(…)`), so its `≈` agrees with Home's `=`. A side with no number is not compared, except that a float with no mark fails.
- */
-export function compareMarks(home: Row, cas: Row, ctx: DisplayContext, approx: boolean): string | null {
+/** Null when Home's and CAS's marks of the same input agree; else what differs. A side with no number is not compared, except that a
+ *  float with no mark fails. */
+export function compareMarks(home: Row, cas: Row, ctx: DisplayContext): string | null {
   const h = markKind(home, ctx);
   const c = markKind(cas, ctx);
   if (c === "unmarked") return `CAS draws a float with no mark: ${drawnText(cas, ctx)} (Home ${said(home, ctx)})`;
   if (h === "unmarked") return `Home draws a float with no mark: ${drawnText(home, ctx)} (CAS ${said(cas, ctx)})`;
   if (h === "other" || c === "other" || h === c || c === "exact") return null;
-  if (approx && h === "exact" && c === "float") return null;
   return `Home ${said(home, ctx)} against CAS ${said(cas, ctx)}`;
 }
 
@@ -85,10 +82,11 @@ function elementsOf(text: string): string[][] {
   return inner.split(",").map((e) => e.match(/\d+(?:\.\d*)?(?:[eE][-+]?\d+)?|\.\d+/g) ?? []);
 }
 
-/** The digits Copy may write of a value with these facts: its confirmed count, the shown digits when nobody checked it, else no bound. */
+/** The digits Copy may write of a value with these facts: on a row nobody checked (a bare ⚠: the mark claims no digit, whatever the
+ *  agreement count says; fsolve's row has 13) the shown digits; else its confirmed count, or no bound when nothing is in doubt. */
 function copyBound(reliable: number | null | undefined, unchecked: boolean, shown: number): number | null {
-  if (reliable !== null && reliable !== undefined) return Math.max(1, reliable);
-  return unchecked ? shown : null;
+  if (unchecked) return shown;
+  return reliable !== null && reliable !== undefined ? Math.max(1, reliable) : null;
 }
 
 /** An exact rational n/d (d > 0) as BigInts. */
@@ -141,7 +139,7 @@ export function judgeCopy(row: Row, copied: string | undefined, ctx: DisplayCont
   if (copied === undefined || noDigit(m)) return null;
   const f = row.facts;
   const shown = f?.digits ?? ctx.digits;
-  const unchecked = !!f?.warn || (m?.mark === "⚠" && m.n === undefined);
+  const unchecked = m?.mark === "⚠" && (m.warn !== undefined || m.n === undefined);
   const items = f?.items;
   if (row.value || items) {
     const els = elementsOf(copied);
@@ -152,7 +150,7 @@ export function judgeCopy(row: Row, copied: string | undefined, ctx: DisplayCont
         const b = copyBound(count, unchecked, shown);
         const over = b === null ? undefined : nums.find((x) => significantDigits(x) > b);
         if (over !== undefined)
-          return `Copy writes ${significantDigits(over)} digits of ${over} where ${count === null || count === undefined ? `${b} are shown and none is confirmed` : `${b} are confirmed`} (${m ? markText(m) : "no mark"} ${drawnText(row, ctx)}; copied ${copied})`;
+          return `Copy writes ${significantDigits(over)} digits of ${over} where ${unchecked ? `${b} are shown and none is confirmed` : `${b} are confirmed`} (${m ? markText(m) : "no mark"} ${drawnText(row, ctx)}; copied ${copied})`;
       }
     }
   }

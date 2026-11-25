@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // G63: the view sweep as a gate stage (r16 Appendix B "Plot comparison"): expressions in x are asked for the same value from Home (x stored),
 // CAS evalf, Num, the plot evaluator (against Giac's evalf(…, 20)), Solve (residual), Slope and Area (against Home's diff and int), each
-// compared within the digits it claims (tools/probes/sweep/views.ts, viewrun.ts).
+// compared within the digits it claims (tools/probes/sweep/views.ts, viewrun.ts). The CAS view is the input with the number in place of x,
+// inside approx (Shift+Enter).
+// G799: what each row says of itself (tools/probes/sweep/agree.ts). Marks agree: Home and CAS of the same text (as typed, and inside approx)
+// carry the same kind of mark (= or none for exact, ≈ for a float, ⚠ for a warned value; a float drawn with no mark fails). Copy keeps its
+// word: no digit past the confirmed count, nor past the shown digits on a row nobody checked (a bare ⚠), and an exact row's copy reads back
+// through Paste to the same value. Both at every point, on lists (an expression at -0.5, 0.3, 1), on G797's matrix trees and on the hunt's
+// pinned inputs (G794's CAS list, G796's fsolve row); the gate asks 20 lists and 12 matrices, --nightly 200 and 150.
 //   node scripts/viewsweep.ts                 # the gate stage: fixed seed, exit 1 on a new failure or a known one that now passes
 //   node scripts/viewsweep.ts --nightly [--seed N] [--count N]   # rotating seed, more trees, report only (exit 0)
 //   In pieces (G188; each under `tools/devlock.sh slice <name> …`, at most 10 minutes; count 300 takes longer):
@@ -12,7 +18,8 @@
 // "<angle> <view and x> <keyboard LaTeX>"), and the sweep goes on with a fresh engine. Each engine's Giac calls go to a call log in
 // VIEWSWEEP_LOG_DIR (default tools/probes/_out/viewsweep/<seed>, emptied first); a crashed or hung engine's log is kept (the finding
 // names it), the others are deleted. Replay one: node ../tools/probes/sweep/replay.ts <log> (tools/probes/README.md).
-// Known failures: tests/golden/viewsweep-known.yaml (id = "<angle> <x> <keyboard LaTeX>", check = num|cas|plot|slope|area|root|leak|crash|hang, package = the open backlog id).
+// Known failures: tests/golden/viewsweep-known.yaml (id = "<angle> <x> <keyboard LaTeX>", x also `[-0.5,0.3,1]`, `matrix` or `pinned`;
+// check = num|cas|plot|slope|area|root|leak|crash|hang|mark|markapprox|copy, package = the open backlog id).
 // Environment: GIAC_OUT as for the golden gate; VIEWSWEEP_HOST (tests) a stand-in host module instead of Giac, VIEWSWEEP_HOST_ARG its argument (JSON).
 import { spawnSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
@@ -52,7 +59,7 @@ if ((part || join) && flag("--seed") === null) {
   console.error("--part and --join need an explicit --seed (every part must sweep the same expressions)");
   process.exit(2);
 }
-const limits = nightly ? { roots: 200, slopes: 300, areas: 200 } : { roots: 12, slopes: 40, areas: 20 };
+const limits = nightly ? { roots: 200, slopes: 300, areas: 200, lists: 200, matrices: 150 } : { roots: 12, slopes: 40, areas: 20, lists: 20, matrices: 12 };
 const statsOf = (r: ViewSweepResult, secs: number): { stats: string; engines: string } => ({
   stats: `${r.cases} expressions (seed ${seed}), ${r.compared} comparisons, total ${secs.toFixed(1)} s`,
   engines: `${r.restarts} engine restarts, ${r.calls} Giac calls, heap up to ${(r.maxHeap / 2 ** 20).toFixed(0)} MB`,

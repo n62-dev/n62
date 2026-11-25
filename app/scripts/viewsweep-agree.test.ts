@@ -41,28 +41,27 @@ describe("marks agree (G799)", () => {
   it("G794: CAS approx([1/3,2/3]) with no mark where Home has ≈ fails; with its elements' facts (G794's fix) it agrees", () => {
     const before: Row = { ...casList, facts: undefined }; // casItem before G794 kept no facts for a list
     expect(markKind(before, ctx)).toBe("unmarked");
-    expect(compareMarks(homeRow(listIn)!, before, ctx, true)).toMatch(/^CAS draws a float with no mark: \[0\.333333333333,0\.666666666667\] \(Home ≈ /);
+    expect(compareMarks(homeRow(listIn)!, before, ctx)).toMatch(/^CAS draws a float with no mark: \[0\.333333333333,0\.666666666667\] \(Home ≈ /);
     expect(markKind(casList, ctx)).toBe("float");
-    expect(compareMarks(homeRow(listIn)!, casList, ctx, true)).toBeNull();
+    expect(compareMarks(homeRow(listIn)!, casList, ctx)).toBeNull();
   });
-  it("a ⚠ on one side and ≈ on the other fails; an exact value asked for as a float agrees, asked as typed it does not", () => {
+  it("a ⚠ on one side and ≈ on the other fails, and so does Home's = beside CAS's ≈", () => {
     const sure = home("1.25992104989", "1.259921049894873", floats);
-    expect(compareMarks(sure, { ...fsolveRow, view: "cas" }, ctx, true)).toMatch(/^Home ≈ 1\.25992104989 against CAS ⚠ 1\.25992104989$/);
-    expect(compareMarks(fsolveRow, { ...sure, view: "cas" }, ctx, true)).toMatch(/^Home ⚠ .* against CAS ≈ /);
+    expect(compareMarks(sure, { ...fsolveRow, view: "cas" }, ctx)).toMatch(/^Home ≈ 1\.25992104989 against CAS ⚠ 1\.25992104989$/);
+    expect(compareMarks(fsolveRow, { ...sure, view: "cas" }, ctx)).toMatch(/^Home ⚠ .* against CAS ≈ /);
     const exact = home("0.09", "0.09", { exact: true, reliableDigits: null }, "9/100");
     const asFloat: Row = { ...home("0.09", "0.09", floats), view: "cas" };
     expect(markKind(exact, ctx)).toBe("exact");
-    expect(compareMarks(exact, asFloat, ctx, true)).toBeNull();
-    expect(compareMarks(exact, asFloat, ctx, false)).toMatch(/^Home = 0\.09 against CAS ≈ 0\.09$/);
+    expect(compareMarks(exact, asFloat, ctx)).toMatch(/^Home = 0\.09 against CAS ≈ 0\.09$/);
   });
   it("CAS keeping an exact value (a number or a symbolic result) agrees with Home's decimal", () => {
     const h = home("0.333333333333", third, floats);
     const q = casRow({ ok: true, text: "1/3", facts: { exact: true, reliableDigits: null } })!;
     expect(markKind(q, ctx)).toBe("exact");
-    expect(compareMarks(h, q, ctx, false)).toBeNull();
+    expect(compareMarks(h, q, ctx)).toBeNull();
     const sym = casRow({ ok: true, text: "sin(3/10)", facts: { exact: true, reliableDigits: null } })!;
     expect(markKind(sym, ctx)).toBe("other");
-    expect(compareMarks(h, sym, ctx, false)).toBeNull();
+    expect(compareMarks(h, sym, ctx)).toBeNull();
   });
 });
 
@@ -70,6 +69,9 @@ describe("Copy keeps its word (G799)", () => {
   it("G796: Copy of the fsolve row writes 13 digits where 12 are shown and none is confirmed", () => {
     expect(judgeCopy(fsolveRow, "1.259921049895", ctx)).toMatch(/^Copy writes 13 digits of 1\.259921049895 where 12 are shown and none is confirmed \(⚠ 1\.25992104989; /);
     expect(judgeCopy(fsolveRow, "1.25992104989", ctx)).toBeNull(); // what it shows: G796's fix
+    // the engine's own row: its agreement count is 13, but fsolve is unaudited, so the mark is a bare ⚠ that claims no digit
+    const live = homeRow({ ok: true, display: "1.25992104989", approximate: true, value: real("1.259921049894899169885320588946342468262"), full: "1.259921049895", facts: { exact: false, reliableDigits: 13, warn: "unaudited", why: { unaudited: ["fsolve"] } } })!;
+    expect(judgeCopy(live, "1.259921049895", ctx)).toMatch(/^Copy writes 13 digits of 1\.259921049895 where 12 are shown and none is confirmed \(⚠ 1\.25992104989; /);
   });
   it("a counted row copies its confirmed digits and no more; a sure float every kept digit", () => {
     const counted = home("1.2599210499", "1.259921049894873", { exact: false, reliableDigits: 11 });

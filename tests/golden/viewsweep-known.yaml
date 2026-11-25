@@ -1,11 +1,51 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# G63: the failures the view sweep (app/scripts/viewsweep.ts, seed 20261022, 100 trees) finds today. id = "<angle> <x or interval> <keyboard LaTeX>" (a leak: "<angle> <call> <LaTeX>"),
-# check = num|cas|plot|slope|area|root|leak, package = the open backlog id whose fix removes the entry. The stage passes when its failures are exactly these.
-# F66: x/x has no value at x = 0, and Home refuses it there (G168: a division by an exact 0), but Giac simplifies x/x to 1 first: Num and CAS (subst) show the number, the plot evaluator has NaN.
+# G63: the failures the view sweep (app/scripts/viewsweep.ts, seed 20261022, 100 trees) finds today. id = "<angle> <x, interval, [list xs], matrix or pinned> <keyboard LaTeX>" (a leak: "<angle> <call> <LaTeX>"),
+# check = num|cas|plot|slope|area|root|leak|mark|markapprox|copy, package = the open backlog id whose fix removes the entry. The stage passes when its failures are exactly these.
+# F66: x/x has no value at x = 0, and Home refuses it there (G168: a division by an exact 0), but Giac simplifies x/x to 1 first: Num shows the number, the plot evaluator has NaN
+# (CAS, asked with 0 in place of x since G799, refuses as Home does).
+# G799 (copy): G796, Copy of a ⚠ row nobody checked (fsolve, factorial, cosh, det, ln of a negative, sin of a matrix: unaudited) writes up to the agreement count's
+# digits (13 to 39) where 12 are shown; F484, Copy of a CAS fraction drawn in DEG writes its text (-15/2), which Paste refuses, where docs/04 2.6 has its digits.
 known:
   - { id: "rad 0 x\\times \\frac{x}{x}", check: plot, package: F66 }
   - { id: "rad 0 x\\times \\frac{x}{x}", check: num, package: F66 }
-  - { id: "rad 0 x\\times \\frac{x}{x}", check: cas, package: F66 }
   - { id: "rad 0 \\left(x-\\pi\\right)-\\frac{x}{x}", check: plot, package: F66 }
   - { id: "rad 0 \\left(x-\\pi\\right)-\\frac{x}{x}", check: num, package: F66 }
-  - { id: "rad 0 \\left(x-\\pi\\right)-\\frac{x}{x}", check: cas, package: F66 }
+  - { id: "deg -0.5 \\left(3.7+1\\right)-\\arccos\\left(x\\right)", check: copy, package: F484 }
+  - { id: "deg -1 \\arcsin\\left(x\\right)\\times \\left(12^{x}\\right)", check: copy, package: F484 }
+  - { id: "deg -1 \\left(3.7+1\\right)-\\arccos\\left(x\\right)", check: copy, package: F484 }
+  - { id: "deg 0 \\left(3.7+1\\right)-\\arccos\\left(x\\right)", check: copy, package: F484 }
+  - { id: "deg matrix \\sin\\left(\\operatorname{approx}\\left(\\begin{pmatrix}0&1\\\\-1&0\\end{pmatrix}\\right)\\right)", check: copy, package: G796 }
+  - { id: "rad -0.5 \\frac{x}{3!}+\\left(7!\\right)", check: copy, package: G796 }
+  - { id: "rad -0.5 \\frac{x}{\\exponentialE}\\times \\frac{3!}{x}", check: copy, package: G796 }
+  - { id: "rad -0.5 \\left(10!\\right)+\\left(x+\\exponentialE\\right)", check: copy, package: G796 }
+  - { id: "rad -0.5 \\left(x\\times 10\\right)-\\cosh\\left(5!\\right)", check: copy, package: G796 }
+  - { id: "rad -1 \\frac{x}{3!}+\\left(7!\\right)", check: copy, package: G796 }
+  - { id: "rad -1 \\frac{x}{\\exponentialE}\\times \\frac{3!}{x}", check: copy, package: G796 }
+  - { id: "rad -1 \\left(10!\\right)+\\left(x+\\exponentialE\\right)", check: copy, package: G796 }
+  - { id: "rad -1 \\left(x\\times 10\\right)-\\cosh\\left(5!\\right)", check: copy, package: G796 }
+  - { id: "rad -2.7 \\frac{x}{\\exponentialE}\\times \\frac{3!}{x}", check: copy, package: G796 }
+  - { id: "rad -2.7 \\left(10!\\right)+\\left(x+\\exponentialE\\right)", check: copy, package: G796 }
+  - { id: "rad -2.7 \\left(x\\times 10\\right)-\\cosh\\left(5!\\right)", check: copy, package: G796 }
+  - { id: "rad 0 \\left(10!\\right)+\\left(x+\\exponentialE\\right)", check: copy, package: G796 }
+  - { id: "rad 0 \\left(x\\times 10\\right)-\\cosh\\left(5!\\right)", check: copy, package: G796 }
+  - { id: "rad 0.3 \\frac{x}{\\exponentialE}\\times \\frac{3!}{x}", check: copy, package: G796 }
+  - { id: "rad 0.3 \\left(10!\\right)+\\left(x+\\exponentialE\\right)", check: copy, package: G796 }
+  - { id: "rad 0.3 \\left(x\\times 10\\right)-\\cosh\\left(5!\\right)", check: copy, package: G796 }
+  - { id: "rad 1 \\frac{x}{3!}+\\left(7!\\right)", check: copy, package: G796 }
+  - { id: "rad 1 \\frac{x}{\\exponentialE}\\times \\frac{3!}{x}", check: copy, package: G796 }
+  - { id: "rad 1 \\left(10!\\right)+\\left(x+\\exponentialE\\right)", check: copy, package: G796 }
+  - { id: "rad 1 \\left(x\\times 10\\right)-\\cosh\\left(5!\\right)", check: copy, package: G796 }
+  - { id: "rad 2 \\frac{x}{3!}+\\left(7!\\right)", check: copy, package: G796 }
+  - { id: "rad 2 \\frac{x}{\\exponentialE}\\times \\frac{3!}{x}", check: copy, package: G796 }
+  - { id: "rad 2 \\left(10!\\right)+\\left(x+\\exponentialE\\right)", check: copy, package: G796 }
+  - { id: "rad 2 \\left(x\\times 10\\right)-\\cosh\\left(5!\\right)", check: copy, package: G796 }
+  - { id: "rad 4.5 \\frac{x}{\\exponentialE}\\times \\frac{3!}{x}", check: copy, package: G796 }
+  - { id: "rad 4.5 \\left(10!\\right)+\\left(x+\\exponentialE\\right)", check: copy, package: G796 }
+  - { id: "rad 4.5 \\left(x\\times 10\\right)-\\cosh\\left(5!\\right)", check: copy, package: G796 }
+  - { id: "rad [-0.5,0.3,1] \\left(10!\\right)+\\left(x+\\exponentialE\\right)", check: copy, package: G796 }
+  - { id: "rad [-0.5,0.3,1] \\ln\\left(x\\right)", check: copy, package: G796 }
+  - { id: "rad [-0.5,0.3,1] \\log\\left(x\\right)", check: copy, package: G796 }
+  - { id: "rad [-0.5,0.3,1] x\\times \\ln\\left(x\\right)", check: copy, package: G796 }
+  - { id: "rad matrix \\operatorname{det}\\left(\\operatorname{inv}\\left(10^{0}\\times \\begin{pmatrix}2&0\\\\5&\\pi\\end{pmatrix}\\right)\\right)", check: copy, package: G796 }
+  - { id: "rad matrix \\sin\\left(\\operatorname{approx}\\left(\\begin{pmatrix}0&1\\\\-1&0\\end{pmatrix}\\right)\\right)", check: copy, package: G796 }
+  - { id: "rad pinned \\operatorname{fsolve}\\left(x^{3}-2=0,x\\right)", check: copy, package: G796 }
