@@ -8,7 +8,7 @@
 // point Home (x stored) against CAS as typed (the number in place of x), and Home's `approx(…)` of that text against CAS's (Shift+Enter;
 // the value check reads CAS's: it was `evalf(subst(…))`, a bare ⚠ that claimed no digit); the same on lists (one expression at LIST_XS)
 // and on G797's matrix trees.
-import { compileDefinition } from "../../../app/src/apps/function/compile.ts";
+import { compileDefinition, definitionAt } from "../../../app/src/apps/function/compile.ts";
 import { latexToGiac } from "../../../app/src/input/latex-to-giac.ts";
 import type { DisplayContext } from "../../../app/src/state/displayMode.ts";
 import { casRow, compareMarks, copyCheck, homeRow, type Row } from "./agree.ts";
@@ -24,8 +24,6 @@ export const XS = ["-2.7", "-1", "-0.5", "0", "0.3", "1", "2", "4.5"];
 const SLOPE_XS = ["0.3", "1"];
 const AREAS: [string, string][] = [["0", "1"], ["-1", "0.5"]];
 const DIGITS = 12;
-/** G799: `giac` with the number `x` in place of the name x, as a user types it in CAS (`subst` is unaudited, so its result is ⚠). */
-export const at = (giac: string, x: string): string => giac.replace(/(?<![A-Za-z0-9_])x(?![A-Za-z0-9_])/g, `(${x})`);
 /** G799: the points of a list input, `[f(-0.5),f(0.3),f(1)]`. */
 export const LIST_XS = ["-0.5", "0.3", "1"];
 
@@ -211,9 +209,9 @@ async function sweepWith(engine: ViewEngine, cases: Case[], fixed: { at: string;
         const t = table[fi]?.[xi];
         diff(angle, "num", x, e.c.latex, compareViews(h, t ? viewOfResult(t) : other));
         // CAS as Shift+Enter asks (approx), and as typed (G799)
-        const cas = (await ask(angle, `cas ${x}`, e.c.latex, "cas", `approx(${at(e.k.giac, x)})`, cass))?.result;
-        const typed = await casOf(x, e.c.latex, at(e.k.giac, x));
-        const homeapprox = await homeOf(x, e.c.latex, `approx(${at(e.k.giac, x)})`);
+        const cas = (await ask(angle, `cas ${x}`, e.c.latex, "cas", `approx(${definitionAt(e.c.latex, x)})`, cass))?.result;
+        const typed = await casOf(x, e.c.latex, definitionAt(e.c.latex, x));
+        const homeapprox = await homeOf(x, e.c.latex, `approx(${definitionAt(e.c.latex, x)})`);
         await leak(angle, e.c.latex, `cas ${x}`);
         diff(angle, "cas", x, e.c.latex, compareViews(h, !cas ? other : cas.ok ? (cas.numeric ? viewOfResult(cas.numeric) : other) : { kind: "refused" }));
         agree(angle, ctx, x, e.c.latex, { home: homeRows[xi]![fi]!, cas: typed, homeapprox, casapprox: cas ? casRow(cas) : null });
@@ -222,7 +220,7 @@ async function sweepWith(engine: ViewEngine, cases: Case[], fixed: { at: string;
     // G799: lists of one expression at LIST_XS and the fixed inputs, each asked of Home and CAS, as typed and inside approx
     const listAt = `[${LIST_XS.join(",")}]`;
     const inputs = [
-      ...cs.slice(0, lim.lists ?? 0).map((e) => ({ at: listAt, latex: e.c.latex, giac: `[${LIST_XS.map((x) => at(e.k.giac, x)).join(",")}]` })),
+      ...cs.slice(0, lim.lists ?? 0).map((e) => ({ at: listAt, latex: e.c.latex, giac: `[${LIST_XS.map((x) => definitionAt(e.c.latex, x)).join(",")}]` })),
       ...fixed.filter((f) => angle === "rad" || f.c.angle).flatMap(({ at, c }) => {
         try {
           return [{ at, latex: c.latex, giac: latexToGiac(c.latex) }];

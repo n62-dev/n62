@@ -8,6 +8,7 @@ import { decimalFromString, type ComplexValue } from "../src/engine/format.ts";
 import type { ValueFacts } from "../src/engine/types.ts";
 import type { DisplayContext } from "../src/state/displayMode.ts";
 import type { HomeIn } from "../src/state/results.ts";
+import { definitionAt } from "../src/apps/function/compile.ts";
 import { casRow, compareMarks, homeRow, judgeCopy, markKind, significantDigits, type Row } from "../../tools/probes/sweep/agree.ts";
 
 const ctx: DisplayContext = { format: "std", digits: 12, fixDecimals: 4, angle: "rad" };
@@ -107,5 +108,17 @@ describe("Copy keeps its word (G799)", () => {
     expect(significantDigits("1200")).toBe(2);
     expect(significantDigits("0.090")).toBe(2);
     expect(significantDigits("0.0000001")).toBe(1);
+  });
+});
+
+describe("the number in place of x, in the parsed tree (G799 fix round 2)", () => {
+  // the Giac text the text rewrite gave (each x as `(<number>)`), so the CAS checks ask what they asked before
+  it("x·ln(x) at -0.5 gives (-0.5)*ln((-0.5)), as before", () => {
+    expect(definitionAt("x\\times \\ln\\left(x\\right)", "-0.5")).toBe("(-0.5)*ln((-0.5))");
+  });
+  it("swaps the symbol x only (X too), never a name that holds the letter, and refuses what does not parse", () => {
+    expect(definitionAt("\\frac{1-\\cos\\left(x\\right)}{x^{2}}", "0.3")).toBe("(1-cos(pasdeg*(0.3)))/(0.3)^2");
+    expect(definitionAt("\\exp\\left(X\\right)+x", "1")).toBe("exp((1))+(1)");
+    expect(definitionAt("\\frac{1}{", "1")).toBe("");
   });
 });
