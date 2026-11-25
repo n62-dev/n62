@@ -1,0 +1,192 @@
+# Upstream: giac 2.1.0 gen.cc sym_add, sym_sub, sym_mult, rdiv and rpn.cc _division: when one operand is an MPFR float (or a complex with MPFR parts) the other is brought to its precision with accurate_evalf, which leaves a product or a quotient of a symbolic constant symbolic (pi/10^11, 10^14*pi, 2*exp(1)); the callers then took has_evalf's value at the context's Digits. Vector and matrix arithmetic (addvecteur, subvecteur, multvecteur, mmult) calls the scalar operators with context0, whose Digits is the default (12), so such an entry beside an MPFR float was a double at any Digits: [[pi]]/10^11+evalf([[30000000]]) = [[30000000.0]] at Digits 30 (right 30000000.0000000000314159265359; the scalar pi/10^11+evalf(30000000) was right), 10^14*[[pi,2],[5,0.1]]+approx([[2,1.05],[4,2.1]]) lost 10^14*pi past its 16th digit (sin of it off by 0.03), and the rank of a float matrix times 10^-11*[[pi,...]] read a rounded product as full rank. Now the new accurate_evalf_value takes such an operand's value at the MPFR operand's own precision (has_evalf at bits2digits(prec) Digits, put back after, an error too); a vector keeps accurate_evalf's result (patch 0069), and a value with no float stays as it was.
+# Changed by Pascaline contributors, 2026-11-25
+--- a/src/gen.cc
++++ b/src/gen.cc
+@@ -2524,6 +2524,37 @@
+     return g.is_approx() && (g.type!=_VECT || is_fully_numeric(g));
+   }
+ 
++  // N62 (G804): accurate_evalf leaves a product or a quotient of a symbolic constant symbolic (pi/10^11 becomes
++  // pi_mpfr*1e-11, no number), and the callers then went on with has_evalf's value at the context's Digits. Vector and
++  // matrix arithmetic (addvecteur, multvecteur, mmult) calls them with context0, whose Digits is the default, so such an
++  // entry beside an MPFR float was a double: [[pi]]/10^11+evalf([[30000000]]) = [[30000000.0]] at Digits 30 (the scalar
++  // sum was right), 10^14*[[pi]]+evalf([[2]]) lost 10^14*pi's digits past the 16th. accurate_evalf_value takes the
++  // value at the MPFR operand's precision (nbits), whatever the context's Digits; a vector keeps accurate_evalf's result
++  // (G802: a vector not fully numeric goes on as before, entry by entry), and a value with no float stays as it was.
++  gen accurate_evalf_value(const gen & g,int nbits,GIAC_CONTEXT){
++    gen res=accurate_evalf(g,nbits);
++    if (g.type==_VECT || accurate_evalf_is_number(res))
++      return res;
++    int save=decimal_digits(contextptr);
++    set_decimal_digits(bits2digits(nbits),contextptr);
++    gen v;
++    bool ok=false;
++#ifndef NO_STDEXCEPT
++    try {
++#endif
++      ok=has_evalf(g,v,1,contextptr);
++#ifndef NO_STDEXCEPT
++    } catch (...) {
++      set_decimal_digits(save,contextptr);
++      throw;
++    }
++#endif
++    set_decimal_digits(save,contextptr);
++    if (ok && v.is_approx())
++      return v;
++    return res;
++  }
++
+   gen evalf(const gen & e,int level,const context * contextptr){ 
+     return e.evalf(level,contextptr); 
+   }
+@@ -5163,7 +5194,7 @@
+ 	    b2=convert_interval(b,mpfi_get_prec(ptr->infsup),contextptr);
+ 	  else
+ #endif	  
+-	    b2=accurate_evalf(b,mpfr_get_prec(a._REALptr->inf));
++	    b2=accurate_evalf_value(b,mpfr_get_prec(a._REALptr->inf),contextptr);
+ 	  if (accurate_evalf_is_number(b2))
+ 	    return a+b2;
+ 	}
+@@ -5174,7 +5205,7 @@
+ 	    b2=convert_interval(b,mpfi_get_prec(ptr->infsup),contextptr);
+ 	  else
+ #endif	  
+-	    b2=accurate_evalf(b,mpfr_get_prec(a._CPLXptr->_REALptr->inf));
++	    b2=accurate_evalf_value(b,mpfr_get_prec(a._CPLXptr->_REALptr->inf),contextptr);
+ 	  if (accurate_evalf_is_number(b2))
+ 	    return a+b2;
+ 	}
+@@ -5193,7 +5224,7 @@
+ 	    a2=convert_interval(a,mpfi_get_prec(ptr->infsup),contextptr);
+ 	  else
+ #endif	  
+-	    a2=accurate_evalf(a,mpfr_get_prec(b._REALptr->inf));
++	    a2=accurate_evalf_value(a,mpfr_get_prec(b._REALptr->inf),contextptr);
+ 	  if (accurate_evalf_is_number(a2))
+ 	    return a2+b;
+ 	}
+@@ -5204,7 +5235,7 @@
+ 	    a2=convert_interval(a,mpfi_get_prec(ptr->infsup),contextptr);
+ 	  else
+ #endif	  
+-	    a2=accurate_evalf(a,mpfr_get_prec(b._CPLXptr->_REALptr->inf));
++	    a2=accurate_evalf_value(a,mpfr_get_prec(b._CPLXptr->_REALptr->inf),contextptr);
+ 	  if (accurate_evalf_is_number(a2))
+ 	    return a2+b;
+ 	}
+@@ -5796,7 +5827,7 @@
+       if (has_evalf(b,b1,1,contextptr) && (b.type!=b1.type || b!=b1)){
+ #ifdef HAVE_LIBMPFR
+ 	if (a.type==_REAL){
+-	  gen b2=accurate_evalf(b,mpfr_get_prec(a._REALptr->inf));
++	  gen b2=accurate_evalf_value(b,mpfr_get_prec(a._REALptr->inf),contextptr);
+ 	  if (accurate_evalf_is_number(b2))
+ 	    return a-b2;
+ 	}
+@@ -5809,7 +5840,7 @@
+       if (has_evalf(a,a1,1,contextptr) && (a.type!=a1.type || a!=a1)){
+ #ifdef HAVE_LIBMPFR
+ 	if (a.type==_REAL){
+-	  gen a2=accurate_evalf(a,mpfr_get_prec(b._REALptr->inf));
++	  gen a2=accurate_evalf_value(a,mpfr_get_prec(b._REALptr->inf),contextptr);
+ 	  if (accurate_evalf_is_number(a2))
+ 	    return a2-b;
+ 	}
+@@ -7626,7 +7657,7 @@
+ 	    b2=convert_interval(b,mpfi_get_prec(ptr->infsup),contextptr);
+ 	  else
+ #endif	  
+-	    b2=accurate_evalf(b,mpfr_get_prec(a._REALptr->inf));
++	    b2=accurate_evalf_value(b,mpfr_get_prec(a._REALptr->inf),contextptr);
+ 	  if (b2.is_approx())
+ 	    return (*a._REALptr)*b2;
+ 	}
+@@ -7637,7 +7668,7 @@
+ 	    b2=convert_interval(b,mpfi_get_prec(ptr->infsup),contextptr);
+ 	  else
+ #endif	  
+-	    b2=accurate_evalf(b,mpfr_get_prec(a._CPLXptr->_REALptr->inf));
++	    b2=accurate_evalf_value(b,mpfr_get_prec(a._CPLXptr->_REALptr->inf),contextptr);
+ 	  if (b2.is_approx())
+ 	    return a*b2;
+ 	}
+@@ -7656,7 +7687,7 @@
+ 	    a2=convert_interval(a,mpfi_get_prec(ptr->infsup),contextptr);
+ 	  else
+ #endif	  
+-	    a2=accurate_evalf(a,mpfr_get_prec(b._REALptr->inf));
++	    a2=accurate_evalf_value(a,mpfr_get_prec(b._REALptr->inf),contextptr);
+ 	  if (a2.is_approx())
+ 	    return a2*b;
+ 	}
+@@ -7667,7 +7698,7 @@
+ 	    a2=convert_interval(a,mpfi_get_prec(ptr->infsup),contextptr);
+ 	  else
+ #endif	  
+-	    a2=accurate_evalf(a,mpfr_get_prec(b._CPLXptr->_REALptr->inf));
++	    a2=accurate_evalf_value(a,mpfr_get_prec(b._CPLXptr->_REALptr->inf),contextptr);
+ 	  if (a2.is_approx())
+ 	    return a2*b;
+ 	}
+@@ -8565,12 +8596,12 @@
+ 	if (has_evalf(b,b1,1,contextptr) && (b.type!=b1.type || b!=b1)){
+ #ifdef HAVE_LIBMPFR
+ 	if (a.type==_REAL){
+-	  gen b2=accurate_evalf(b,mpfr_get_prec(a._REALptr->inf));
++	  gen b2=accurate_evalf_value(b,mpfr_get_prec(a._REALptr->inf),contextptr);
+ 	  if (accurate_evalf_is_number(b2))
+ 	    return rdiv(a,b2,contextptr);
+ 	}
+ 	if (a.type==_CPLX && a._CPLXptr->type==_REAL){
+-	  gen b2=accurate_evalf(b,mpfr_get_prec(a._CPLXptr->_REALptr->inf));
++	  gen b2=accurate_evalf_value(b,mpfr_get_prec(a._CPLXptr->_REALptr->inf),contextptr);
+ 	  if (accurate_evalf_is_number(b2))
+ 	    return rdiv(a,b2,contextptr);
+ 	}
+@@ -8583,12 +8614,12 @@
+ 	if (has_evalf(a,a1,1,contextptr) && (a.type!=a1.type || a!=a1)){
+ #ifdef HAVE_LIBMPFR
+ 	  if (b.type==_REAL){
+-	    gen a2=accurate_evalf(a,mpfr_get_prec(b._REALptr->inf));
++	    gen a2=accurate_evalf_value(a,mpfr_get_prec(b._REALptr->inf),contextptr);
+ 	    if (accurate_evalf_is_number(a2))
+ 	      return rdiv(a2,b,contextptr);
+ 	  }
+ 	  if (b.type==_CPLX && b._CPLXptr->type==_REAL){
+-	    gen a2=accurate_evalf(a,mpfr_get_prec(b._CPLXptr->_REALptr->inf));
++	    gen a2=accurate_evalf_value(a,mpfr_get_prec(b._CPLXptr->_REALptr->inf),contextptr);
+ 	    if (accurate_evalf_is_number(a2))
+ 	      return rdiv(a2,b,contextptr);
+ 	  }
+--- a/src/gen.h
++++ b/src/gen.h
+@@ -506,6 +506,7 @@
+   vecteur accurate_evalf(const vecteur & v,int nbits);
+   // N62 (G802): true when g, a result of accurate_evalf, is a number or a vector of numbers only.
+   bool accurate_evalf_is_number(const gen & g);
++  gen accurate_evalf_value(const gen & g,int nbits,const context * contextptr);
+   std::string print_DOUBLE_(double d,GIAC_CONTEXT);
+   bool islogo(const gen & g);
+ 
+--- a/src/rpn.cc
++++ b/src/rpn.cc
+@@ -1076,7 +1076,7 @@
+       if (has_evalf(b,b1,1,contextptr) && b.type!=b1.type){
+ #ifdef HAVE_LIBMPFR
+ 	if (a.type==_REAL){
+-	  gen b2=accurate_evalf(b,mpfr_get_prec(a._REALptr->inf));
++	  gen b2=accurate_evalf_value(b,mpfr_get_prec(a._REALptr->inf),contextptr);
+ 	  if (accurate_evalf_is_number(b2))
+ 	    return (*a._REALptr)/b2;
+ 	}
+@@ -1089,7 +1089,7 @@
+       if (has_evalf(a,a1,1,contextptr) && a.type!=a1.type){
+ #ifdef HAVE_LIBMPFR
+ 	if (b.type==_REAL){
+-	  gen a2=accurate_evalf(a,mpfr_get_prec(b._REALptr->inf));
++	  gen a2=accurate_evalf_value(a,mpfr_get_prec(b._REALptr->inf),contextptr);
+ 	  if (accurate_evalf_is_number(a2))
+ 	    return a2/b;
+ 	}

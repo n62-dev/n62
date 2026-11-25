@@ -1095,6 +1095,20 @@ export function build(cases) {
     patched.push("// patch 0069-vector-mpfr-arith-recursion.patch", `// ${id} (oracle: mpmath)`, `Digits:=40:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
   }
+  // Patch 0070 (G804, F486), written lines: vector and matrix arithmetic (addvecteur, subvecteur, multvecteur) calls the scalar
+  // operators with context0, whose Digits is the default, and gen.cc sym_add, sym_sub, sym_mult took an exact entry that accurate_evalf
+  // leaves symbolic (pi/10^11, exp(1)) at that Digits, a double: ([[pi]]/10^11+evalf([[30000000]]))[0][0] was 30000000.0 at Digits 30.
+  // A line subtracts the leading digits and scales the rest up, since pc()'s difference of a double and an exact value is taken in
+  // doubles (0.0 on stock). Expected values (derived): the exact value, as Giac's scalar pi/10^11+evalf(30000000) gives it at Digits
+  // 30; the tolerance is 10^-8, far above the MPFR rounding left after the subtraction (stock is off by pi, pi and 1).
+  for (const [id, input, value, tol] of [
+    ["g804-add-matrix-pi-over-1e11-30", "(([[pi]]/10^11+evalf([[30000000]]))[0][0]-30000000)*10^11", "pi", "1/10^8"],
+    ["g804-sub-matrix-pi-over-1e11-30", "(30000000-(evalf([[30000000]])-[[pi]]/10^11)[0][0])*10^11", "pi", "1/10^8"],
+    ["g804-mult-vector-approx-e-30", "((2*[approx(1/10),exp(1)])[1]-5)*10^14", "(2*exp(1)-5)*10^14", "1/10^8"],
+  ]) {
+    patched.push("// patch 0070-vector-entry-mpfr-precision.patch", `// ${id} (derived: the exact value)`, `Digits:=30:; pc("${id}",'${input}',${value},${tol});`);
+    nPatched++;
+  }
   // Patch 0067 (G803, F240), written lines: prog.cc _convert took the list's subtype from a last argument that is no _INT_ (its
   // pointer's or its double's bits: convert(129,2,1/2) printed [129,1/2], pnt[129,1/2] or gr2d(logo(…)) by the session); now
   // refused, as B. Parisse said it should (2026-11-24). A line passes when the input is an error (pasr 1); stock answers a list.
