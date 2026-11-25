@@ -187,7 +187,7 @@ describe("G312: the polar form draws the confirmed digits only", () => {
     // for when the polar form is drawn in a FIX context
     const fix: DisplayContext = { ...c30, format: "fix" as unknown as DisplayContext["format"], fixDecimals: 12 };
     expect(renderNumeric(small, "polar", fix)?.text).toBe("0.00141421356∡0.78539816340");
-    expect(markFor(small, "polar", fix)).toEqual({ mark: "⚠", n: 11 });
+    expect(markFor(small, "polar", fix)).toEqual({ mark: "⚠", n: 11, of: 12 }); // G795: θ in FIX 12 asks for 12
   });
   it("⚠ 0 draws no number, as the point form", () => {
     expect(noDigit(markFor(z(0), "polar", c30))).toBe(true);
