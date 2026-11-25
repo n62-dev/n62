@@ -308,7 +308,7 @@ test.describe("R916: every input channel against the unit view", () => {
 const KNOWN2: readonly { case: string; f: string; by: string }[] = [
   // a tap on a history row under the name prompt picks the row and shows its bar; the prompt stays (askName's comment: a tap that
   // goes elsewhere ends the prompt first). Nothing is lost: the bar's Store ▶ ends the prompt, the line comes back. No package yet.
-  { case: "prompt tap:row", f: "new (R921)", by: "decisions.md, Needs the user (R921)" },
+  { case: "prompt tap:row", f: "new (R921)", by: "R921's report, Needs a decision" },
 ];
 
 /** A layer's state: Home's line (the name while a prompt is up) and rows, the layer (`where`: the sheet's id and title, or the
