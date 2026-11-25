@@ -654,6 +654,9 @@ export const PATCHED_IDS = new Map([
   // g793*-keep-* rows pass on stock and stay in the check file (the list results of the *-pairs-* rows and the *-cas-* rows are not exported)
   ...["lcm-neg4-6", "lcm-4-neg6", "lcm-list-neg4-6-10", "lcm-neg3-neg5-neg7", "lcm-neg2^70-3", "lcm-neg4-alone"].map((k) => [`g793-${k}`, "0065-lcm-integers-positive.patch"]),
   ...["lcm-half-neg-third", "lcm-neg-2/3-4/5", "lcm-list-neg-half-third-quarter", "lcm-neg-half-alone", "lcm-neg4-third", "lcm-neg2^70/3-fifth"].map((k) => [`g793f1-${k}`, "0065-lcm-integers-positive.patch"]),
+  // G802 (F481): the division of a matrix holding an MPFR float and exp(1) overflowed the stack (patch 0069); the scalar inv rows
+  ["g802-inv-exp-approx-entry-scaled-00", "0069-vector-mpfr-arith-recursion.patch"],
+  ["g802-home-inv-exp-approx-entry-scaled-00-40", "0069-vector-mpfr-arith-recursion.patch"],
 ]);
 // G122: Giac's exact answer is right (patch 0014), but pc()'s evalf of it at Digits 40 cancels the digits of a large k*pi
 // (asin(cos(30!)) = -pi/2+30!-k*pi with k of 32 digits keeps about 7, -pi/2+10^50-k*pi none); Home raises the precision
@@ -1074,6 +1077,22 @@ export function build(cases) {
     ["g792-sinh-evalf-tiny-00-40", "sinh(evalf([[10^-400,0],[0,10^-400]]))[0][0]", "1/10^400", "5/10^440"],
   ]) {
     patched.push("// patch 0066-matrix-trig-series.patch", `// ${id} (oracle: mpmath)`, `Digits:=40:; pc("${id}",'${input}',${value},${tol});`);
+    nPatched++;
+  }
+  // Patch 0069 (G802, F481), written lines: a vector holding an MPFR float and exp(1) divided by (or plus, minus) a number
+  // overflowed the wasm stack (gen.cc rdiv, sym_add, sym_sub and rpn.cc _division called themselves with the vector accurate_evalf
+  // gave back unchanged), so a stock or phase-1 build dies on each line. approx(1/10) is the MPFR float a typed 0.1 is at Digits 40
+  // (the golden g802-* rows are matrices and lists, which the export leaves out). Expected values: mpmath at 70 digits (expm,
+  // inverse, det, e/2, e+2; oracle) rounded to 38 digits; det(exp(M)) = exp(trace M) agrees. The plus line reads Giac's
+  // list-plus-number polynomial (the number goes to the last coefficient; our Home refuses that form, nonsquare.ts).
+  for (const [id, input, value, tol] of [
+    ["g802-div-vector-approx-half-1-40", "([approx(1/10),exp(1)]/2)[1]", "13591409142295226176801437356763312489/10^37", "5/10^38"],
+    ["g802-exp-approx-entry-scaled-01-40", "exp([[approx(1/10),exp(1),pi],[5,2,7],[exp(1),7,approx(981/100)]]/10^4)[0][1]", "27196675836255845595218722617418351666/10^41", "5/10^42"],
+    ["g802-inv-exp-approx-entry-scaled-00-40", "inv(exp([[approx(1/10),exp(1),pi],[5,2,7],[exp(1),7,approx(981/100)]]/10^4))[0][0]", "99999011065955788604375608492124996379/10^38", "5/10^39"],
+    ["g802-det-exp-approx-entry-scaled-40", "det(exp([[approx(1/10),exp(1),pi],[5,2,7],[exp(1),7,approx(981/100)]]/10^4))", "10011917095221523354884149375157479586/10^37", "5/10^38"],
+    ["g802-plus-vector-approx-float-1-40", "([approx(1/10),exp(1)]+approx(2))[1]", "47182818284590452353602874713526624978/10^37", "5/10^38"],
+  ]) {
+    patched.push("// patch 0069-vector-mpfr-arith-recursion.patch", `// ${id} (oracle: mpmath)`, `Digits:=40:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
   }
   // Patch 0067 (G803, F240), written lines: prog.cc _convert took the list's subtype from a last argument that is no _INT_ (its
