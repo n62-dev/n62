@@ -144,7 +144,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | B6d | G802 exp of a 3×3 float matrix kills the engine | gorge, Opus | `p1/gorge-matexpstack` | – |
 | B6h | G799 marks and Copy agree | gorge, Opus | `p1/gorge-markagree` | – |
 | B6i | [G800](packages/G800.md) a unit sweep | gorge, Opus | `p1/gorge-unitsweep` | R885 |
-| B6j | [G795](packages/G795.md) FIX of a long number | gorge, Opus | `p1/gorge-fixlong` | – |
+| B6j | G795 FIX of a long number | gorge, Opus | `p1/gorge-fixlong` | – |
 | B6k | [G796](packages/G796.md) Copy of an unchecked row | gorge, Opus | `p1/gorge-copywarn` | – |
 | B6l | [G801](packages/G801.md) a constant's own unit (J·s) | gorge, Opus | `p1/gorge-constunit` | – |
 | B7 | [G405](packages/G405.md) solve keeps close real roots | gorge, Opus | `p1/gorge-closeroots` | – |

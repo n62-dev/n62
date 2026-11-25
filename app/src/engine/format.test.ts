@@ -304,14 +304,14 @@ describe("markOf: the mark per format (docs/04 2.4)", () => {
     const f = { value: real("1.41421356237309504880"), exact: false, reliableDigits: 20 };
     expect(markOf(f, STD)).toEqual({ mark: "≈" });
     expect(markOf(f, { format: "STD", digits: 30 })).toEqual({ mark: "⚠", n: 20 });
-    expect(markOf(f, { format: "FIX", digits: 12, fixed: 25 })).toEqual({ mark: "⚠", n: 20 });
+    expect(markOf(f, { format: "FIX", digits: 12, fixed: 25 })).toEqual({ mark: "⚠", n: 20, of: 26 }); // G795: 1 + 25 asked
     expect(markOf(f, { format: "FIX", digits: 12, fixed: 4 })).toEqual({ mark: "≈" });
   });
   it("a value with no digit confirmed is ⚠ 0 in every format, never ≈, though it is drawn with one digit (G325f1)", () => {
     // acos(sqrt(-2)*10^-330-2) showed ≈ 5-7E2*i: reliableDigits 0, drawn at one digit, compared with max(1, 0)
     const none = { value: { re: v("5.2"), im: v("-7.1e2") }, exact: false, reliableDigits: 0 };
     for (const format of ["STD", "SCI", "ENG", "PFX"] as const) expect(markOf(none, { format, digits: 12 })).toEqual({ mark: "⚠", n: 0 });
-    expect(markOf(none, { format: "FIX", digits: 12, fixed: 4 })).toEqual({ mark: "⚠", n: 0 });
+    expect(markOf(none, { format: "FIX", digits: 12, fixed: 4 })).toEqual({ mark: "⚠", n: 0, of: 5 }); // 5.2000; -7.1000E2
     expect(markOf(none, confirmedOptions(none.value, 0, STD))).toEqual({ mark: "⚠", n: 0 });
     expect(markOf({ value: real("0"), exact: false, reliableDigits: 0 }, STD)).toEqual({ mark: "⚠", n: 0 });
     expect(markOf({ value: real("5.2"), exact: false, reliableDigits: 1 }, { format: "STD", digits: 1 })).toEqual({ mark: "≈" });
@@ -358,13 +358,40 @@ describe("formatConfirmed: only confirmed digits are shown", () => {
     expect(c("1234.56789", "4.71234e-6", 7)).toBe("1234.568+4.7123E-6*i");
     expect(c("1.23456", "0.00123", 3)).toBe("1.23+1.23E-3*i");
     const m = (re: string, im: string, n: number) => markOf({ value: { re: v(re), im: v(im) }, exact: false, reliableDigits: n }, o);
-    expect(m("0.0123", "0.000123", 1)).toEqual({ mark: "⚠", n: 1 });
-    expect(m("1.23456", "0.00123", 3)).toEqual({ mark: "⚠", n: 3 });
+    // G795: of = the most significant digits a part's FIX 4 asks for: 0.0123 (3); 1.2346 (5)
+    expect(m("0.0123", "0.000123", 1)).toEqual({ mark: "⚠", n: 1, of: 3 });
+    expect(m("1.23456", "0.00123", 3)).toEqual({ mark: "⚠", n: 3, of: 5 });
   });
   it("lists and matrices", () => {
     const it2 = [f("1.5", null), f("0.333333333333333", 3)];
     expect(formatConfirmed({ exact: false, reliableDigits: 3, items: it2 }, { format: "STD", digits: 12 })).toBe("[1.5,0.333]");
     expect(formatConfirmed({ exact: false, reliableDigits: 3, items: [...it2, ...it2], shape: [2, 2] }, { format: "STD", digits: 12 })).toBe("[[1.5,0.333],[1.5,0.333]]");
+  });
+});
+
+describe("G795: FIX of a value whose integer part is longer than its confirmed digits", () => {
+  const v = (s: string) => decimalFromString(s)!;
+  const FIX4: FormatOptions = { format: "FIX", digits: 12, fixed: 4 };
+  // oracle (mpmath, 55 digits): exp(100) = 26881171418161354484126255515800135873611118.77374192242; the engine confirmed 40
+  const exp100 = { value: { re: v("26881171418161354484126255515800135873611118.77374192242"), im: ZERO_VALUE }, exact: false, reliableDigits: 40 };
+  it("falls back to SCI at fixed + 1 = 5 significant digits, as a tiny value does, and every digit shown is confirmed: ≈", () => {
+    expect(formatComplex(exp100.value, confirmedOptions(exp100.value, 40, FIX4)).text).toBe("2.6881E43");
+    expect(formatConfirmed(exp100, FIX4)).toBe("2.6881E43");
+    expect(markOf(exp100, FIX4)).toEqual({ mark: "≈" });
+  });
+  it("fewer confirmed digits than fixed + 1: the fallback shows those, ⚠ n of the 5 it asks for", () => {
+    const f = { ...exp100, reliableDigits: 3 };
+    expect(formatConfirmed(f, FIX4)).toBe("2.69E43");
+    expect(markOf(f, FIX4)).toEqual({ mark: "⚠", n: 3, of: 5 });
+  });
+  it("controls: an exact long integer stays in FIX; an integer part within the confirmed digits keeps its decimals", () => {
+    const two100 = { value: { re: v("1267650600228229401496703205376"), im: ZERO_VALUE }, exact: true, reliableDigits: null };
+    expect(formatConfirmed(two100, FIX4)).toBe("1267650600228229401496703205376.0000");
+    expect(markOf(two100, FIX4)).toEqual({ mark: "=" });
+    // derived: sqrt(2) = 1.41421356237309504880…, × 10^15
+    const r2 = { value: { re: v("1414213562373095.04880168872"), im: ZERO_VALUE }, exact: false, reliableDigits: 20 };
+    expect(formatConfirmed(r2, { ...FIX4, fixed: 2 })).toBe("1414213562373095.05");
+    expect(markOf(r2, { ...FIX4, fixed: 2 })).toEqual({ mark: "≈" });
   });
 });
 

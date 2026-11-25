@@ -57,8 +57,9 @@ export function whyLine(item: CopySource, mark: MarkInfo | null, digits: number)
     return `≈ ${tc("why.rounded")}${exact === undefined ? "" : `: ${tc("why.exactIs")} ${exact}`}`;
   }
   const parts: string[] = [];
-  // a ⚠ with a warning shows no count in its mark, but fewer confirmed digits than asked are said here
-  const shown = item.facts?.digits ?? digits;
+  // a ⚠ with a warning shows no count in its mark, but fewer confirmed digits than asked are said here; "of" counts the
+  // drawn form's digits (FIX's, mark.of, G795), else the digits setting's
+  const shown = mark.of ?? item.facts?.digits ?? digits;
   const rd = item.facts?.reliableDigits ?? null;
   const n = mark.n ?? (rd !== null && rd < shown ? rd : undefined);
   if (n !== undefined) parts.push(n > 0 ? `${n} ${tc("why.of")} ${shown} ${tc("why.confirmed")}` : tc("why.noDigit"));

@@ -627,8 +627,10 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  60,670 → 60,680 B (R901, Settings and Mode keep the picked row; the budget stays): phase-1 a1b3b033 holds 60,666 B, the branch
  *  60,672 B (route.ts run lets settings and mode past historyKey as it lets fmt, +9 B; App.svelte drops two pick resets, −3 B).
  *  A check inside historyKey measured 60,675 B, a regex or three compares 60,674-60,675 B, openSettings folded into openMode
- *  60,675 B. Rounded up to 10 B. */
-export const START_PIN_GZIP = 60_680;
+ *  60,675 B. Rounded up to 10 B.
+ *  60,680 → 60,740 B (G795, FIX's SCI fallback for an integer part past its confirmed digits, a fix in engine/format.ts): phase-1
+ *  8fa7bc3d holds 60,680 B, the branch 60,738 B (172,915 B raw; first 60,762 B, trimmed in weakest and markOf). Up to 10 B. */
+export const START_PIN_GZIP = 60_740;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its
