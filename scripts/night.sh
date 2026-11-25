@@ -23,7 +23,8 @@
 # NO PASS when no package finished since the last one), then night.sh runs `scripts/pipeline.sh report` and stops.
 # In lanes, --until is per lane; lane B's closing runs its last pass and no report; lane A's report waits for lane B's
 # night.sh to end (at most 5 h, N62_NIGHT_LANE_WAIT), so the writer reads both lanes' lines.
-# After every pass night.sh runs `scripts/pipeline.sh device <p>` with p from the pass's RESULT line (A47a may move it).
+# After every pass night.sh runs `scripts/pipeline.sh device <p>` with p from the pass's RESULT line (A47a may move it), then
+# `scripts/pipeline.sh nightly <p>` (A273: the family tests' --nightly runs; the next pass reads their NIGHTLY lines).
 # A usage limit (a pipeline step at rc 75, or henri's claude call, also in the closing steps) waits and asks or runs the same step again,
 # and costs no step (A121).
 # Disk (A69): before each step (the closing ones too) it needs NIGHT_MIN_FREE_GB (default 5) free on the file system of the phase-1
@@ -266,7 +267,7 @@ check_stop() {  # A47c: the owner's --stop, read before each step and in every w
 pause() { local end=$((SECONDS + $1)); while (( SECONDS < end )); do check_stop; sleep "$(( end - SECONDS < poll ? end - SECONDS : poll ))"; done; }
 pass_device() {  # A41, A47c: the device step after a pass, numbered from the pass's RESULT line (A47a may give another number)
   local pn; pn="$(sed -nE 's/^RESULT pass ([0-9]+):.*/\1/p' <<<"$result_line")"
-  if [[ -n "$pn" ]]; then run_cmd "scripts/pipeline.sh device $pn" || true
+  if [[ -n "$pn" ]]; then run_cmd "scripts/pipeline.sh device $pn" || true; run_cmd "scripts/pipeline.sh nightly $pn" || true  # A273: then the family tests
   else log "night.sh: the pass gave no RESULT pass line (${result_line:-none}); no device step"; fi
 }
 wait_lane() {  # <lane>: lane A's report waits for lane B's night.sh to end (both lanes' lines in the report), at most 5 h
