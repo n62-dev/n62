@@ -1,0 +1,143 @@
+# Upstream: giac 2.1.0 gen.cc sym_add, sym_sub, rdiv and rpn.cc _division: when one operand is an MPFR float (or a complex with MPFR parts) and the other has a float value, the other is brought to its precision with accurate_evalf and the operation called again if the result is_approx. For a vector is_approx means has_num_coeff (one float entry), and accurate_evalf leaves a symbolic constant symbolic (exp(1) becomes exp(1.0)), so a vector holding a float and exp(1), sqrt(2), ln(2) or sin(1) came back unchanged and the call repeated until the stack overflowed (RangeError: Maximum call stack size exceeded in the wasm build): [0.1,exp(1)]/2, [0.1,exp(1)]/2.0, 2.0/[0.1,exp(1)], [0.1,exp(1)]+2.0, [0.1,exp(1)]-2.0, 2.0-[0.1,exp(1)], [0.1,exp(1)]+(2.0+3.0*i) at Digits > 14, where a typed decimal is an MPFR float; so [[0.1,exp(1),pi],[5,2,7],[exp(1),7,9.81]]/10^4 killed the engine (Digits 12, doubles, took another case). Now a vector counts as converted only when every entry is a number (is_fully_numeric); otherwise the callers go on with has_evalf's value, as they do for a symbolic scalar. sym_mult (its vector case ends the recursion) is unchanged.
+# Changed by Pascaline contributors, 2026-11-25
+diff --git a/src/gen.cc b/src/gen.cc
+index 067e403..f0e2888 100644
+--- a/src/gen.cc
++++ b/src/gen.cc
+@@ -2513,6 +2513,17 @@ namespace giac {
+     return res;
+   }
+ 
++  // N62 (G802): sym_add, sym_sub, rdiv and _division (rpn.cc) bring an exact operand to the precision of an MPFR one with
++  // accurate_evalf and call themselves again when the result is_approx. For a vector is_approx is has_num_coeff (one float
++  // entry is enough), and accurate_evalf leaves a symbolic constant symbolic (exp(1) becomes exp(1.0)), so a vector holding
++  // a float and exp(1), sqrt(2), ln(2) or sin(1) came back as it was and the call repeated until the stack overflowed:
++  // [0.1,exp(1)]/2, [0.1,exp(1)]+2.0, 2.0-[0.1,exp(1)] at Digits > 14 (a typed decimal is an MPFR float there), so
++  // exp(approx([[0.1,exp(1),pi],[5,2,7],[exp(1),7,9.81]]/10^4)) killed the engine. A vector counts as converted only when
++  // every entry is a number; otherwise the callers go on with has_evalf's value, as for a symbolic scalar.
++  bool accurate_evalf_is_number(const gen & g){
++    return g.is_approx() && (g.type!=_VECT || is_fully_numeric(g));
++  }
++
+   gen evalf(const gen & e,int level,const context * contextptr){ 
+     return e.evalf(level,contextptr); 
+   }
+@@ -5153,7 +5164,7 @@ namespace giac {
+ 	  else
+ #endif	  
+ 	    b2=accurate_evalf(b,mpfr_get_prec(a._REALptr->inf));
+-	  if (b2.is_approx())
++	  if (accurate_evalf_is_number(b2))
+ 	    return a+b2;
+ 	}
+ 	if (a.type==_CPLX && a._CPLXptr->type==_REAL){
+@@ -5164,7 +5175,7 @@ namespace giac {
+ 	  else
+ #endif	  
+ 	    b2=accurate_evalf(b,mpfr_get_prec(a._CPLXptr->_REALptr->inf));
+-	  if (b2.is_approx())
++	  if (accurate_evalf_is_number(b2))
+ 	    return a+b2;
+ 	}
+ #endif
+@@ -5183,7 +5194,7 @@ namespace giac {
+ 	  else
+ #endif	  
+ 	    a2=accurate_evalf(a,mpfr_get_prec(b._REALptr->inf));
+-	  if (a2.is_approx())
++	  if (accurate_evalf_is_number(a2))
+ 	    return a2+b;
+ 	}
+ 	if (b.type==_CPLX && b._CPLXptr->type==_REAL){
+@@ -5194,7 +5205,7 @@ namespace giac {
+ 	  else
+ #endif	  
+ 	    a2=accurate_evalf(a,mpfr_get_prec(b._CPLXptr->_REALptr->inf));
+-	  if (a2.is_approx())
++	  if (accurate_evalf_is_number(a2))
+ 	    return a2+b;
+ 	}
+ #endif
+@@ -5786,7 +5797,7 @@ namespace giac {
+ #ifdef HAVE_LIBMPFR
+ 	if (a.type==_REAL){
+ 	  gen b2=accurate_evalf(b,mpfr_get_prec(a._REALptr->inf));
+-	  if (b2.is_approx())
++	  if (accurate_evalf_is_number(b2))
+ 	    return a-b2;
+ 	}
+ #endif
+@@ -5799,7 +5810,7 @@ namespace giac {
+ #ifdef HAVE_LIBMPFR
+ 	if (a.type==_REAL){
+ 	  gen a2=accurate_evalf(a,mpfr_get_prec(b._REALptr->inf));
+-	  if (a2.is_approx())
++	  if (accurate_evalf_is_number(a2))
+ 	    return a2-b;
+ 	}
+ #endif
+@@ -8555,12 +8566,12 @@ namespace giac {
+ #ifdef HAVE_LIBMPFR
+ 	if (a.type==_REAL){
+ 	  gen b2=accurate_evalf(b,mpfr_get_prec(a._REALptr->inf));
+-	  if (b2.is_approx())
++	  if (accurate_evalf_is_number(b2))
+ 	    return rdiv(a,b2,contextptr);
+ 	}
+ 	if (a.type==_CPLX && a._CPLXptr->type==_REAL){
+ 	  gen b2=accurate_evalf(b,mpfr_get_prec(a._CPLXptr->_REALptr->inf));
+-	  if (b2.is_approx())
++	  if (accurate_evalf_is_number(b2))
+ 	    return rdiv(a,b2,contextptr);
+ 	}
+ #endif
+@@ -8573,12 +8584,12 @@ namespace giac {
+ #ifdef HAVE_LIBMPFR
+ 	  if (b.type==_REAL){
+ 	    gen a2=accurate_evalf(a,mpfr_get_prec(b._REALptr->inf));
+-	    if (a2.is_approx())
++	    if (accurate_evalf_is_number(a2))
+ 	      return rdiv(a2,b,contextptr);
+ 	  }
+ 	  if (b.type==_CPLX && b._CPLXptr->type==_REAL){
+ 	    gen a2=accurate_evalf(a,mpfr_get_prec(b._CPLXptr->_REALptr->inf));
+-	    if (a2.is_approx())
++	    if (accurate_evalf_is_number(a2))
+ 	      return rdiv(a2,b,contextptr);
+ 	  }
+ #endif
+diff --git a/src/gen.h b/src/gen.h
+index 98391c0..7dc01d3 100644
+--- a/src/gen.h
++++ b/src/gen.h
+@@ -504,6 +504,8 @@ namespace giac {
+   // Convert g to a real or complex object of precision nbits
+   gen accurate_evalf(const gen & g,int nbits);
+   vecteur accurate_evalf(const vecteur & v,int nbits);
++  // N62 (G802): true when g, a result of accurate_evalf, is a number or a vector of numbers only.
++  bool accurate_evalf_is_number(const gen & g);
+   std::string print_DOUBLE_(double d,GIAC_CONTEXT);
+   bool islogo(const gen & g);
+ 
+diff --git a/src/rpn.cc b/src/rpn.cc
+index 92ab931..9b97a73 100755
+--- a/src/rpn.cc
++++ b/src/rpn.cc
+@@ -1077,7 +1077,7 @@ namespace giac {
+ #ifdef HAVE_LIBMPFR
+ 	if (a.type==_REAL){
+ 	  gen b2=accurate_evalf(b,mpfr_get_prec(a._REALptr->inf));
+-	  if (b2.is_approx())
++	  if (accurate_evalf_is_number(b2))
+ 	    return (*a._REALptr)/b2;
+ 	}
+ #endif
+@@ -1090,7 +1090,7 @@ namespace giac {
+ #ifdef HAVE_LIBMPFR
+ 	if (b.type==_REAL){
+ 	  gen a2=accurate_evalf(a,mpfr_get_prec(b._REALptr->inf));
+-	  if (a2.is_approx())
++	  if (accurate_evalf_is_number(a2))
+ 	    return a2/b;
+ 	}
+ #endif

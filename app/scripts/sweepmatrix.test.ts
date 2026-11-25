@@ -33,7 +33,8 @@ describe("the matrix generator (G797)", () => {
     expect(sha(runsOf(20261021, 1000))).toBe("df26d42fcff7a461f9eb349d30e2a2c8f5b9f7247e3ae2fad67a9c5d5499ddca");
     const withM = runsOf(20261021, 1000, false, { matrices: 100 });
     expect(sha(withM.slice(0, 1187))).toBe("df26d42fcff7a461f9eb349d30e2a2c8f5b9f7247e3ae2fad67a9c5d5499ddca");
-    expect(withM.slice(1187, 1187 + MATRIX_PINNED.length).map((r) => r.latex)).toEqual(MATRIX_PINNED.map((c) => c.latex));
+    // the pinned inputs, the sin in RAD and DEG (G802 put two after it)
+    expect([...new Set(withM.slice(1187, 1187 + MATRIX_PINNED.length + 1).map((r) => r.latex))]).toEqual(MATRIX_PINNED.map((c) => c.latex));
     expect(runsOf(20261021, 100, true, { matrices: 0 })).toEqual(runsOf(20261021, 100, true));
   });
 
@@ -264,9 +265,10 @@ describe("the judge, entry by entry (G797; made-up oracles for its rules)", () =
 
 // Red on phase-1 394e7413: the sweep built no matrix, so none of these ran. Through the real engine they are G790's product and G622's
 // inverse and rank (right since G790 and G622 merged: they must pass), and G792's sin (right since patch 0066, G792f1: it must pass in
-// RAD and DEG); a failure would be a known row naming its package.
+// RAD and DEG); a failure would be a known row naming its package. G802: the last two (e^ of the scaled 3×3 and the scaled 2×2
+// alone) are right since patch 0069; on phase-1 a1843b9b the 2×2 killed the engine (a crash row) and the 3×3 passed (Home reads 0.1 exactly).
 describe.skipIf(!giacAvailable())("the pinned hunt inputs through Home (G797, real Giac)", () => {
-  it("passes G790's product, G622's inverse and rank and G792's sin; no failure is left", async () => {
+  it("passes G790's product, G622's inverse and rank, G792's sin and G802's matrices; no failure is left", async () => {
     const runs: Run[] = runsOf(20261021, 0, false, { matrices: 1 }).filter((r) => MATRIX_PINNED.some((c) => c.latex === r.latex));
     expect(runs.length).toBe(MATRIX_PINNED.length + 1); // the sin also in DEG
     const oracles = oracleFor(runs, pythonFor(repo, mainCheckout), oraclePy);
@@ -279,6 +281,10 @@ describe.skipIf(!giacAvailable())("the pinned hunt inputs through Home (G797, re
     }
     expect(byLatex(MATRIX_PINNED[3]!.latex)).toEqual([]); // RAD and DEG: real, right digits (patch 0066)
     expect(judged.filter((j) => j.latex === MATRIX_PINNED[3]!.latex).map((j) => j.verdict.kind)).toEqual(["ok", "ok"]);
+    for (const c of MATRIX_PINNED.slice(4)) {
+      expect(byLatex(c.latex)).toEqual([]);
+      expect(judged.find((j) => j.latex === c.latex)!.verdict.kind).toBe("ok");
+    }
     expect(failures).toEqual([]);
     const known = loadKnown(repo, false).gate;
     for (const f of failures) {
