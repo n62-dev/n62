@@ -50,3 +50,15 @@ export function compileDefinition(latex: string, angle: "rad" | "deg" = "rad", v
     return { giac, error: "", angle, ...read };
   }
 }
+
+/** G799f2: a definition's Giac text with the number `x` (a decimal, as LaTeX) in place of the variable, in parentheses, as a
+ *  user types it in CAS: the symbol x is swapped in the parsed tree (no name regex over Giac's text, P20); "" when it does not parse. */
+export function definitionAt(latex: string, x: string): string {
+  try {
+    const n: Json = ["Delimiter", parseLatex(x)];
+    const swap = (e: Json): Json => (e === "x" ? n : Array.isArray(e) ? e.map((a, i) => (i === 0 ? a : swap(a))) : e);
+    return mathJsonToGiac(swap(renameX(parseLatex(latex))), { realOddRoots: true });
+  } catch {
+    return "";
+  }
+}

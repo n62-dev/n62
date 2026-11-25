@@ -4,11 +4,18 @@
 // (against Home's int); views.ts compares them. G188: the engine runs in a worker thread (viewhost.ts, viewworker.ts) with a deadline
 // per call; a call that traps the engine is a `crash` finding, one past its deadline a `hang` finding, and the sweep goes on with a fresh
 // engine (the stored x set again). Each engine's Giac calls go to a call log (calllog.ts); a crashed one's is kept for replay.ts.
-import { compileDefinition } from "../../../app/src/apps/function/compile.ts";
+// G799: the rows Home and CAS keep of the same input carry the same kind of mark, and Copy of each keeps its word (agree.ts): at each
+// point Home (x stored) against CAS as typed (the number in place of x), and Home's `approx(…)` of that text against CAS's (Shift+Enter;
+// the value check reads CAS's: it was `evalf(subst(…))`, a bare ⚠ that claimed no digit); the same on lists (one expression at LIST_XS)
+// and on G797's matrix trees.
+import { compileDefinition, definitionAt } from "../../../app/src/apps/function/compile.ts";
+import { latexToGiac } from "../../../app/src/input/latex-to-giac.ts";
+import type { DisplayContext } from "../../../app/src/state/displayMode.ts";
+import { casRow, compareMarks, copyCheck, homeRow, type Row } from "./agree.ts";
 import { markOf, type ComplexValue } from "../../../app/src/engine/format.ts";
 import { defaultHomeSettings, precisionFacts, type HomeResult, type HomeSettings } from "../../../app/src/engine/homeEval.ts";
 import { defaultCasSettings } from "../../../app/src/engine/types.ts";
-import { generate, type Case } from "./gen.ts";
+import { generate, generateMatrices, MATRIX_PINNED, type Case } from "./gen.ts";
 import { ViewEngine, type Failed } from "./viewhost.ts";
 import { compareViews, comparePlot, numView, type View } from "./views.ts";
 import type { ViewHost, ViewMethod } from "./viewworker.ts";
@@ -17,6 +24,8 @@ export const XS = ["-2.7", "-1", "-0.5", "0", "0.3", "1", "2", "4.5"];
 const SLOPE_XS = ["0.3", "1"];
 const AREAS: [string, string][] = [["0", "1"], ["-1", "0.5"]];
 const DIGITS = 12;
+/** G799: the points of a list input, `[f(-0.5),f(0.3),f(1)]`. */
+export const LIST_XS = ["-0.5", "0.3", "1"];
 
 /** Inputs that were found wrong and stay in every run: F56 (Area refused ∫₀¹ ln x, hunt N6; G70). */
 export const PINNED_X: Case[] = [
@@ -64,7 +73,24 @@ export interface Limits {
   roots: number;
   slopes: number;
   areas: number;
+  /** G799: the expressions also asked as a list at LIST_XS, and G797's matrix trees asked (MATRIX_PINNED's first); absent: none
+   *  (AGREE_PINNED is asked in every run). */
+  lists?: number;
+  matrices?: number;
 }
+
+/** G799: inputs found with a false mark or copy, in every run (id x `pinned`): G794's CAS list drawn with no mark, G796's fsolve row
+ *  copying 13 digits where 12 are shown and none is confirmed (owner-style hunt 2026-11-23). */
+export const AGREE_PINNED: Case[] = [
+  { latex: "\\operatorname{approx}\\left(\\left[\\frac{1}{3},\\frac{2}{3}\\right]\\right)", mp: "", angle: false },
+  { latex: "\\operatorname{fsolve}\\left(x^{3}-2=0,x\\right)", mp: "", angle: false },
+];
+
+/** G799: the fixed inputs of a run (id x `pinned` or `matrix`): AGREE_PINNED, then MATRIX_PINNED and G797's trees of the seed, `count` of these. */
+export const agreeCases = (seed: number, count: number): { at: string; c: Case }[] => [
+  ...AGREE_PINNED.map((c) => ({ at: "pinned", c })),
+  ...(count > 0 ? [...MATRIX_PINNED, ...generateMatrices(seed, count)].slice(0, count) : []).map((c) => ({ at: "matrix", c })),
+];
 
 export interface ViewSweepOptions {
   /** The call logs' folder (emptied first); null: none. */
@@ -92,16 +118,15 @@ export const failedDetail = (f: Failed): string => `${f.detail}; ${f.calls} Giac
 export async function viewSweep(seed: number, count: number, lim: Limits, opts: ViewSweepOptions = { logDir: null }): Promise<ViewSweepResult> {
   const engine = new ViewEngine({ logDir: opts.logDir, host: opts.host, hostArg: opts.hostArg, deadlineMs: opts.deadlineMs ?? deadlineOf });
   try {
-    const all = viewCases(seed, count);
     const p = opts.part;
-    const cases = p ? all.slice(Math.floor(((p.i - 1) * all.length) / p.n), Math.floor((p.i * all.length) / p.n)) : all;
-    return await sweepWith(engine, cases, lim, opts.onFailed ?? (() => {}));
+    const slice = <T>(all: T[]): T[] => (p ? all.slice(Math.floor(((p.i - 1) * all.length) / p.n), Math.floor((p.i * all.length) / p.n)) : all);
+    return await sweepWith(engine, slice(viewCases(seed, count)), slice(agreeCases(seed, lim.matrices ?? 0)), lim, opts.onFailed ?? (() => {}));
   } finally {
     await engine.close();
   }
 }
 
-async function sweepWith(engine: ViewEngine, cases: Case[], lim: Limits, onFailed: (f: ViewFailure) => void): Promise<ViewSweepResult> {
+async function sweepWith(engine: ViewEngine, cases: Case[], fixed: { at: string; c: Case }[], lim: Limits, onFailed: (f: ViewFailure) => void): Promise<ViewSweepResult> {
   const failures: ViewFailure[] = [];
   let compared = 0;
   /** One host call for `latex` at `where`; null when the engine crashed or hung, which is a finding of that kind. */
@@ -125,8 +150,31 @@ async function sweepWith(engine: ViewEngine, cases: Case[], lim: Limits, onFaile
     await ask(angle, `${where} purge`, latex, "eval", "purge(x)");
   };
   const other: View = { kind: "other" };
+  /** G799: Home's row against CAS's of the same text, as typed (check `mark`) and inside approx (`markapprox`); then the four rows'
+   *  copies (check `copy`, one finding per input naming each row that broke its word: home, cas, homeapprox, casapprox). */
+  type Rows = { home: Row | null; cas: Row | null; homeapprox: Row | null; casapprox: Row | null };
+  const agree = (angle: string, ctx: DisplayContext, at: string, latex: string, r: Rows): void => {
+    if (r.home && r.cas) diff(angle, "mark", at, latex, compareMarks(r.home, r.cas, ctx));
+    if (r.homeapprox && r.casapprox) diff(angle, "markapprox", at, latex, compareMarks(r.homeapprox, r.casapprox, ctx));
+    const broke = Object.entries(r).flatMap(([view, row]) => {
+      const d = row ? copyCheck(row, ctx) : null;
+      return d ? [`${view}: ${d}`] : [];
+    });
+    diff(angle, "copy", at, latex, broke.length ? broke.join("; ") : null);
+  };
   for (const angle of ["rad", "deg"] as const) {
     const s: HomeSettings = { ...defaultHomeSettings, angle, digits: DIGITS, workDigits: 30 };
+    const cass = { ...defaultCasSettings, angle, digits: DIGITS };
+    const ctx: DisplayContext = { format: "std", digits: DIGITS, fixDecimals: 4, angle };
+    /** The Home and CAS rows of `giac` (null: an error, a crash or a hang). */
+    const homeOf = async (where: string, latex: string, giac: string): Promise<Row | null> => {
+      const r = (await ask(angle, `home ${where}`, latex, "home", giac, s))?.result;
+      return r ? homeRow(r) : null;
+    };
+    const casOf = async (where: string, latex: string, giac: string): Promise<Row | null> => {
+      const r = (await ask(angle, `cas ${where}`, latex, "cas", giac, cass))?.result;
+      return r ? casRow(r) : null;
+    };
     const cs = cases
       .filter((c) => angle === "rad" || c.angle)
       .map((c) => ({ c, k: compileDefinition(c.latex, angle) }))
@@ -137,16 +185,20 @@ async function sweepWith(engine: ViewEngine, cases: Case[], lim: Limits, onFaile
     await leak(angle, "(Num table)", "num");
     // Home with x stored: a fresh engine after a crash stores x again
     const home: View[][] = [];
+    const homeRows: (Row | null)[][] = [];
     for (const x of XS) {
       // the context first: if x:= itself crashes, the next call's fresh engine stores x before it (G188 fix round 1)
       engine.context = [{ method: "home", args: [`x:=${x}`, s] }];
       await ask(angle, `home ${x}`, "(x:=)", "home", `x:=${x}`, s);
       const row: View[] = [];
+      const rows: (Row | null)[] = [];
       for (const e of cs) {
         const r = await ask(angle, `home ${x}`, e.c.latex, "home", e.k.giac, s);
         row.push(r ? viewOfResult(r.result) : other);
+        rows.push(r ? homeRow(r.result) : null);
       }
       home.push(row);
+      homeRows.push(rows);
       engine.context = [];
       await ask(angle, `home ${x}`, "(purge(x))", "home", "purge(x)", s);
       await leak(angle, "(Home with x stored)", x);
@@ -156,10 +208,36 @@ async function sweepWith(engine: ViewEngine, cases: Case[], lim: Limits, onFaile
         const h = home[xi]![fi]!;
         const t = table[fi]?.[xi];
         diff(angle, "num", x, e.c.latex, compareViews(h, t ? viewOfResult(t) : other));
-        const cas = (await ask(angle, `cas ${x}`, e.c.latex, "cas", `evalf(subst(${e.k.giac},x=(${x})))`, { ...defaultCasSettings, angle, digits: DIGITS }))?.result;
+        // CAS as Shift+Enter asks (approx), and as typed (G799)
+        const cas = (await ask(angle, `cas ${x}`, e.c.latex, "cas", `approx(${definitionAt(e.c.latex, x)})`, cass))?.result;
+        const typed = await casOf(x, e.c.latex, definitionAt(e.c.latex, x));
+        const homeapprox = await homeOf(x, e.c.latex, `approx(${definitionAt(e.c.latex, x)})`);
         await leak(angle, e.c.latex, `cas ${x}`);
         diff(angle, "cas", x, e.c.latex, compareViews(h, !cas ? other : cas.ok ? (cas.numeric ? viewOfResult(cas.numeric) : other) : { kind: "refused" }));
+        agree(angle, ctx, x, e.c.latex, { home: homeRows[xi]![fi]!, cas: typed, homeapprox, casapprox: cas ? casRow(cas) : null });
       }
+    }
+    // G799: lists of one expression at LIST_XS and the fixed inputs, each asked of Home and CAS, as typed and inside approx
+    const listAt = `[${LIST_XS.join(",")}]`;
+    const inputs = [
+      ...cs.slice(0, lim.lists ?? 0).map((e) => ({ at: listAt, latex: e.c.latex, giac: `[${LIST_XS.map((x) => definitionAt(e.c.latex, x)).join(",")}]` })),
+      ...fixed.filter((f) => angle === "rad" || f.c.angle).flatMap(({ at, c }) => {
+        try {
+          return [{ at, latex: c.latex, giac: latexToGiac(c.latex) }];
+        } catch {
+          return [];
+        }
+      }),
+    ];
+    for (const i of inputs) {
+      const rows = {
+        home: await homeOf(i.at, i.latex, i.giac),
+        cas: await casOf(i.at, i.latex, i.giac),
+        homeapprox: await homeOf(i.at, i.latex, `approx(${i.giac})`),
+        casapprox: await casOf(i.at, i.latex, `approx(${i.giac})`),
+      };
+      await leak(angle, i.latex, `cas ${i.at}`);
+      agree(angle, ctx, i.at, i.latex, rows);
     }
     // The plot evaluator against Giac's evalf(…, 20), in the mode Home just left (a fresh engine sets it again)
     engine.context = [{ method: "home", args: ["0", s] }];
