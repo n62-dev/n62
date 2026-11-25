@@ -74,7 +74,7 @@ export N62_LOCK_PID=$$   # A35: locks taken here (and by the agents it starts) r
 self_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"  # before the cd below: a relative call (night.sh's) resolves here
 # shellcheck source=scripts/pipeline-lib.sh
 source "$self_dir/pipeline-lib.sh"
-source "$self_dir/pipeline-tokens.sh"
+source "$self_dir/pipeline-tokens.sh"; source "$self_dir/pipeline-redfirst.sh"  # A274: red_first and the stock engine build
 own_traps  # A54: TERM, HUP and INT end the child sessions first (owned_kill), then the job (its EXIT trap drops the locks)
 
 main="$(cd "$(git rev-parse --git-common-dir)/.." && pwd)"

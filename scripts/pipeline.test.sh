@@ -91,7 +91,7 @@ git -C "$r" add note.md
 
 # A17 point 1: only the audited commit is merged; a branch left behind a detached HEAD stops the merge
 # shellcheck source=scripts/pipeline-lib.sh
-source "$here/pipeline-lib.sh"
+source "$here/pipeline-lib.sh"; source "$here/pipeline-redfirst.sh"  # A274: red_first moved to its own file
 g="$tmp/heads"; mkdir -p "$g"; git -C "$g" init -q -b main
 gc() { git -C "$1" -c user.name=t -c user.email=t@t commit -q --allow-empty -m "$2"; }
 gc "$g" base; git -C "$g" branch p1/x; git -C "$g" worktree add -q "$tmp/heads-wt" p1/x
@@ -1159,7 +1159,7 @@ if ! declare -F nm_selflink_drop >/dev/null; then fail "A265: nm_selflink_drop i
   [[ "$(grep -c 'unlinked the self-link' "$sl_log")" -eq 1 ]] || fail "A265: device_tree: the run log has not one line about the unlink"
   nodemods_held=0; unset -f runlog
 fi
-grep -q 'ln -sT "$wt/app/node_modules" "$scratch/app/node_modules"' "$here/pipeline-lib.sh" || fail "A265: red-first's scratch link is not made with ln -sT"
+grep -q 'ln -sT "$wt/app/node_modules" "$scratch/app/node_modules"' "$here/pipeline-redfirst.sh" || fail "A265: red-first's scratch link is not made with ln -sT"
 
 # A51: a timing rerun waits for a quiet host: 1-minute load under half of nproc, checked every 15 s, at most 600 s, then reruns anyway
 declare -F quiet_wait >/dev/null || fail "A51: quiet_wait is not defined in pipeline-lib.sh"
