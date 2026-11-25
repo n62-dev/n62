@@ -73,7 +73,7 @@ test("Appearance: Key shadows is a switch after Plain keys with its line, on at 
   await open(page);
   await expect(page.locator("html")).toHaveAttribute("data-shadow", "on");
   expect(await page.evaluate(() => window.n62.session.settings.look.shadow)).toBe(true);
-  await tap(page, ["@mode", "d6", "d1"]);
+  await tap(page, ["help", "d2"]);
   const ids = await sheet(page).getByRole("menuitem").evaluateAll((els) => els.map((e) => e.getAttribute("data-id")));
   expect(ids).toEqual(["theme", "brightness", "contrast", "plain", "shadow", "pops", "findFull"]); // (Key pop-ups: R163)
   await expect(row(page, "shadow").locator(".label")).toHaveText("Key shadows");

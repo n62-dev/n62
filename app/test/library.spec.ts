@@ -26,9 +26,9 @@ async function start(page: Page): Promise<void> {
   await open(page, "");
   await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 30_000 });
 }
-/** Mode › Settings › Data › Library. */
+/** Settings › Data › Library. */
 async function library(page: Page): Promise<void> {
-  await tap(page, ["@mode", "d6"]);
+  await tap(page, ["help"]);
   await row(page, "data").tap();
   await row(page, "library").tap();
   await expect(page.getByTestId("sheet-title")).toHaveText(/Settings › Data › Library$/);

@@ -40,13 +40,13 @@ async function openDeviceName(page: Page): Promise<void> {
   });
   await open(page);
   await tap(page, ["d2", "add", "d3"]);
-  await tap(page, ["@mode", "d6", "d5"]);
+  await tap(page, ["help", "d6"]);
   await row(page, "sync").tap();
   await row(page, "device").tap();
 }
 /** Settings › Sync reopened: the Device name row (its kept name is read on the level's first draw, so a test waits on the row). */
 const deviceRow = async (page: Page) => {
-  await tap(page, ["@mode", "d6", "d5"]);
+  await tap(page, ["help", "d6"]);
   await row(page, "sync").tap();
   return row(page, "device").getByTestId("sheet-value");
 };
@@ -76,7 +76,7 @@ test("Settings › Sync › Device name: Esc leaves the old name and the old lin
 test("Presets › Save: the same prompt; letters type with no Alpha press, and a number once Alpha is tapped off", async ({ page }) => {
   await open(page);
   await tap(page, ["d2", "add", "d3"]);
-  await tap(page, ["@mode", "d5", "d1"]);
+  await tap(page, ["@mode", "d1", "d1"]);
   await expectAsking(page, "Preset name");
   await tap(page, ["vars", "alpha", "d7"]); // a; the Alpha tap ends the lock (a digit key's Alpha letter is Q); then 7 types as before
   expect(await entryValue(page)).toBe("a7");
@@ -91,7 +91,7 @@ test("Presets › Save: the same prompt; letters type with no Alpha press, and a
 test("Presets › Save: Esc cancels, the old line comes back and Alpha is off", async ({ page }) => {
   await open(page);
   await tap(page, ["d2", "add", "d3"]);
-  await tap(page, ["@mode", "d5", "d1"]);
+  await tap(page, ["@mode", "d1", "d1"]);
   await expectAsking(page, "Preset name");
   await tap(page, ["vars"]);
   await tap(page, ["esc"]);

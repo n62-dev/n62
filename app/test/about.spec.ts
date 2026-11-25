@@ -21,8 +21,8 @@ test("start fetches no About data; opening Help and about does not either, About
   const urls: string[] = [];
   page.on("request", (r) => urls.push(r.url()));
   await open(page);
-  await tap(page, ["@mode", "d6", "d7"]);
-  await expect(title(page)).toHaveText("Mode › Settings › Help and about");
+  await tap(page, ["help", "d8"]);
+  await expect(title(page)).toHaveText("Settings › Help and about");
   expect(urls.filter((u) => /virtual:about|about-[\w-]+\.js/.test(u))).toEqual([]);
   await tap(page, ["d3"]);
   await expect(row(page, "version")).toBeVisible();
@@ -33,7 +33,7 @@ test.describe("by keys", () => {
   test.beforeEach(async ({ page }) => {
     await open(page);
     // R173: Report a problem is the second row (after the first-start tips), so About is digit 3, Why trust it (R174) digit 4 and Parts digit 5
-    await tap(page, ["@mode", "d6", "d7"]);
+    await tap(page, ["help", "d8"]);
   });
 
   test("Help and about: About N62, Parts we use and (R131) Desktop keys; digit 1 shows the name, the version, GPL-3.0-or-later and the source URL", async ({ page }) => {
@@ -49,7 +49,7 @@ test.describe("by keys", () => {
     await expect(row(page, "source")).toContainText("https://github.com/n62-dev/n62");
     for (const r of await rows(page).allInnerTexts()) expect(r).not.toMatch(/\b(HP|Prime)\b/);
     await tap(page, ["esc"]);
-    await expect(title(page)).toHaveText("Mode › Settings › Help and about");
+    await expect(title(page)).toHaveText("Settings › Help and about");
   });
 
   test("About › Licence opens the GPL text as a level that scrolls; ▼ pages down, ◀ goes back onto the same row", async ({ page }) => {
@@ -99,7 +99,7 @@ test.describe("by keys", () => {
 test("Why trust it (R174) at 360 × 740: the first line and the last are readable, the level scrolls", async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 740 });
   await open(page);
-  await tap(page, ["@mode", "d6", "d7", "d4"]);
+  await tap(page, ["help", "d8", "d4"]);
   await expect(title(page)).toHaveText("Settings › Help and about › Why trust it");
   await expect(text(page)).toContainText("recorded answers", { timeout: 20_000 });
   await expect(text(page)).toContainText("Giac patches");
@@ -137,8 +137,8 @@ test("Why trust it (R174) at 360 × 740: the first line and the last are readabl
 test.describe("by touch", () => {
   test.beforeEach(async ({ page }) => {
     await open(page);
-    await page.getByTestId("chip-format").tap();
-    await row(page, "settings").tap();
+    await page.getByTestId("chip-format").tap(); // Settings › Mode (R927); ‹ up to Settings
+    await sheet(page).getByRole("button", { name: "Back" }).tap();
     await row(page, "help").tap();
   });
 

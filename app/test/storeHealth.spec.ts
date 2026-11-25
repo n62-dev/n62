@@ -5,9 +5,9 @@ import { expect, test, type Page } from "@playwright/test";
 import { open, savePicker, tap } from "./helpers.ts";
 
 async function dataLevel(page: Page): Promise<void> {
-  await tap(page, ["@mode", "d6"]);
+  await tap(page, ["help"]);
   await page.getByTestId("menu").locator('[data-id="data"]').tap();
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings › Data");
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Data");
 }
 const line = (page: Page) => page.getByTestId("menu").locator('[data-id="store"] .label');
 const hint = (page: Page) => page.getByTestId("menu").locator('[data-id="store"] [data-testid="row-hint"]');

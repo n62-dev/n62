@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R89 (docs/05 3.4, docs/archive/mockups/settings.html section 4): presets in Mode. Row 5 is Preset (the active one's name, what
-// it holds on a second line; ◀ ▶ apply the previous or next one with the sheet open; a tap, a digit or Enter lists them),
-// Settings is row 6. `Mode › Presets`: the presets as radio rows, a pick applies and closes, then Save and Edit ›. A
+// R89 (docs/05 3.4, docs/archive/mockups/settings.html section 4): presets in Mode. Row 1 is Preset (R927; the active one's name, what
+// it holds on a second line; ◀ ▶ apply the previous or next one with the sheet open; a tap, a digit or Enter lists them);
+// Mode has no Settings row (it is Settings' row 1). `Mode › Presets`: the presets as radio rows, a pick applies and closes, then Save and Edit ›. A
 // preset's page: five ticks, Update, Rename or delete ›. A name is typed in the entry line under the label "Preset name":
 // Enter saves, Esc cancels, an empty or taken name is refused with a notice. A switch shows the notice naming what it
 // set; the free keys' faces follow; a later change to a held setting puts a dot after the name. The fake engine.
@@ -24,8 +24,8 @@ const setKey = (page: Page, id: string, label: string) =>
 
 /** Mode › Presets › Save, the name typed on a hardware keyboard, Enter. */
 async function saveAs(page: Page, name: string): Promise<void> {
-  await tap(page, ["@mode", "d5"]);
-  await expect(title(page)).toHaveText("Mode › Presets");
+  await tap(page, ["@mode", "d1"]);
+  await expect(title(page)).toHaveText("Settings › Mode › Presets");
   await row(page, "save").tap();
   await expect(label(page)).toHaveText("Preset name");
   await page.keyboard.type(name);
@@ -41,14 +41,12 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe("by keys", () => {
-  test("Mode's rows: Preset is 5, Settings 6; 5 lists the presets; Save names one in the entry line with Alpha letters, Enter saves, the line comes back", async ({ page }) => {
+  test("Mode's rows: Preset is 1, no Settings row (R927); 1 lists the presets; Save names one in the entry line with Alpha letters, Enter saves, the line comes back", async ({ page }) => {
     await tap(page, ["d1", "d2", "@mode"]);
-    expect(await rowIds(page)).toEqual(["angle", "format", "digits", "entry", "preset", "settings"]);
+    expect(await rowIds(page)).toEqual(["preset", "angle", "format", "digits", "entry"]);
     await expect(row(page, "preset").getByTestId("sheet-value")).toHaveText("None");
-    await tap(page, ["d6"]);
-    await expect(title(page)).toHaveText("Mode › Settings");
-    await tap(page, ["esc", "d5"]);
-    await expect(title(page)).toHaveText("Mode › Presets");
+    await tap(page, ["d1"]);
+    await expect(title(page)).toHaveText("Settings › Mode › Presets");
     await expect.poll(() => rowIds(page)).toEqual(["save", "edit"]); // the presets are read: until then the list holds a loading row
     await expect(row(page, "edit")).toHaveAttribute("aria-disabled", "true"); // nothing to edit yet
     await tap(page, ["d1"]);
@@ -63,20 +61,20 @@ test.describe("by keys", () => {
     expect(await entryValue(page)).toBe("12"); // the line as it was before the name
     expect(await historyRows(page)).toBe(0);
     await tap(page, ["@mode"]);
-    await sheetKey(page, ["down", "down", "down", "down"]);
+    await sheetKey(page, ["up"]);
     await expect(active(page)).toHaveAttribute("data-id", "preset");
     await expect(row(page, "preset").getByTestId("sheet-value")).toHaveText("ab");
     await expect(row(page, "preset").getByTestId("row-hint")).toHaveText("RAD · STD 12 · point · no keys");
     await tap(page, ["enter"]); // Enter on the row lists the presets
-    await expect(title(page)).toHaveText("Mode › Presets");
+    await expect(title(page)).toHaveText("Settings › Mode › Presets");
     expect(await rowIds(page)).toEqual(["p1", "save", "edit"]);
     await expect(row(page, "p1")).toHaveAttribute("data-selected", "true");
   });
 
   test("a hardware Enter on the name saves and nothing reaches the history; an empty or taken name is refused with a notice; Esc cancels", async ({ page }) => {
     await tap(page, ["d1", "d2"]);
-    await tap(page, ["@mode", "d5"]);
-    await expect(title(page)).toHaveText("Mode › Presets");
+    await tap(page, ["@mode", "d1"]);
+    await expect(title(page)).toHaveText("Settings › Mode › Presets");
     await expect(row(page, "save")).toBeVisible();
     await tap(page, ["d1"]);
     await expect(label(page)).toHaveText("Preset name");
@@ -88,7 +86,7 @@ test.describe("by keys", () => {
     await expect(notice(page)).toHaveText("Saved Lab");
     expect(await historyRows(page)).toBe(0);
     expect(await entryValue(page)).toBe("12");
-    await tap(page, ["@mode", "d5", "d2"]); // Save is row 2 now
+    await tap(page, ["@mode", "d1", "d2"]); // Save is row 2 now
     await expect(label(page)).toHaveText("Preset name");
     await page.keyboard.type("lab");
     await page.keyboard.press("Enter");
@@ -117,9 +115,9 @@ test.describe("by keys", () => {
     await saveAs(page, "Chemistry");
     await expect(face(page, "u1")).toHaveText("mol");
     await tap(page, ["@mode"]);
-    await sheetKey(page, ["down", "down", "down", "down", "left"]);
+    await sheetKey(page, ["up", "left"]);
     await expect(notice(page)).toHaveText("Lab: DEG · STD 12 · point · 1 key");
-    await expect(title(page)).toHaveText("Mode"); // the sheet stays open
+    await expect(title(page)).toHaveText("Settings › Mode"); // the sheet stays open
     await expect(row(page, "preset").getByTestId("sheet-value")).toHaveText("Lab");
     await expect(row(page, "preset").getByTestId("row-hint")).toHaveText("DEG · STD 12 · point · 1 key");
     expect(await angle(page)).toBe("deg");
@@ -130,8 +128,8 @@ test.describe("by keys", () => {
     await expect(face(page, "u2")).toHaveText("pH");
     await sheetKey(page, ["right"]); // round the end
     await expect(row(page, "preset").getByTestId("sheet-value")).toHaveText("Lab");
-    await tap(page, ["d6", "d6"]);
-    await expect(title(page)).toHaveText("Mode › Settings › Counters");
+    await tap(page, ["esc", "d7"]); // up to Settings (R927), its Counters
+    await expect(title(page)).toHaveText("Settings › Counters");
     await expect(row(page, "presets").getByTestId("sheet-value")).toHaveText("3");
   });
 
@@ -140,7 +138,7 @@ test.describe("by keys", () => {
     await page.getByTestId("chip-angle").tap(); // DEG: held by Lab's Mode group
     await tap(page, ["@mode"]);
     await expect(row(page, "preset").getByTestId("sheet-value")).toHaveText("Lab •");
-    await tap(page, ["d5", "d3"]);
+    await tap(page, ["d1", "d3"]);
     await expect(title(page)).toHaveText("Mode › Presets › Edit");
     expect(await rowIds(page)).toEqual(["p1"]);
     await tap(page, ["d1"]);
@@ -158,13 +156,13 @@ test.describe("by keys", () => {
     await expect(row(page, "look")).toHaveAttribute("data-selected", "false");
     await expect(row(page, "look").getByTestId("row-hint")).toHaveText("Not held: stays as it is");
     await tap(page, ["esc", "esc", "esc"]);
-    await expect(title(page)).toHaveText("Mode");
+    await expect(title(page)).toHaveText("Settings › Mode");
     await expect(row(page, "preset").getByTestId("sheet-value")).toHaveText("Lab");
   });
 
   test("Rename or delete: Rename puts the name on the line under its label; Delete removes the preset", async ({ page }) => {
     await saveAs(page, "Lab");
-    await tap(page, ["@mode", "d5", "d3", "d1", "d7"]);
+    await tap(page, ["@mode", "d1", "d3", "d1", "d7"]);
     await expect(title(page)).toHaveText("Edit › Lab › Rename or delete");
     expect(await rowIds(page)).toEqual(["rename", "delete"]);
     await tap(page, ["d1"]);
@@ -177,7 +175,7 @@ test.describe("by keys", () => {
     await expect(notice(page)).toHaveText("Renamed to Bench");
     await tap(page, ["@mode"]);
     await expect(row(page, "preset").getByTestId("sheet-value")).toHaveText("Bench");
-    await tap(page, ["d5", "d3", "d1", "d7", "d2"]);
+    await tap(page, ["d1", "d3", "d1", "d7", "d2"]);
     await expect(sheet(page)).toHaveCount(0);
     await expect(notice(page)).toHaveText("Bench deleted");
     await tap(page, ["@mode"]);
@@ -193,7 +191,7 @@ test.describe("by touch", () => {
     await saveAs(page, "Survey");
     await page.getByTestId("chip-format").tap();
     await row(page, "preset").locator(".label").tap();
-    await expect(title(page)).toHaveText("Mode › Presets");
+    await expect(title(page)).toHaveText("Settings › Mode › Presets");
     expect(await rowIds(page)).toEqual(["p1", "p2", "save", "edit"]);
     await expect(row(page, "p2")).toHaveAttribute("data-selected", "true");
     await expect(row(page, "p1").getByTestId("row-hint")).toHaveText("RAD · STD 12 · point · no keys");
@@ -204,13 +202,13 @@ test.describe("by touch", () => {
     await page.getByTestId("chip-format").tap();
     await row(page, "preset").getByTestId("step-up").tap();
     await expect(notice(page)).toHaveText("Survey: DEG · STD 12 · point · no keys");
-    await expect(title(page)).toHaveText("Mode");
+    await expect(title(page)).toHaveText("Settings › Mode");
     expect(await angle(page)).toBe("deg");
   });
 
   test("a tap elsewhere ends the naming: the format chip, then Save again, then Esc gives the line back; the place name too", async ({ page }) => {
-    await tap(page, ["d1", "d2", "@mode", "d5"]);
-    await expect(title(page)).toHaveText("Mode › Presets");
+    await tap(page, ["d1", "d2", "@mode", "d1"]);
+    await expect(title(page)).toHaveText("Settings › Mode › Presets");
     await expect(row(page, "save")).toBeVisible();
     await tap(page, ["d1"]);
     await expect(label(page)).toHaveText("Preset name");
@@ -219,13 +217,13 @@ test.describe("by touch", () => {
     await page.getByTestId("chip-format").tap(); // a sheet opens: the half-typed name goes, the line comes back
     await expect(label(page)).toHaveCount(0);
     expect(await entryValue(page)).toBe("12");
-    await tap(page, ["d5", "d1"]); // Save again
+    await tap(page, ["d1", "d1"]); // Save again
     await expect(label(page)).toHaveText("Preset name");
     await tap(page, ["esc"]);
     await expect(label(page)).toHaveCount(0);
     expect(await entryValue(page)).toBe("12"); // never "La"
-    await tap(page, ["@mode", "d5"]);
-    await expect(title(page)).toHaveText("Mode › Presets");
+    await tap(page, ["@mode", "d1"]);
+    await expect(title(page)).toHaveText("Settings › Mode › Presets");
     await expect(row(page, "save")).toBeVisible();
     await tap(page, ["d1"]);
     await expect(label(page)).toHaveText("Preset name");
@@ -248,14 +246,14 @@ test.describe("by touch", () => {
       for (let i = 1; i <= 8; i++) presets.capture(`Job ${i}`);
     }, "/src/views/modeSheet.ts");
     await page.setViewportSize({ width: 360, height: 740 });
-    await tap(page, ["@mode", "d5"]);
-    await expect(title(page)).toHaveText("Mode › Presets");
+    await tap(page, ["@mode", "d1"]);
+    await expect(title(page)).toHaveText("Settings › Mode › Presets");
     await expect(page.getByTestId("sheet-count")).toHaveText("10 items");
   });
 });
 
 for (const [w, h] of [[360, 740], [372, 767]] as const)
-  test(`fit at ${w} × ${h}: Mode with DEG, PFX 30, one line and a long preset name has all six rows, none off the screen`, async ({ page }) => {
+  test(`fit at ${w} × ${h}: Mode with DEG, PFX 30, one line and a long preset name has all five rows, none off the screen`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await page.evaluate(() => {
       const s = window.n62.session;
@@ -266,8 +264,8 @@ for (const [w, h] of [[360, 740], [372, 767]] as const)
     });
     await saveAs(page, "Lab bench: strain-gauge calibration");
     await tap(page, ["@mode"]);
-    expect(await rowIds(page)).toEqual(["angle", "format", "digits", "entry", "preset", "settings"]);
-    // R770: the sheet is in the viewport (about 250 px): the six rows scroll inside its box, the last scrolls into view
+    expect(await rowIds(page)).toEqual(["preset", "angle", "format", "digits", "entry"]);
+    // R770: the sheet is in the viewport (about 250 px): the five rows scroll inside its box, the last scrolls into view
     const last = sheet(page).getByRole("menuitem").last();
     await last.scrollIntoViewIfNeeded();
     const [list, end] = await Promise.all([sheet(page).locator(".list").boundingBox(), last.boundingBox()]);

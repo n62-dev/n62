@@ -55,28 +55,28 @@ for (const width of [412, 360]) {
     test.use({ viewport: { width, height: 860 } });
     test.beforeEach(async ({ page }) => open(page));
 
-    test("the ⚙ key (R863) opens Settings over the view; Esc twice comes back to it, slots and focus as they were", async ({ page }) => {
+    test("the ⚙ key (R863) opens Settings over the view; Esc comes back to it, slots and focus as they were", async ({ page }) => {
       await kmPerH(page);
       await tap(page, ["help"]);
       await expect(page.getByTestId("menu")).toBeVisible();
-      expect(await depth(page)).toBe(2); // Mode › Settings
+      expect(await depth(page)).toBe(1); // the Settings root (R927)
       expect(await viewOpen(page)).toBe(true);
-      await tap(page, ["esc", "esc"]);
+      await tap(page, ["esc"]);
       await sameView(page);
     });
 
-    test("Mode from Alt + Shift + O and from the bar's chip opens over the view; Esc comes back to it", async ({ page }) => {
+    test("Mode from Alt + Shift + O and from the bar's chip opens over the view; Esc twice (Settings › Mode, R927) comes back to it", async ({ page }) => {
       await kmPerH(page);
       await page.keyboard.press("Alt+Shift+O");
       await expect(page.getByTestId("menu")).toBeVisible();
       expect(await viewOpen(page)).toBe(true);
-      await tap(page, ["esc"]);
+      await tap(page, ["esc", "esc"]);
       await sameView(page);
       await page.keyboard.press("ArrowRight"); // u2 active again
       await expect.poll(() => active(page)).toBe(1);
       await tap(page, ["@mode"]);
       await expect(page.getByTestId("menu")).toBeVisible();
-      await tap(page, ["esc"]);
+      await tap(page, ["esc", "esc"]);
       await sameView(page);
     });
 
@@ -91,10 +91,10 @@ for (const width of [412, 360]) {
       await tap(page, ["up"]);
       await expect.poll(hl).toBe(first);
       await tap(page, ["d4"]); // Settings' row 4 opens its level (no k into a slot)
-      await expect.poll(() => depth(page)).toBe(3);
+      await expect.poll(() => depth(page)).toBe(2);
       expect(await slotText(page, "u1")).toBe("k:m");
       expect(await slotText(page, "u2")).toBe("h");
-      await tap(page, ["esc", "esc", "esc"]);
+      await tap(page, ["esc", "esc"]);
       await sameView(page);
     });
 
@@ -105,7 +105,7 @@ for (const width of [412, 360]) {
       expect(await slotText(page, "u1")).toBe("");
       await tap(page, ["help"]);
       await expect(page.getByTestId("menu")).toBeVisible();
-      await tap(page, ["esc", "esc"]);
+      await tap(page, ["esc"]);
       await backOnView(page);
       await tap(page, ["d9"]);
       expect(await slotText(page, "u1")).toBe("k:m");
@@ -246,7 +246,7 @@ test.describe("a setting changed over the unit view redraws its result (R838)", 
     const plain = await twoPi(page);
     await page.keyboard.press("Alt+Shift+O"); // Mode
     await expect(page.getByTestId("menu")).toBeVisible();
-    await tap(page, ["d3", "d2"]); // › Significant digits › 6: the pick closes the sheet
+    await tap(page, ["d4", "d2"]); // › Significant digits › 6: the pick closes the sheet
     await backOnView(page);
     // the digits are in the engine's answer (its facts, σ's text, the Home row), so the result is asked for again, once
     await expect.poll(plain).toMatch(/^157\.080?$/);
@@ -261,7 +261,7 @@ test.describe("a setting changed over the unit view redraws its result (R838)", 
     await page.keyboard.press("Alt+Shift+O"); // Mode
     await expect(page.getByTestId("menu")).toBeVisible();
     await page.evaluate(() => window.n62.session.setDecimalMark("comma")); // (Settings › Numbers › Decimal mark, while the sheet is open)
-    await tap(page, ["esc"]);
+    await tap(page, ["esc", "esc"]); // (Settings › Mode, R927)
     await backOnView(page);
     await expect.poll(plain).toBe("157,079632679");
     await expect.poll(() => dataText(page)).toBe("157,079632679");

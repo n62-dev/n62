@@ -20,9 +20,9 @@ const state = (page: Page): Promise<State> =>
 const ready = (page: Page): Promise<unknown> => page.waitForFunction(() => window.n62?.session.engineState === "ready", undefined, { timeout: 30_000 });
 
 async function dataSection(page: Page): Promise<void> {
-  await tap(page, ["@mode", "d6"]);
+  await tap(page, ["help"]);
   await page.getByTestId("menu").locator('[data-id="data"]').tap();
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings › Data");
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Data");
 }
 /** Settings › Data › Restore from a file, with the file given to the picker. */
 async function pick(page: Page, file: string | { name: string; mimeType: string; buffer: Buffer }): Promise<void> {

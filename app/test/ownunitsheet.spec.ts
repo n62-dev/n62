@@ -16,8 +16,8 @@ const notice = (page: Page) => page.getByTestId("notice");
 
 /** Settings › Your keys › Your units. */
 async function yourUnits(page: Page): Promise<void> {
-  await tap(page, ["@mode", "d6", "d4"]);
-  await expect(title(page)).toHaveText("Mode › Settings › Your keys");
+  await tap(page, ["help", "d5"]);
+  await expect(title(page)).toHaveText("Settings › Your keys");
   await row(page, "units").tap();
   await expect(title(page)).toHaveText("Settings › Your keys › Your units");
 }
@@ -79,7 +79,7 @@ test("Your units: New makes myfurlong (201.168 m), a name Find has is refused wi
   await tap(page, ["esc", "esc"]);
 
   // an edit: the factor changes (and a factor that is no number is refused in words)
-  await tap(page, ["@mode", "d6", "d4"]);
+  await tap(page, ["help", "d5"]);
   await row(page, "units").tap();
   await row(page, "u:myfurlong").tap();
   await expect(title(page)).toHaveText("myfurlong");

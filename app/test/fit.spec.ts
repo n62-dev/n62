@@ -43,20 +43,20 @@ const OPENERS: Record<string, (page: Page) => Promise<void>> = {
   mode: (page) => tap(page, ["@mode"]),
   "mode digits": async (page) => {
     await tap(page, ["@mode"]);
-    await sheet(page).getByRole("menuitem", { name: "3 Significant digits" }).tap(); // the 3 key is under the sheet: its row is where it was
-    await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Significant digits");
+    await sheet(page).getByRole("menuitem", { name: "4 Significant digits" }).tap(); // the 4 key is under the sheet: its row is where it was
+    await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Mode › Significant digits");
   },
   "mode settings": async (page) => {
-    await tap(page, ["@mode", "d6"]);
-    await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings");
+    await tap(page, ["help"]);
+    await expect(page.getByTestId("sheet-title")).toHaveText("Settings");
   },
   "mode settings appearance": async (page) => {
-    await tap(page, ["@mode", "d6", "d1"]);
-    await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings › Appearance");
+    await tap(page, ["help", "d2"]);
+    await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Appearance");
   },
   "mode settings numbers": async (page) => {
-    await tap(page, ["@mode", "d6", "d2"]);
-    await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings › Numbers");
+    await tap(page, ["help", "d3"]);
+    await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Numbers");
   },
   tmpl: (page) => tap(page, ["tmpl"]),
   "shift 6": (page) => tap(page, ["shift", "d6"]),
@@ -107,7 +107,7 @@ test.describe("at 412 × 915", () => {
     const before = await keyBoxes(page);
     await openSheet(page, "mode settings numbers");
     expect(await keyBoxes(page)).toEqual(before);
-    await tap(page, ["esc", "esc", "esc"]);
+    await tap(page, ["esc", "esc"]);
     await expect(sheet(page)).toHaveCount(0);
     expect(await keyBoxes(page)).toEqual(before);
   });
@@ -117,7 +117,7 @@ test.describe("at 412 × 915", () => {
       const before = await keyBoxes(page);
       await openSheet(page, name);
       expect(await keyBoxes(page)).toEqual(before);
-      await tap(page, ["esc"]);
+      await tap(page, name === "mode" ? ["esc", "esc"] : ["esc"]); // (R927: Mode is a level of Settings)
       await expect(sheet(page)).toHaveCount(0);
       expect(await keyBoxes(page)).toEqual(before);
     });
