@@ -150,6 +150,32 @@ test("every legend and face fits its key within the fit code's floor at 360 px",
   }
 });
 
+// R907: a unit's size does not hang on the main key under it (the cell kept its key's class: J 17 px on a function key, W 20 px
+// on a digit, Torr 16 px on a control key). Every unit and prefix cell's face has one size before fit.ts shrinks a long one (its
+// inline size taken off for the reading), the digits' 20 px, in all three layers.
+test("every unit and prefix face has one size before fitting, in all three layers", async ({ page }) => {
+  for (const state of [[], ["shift"], ["alpha"]]) {
+    await tap(page, state);
+    const sizes = await page.evaluate(() => {
+      const out: Record<string, string[]> = {};
+      for (const key of document.querySelectorAll<HTMLElement>('.pad .key:is([data-pad="unit"], [data-pad="prefix"])')) {
+        const el = key.querySelector<HTMLElement>(".main");
+        if (!el) continue;
+        const fitted = el.style.fontSize;
+        el.style.fontSize = "";
+        const px = getComputedStyle(el).fontSize;
+        el.style.fontSize = fitted;
+        (out[px] ??= []).push(`${key.dataset["key"]} "${el.textContent}"`);
+      }
+      return out;
+    });
+    const where = state.join("+") || "plain";
+    expect(Object.values(sizes).flat().length, `${where}: the cells`).toBeGreaterThan(20);
+    expect(Object.keys(sizes), `${where}: ${JSON.stringify(sizes)}`).toEqual(["20px"]);
+    if (state.length) await tap(page, state); // off again
+  }
+});
+
 // R803: the power keys read x², √x, x³, x⁴, ÷ and x⁻¹ (upright, as the main keypad's x²), whole at both phone widths
 for (const [w, h] of [[412, 915], [360, 740]] as const)
   test(`the power cells read x², x³, x⁴, x⁻¹ and √x, whole and upright at ${w} × ${h}`, async ({ page }) => {
