@@ -1784,6 +1784,15 @@ Digits:=40:; pc("g802-det-exp-approx-entry-scaled-40",'det(exp([[approx(1/10),ex
 // patch 0069-vector-mpfr-arith-recursion.patch
 // g802-plus-vector-approx-float-1-40 (oracle: mpmath)
 Digits:=40:; pc("g802-plus-vector-approx-float-1-40",'([approx(1/10),exp(1)]+approx(2))[1]',47182818284590452353602874713526624978/10^37,5/10^38);
+// patch 0070-vector-entry-mpfr-precision.patch
+// g804-add-matrix-pi-over-1e11-30 (derived: the exact value)
+Digits:=30:; pc("g804-add-matrix-pi-over-1e11-30",'(([[pi]]/10^11+evalf([[30000000]]))[0][0]-30000000)*10^11',pi,1/10^8);
+// patch 0070-vector-entry-mpfr-precision.patch
+// g804-sub-matrix-pi-over-1e11-30 (derived: the exact value)
+Digits:=30:; pc("g804-sub-matrix-pi-over-1e11-30",'(30000000-(evalf([[30000000]])-[[pi]]/10^11)[0][0])*10^11',pi,1/10^8);
+// patch 0070-vector-entry-mpfr-precision.patch
+// g804-mult-vector-approx-e-30 (derived: the exact value)
+Digits:=30:; pc("g804-mult-vector-approx-e-30",'((2*[approx(1/10),exp(1)])[1]-5)*10^14',(2*exp(1)-5)*10^14,1/10^8);
 // patch 0067-convert-subtype-integer.patch
 // g803-convert-129-2-half-refused (derived: no integer subtype; Parisse, 2026-11-24: "it should probably error")
 Digits:=40:; pasr:=0:; try { convert(129,2,1/2); } catch (err) { pasr:=1; }:; pc("g803-convert-129-2-half-refused",'pasr',1,1/10^30);
