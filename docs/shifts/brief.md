@@ -141,7 +141,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 |---|---|---|---|---|
 | B6b | G622 float pivots relative to the matrix (G622f2, pass 239) | gorge, Opus | `p1/gorge-floatrref` | – |
 | B6c | A273 the family tests' nightly runs after each pass | annabell, Sonnet | `p1/annabell-familynightly` | – |
-| B6d | [G802](packages/G802.md) exp of a 3×3 float matrix kills the engine | gorge, Opus | `p1/gorge-matexpstack` | – |
+| B6d | G802 exp of a 3×3 float matrix kills the engine | gorge, Opus | `p1/gorge-matexpstack` | – |
 | B6h | [G799](packages/G799.md) marks and Copy agree | gorge, Opus | `p1/gorge-markagree` | – |
 | B6i | [G800](packages/G800.md) a unit sweep | gorge, Opus | `p1/gorge-unitsweep` | R885 |
 | B6j | [G795](packages/G795.md) FIX of a long number | gorge, Opus | `p1/gorge-fixlong` | – |

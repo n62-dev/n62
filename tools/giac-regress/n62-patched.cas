@@ -206,6 +206,9 @@ Digits:=40:; pc("g622-det-approx-diag-tiny",'(det(approx([[2*10^-13,0],[0,3*10^-
 // patch 0068-float-rref-cancelled-pivot.patch
 // g622-det-approx-block-tiny (home.yaml, oracle)
 Digits:=40:; pc("g622-det-approx-block-tiny",'(det(approx([[10^-13,0,0],[0,2*10^-13,3*10^-13],[0,4*10^-13,5*10^-13]])))',-(2/10^39),5/10^51);
+// patch 0069-vector-mpfr-arith-recursion.patch
+// g802-inv-exp-approx-entry-scaled-00 (home.yaml, oracle)
+Digits:=40:; pc("g802-inv-exp-approx-entry-scaled-00",'(inv(exp([[approx((1/10^1)),exp(1),pi],[5,2,7],[exp(1),7,(981/10^2)]]/10^4))[0][0])',(99999011066/10^11),5/10^13);
 // patch 0046-shift-integer-exact.patch
 // g226-shift-1-neg70 (home.yaml, derived)
 Digits:=40:; pc("g226-shift-1-neg70",'(shift(1,-70))',(118059162072*10^10),5*10^9);
@@ -1376,6 +1379,9 @@ Digits:=50:; pc("g622-det-approx-diag-1e-13-40",'(det(approx([[10^-13,0],[0,10^-
 // patch 0068-float-rref-cancelled-pivot.patch
 // g622-rank-approx-123-20 (precision.yaml, derived)
 Digits:=40:; pc("g622-rank-approx-123-20",'(rank(approx([[1,2,3],[4,5,6],[7,8,9]])))',2,5/10^20);
+// patch 0069-vector-mpfr-arith-recursion.patch
+// g802-home-inv-exp-approx-entry-scaled-00-40 (precision.yaml, oracle)
+Digits:=50:; pc("g802-home-inv-exp-approx-entry-scaled-00-40",'(inv(exp([[approx((1/10^1)),exp(1),pi],[5,2,7],[exp(1),7,(981/10^2)]]/10^4))[0][0])',(9999901106595578860437560849212499637944/10^40),5/10^41);
 // patch 0006-reim-root-of-unknown-sign.patch
 // g96-cas-im-2sqrt (bench.yaml, derived)
 Digits:=40:; pc("g96-cas-im-2sqrt",'subst(im(2*sqrt(x)),x,-1)',2,1/10^30);
@@ -1763,6 +1769,21 @@ Digits:=40:; pc("g792-sin-evalf-tiny-00-40",'sin(evalf([[10^-400,0],[0,10^-400]]
 // patch 0066-matrix-trig-series.patch
 // g792-sinh-evalf-tiny-00-40 (oracle: mpmath)
 Digits:=40:; pc("g792-sinh-evalf-tiny-00-40",'sinh(evalf([[10^-400,0],[0,10^-400]]))[0][0]',1/10^400,5/10^440);
+// patch 0069-vector-mpfr-arith-recursion.patch
+// g802-div-vector-approx-half-1-40 (oracle: mpmath)
+Digits:=40:; pc("g802-div-vector-approx-half-1-40",'([approx(1/10),exp(1)]/2)[1]',13591409142295226176801437356763312489/10^37,5/10^38);
+// patch 0069-vector-mpfr-arith-recursion.patch
+// g802-exp-approx-entry-scaled-01-40 (oracle: mpmath)
+Digits:=40:; pc("g802-exp-approx-entry-scaled-01-40",'exp([[approx(1/10),exp(1),pi],[5,2,7],[exp(1),7,approx(981/100)]]/10^4)[0][1]',27196675836255845595218722617418351666/10^41,5/10^42);
+// patch 0069-vector-mpfr-arith-recursion.patch
+// g802-inv-exp-approx-entry-scaled-00-40 (oracle: mpmath)
+Digits:=40:; pc("g802-inv-exp-approx-entry-scaled-00-40",'inv(exp([[approx(1/10),exp(1),pi],[5,2,7],[exp(1),7,approx(981/100)]]/10^4))[0][0]',99999011065955788604375608492124996379/10^38,5/10^39);
+// patch 0069-vector-mpfr-arith-recursion.patch
+// g802-det-exp-approx-entry-scaled-40 (oracle: mpmath)
+Digits:=40:; pc("g802-det-exp-approx-entry-scaled-40",'det(exp([[approx(1/10),exp(1),pi],[5,2,7],[exp(1),7,approx(981/100)]]/10^4))',10011917095221523354884149375157479586/10^37,5/10^38);
+// patch 0069-vector-mpfr-arith-recursion.patch
+// g802-plus-vector-approx-float-1-40 (oracle: mpmath)
+Digits:=40:; pc("g802-plus-vector-approx-float-1-40",'([approx(1/10),exp(1)]+approx(2))[1]',47182818284590452353602874713526624978/10^37,5/10^38);
 // patch 0067-convert-subtype-integer.patch
 // g803-convert-129-2-half-refused (derived: no integer subtype; Parisse, 2026-11-24: "it should probably error")
 Digits:=40:; pasr:=0:; try { convert(129,2,1/2); } catch (err) { pasr:=1; }:; pc("g803-convert-129-2-half-refused",'pasr',1,1/10^30);
