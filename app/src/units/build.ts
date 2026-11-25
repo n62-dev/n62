@@ -470,22 +470,13 @@ export function shownUnits(req: UnitRequest, table: FactorTable): ShownUnit[] {
 
 /** G801: the units of the request's constants a result without an end slot may be shown in, best first: their product
  *  (h·c in J·m), each constant's own unit (find/units.yaml constants.ownUnit) or base form standing for it, then each
- *  alone (h·c/c in J·s). All have factor exactly 1. The product of several is taken only when it has fewer symbols than
+ *  alone (h·c/c in J·s; a repeat is harmless, the first that fits is taken). All have factor exactly 1. The product of several is taken only when it has fewer symbols than
  *  the base form of its dimension (R·T/p is m³/mol, not J/(mol·Pa)); a pure number's constant (α) has none. */
 export function constUnits(req: UnitRequest, table: FactorTable): ShownUnit[] {
-  const slots = (req.consts ?? []).flatMap((id) => {
-    const c = table.consts.get(id);
-    const s = c?.dim ? (c.own ?? siSlot(c.dim)) : null;
-    return s?.tokens.length ? [s] : [];
-  });
-  const out: ShownUnit[] = [];
-  const all = slots.length ? shownOf(slots, table, () => true) : null;
-  if (all && (slots.length === 1 || all.slot.tokens.length < parseDimKey(all.dim).size)) out.push(all);
-  for (const s of slots) {
-    const one = shownOf([s], table, () => true);
-    if (one && !out.some((o) => o.text === one.text)) out.push(one);
-  }
-  return out;
+  const slots = (req.consts ?? []).flatMap((id) => { const c = table.consts.get(id); return c?.dim ? [c.own ?? siSlot(c.dim)] : []; });
+  const all = shownOf(slots, table, () => true);
+  const one = slots.flatMap((s) => shownOf([s], table, () => true) ?? []);
+  return all && (slots.length < 2 || all.slot.tokens.length < parseDimKey(all.dim).size) ? [all, ...one] : one;
 }
 
 const PLACEHOLDER = /\bpas([uk])(\d+)\b/g;

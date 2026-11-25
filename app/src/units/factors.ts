@@ -31,11 +31,6 @@ export interface ConstFactor {
   own?: UnitSlot;
 }
 
-/** G801: an index `ownUnit` ("J*K^-1") as slot tokens: each id with its power, none below a ÷. */
-export function ownSlot(text: string): UnitSlot {
-  return { tokens: text.split("*").map((p) => { const [unit, power] = p.split("^"); return { unit: unit!, ...(power !== undefined ? { power } : {}) }; }) };
-}
-
 export interface FactorTable {
   units: ReadonlyMap<string, UnitFactor>;
   prefixes: ReadonlyMap<string, { si: string; symbol: string }>;
@@ -76,7 +71,8 @@ export function factorTable(items: readonly IndexItem[]): FactorTable {
         basisLeaves: it.basisLeaves,
         ...(it.dim !== undefined ? { dim: it.dim } : {}),
         symbol: symbolOf(it),
-        ...(it.ownUnit !== undefined ? { own: ownSlot(it.ownUnit) } : {}),
+        // G801: "J*K^-1" as tokens, each id with its power, none below a ÷
+        ...(it.ownUnit ? { own: { tokens: it.ownUnit.split("*").map((p) => { const [unit, power] = p.split("^") as [string, string?]; return power ? { unit, power } : { unit }; }) } } : {}),
       });
   }
   return { units, prefixes, consts };
