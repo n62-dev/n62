@@ -2,6 +2,12 @@
 // G64: CAS answers checked back (r16 section 3). Each check takes an answer and asks `at(expr, x)` for the number an
 // expression has at x (null: not a plain real number there). A claim holds when the difference is 0 at every point.
 // No expected values: the answer is checked against the question it answers. Only erasable TypeScript syntax.
+// G805: the points are evaluated in doubles (Giac's evalf at 12 digits, read back as 12-digit text), so a point where the two sides differ
+// is not checkable (the point is dropped, and the check is a skip unless another point fails) when a periodic function's argument (sin, cos, tan, sec,
+// csc, cot, in either side) passes 10^8 there (one ulp of a double past 10^8 is 1.5·10^-8 or more, so its phase is round-off: tan of
+// 9.1·10^13 two ways gave 2.04 and -22.8), or when they differ only past their first HELD_DIGITS digits at that size (|a-o| ≤ 10^-10
+// of the larger: the last two of the 12 digits carry the round-off the steps grow; 2.00392368114e87 against …115e87). A side that
+// really differs (in its first 10 digits, past TOL, with every argument under 10^8) still fails.
 import type { ComplexValue, DecimalValue } from "../../../app/src/engine/format.ts";
 import type { Shown } from "../sweep/judge.ts";
 
@@ -14,6 +20,13 @@ export type Kind = "antiderivative" | "solution" | "factorisation" | "simplifica
  *  where a lost sign shows (sqrt(x^2) -> x agrees at all three positive ones). */
 export const POINTS: readonly string[] = ["0.3", "0.55", "0.8", "-0.7"];
 const TOL = 1e-7;
+/** G805: the digits two double evaluations of one value are compared to, at any size. */
+export const HELD_DIGITS = 10;
+/** G805: past this a periodic function's argument holds no reliable phase in a double. */
+export const PHASE_LIMIT = 1e8;
+
+/** G805: the largest |argument| of a periodic function (sin, cos, tan, sec, csc, cot) in an expression at x; 0 with none, null unknown. */
+export type Phase = (expr: string, x: string) => number | null;
 
 export interface Verdict {
   /** "ok": holds; "wrong": differs at a point; "skip": not checkable (the reason says why). */
@@ -38,17 +51,35 @@ const NO_EXPRESSION: ReadonlySet<string> = new Set(["undef", "error", "other", "
 
 /** The claim `answer = original` at every point, each evaluated alone. A point where exactly one has a real value is wrong
  *  (a lost sign: ln(x^2) -> 2*ln(x) is not real at x<0); only a point where neither has one is not checked. */
-function sameAt(answer: string, original: string, at: At, points: readonly string[] = POINTS): Verdict {
+function sameAt(answer: string, original: string, at: At, phase?: Phase, points: readonly string[] = POINTS): Verdict {
   let seen = 0;
+  let dropped = "";
   for (const p of points) {
     const a = at(answer, p);
     const o = at(original, p);
     if (a === null && o === null) continue;
-    seen++;
+    if (a !== null && o !== null && Math.abs(a - o) <= TOL) {
+      seen++;
+      continue;
+    }
+    const why = notCheckable([answer, original], p, phase, a, o);
+    if (why) {
+      dropped ||= why;
+      continue;
+    }
     if (a === null || o === null) return { status: "wrong", detail: `${a === null ? answer : original} is not real at x=${p}, ${a === null ? original : answer} = ${a ?? o}` };
-    if (!(Math.abs(a - o) <= TOL)) return { status: "wrong", detail: `${answer} = ${a}, ${original} = ${o} at x=${p}` };
+    return { status: "wrong", detail: `${answer} = ${a}, ${original} = ${o} at x=${p}` };
   }
-  return seen > 0 ? ok : skip("no real number at any point");
+  // a dropped point makes the check a skip (the points that agreed may agree by chance, as two rounded phases can)
+  return dropped ? skip(dropped) : seen > 0 ? ok : skip("no real number at any point");
+}
+
+/** G805 (the rule in the header): why a point where the sides differ is not checkable in doubles, or null when it is. */
+function notCheckable(exprs: readonly string[], x: string, phase: Phase | undefined, a: number | null, o: number | null): string | null {
+  if (a !== null && o !== null && Math.abs(a - o) <= 10 ** -HELD_DIGITS * Math.max(Math.abs(a), Math.abs(o))) return `the sides differ only past ${HELD_DIGITS} digits at x=${x} (${a}, ${o})`;
+  if (!phase) return null;
+  const top = Math.max(...exprs.map((e) => phase(e, x) ?? 0));
+  return top > PHASE_LIMIT ? `a periodic function's argument is ${top.toPrecision(3)} at x=${x}, past 10^8` : null;
 }
 
 function notAnswer(answer: string, probe: Probe): string | null {
@@ -58,28 +89,28 @@ function notAnswer(answer: string, probe: Probe): string | null {
 }
 
 /** An antiderivative differentiates to the integrand. */
-export function checkAntiderivative(integrand: string, answer: string, at: At, probe: Probe): Verdict {
+export function checkAntiderivative(integrand: string, answer: string, at: At, probe: Probe, phase?: Phase): Verdict {
   const why = notAnswer(answer, probe);
-  return why ? skip(why) : sameAt(`diff(${answer},x)`, integrand, at);
+  return why ? skip(why) : sameAt(`diff(${answer},x)`, integrand, at, phase);
 }
 
 /** A factorisation expands back to the original. */
-export function checkFactorisation(original: string, answer: string, at: At, probe: Probe): Verdict {
+export function checkFactorisation(original: string, answer: string, at: At, probe: Probe, phase?: Phase): Verdict {
   const why = notAnswer(answer, probe);
-  return why ? skip(why) : sameAt(answer, original, at);
+  return why ? skip(why) : sameAt(answer, original, at, phase);
 }
 
 /** A simplification agrees with the original at the points. */
-export function checkSimplification(original: string, answer: string, at: At, probe: Probe): Verdict {
+export function checkSimplification(original: string, answer: string, at: At, probe: Probe, phase?: Phase): Verdict {
   const why = notAnswer(answer, probe);
-  return why ? skip(why) : sameAt(answer, original, at);
+  return why ? skip(why) : sameAt(answer, original, at, phase);
 }
 
 /** The entries of a printed list, read by Giac's bridge (P20: no bracket loop here); null when the text is not a list. */
 export type Entries = (text: string) => string[] | null;
 
 /** Every solution of `lhs=rhs` substitutes to 0 (one check per entry, so a missing solution is not noticed: only wrong ones). */
-export function checkSolutions(equation: string, answer: string, at: At, entries: Entries, probe: Probe): Verdict {
+export function checkSolutions(equation: string, answer: string, at: At, entries: Entries, probe: Probe, phase?: Phase): Verdict {
   const sols = entries(answer);
   if (!sols || sols.length === 0) return skip("no list of solutions");
   const sides = equation.split("=");
@@ -90,7 +121,10 @@ export function checkSolutions(equation: string, answer: string, at: At, entries
     if (why) return skip(`solution ${s}: ${why}`);
     const v = at(diff, s);
     if (v === null) return skip(`solution ${s} gives no real number`);
-    if (!(Math.abs(v) <= TOL)) return { status: "wrong", detail: `${diff} = ${v} at x=${s}` };
+    if (Math.abs(v) <= TOL) continue;
+    const not = notCheckable([diff], s, phase, null, null);
+    if (not) return skip(`solution ${s}: ${not}`);
+    return { status: "wrong", detail: `${diff} = ${v} at x=${s}` };
   }
   return ok;
 }
@@ -105,12 +139,13 @@ export interface Question {
   subject: string;
 }
 
-export function checkBack(q: Question, answer: string, at: At, entries: Entries, probe: Probe): Verdict {
+/** G805: `phase` (optional) reads a periodic function's argument at a point, for the rule in the header. */
+export function checkBack(q: Question, answer: string, at: At, entries: Entries, probe: Probe, phase?: Phase): Verdict {
   switch (q.kind) {
-    case "antiderivative": return checkAntiderivative(q.subject, answer, at, probe);
-    case "solution": return checkSolutions(q.subject, answer, at, entries, probe);
-    case "factorisation": return checkFactorisation(q.subject, answer, at, probe);
-    case "simplification": return checkSimplification(q.subject, answer, at, probe);
+    case "antiderivative": return checkAntiderivative(q.subject, answer, at, probe, phase);
+    case "solution": return checkSolutions(q.subject, answer, at, entries, probe, phase);
+    case "factorisation": return checkFactorisation(q.subject, answer, at, probe, phase);
+    case "simplification": return checkSimplification(q.subject, answer, at, probe, phase);
   }
 }
 
