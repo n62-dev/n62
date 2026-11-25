@@ -8,7 +8,7 @@
 import type { ChipTable } from "../input/chips.ts";
 import { chipSlot } from "../input/chipUnit.ts";
 import { unitText } from "../i18n/enUnits.ts";
-import { END, slotFormula, unitRequest, type SlotFormula } from "../input/unitFormula.ts";
+import { END, constLabels, slotFormula, unitRequest, type SlotFormula } from "../input/unitFormula.ts";
 import type { Alternative } from "./alternatives.ts";
 import type { PadEmit } from "./pad.ts";
 import { shownOf, type Shown, type UnitFormat } from "./result.ts";
@@ -41,6 +41,8 @@ export interface ViewHost {
   reset?(latex: string, ids: readonly string[]): void;
   /** R258: the session's stored values (latex-to-giac.ts userValuesOf), read at each request. */
   values?(): ReadonlySet<string>;
+  /** R929: a constant's own unit as the result shows it (J·s for `planck`), drawn muted after its chip; none for a pure number. */
+  constUnit?(id: string): string | undefined;
   /** R63: a result is in (as shown: the unit a tapped chip names): it becomes Home's history row of this visit. */
   result?(q: Quantity): void;
 }
@@ -157,6 +159,11 @@ export class UnitView {
   get formula(): SlotFormula {
     return this.#forms[this.#checking ? 1 : 0];
   }
+  /** R929: the field's value: the formula with each constant's own unit after its chip (never in `formula`, the request's). */
+  get fieldLatex(): string {
+    const unit = this.#host.constUnit;
+    return unit ? constLabels(this.formula.latex, (id) => unit.call(this.#host, id)) : this.formula.latex;
+  }
   /** The slots' ids, then the end slot's while it is on. */
   get ids(): readonly string[] {
     return this.#ids[this.#checking ? 1 : 0];
@@ -193,7 +200,7 @@ export class UnitView {
     this.#more = false;
     this.#models.set(END, new SlotModel(this.#cat));
     this.#checking = on;
-    this.#host.reset?.(this.formula.latex, this.ids);
+    this.#host.reset?.(this.fieldLatex, this.ids);
     this.#active = on ? this.ids.length - 1 : Math.min(this.#active, this.ids.length - 1);
     for (const id of this.ids) this.#draw(id);
     this.#host.changed();

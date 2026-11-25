@@ -27,6 +27,7 @@ import { loadSheetView } from "../views/sheetView.svelte.ts";
 import { guardTaps } from "../input/tapGuard.ts";
 import { alternatives, readTargets, writeTarget } from "./alternatives.ts";
 import { storeChip } from "./chip.ts";
+import { constUnits } from "./build.ts";
 import { factorTable } from "./factors.ts";
 import { userUnitCells } from "./padCells.ts";
 import { UnitPad, padUnitList } from "./pad.ts";
@@ -203,6 +204,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem, unit?: FindItem)
       values: () => userValuesOf(session.userNames),
       changed: () => panel.draw(),
       reset: (latex, ids) => lockedValue(mf, latex, ids),
+      constUnit: (id) => constUnits({ formula: "", slots: [], consts: [id] }, table)[0]?.text, // R929
       result: (q) => void (rowId = putRow(session, unitRow({ line, chips, q, slots: view.filled(), input: view.drawn(), digits: session.settings.digits, job }), rowId)),
     };
     /** R92: a constant from the units menu goes on Home's line at its cursor (Find's own pick path); the view leaves
@@ -271,7 +273,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem, unit?: FindItem)
     await mounted;
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     setUp(mf, element, c, hw, new HwTyping(view));
-    lockedValue(mf, view.formula.latex, view.ids);
+    lockedValue(mf, view.fieldLatex, view.ids);
     view.start();
     if (unit && pf) for (const a of pf.pickActions(cat, unit)) view.apply(a);
 

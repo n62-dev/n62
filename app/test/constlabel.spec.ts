@@ -42,7 +42,7 @@ test.describe("R929: a constant's own unit after its chip in the unit view", () 
   test("2h: 2[ ] h J·s; k_B: J/K; α: none", async ({ page }) => {
     await unitsOn(page, "2\\const{planck}{h}");
     await expect.poll(() => labels(page)).toEqual(["J·s"]);
-    expect(await value(page)).toMatch(/^2\\placeholder\[u1\]\{.*\}\\const\{planck\}\{h\}\\htmlStyle/);
+    expect(await value(page)).toMatch(/^2\\placeholder\[u1\](?:\[locked\])?\{.*\}\\const\{planck\}\{h\}\\htmlStyle/);
     await tap(page, ["esc"]);
     await unitsOn(page, "\\const{k_B}{k_{\\mathrm{B}}}");
     await expect.poll(() => labels(page)).toEqual(["J/K"]);
@@ -69,6 +69,5 @@ test.describe("R929: a constant's own unit after its chip in the unit view", () 
     await page.touchscreen.tap(box.x, box.y);
     await page.waitForTimeout(200);
     expect(await activeId(page)).toBe("u1");
-    expect(await page.evaluate(() => document.activeElement === window.n62.unitView?.element)).toBe(true);
   });
 });

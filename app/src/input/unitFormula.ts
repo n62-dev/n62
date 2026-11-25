@@ -5,7 +5,7 @@
 // holds them); the parser's units mode (R28) reads the prompts as pasu<n> and the end slot. The entry's LaTeX, so it lives
 // beside the parser (input/), not under units/ (P20: no text reading there). Plain TS, loaded with the unit view.
 import type { ChipTable } from "./chips.ts";
-import { sigmaChipOf, uncChipsIn } from "./chipUnit.ts";
+import { sigmaChipOf, uncChipsIn, unitLatex } from "./chipUnit.ts";
 import { latexToGiacInfo } from "./latex-to-giac.ts";
 import { TEN_POWER } from "./tenPower.ts";
 import type { UnitRequest, UnitSlot } from "../units/types.ts";
@@ -234,4 +234,20 @@ export function unitRequest(f: SlotFormula, slot: (id: string) => UnitSlot | und
   const sigmas = u.sigmas?.map((c) => sigmaChipOf(chips[c.key], c.slot));
   const uncChips = uncChipsIn(latex, chips);
   return { formula: r.giac, slots: u.slots.map(at), ...(u.consts.length ? { consts: u.consts } : {}), ...(u.end ? { end: at(u.end) } : {}), ...(sigmas ? { sigmas } : {}), ...(uncChips.length ? { uncChips } : {}) };
+}
+
+/** R929: `latex` (the formula as the field shows it) with each constant chip's own unit after it, muted and read-only
+ *  (unitLatex, as after a result chip): `unit(id)` is its text (J·s for h), undefined for a pure number (α). The field's
+ *  LaTeX only: never in slotFormula's text, so filledLatex and unitRequest read the same request with it or without. */
+export function constLabels(latex: string, unit: (id: string) => string | undefined): string {
+  const re = /\\const(?![A-Za-z])\s*\{([^{}]*)\}/g;
+  let out = "";
+  let i = 0;
+  for (let m = re.exec(latex); m; m = re.exec(latex)) {
+    const end = groupEnd(latex, re.lastIndex); // the symbol's group (k_{\mathrm{B}})
+    const text = unit(m[1] as string);
+    out += latex.slice(i, end) + (text ? unitLatex(text) : "");
+    i = re.lastIndex = end;
+  }
+  return out + latex.slice(i);
 }
