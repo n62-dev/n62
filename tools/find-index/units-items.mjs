@@ -590,6 +590,27 @@ export async function unitItems({ q, factors, xml, ours, aliases }) {
       insert: `\\const{${id}}{${sym ? symbolLatex(sym) : `\\mathrm{${latexName(id)}}`}}` });
     stats.consts++;
   }
+  // G801 (find/units.yaml constants.ownUnit): a constant's own unit, Find unit ids of factor exactly 1 whose product has
+  // the constant's dimension, as "J*K^-1"; one that is the base form already is left out (it would say nothing)
+  for (const [id, text] of Object.entries(ours.constants?.ownUnit ?? {})) {
+    const item = items.find((i) => i.id === `const:${id}`);
+    if (!item || item.dim === undefined) { fail(`find/units.yaml constants.ownUnit ${id}: no constant of that id with a dimension`); continue; }
+    const parts = String(text).trim().split(/\s+/);
+    const dims = new Map();
+    const bad = parts.find((p) => {
+      const m = /^([A-Za-z_]+)(?:\^(-?\d+))?$/.exec(p);
+      const u = m && items.find((i) => i.id === `unit:${m[1]}`);
+      if (!u || u.si !== "1" || u.dim === undefined) return true;
+      for (const [b, e] of dimsOf(u.dim)) dims.set(b, (dims.get(b) ?? 0) + e * Number(m[2] ?? 1));
+      return false;
+    });
+    for (const [b, e] of dims) if (e === 0) dims.delete(b);
+    const own = parts.join("*");
+    if (bad !== undefined) fail(`find/units.yaml constants.ownUnit ${id}: ${bad} is no Find unit of factor exactly 1`);
+    else if (dimKey(dims) !== item.dim) fail(`find/units.yaml constants.ownUnit ${id}: ${text} is ${dimKey(dims)}, the constant ${item.dim}`);
+    else if (own === item.unit) fail(`find/units.yaml constants.ownUnit ${id}: ${text} is the base form already`);
+    else item.ownUnit = own;
+  }
   for (const id of Object.keys(ours.titles ?? {})) if (!items.some((i) => i.id === id)) fail(`find/units.yaml titles ${id}: no item of that id`);
   // G321: a checks entry whose id no item has (a unit renamed or dropped) would audit nothing
   if (F) for (const id of Object.keys(ours.checks ?? {})) if (!checked.has(id)) fail(`find/units.yaml checks ${id}: no item of that id`);

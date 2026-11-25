@@ -494,8 +494,9 @@ function siPrefixed(giac: Giac, dimension: string, num: string): { text: string;
 }
 
 /** The unit a result without an end slot is shown in (G25): the first typed unit of the job that has the result's
- *  dimension; an angle in the mode's unit (G40: ° in DEG, rad in RAD); else `si`, the SI unit with the SI prefix that
- *  puts the number from 1 to 999. `factor` is its factor to SI, `slot` its tokens (R60). G40: when no typed unit has the
+ *  dimension; an angle in the mode's unit (G40: ° in DEG, rad in RAD); a named or single-base SI unit (J, m), as `si`
+ *  with the SI prefix that puts the number from 1 to 999; else a constant's own unit of that dimension (G801: J·s for h,
+ *  factor 1); else `si`, the base form. `factor` is its factor to SI, `slot` its tokens (R60). G40: when no typed unit has the
  *  dimension, the first typed unit with one rad less is taken with the rad dropped (`asin(1/2)·1 rad` is π/6 rad, not
  *  rad²), unless a cycle unit is in. */
 function chosenUnit(job: UnitJob, dimension: string, si: { text: string; factor: string }, angle: HomeSettings["angle"]): { text: string; factor: string; slot: UnitSlot; radDropped?: true } {
@@ -506,6 +507,8 @@ function chosenUnit(job: UnitJob, dimension: string, si: { text: string; factor:
   const near = job.cycles ? undefined : job.shows?.find((u) => oneRadApart(dimension, u.dim) && Number(rad(dimension)) === Number(rad(u.dim)) + 1);
   if (near) return { text: near.text, factor: near.factor, slot: near.slot, radDropped: true };
   if (dimension === "rad1" && angle === "deg") return { text: "°", factor: "pi/180", slot: { tokens: [{ unit: "deg" }] } };
+  const own = siUnit(dimension).prefixable ? undefined : job.constUnits?.find((u) => u.dim === dimension);
+  if (own) return { text: own.text, factor: own.factor, slot: own.slot };
   return { ...si, slot: siSlot(dimension, si.text) };
 }
 

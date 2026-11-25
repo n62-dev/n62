@@ -122,10 +122,10 @@ describe.skipIf(!hasIndex || !giacAvailable())("G801: a constant's own unit is t
     expect(texts).not.toContain("J·s");
   });
   it("a typed unit that fits is shown, and the row offers the constant's own unit beside it", () => {
-    const input = "{=planck}+1*{kg m^2 / s}";
+    const input = "{=planck}+1*{N m s}";
     const q = run(input);
     if (isUnitError(q)) throw new Error(JSON.stringify(q));
-    expect(q.unit).toBe("kg·m²/s");
+    expect(q.unit).toBe("N·m·s");
     const texts = alternatives(q, { table, pad: [], user: [], req: requestOf(input, undefined, table) }).map((a) => a.text);
     expect(texts).toContain("J·s");
   });
