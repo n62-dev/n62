@@ -68,7 +68,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 888e10a | R921 layer sweep 2: sheets | ron, Opus | `p1/ron-layersweep2` | R916 |
 | 888e11 | R900 Paste into a name filter | ron, Opus | `p1/ron-sheetpaste` | R889, R922 |
 | 888e12 | R901 Settings and Mode keep the pick | ron, Opus | `p1/ron-keeppick` | – |
-| 888e12a | [R927](packages/R927.md) Settings on top; Mode its row 1, Preset first | ron, Opus | `p1/ron-modeorder` | R887, R901 |
+| 888e12a | R927 Settings on top; Mode its row 1, Preset first | ron, Opus | `p1/ron-modeorder` | R887, R901 |
 | 888e13 | [R902](packages/R902.md) a dropped unit says so | ron, Opus | `p1/ron-unitdropped` | – |
 | 888e14 | [R903](packages/R903.md) hold on the line copies | ron, Opus | `p1/ron-linehold` | – |
 | 888e15 | [R904](packages/R904.md) Copied notice tells the truth | ron, Opus | `p1/ron-copiednotice` | – |
