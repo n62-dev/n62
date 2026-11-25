@@ -261,4 +261,8 @@ export const MATRIX_PINNED: (Case & { digits: 12 | 30 })[] = [
   { latex: "\\operatorname{rank}\\left(\\operatorname{approx}\\left(\\begin{pmatrix}1&2&3\\\\4&5&6\\\\7&8&9\\end{pmatrix}\\right)\\right)", mp: "RANK(APPROX(MAT([[mpf('1'),mpf('2'),mpf('3')],[mpf('4'),mpf('5'),mpf('6')],[mpf('7'),mpf('8'),mpf('9')]])))", angle: false, digits: 12 },
   // G792: sin of a float matrix with imaginary noise
   { latex: "\\sin\\left(\\operatorname{approx}\\left(\\begin{pmatrix}0&1\\\\-1&0\\end{pmatrix}\\right)\\right)", mp: "SINM(APPROX(MAT([[mpf('0'),mpf('1')],[mpf('-1'),mpf('0')]])))", angle: true, digits: 12 },
+  // G802 (F481, G797's nightly): the package input, and its division alone, which killed Home's engine (a float entry beside e
+  // divided by a number overflowed the wasm stack; patch 0069)
+  { latex: "\\exponentialE^{\\operatorname{approx}\\left(\\frac{\\begin{pmatrix}0.1&\\exponentialE&\\pi\\\\5&2&7\\\\\\exponentialE&7&9.81\\end{pmatrix}}{10^{4}}\\right)}", mp: "EXPM(APPROX(MDIV(MAT([[mpf('0.1'),E,PI],[mpf('5'),mpf('2'),mpf('7')],[E,mpf('7'),mpf('9.81')]]),POW(mpf('10'),mpf('4')))))", angle: false, digits: 30 },
+  { latex: "\\frac{\\begin{pmatrix}0.1&\\exponentialE\\\\5&2\\end{pmatrix}}{10^{4}}", mp: "MDIV(MAT([[mpf('0.1'),E],[mpf('5'),mpf('2')]]),POW(mpf('10'),mpf('4')))", angle: false, digits: 12 },
 ];

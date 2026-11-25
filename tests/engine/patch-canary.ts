@@ -271,6 +271,9 @@ const CANARIES: [string, string, RegExp, string][] = [
   // G803 (F240), patch 0067: _convert sets the list's subtype from the last argument's val with no test that it is an _INT_, so a
   // fraction, a float or a name gave a subtype from its pointer's bits (convert(129,2,1/2) = [129,1/2], pnt[…] or gr2d(logo(…)))
   ["0067-convert-subtype-integer.patch", "giac-2.1.0/src/prog.cc", /default:\s*return gensizeerr\(contextptr\);\s*\}\s*\}\s*#endif\s*g\.subtype=v\.back\(\)\.val;/, "case _SET__VECT:"],
+  // G802 (F481), patch 0069: rdiv (and sym_add, sym_sub, _division) takes accurate_evalf's result as converted when it is_approx, one
+  // float entry for a vector, while exp(1) stays symbolic: [0.1,exp(1)]/2 at Digits 40 called rdiv with the same vector until the stack overflowed
+  ["0069-vector-mpfr-arith-recursion.patch", "giac-2.1.0/src/gen.cc", /gen a2=accurate_evalf\(a,mpfr_get_prec\(b\._REALptr->inf\)\);\s*if \(a2\.is_approx\(\)\)\s*return rdiv\(a2,b,contextptr\);/, "if (a==b && a.type!=_REAL && b.type!=_REAL)"],
 ];
 
 const tar = tarball(SOURCES.giac);
