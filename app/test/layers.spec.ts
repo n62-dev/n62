@@ -302,14 +302,10 @@ test.describe("R916: every input channel against the unit view", () => {
 // job in a sheet, sheetKeys.ts; Store's keys that type no name go on to the line, R281; a key the prompt does not take ends it
 // first). Any other channel leaves the layer where it is and the line and the history as they were; a leave (Esc, back, a tap on
 // the history, a bar control) leaves Home's line as it was taken. A name prompt's line is the name: it never shows Home's line
-// (F374, R898's undo boundary). After a case that moved the layer, the test opens it again as at the start. The fake engine
+// (F374, R898's undo boundary); a tap on the screen outside its line is the dead press, as under the unit view (R921f1). After a case that moved the layer, the test opens it again as at the start. The fake engine
 // (Enter echoes), 412 × 915. KNOWN2: today's failures as in part 1 (F372 F373 by R922, F374 by R898, F375 by R919 are closed).
 
-const KNOWN2: readonly { case: string; f: string; by: string }[] = [
-  // a tap on a history row under the name prompt picks the row and shows its bar; the prompt stays (askName's comment: a tap that
-  // goes elsewhere ends the prompt first). Nothing is lost: the bar's Store ▶ ends the prompt, the line comes back. No package yet.
-  { case: "prompt tap:row", f: "new (R921)", by: "R921's report, Needs a decision" },
-];
+const KNOWN2: readonly { case: string; f: string; by: string }[] = [];
 
 /** A layer's state: Home's line (the name while a prompt is up) and rows, the layer (`where`: the sheet's id and title, or the
  *  prompt's label; "" for none), the place, a picked row, the focus and Alpha. */
@@ -535,7 +531,26 @@ test.describe("R921: every input channel against the sheets and the name prompt"
       // (the line where the layer leaves it uncovered: under a sheet a tap there is the sheet's)
       if (await lineShows(page)) await s.fire("tap:line", () => page.locator("math-field").first().tap(), "leave");
       for (const [id, sel] of BAR) if (await page.getByTestId(sel).isVisible()) await s.fire(`tap:${id}`, () => page.getByTestId(sel).tap(), "leave");
-      if (def.prompt) await s.fire("tap:row", () => row(page, 0).tap(), "leave", true); // (askName: the tap ends the prompt, then picks as on Home)
+      if (def.prompt) {
+        // R921f1: under the name prompt a tap on a row, or twice on it, or on the history's empty space is the dead press, as
+        // under the unit view (R918): the prompt stays, no pick, no row bar, nothing on the line
+        // (the name line is checked here: `fire` lets a prompt's line change)
+        const still = (id: string, act: () => Promise<unknown>) => async (): Promise<void> => {
+          await act();
+          const l = (await lsettle(page)).line;
+          if (l !== s.root.line) s.bad.set(`${def.name} ${id}`, `the name line ${s.root.line} → ${l}`);
+          if ((await page.getByTestId("row-actions").count()) > 0) s.bad.set(`${def.name} ${id}`, "the row bar shows");
+        };
+        await s.fire("tap:row", still("tap:row", () => row(page, 0).tap()));
+        await s.fire("tap:row2", still("tap:row2", async () => {
+          await row(page, 0).tap();
+          await row(page, 0).tap();
+        }));
+        // the history's empty space (the rows stand at its foot): halfway between its top and the row
+        const [h, r] = [await page.locator("section.history").boundingBox(), await page.locator("article.item").first().boundingBox()];
+        expect(h && r && r.y - h.y > 40, "empty space above the row").toBe(true);
+        if (h && r) await s.fire("tap:history", still("tap:history", () => page.mouse.click(h.x + h.width / 2, (h.y + r.y) / 2)));
+      }
       else {
         const p = await historyPoint(page); // (outside the sheet: a tap there closes it and does nothing else, sheetoutside.spec.ts)
         if (p) await s.fire("tap:history", () => page.mouse.click(p.x, p.y), "leave");
