@@ -65,7 +65,7 @@ for (const width of [412, 360])
     expect(await entryValue(page)).toBe("7\\times8");
     await tap(page, ["help"]);
     await expect(page.getByTestId("sheet-title")).toHaveText("Settings");
-    await tap(page, ["esc", "esc"]); // back to Mode, then closed (R49)
+    await tap(page, ["esc"]); // the Settings root: one Esc closes it (R927)
     await expect(sheet(page)).toBeHidden();
     await tap(page, ["esc", "shift", "help"]);
     await expect(page.getByTestId("find")).toBeVisible(); // nothing at the cursor: Help is Find (R197)
@@ -309,7 +309,7 @@ test("an empty free key is no dead press (R705): the key-down pulse, Your keys o
     await tap(page, [id]);
     await expect(active).toHaveAttribute("data-id", `${id}:primary`);
     await expect.poll(async () => (await vibrations(page)).length - before, id).toBe(1); // drawn live: one pulse, never the dead double (R777)
-    await tap(page, ["esc", "esc", "esc"]); // Your keys, Settings, Mode
+    await tap(page, ["esc", "esc"]); // Your keys, then the Settings root closes (R927)
     await expect(sheet(page)).toHaveCount(0);
   }
   await flick(page, "u2", "up"); // U2's Shift slot ships empty: its Shift row

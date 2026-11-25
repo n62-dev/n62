@@ -257,7 +257,7 @@ test.describe("Your keys", () => {
     await expect(mrow(page, "cas")).toHaveAttribute("data-selected", "true");
     await tap(page, ["esc"]);
     await expect(mrow(page, "u2:primary")).toContainText("CAS");
-    await tap(page, ["esc", "esc", "esc"]); // Settings, Mode, closed
+    await tap(page, ["esc", "esc"]); // the Settings root, closed (R927: no Mode level above it)
     await expect(menu(page)).toHaveCount(0);
     await tap(page, ["u2"]);
     await expect(page.getByTestId("place")).toHaveAttribute("data-view", "cas");

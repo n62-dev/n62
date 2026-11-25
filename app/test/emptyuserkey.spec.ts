@@ -52,7 +52,7 @@ test("(c) a set key is untouched: U1 set to sin from Find types sin( on a tap; A
   await expect(factive(page)).toHaveAttribute("data-id", "fn:sin");
   await tap(page, ["enter"]);
   await expect(find(page)).toBeHidden();
-  await tap(page, ["esc", "esc", "esc"]); // Your keys, Settings, Mode
+  await tap(page, ["esc", "esc", "esc"]); // (the Find pick closed the sheets, R4b: these reach the empty line)
   await expect(menu(page)).toHaveCount(0);
   await expect(page.locator('[data-key="u1"]')).toHaveAttribute("data-user", "set");
   await tap(page, ["u1"]);

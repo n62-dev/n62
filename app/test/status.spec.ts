@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R8, R722: the bar on the keypad (docs/05 3.2; the status line before R722), the Mode sheet (the chips since R15c2) and Settings (Mode's last row) (3.4). The
+// R8, R722: the bar on the keypad (docs/05 3.2; the status line before R722), the Mode sheet (the chips since R15c2) and Settings (its root, Mode its row 1 since R927) (3.4). The
 // real engine for the angle test (GIAC_OUT); the fake one for the rest.
 import { expect, test, type Page } from "@playwright/test";
 import { entryValue, hwOn, open, sheet, sheetKey, tap, tapHw } from "./helpers.ts";
