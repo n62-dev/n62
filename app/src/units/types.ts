@@ -84,6 +84,9 @@ export interface UnitJob {
   /** Without an end slot: the typed units the result may be shown in, best first (G25). The first whose `dim` is the
    *  result's dimension is used; none: SI with an SI prefix. */
   shows?: ShownUnit[];
+  /** G801: without an end slot, the constants' own units (J·s for h, constUnits in build.ts), best first: the first whose
+   *  `dim` is the result's dimension is used when that dimension has no named or single-base SI unit (J, m). */
+  constUnits?: ShownUnit[];
   /** G32: the symbol of an rpm or rev typed in a slot (a count of cycles, not an angle), for the refusal that names it. */
   cycle?: string;
   /** G161: the kinds of power (W, VA, var) the slots and the end slot name, when there are two or more: refused. */

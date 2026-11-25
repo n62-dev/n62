@@ -31,6 +31,9 @@ export interface FindItem {
   unc?: string;
   /** const: canonical unit expression ("m*s^-1"). */
   unit?: string;
+  /** const (G801): the unit an engineer writes, as Find unit ids of factor exactly 1 ("J*s", "J*K^-1"; find/units.yaml
+   *  constants.ownUnit, NIST's CODATA unit column); absent where it is `unit`. */
+  ownUnit?: string;
   /** const, inexact only (G80): the value as Giac text over `pasl_<leaf>` names and exact numbers, from libqalculate's
    *  formula; evaluating it at the leaves' values gives `value` within `unc`. Absent when the formula has no Giac form. */
   basis?: string;

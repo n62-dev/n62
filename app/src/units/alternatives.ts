@@ -5,15 +5,15 @@
 // `units.targets` (the last unit tapped per dimension) orders the row only; it never changes the unit shown (G25).
 // Main thread, synchronous, no Giac; loaded with the unit view only. Only erasable TypeScript syntax (the golden gate).
 import type { Kv } from "../state/storage.ts";
-import { endMixesPowers, powerKinds, shownUnits, slotText, tempDifference } from "./build.ts";
+import { constUnits, endMixesPowers, powerKinds, shownUnits, slotText, tempDifference } from "./build.ts";
 import { BASES, dimKeyOf, isExponent, parseDimKey, powerText, siSlot } from "./dims.ts";
 import type { FactorTable } from "./factors.ts";
 import { cellText, type PadLegUnit, type PadUnitCell } from "./padCells.ts";
 import type { Quantity, ShownUnit, UnitRequest, UnitSlot, UnitToken } from "./types.ts";
 
-/** Where an alternative comes from: the coherent SI unit with no prefix, the SI unit with its prefix, the last unit
- *  used for the dimension, a pad or user cell, a unit typed in the request. */
-export type AltKind = "si" | "siPrefixed" | "target" | "pad" | "typed";
+/** Where an alternative comes from: the coherent SI unit with no prefix, the SI unit with its prefix, a constant's own
+ *  unit (G801), the last unit used for the dimension, a pad or user cell, a unit typed in the request. */
+export type AltKind = "si" | "siPrefixed" | "const" | "target" | "pad" | "typed";
 
 export interface Alternative {
   /** The end slot a tap sets. */
@@ -116,7 +116,8 @@ function temperatures(req: UnitRequest, table: FactorTable): { slot: UnitSlot; t
 }
 
 /**
- * The row for a result, in r17 0.2's order: the coherent SI unit with no prefix, the SI unit with its prefix, the target,
+ * The row for a result, in r17 0.2's order: the coherent SI unit with no prefix, the SI unit with its prefix, the
+ * constants' own units of the dimension (G801: kg·m²/s and J·s for h, whichever is not shown), the target,
  * the pad cell's units of that dimension in the pad's order, then the user cells', then the typed units. Repeats and the
  * unit shown are left out; none for a pure number or a result without a dimension. A temperature gives its own three
  * (absolute or interval) after the SI units, and no target (an absolute target would read an interval as absolute).
@@ -141,6 +142,7 @@ export function alternatives(q: Quantity, ctx: AltContext): Alternative[] {
   const typed = shownUnits(asTyped, ctx.table).filter((u) => u.dim === dim);
   add(inKind(coherent(dim, typed, ctx)), "si");
   if (q.siPrefixed !== "") add(inKind(siSlot(dim, q.siPrefixed)), "siPrefixed");
+  for (const u of constUnits(asTyped, ctx.table)) if (u.dim === dim) add(u.slot, "const");
   if (dim === "K1") {
     for (const t of temperatures(ctx.req, ctx.table)) add(t.slot, "pad", t.text, t.key);
     return out;
