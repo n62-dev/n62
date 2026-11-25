@@ -610,6 +610,11 @@
   .key[data-pad="user"] {
     box-shadow: inset 0 0 0 var(--stroke-thin) var(--key-muted), var(--key-drop);
   }
+  /* R906: a key with its own outline (a free key, a unit U cell) drops its Shift legend off it in every look, by High
+     contrast's 2.5 px (R792, theme/modes.css, a lazy sheet: so here). A translate: no box, face or Alpha legend moves */
+  .key:is([data-user], [data-pad="user"]) .shiftlegend {
+    translate: 0 2.5px;
+  }
   /* a user cell with a flick down has the letter line in the cluster too: the face's track may shrink to what is left of
      the key's 36 px less its 2 px padding (a fixed track, the face overflows it evenly), so the keys below do not move (docs/03 rule 8) */
   .key[data-pad="user"][data-letters="true"] {
