@@ -28,6 +28,10 @@
 #   scripts/pipeline.sh device <n> [--dry-run]
 #                           A33: the core list on the night's device ($ANDROID_SERIAL): test APK of phase-1's HEAD, install, tools/core-device.sh;
 #                           logs `CORE DEVICE <p>/<a> (known <k>, new <ids or none>) on <sha>`; skips (DEVICE SKIPPED), never fails
+#   scripts/pipeline.sh nightly <n> [--dry-run]
+#                           A273: the family tests' nightly runs (NIGHTLY_TOOLS: sweep, casback) on phase-1's engine under host-cpu, each at most 20 min;
+#                           logs `NIGHTLY <n> <tool>: <runs> runs, <known> known, <new> new (seed <s>)` or `NIGHTLY <n> <tool>: FAILED (<first line>)`,
+#                           `NIGHTLY <n>: SKIPPED (host-cpu)`; report .tasks/nightly-<date>-<n>.md; never fails
 #   scripts/pipeline.sh flakes <n> [--dry-run]
 #                           A37: the flake census: vitest and e2e five times on phase-1's HEAD (host-cpu lock); .tasks/flakes-<date>.md and
 #                           the log line `FLAKES <n>: vitest <k> of 5 runs clean, e2e <k> of 5, flaky: <ids or none>`; stops if HEAD moves
@@ -416,6 +420,54 @@ if [[ "${1:-}" == "flakes" ]]; then
   else line="FLAKES $n: vitest $clean_v of $runs runs clean, e2e $clean_e of $runs, flaky: ${ids:-none}"; fi
   log "pipeline flakes $n: $line (file $out_md)"
   echo "RESULT flakes $n: $line ($((SECONDS - t0)) s; $out_md)"; exit 0
+fi
+
+# ---------- subcommand: nightly ----------
+# A273: the family tests' nightly runs after an Opus pass (night.sh, after the device step): every tool of NIGHTLY_TOOLS (pipeline-lib.sh) once,
+# `node <script> --nightly` in the phase-1 worktree's app/ on the shared engine (GIAC_OUT), each under host-cpu (waits N62_NIGHTLY_WAIT, 1800 s; held per tool),
+# each at most 20 min (N62_NIGHTLY_TIMEOUT). One log line per tool; a tool that fails or prints no summary is FAILED and the step goes on;
+# never fails the night (exit 0). The report .tasks/nightly-<date>-<n>.md holds, by tool, the summary and the findings that are not known rows.
+if [[ "${1:-}" == "nightly" ]]; then
+  [[ $# -ge 2 && "$2" =~ ^[0-9]+$ ]] || die "usage: pipeline.sh nightly <n> [--dry-run]"
+  n="$2"; run="$tasks/nightly-$n"; out_md="$tasks/nightly-$(date +%F)-$n.md"; tmax="${N62_NIGHTLY_TIMEOUT:-1200}"
+  if [[ "${3:-}" == "--dry-run" ]]; then
+    integ="$(integ_dir)"; : "${integ:=$main/.claude/worktrees/phase-1}"
+    echo "DRY RUN: nightly step $n: ${NIGHTLY_TOOLS[*]%%:*} from $integ/app on GIAC_OUT=$GIAC_OUT; output in $run"
+    echo "1. before each tool: tools/devlock.sh acquire host-cpu nightly-$n ${N62_NIGHTLY_WAIT:-1800} (waits logged), released after it; busy past the wait: NIGHTLY $n: SKIPPED (host-cpu)"
+    for t in "${NIGHTLY_TOOLS[@]}"; do echo "2. (cd $integ/app && timeout -k 60 $tmax node ${t#*:} --nightly) = ${t%%:*}, at most $tmax s"; done
+    echo "3. log: - HH:MM pipeline nightly $n: NIGHTLY $n <tool>: <runs> runs, <known> known, <new> new (seed <s>)  or  NIGHTLY $n <tool>: FAILED (<first line>); the report $out_md"
+    echo "never failed (exit 0)"; echo "RESULT nightly $n: DRY RUN"; exit 0
+  fi
+  ensure_integ; mkdir -p "$run"; t0=$SECONDS
+  trap 'owned_kill; host_cpu_drop' EXIT
+  sha="$(git -C "$integ" rev-parse --short HEAD)"
+  { echo "# Nightly family tests $n, $(date +%F) $(date +%H:%M), phase-1 $sha"; echo; echo "The findings that are not known rows, by tool."; } > "$out_md"
+  lines=()
+  for t in "${NIGHTLY_TOOLS[@]}"; do
+    name="${t%%:*}"; script="${t#*:}"; f="$run/$name.out"; rc=0
+    # host-cpu per tool, so the checks of other runs get it between the tools; busy past the wait: the step ends
+    if ! N62_CPU_WAIT="${N62_NIGHTLY_WAIT:-1800}" host_cpu_take "nightly-$n" "pipeline nightly $n:"; then
+      line="NIGHTLY $n: SKIPPED (host-cpu)"; log "pipeline nightly $n: $line"; lines+=("$line")
+      { echo; echo "## $name"; echo; echo "$line"; } >> "$out_md"; break
+    fi
+    ts=$SECONDS
+    own_sh 'cd "$1/app" && timeout -k 60 "$2" node "$3" --nightly' "$integ" "${N62_NIGHTLY_TIMEOUT:-1200}" "$script" > "$f" 2>&1 < /dev/null || rc=$?
+    first="$(grep -m1 -vE '^[[:space:]]*$' "$f" | cut -c1-160 || true)"
+    if [[ $rc -eq 0 ]] && cnt="$(nightly_counts "$f")"; then
+      read -r nruns nknown nnew nseed <<<"$cnt"; line="NIGHTLY $n $name: $nruns runs, $nknown known, $nnew new (seed $nseed)"
+    else
+      why="${first:-no output}"; [[ $rc -ne 124 && $rc -ne 137 ]] || why="$why; timed out after ${tmax} s"
+      line="NIGHTLY $n $name: FAILED ($why)"
+    fi
+    { echo; echo "## $name ($((SECONDS - ts)) s)"; echo; echo "$line"; echo
+      if grep -q '^FINDING ' "$f"; then grep '^FINDING ' "$f" | sed 's/^/- /'; else echo "no new finding"; fi
+      grep -E '^[A-Z]+ NIGHTLY: ' "$f" | tail -n1 | sed 's/^/\nSummary: /' || true
+      [[ $rc -eq 0 ]] || { echo; echo "Last lines of its output:"; echo; tail -n 8 "$f" | sed 's/^/    /'; }
+    } >> "$out_md"
+    host_cpu_drop; log "pipeline nightly $n: $line"; lines+=("$line")
+  done
+  res="$(printf '%s; ' "${lines[@]}")"
+  echo "RESULT nightly $n: ${res%; } ($((SECONDS - t0)) s; $out_md)"; exit 0
 fi
 
 # ---------- subcommand: report ----------

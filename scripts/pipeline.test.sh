@@ -135,8 +135,8 @@ grep -q '"^## $(date +%F) night"' "$here/night.sh" && fail "night.sh writes the 
 printf '%s\n' 'scripts/pipeline.sh pass 7 "A1" "none"' '75: scripts/pipeline.sh pass 8 "A2" "none"' 'scripts/pipeline.sh pass 8 "A2" "none"' 'scripts/pipeline.sh ron "R1" --model sonnet' > "$tmp/replies"
 out="$(N62_NIGHT_REPLIES="$tmp/replies" N62_NIGHT_NOW=22:00 "$here/night.sh" --dry-run --max-steps 20 2>&1)"
 seq="$(grep -E '^[0-9:]+ run: ' <<<"$out" | sed -E 's/^[0-9:]+ run: //')"
-want=$'scripts/pipeline.sh pass 7 "A1" "none"\nscripts/pipeline.sh device 7\nscripts/pipeline.sh pass 8 "A2" "none"\nscripts/pipeline.sh pass 8 "A2" "none"\nscripts/pipeline.sh device 8\nscripts/pipeline.sh ron "R1" --model sonnet --audit-model auto'
-[[ "$seq" == "$want" ]] || fail "A41: the run sequence is not pass, device, (limit: no device), pass, device: $seq"
+want=$'scripts/pipeline.sh pass 7 "A1" "none"\nscripts/pipeline.sh device 7\nscripts/pipeline.sh nightly 7\nscripts/pipeline.sh pass 8 "A2" "none"\nscripts/pipeline.sh pass 8 "A2" "none"\nscripts/pipeline.sh device 8\nscripts/pipeline.sh nightly 8\nscripts/pipeline.sh ron "R1" --model sonnet --audit-model auto'
+[[ "$seq" == "$want" ]] || fail "A41: the run sequence is not pass, device, nightly, (limit: none), pass, device, nightly: $seq"
 out="$(N62_NIGHT_REPLIES="$tmp/replies" N62_NIGHT_NOW=22:00 "$here/night.sh" --dry-run --max-steps 6 2>&1)"
 grep -q 'closing 1 of 2' <<<"$out" && grep -q 'closing 2 of 2' <<<"$out" || fail "A41: the closing steps are gone: $out"
 
@@ -422,6 +422,63 @@ grep -q 'FLAKES 7: ABORTED (HEAD moved during run 1' <<<"$out" || fail "A37/A54:
 printf 'a\tt\na\tt\n' > "$tmp/d1"; : > "$tmp/d2"
 [[ "$(flaky_items 2 "$tmp/d1" "$tmp/d2")" == $'1/2\ta\tt' ]] || fail "A37: a duplicate line in one run counts twice"
 [[ -z "$(flaky_items 2 "$tmp/d1" "$tmp/d1")" ]] || fail "A37: a duplicate line in two runs is not always failing"
+
+# A273: `nightly <n>` runs each family tool (NIGHTLY_TOOLS) once under host-cpu and logs one NIGHTLY line per tool; a failing tool is a
+# FAILED line and the step goes on; a busy host-cpu is SKIPPED. Sandbox with fake sweep.ts and casback.ts in the phase-1 tree.
+out="$("$script" nightly 3 --dry-run 2>&1)"; rc=$?
+[[ $rc -eq 0 ]] || fail "A273: nightly --dry-run: exit $rc: $out"
+for want in 'host-cpu' 'sweep' 'casback' '--nightly' '.tasks/nightly-' '1200 s' 'NIGHTLY 3 <tool>: <runs> runs, <known> known, <new> new (seed <s>)' 'NIGHTLY 3: SKIPPED (host-cpu)'; do
+  grep -qF -- "$want" <<<"$out" || fail "A273: nightly --dry-run does not print '$want': $out"
+done
+nt="$tmp/nt"; mkdir -p "$nt/tools" "$nt/docs/shifts" "$nt/app/scripts" "$nt/app/node_modules/x"; git init -q -b main "$nt"
+cp "$sb/tools/devlock.sh" "$nt/tools/"; : > "$nt/docs/shifts/brief.md"; echo t > "$nt/tracked"
+cat > "$nt/app/scripts/sweep.ts" <<'STUB'
+import { appendFileSync } from "node:fs";
+appendFileSync(process.env["NT_CALLS"] ?? "/dev/null", `sweep ${process.argv.slice(2).join(" ")} in ${process.cwd()} giac ${process.env["GIAC_OUT"]}\n`);
+if (process.env["NT_SWEEP"] === "crash") { console.log("TypeError: boom"); console.log("  at x"); process.exit(1); }
+if (process.env["NT_SWEEP"] === "silent") process.exit(0);
+if (process.env["NT_SWEEP"] === "hang") await new Promise((r) => setTimeout(r, 60_000));
+console.log("SWEEP SEED 42 (repeat: node scripts/sweep.ts --nightly --seed 42 --count 25000)");
+console.log("FINDING angle 12 \\frac{1}{x} [mark]: shown = but wrong");
+console.log("SWEEP NIGHTLY: 3 failures (1 not in the known files, 0 nightly rows now passing); 25000 runs of 25000 trees (seed 42): 20000 numbers judged, total 9.0 s; 0.4 s per 1,000 trees; report /x/sweep-42.md");
+STUB
+cat > "$nt/app/scripts/casback.ts" <<'STUB'
+import { appendFileSync } from "node:fs";
+appendFileSync(process.env["NT_CALLS"] ?? "/dev/null", `casback ${process.argv.slice(2).join(" ")} in ${process.cwd()} giac ${process.env["GIAC_OUT"]}\n`);
+console.log("known (G798) det(c*A) [law]: x");
+console.log("known (G799) inv [law]: y");
+console.log("CASBACK NIGHTLY: 1200 questions and 60 laws (seed 9): 1100 checked, 160 skipped as not checkable, 2 failed, total 4.0 s; 0 new");
+STUB
+git -C "$nt" add -A; gc "$nt" init; git -C "$nt" branch phase-1
+ntrun() { (cd "$nt" && PATH="$sb/bin:$PATH" GIAC_OUT="$nt/engine" NT_CALLS="$nt/calls" N62_NIGHTLY_WAIT=2 "$@" "$script" nightly 7 2>&1); }
+out="$(ntrun env)"; rc=$?
+[[ $rc -eq 0 ]] || fail "A273: nightly: exit $rc: $out"
+for want in 'NIGHTLY 7 sweep: 25000 runs, 2 known, 1 new (seed 42)' 'NIGHTLY 7 casback: 1100 runs, 2 known, 0 new (seed 9)'; do
+  grep -qF -- "$want" "$nt/.coord/log.md" || fail "A273: the log lacks '$want': $(cat "$nt/.coord/log.md")"
+  grep -qF -- "$want" <<<"$out" || fail "A273: the RESULT line lacks '$want': $out"
+done
+[[ "$(wc -l < "$nt/calls")" -eq 2 && "$(grep -c '^sweep --nightly in .*/app giac ' "$nt/calls")" -eq 1 && "$(grep -c '^casback --nightly in .*/app giac ' "$nt/calls")" -eq 1 ]] || fail "A273: each tool is not run once with --nightly in the phase-1 tree's app: $(cat "$nt/calls")"
+grep -q "giac $nt/engine\$" <<<"$(head -n1 "$nt/calls")" || fail "A273: the tools do not get the shared GIAC_OUT: $(cat "$nt/calls")"
+nrep="$(ls "$nt"/.tasks/nightly-*-7.md 2>/dev/null | head -n1)"
+[[ -n "$nrep" ]] && grep -q 'FINDING angle 12' "$nrep" && ! grep -q 'known (G79' "$nrep" || fail "A273: .tasks/nightly-<date>-7.md is missing or does not hold the findings that are not known rows: $(cat "$nrep" 2>/dev/null)"
+# a tool that exits non-zero, one that prints no summary, one that hangs past its timeout: FAILED (first line), the other tool still runs
+rm -f "$nt/calls" "$nt/.coord/log.md"
+out="$(ntrun env NT_SWEEP=crash)"
+grep -qF 'NIGHTLY 7 sweep: FAILED (TypeError: boom)' "$nt/.coord/log.md" && grep -qF 'NIGHTLY 7 casback: 1100 runs, 2 known, 0 new (seed 9)' "$nt/.coord/log.md" || fail "A273: a crashing sweep is not FAILED with its first line, or casback did not run: $(cat "$nt/.coord/log.md")"
+rm -f "$nt/.coord/log.md"; out="$(ntrun env NT_SWEEP=silent)"
+grep -qE 'NIGHTLY 7 sweep: FAILED \(' "$nt/.coord/log.md" && grep -q 'NIGHTLY 7 casback: 1100 runs' "$nt/.coord/log.md" || fail "A273: a tool with no summary is not FAILED: $(cat "$nt/.coord/log.md")"
+rm -f "$nt/.coord/log.md"; out="$(ntrun env NT_SWEEP=hang N62_NIGHTLY_TIMEOUT=2)"
+grep -qE 'NIGHTLY 7 sweep: FAILED \(.*timed out' "$nt/.coord/log.md" && grep -q 'NIGHTLY 7 casback: 1100 runs' "$nt/.coord/log.md" || fail "A273: a hanging tool is not FAILED (timed out): $(cat "$nt/.coord/log.md")"
+printf '#!/bin/sh\nexit 1\n' > "$nt/tools/devlock.sh"   # every acquire fails: host-cpu is busy past the wait
+rm -f "$nt/.coord/log.md" "$nt/calls"; out="$(ntrun env)"; rc=$?
+grep -qF 'NIGHTLY 7: SKIPPED (host-cpu)' "$nt/.coord/log.md" && [[ $rc -eq 0 && ! -e "$nt/calls" ]] || fail "A273: a busy host-cpu is not SKIPPED (rc $rc, calls $(cat "$nt/calls" 2>/dev/null)): $(cat "$nt/.coord/log.md")"
+grep -qF 'N62_NIGHTLY_TIMEOUT:-1200' "$here/pipeline.sh" && grep -qF 'timeout -k 60 "$2" node "$3" --nightly' "$here/pipeline.sh" || fail "A273: the tools have no 20-minute timeout -k 60"
+grep -q '^NIGHTLY_TOOLS=(sweep:scripts/sweep.ts casback:scripts/casback.ts' "$here/pipeline-lib.sh" || fail "A273: pipeline-lib.sh lacks the NIGHTLY_TOOLS list"
+# night.sh: the nightly step follows the device step of each pass (the A41 test's sequence holds it too)
+out="$(N62_NIGHT_REPLIES="$tmp/replies" N62_NIGHT_NOW=22:00 "$here/night.sh" --dry-run --max-steps 20 2>&1)"
+seq="$(grep -E '^[0-9:]+ run: ' <<<"$out" | sed -E 's/^[0-9:]+ run: //')"
+want=$'scripts/pipeline.sh pass 7 "A1" "none"\nscripts/pipeline.sh device 7\nscripts/pipeline.sh nightly 7\nscripts/pipeline.sh pass 8 "A2" "none"\nscripts/pipeline.sh pass 8 "A2" "none"\nscripts/pipeline.sh device 8\nscripts/pipeline.sh nightly 8\nscripts/pipeline.sh ron "R1" --model sonnet --audit-model auto'
+[[ "$seq" == "$want" ]] || fail "A273: the run sequence is not pass, device, nightly per pass: $seq"
 
 # A36: red-first: a package that says its tests fail on phase-1 must have a new test that fails there
 rf="$tmp/rf"; mkdir -p "$rf/app" "$rf/tests/golden"; git init -q -b phase-1 "$rf"; echo 1 > "$rf/app/code.txt"; printf -- '- id: old\n' > "$rf/tests/golden/g2.yaml"; cp "$rf/tests/golden/g2.yaml" "$rf/tests/golden/home.yaml"
