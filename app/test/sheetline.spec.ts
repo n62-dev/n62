@@ -26,7 +26,7 @@ const SHEETS: Record<string, Opener> = {
   "Settings › Numbers": async (page) => {
     await sheetKey(page, ["help"]);
     await expect(page.getByTestId("sheet-title")).toContainText("Settings");
-    await sheetKey(page, ["d2"]);
+    await sheetKey(page, ["d3"]);
     await expect(page.getByTestId("sheet-title")).toContainText("Numbers");
   },
   credits: async (page) => {
@@ -54,6 +54,7 @@ async function onBar(page: Page, name: string): Promise<void> {
   const b = await boxes(page);
   expect(Math.abs(b.sheetBottom - b.barTop), `${name}: |sheet bottom ${b.sheetBottom} − bar top ${b.barTop}|`).toBeLessThanOrEqual(ON_BAR);
   if (!b.fits) return; // a sheet taller than the viewport fills it and scrolls (sheetfull.spec.ts, fit.spec.ts)
+  if (b.sheetTop <= b.overlayTop + ON_BAR) return; // as tall as its room, to the pixel (R927: Mode at 372 × 767, 244 px of rows in 243)
   expect(b.sheetTop, `${name}: a short sheet keeps its height`).toBeGreaterThan(b.historyTop + ON_BAR);
   const p = await historyPoint(page);
   if (!p) return; // Plot and the unit view have no history section; nothing above to tap
@@ -121,7 +122,7 @@ test("R891: a Your units field closes the form, the line takes its value in sigh
   await page.setViewportSize({ width: 360, height: 740 });
   await open(page);
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await tap(page, ["@mode", "d6", "d4"]);
+  await tap(page, ["help", "d5"]);
   await page.getByTestId("menu").locator('[role="menuitem"][data-id="units"]').tap();
   await page.getByTestId("menu").locator('[role="menuitem"][data-id="new"]').tap();
   await expect(page.getByTestId("sheet-title")).toHaveText("New unit");

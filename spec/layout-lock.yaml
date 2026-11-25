@@ -270,6 +270,7 @@ settings:
   "5": "data"
   "6": "counters"
   "7": "help"
+  "8": "help"
 apps:
   "1": "home"
   "2": "cas"
@@ -418,3 +419,16 @@ units-view:
 moves:
   - { entry: layers/help.primary, from: "special help", to: "special settings", version: v0.1.1, decision: "Settings on the tap of row 0, col 4, Help on Shift" }
   - { entry: layers/help.shift, from: "special settings", to: "special help", version: v0.1.1, decision: "Settings on the tap of row 0, col 4, Help on Shift" }
+  - { entry: mode/1, from: "angle", to: "preset", version: v0.1.0, decision: "Settings over Mode" }
+  - { entry: mode/2, from: "format", to: "angle", version: v0.1.0, decision: "Settings over Mode" }
+  - { entry: mode/3, from: "digits", to: "format", version: v0.1.0, decision: "Settings over Mode" }
+  - { entry: mode/4, from: "entry", to: "digits", version: v0.1.0, decision: "Settings over Mode" }
+  - { entry: mode/5, from: "preset", to: "entry", version: v0.1.0, decision: "Settings over Mode" }
+  - { entry: mode/6, from: "settings", to: "reserved", version: v0.1.0, decision: "Settings over Mode" }
+  - { entry: settings/1, from: "appearance", to: "mode", version: v0.1.0, decision: "Settings over Mode" }
+  - { entry: settings/2, from: "numbers", to: "appearance", version: v0.1.0, decision: "Settings over Mode" }
+  - { entry: settings/3, from: "vibration", to: "numbers", version: v0.1.0, decision: "Settings over Mode" }
+  - { entry: settings/4, from: "keys", to: "vibration", version: v0.1.0, decision: "Settings over Mode" }
+  - { entry: settings/5, from: "data", to: "keys", version: v0.1.0, decision: "Settings over Mode" }
+  - { entry: settings/6, from: "counters", to: "data", version: v0.1.0, decision: "Settings over Mode" }
+  - { entry: settings/7, from: "help", to: "counters", version: v0.1.0, decision: "Settings over Mode" }

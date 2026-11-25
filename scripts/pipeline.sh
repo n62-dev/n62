@@ -675,7 +675,7 @@ if [[ $dry -eq 1 ]]; then
   if [[ -n "$pkg_drop" ]]; then echo "package file: $pkg_drop deleted on $branch in a commit of its own before each queue entry (A75; phase-1 keeps it until the merge, so <merge>^1 has it)"
   else echo "package file: none deleted (a FIX id or a task text)"; fi
   echo "dead links (A140): after every merge of phase-1 into the branch (a resumed worker start, the queue entry, review-only) every link in tracked Markdown to a missing docs/shifts/packages/*.md, any id, is unlinked in a commit of its own: chore($id): drop links to deleted package files (A140)"
-  echo "pre-flight (auto; after the worker and after each fix round, before the queue, in $wt without integ): lint (a new engine/giac/patches/NNNN-*.patch has its README row; a report commit), docs, typecheck, size when app/ changed (under host-cpu); a failure is a fix round (one of the two; free when only docs or size failed, A124) and never enters the queue"
+  echo "pre-flight (auto; after the worker and after each fix round, before the queue, in $wt without integ): lint (a new engine/giac/patches/NNNN-*.patch has its README row; a report commit), the Docs step (each docs file the task's Docs step names is changed on the branch or has a report line 'Docs not changed: <path>: <why>', A275), docs, typecheck, size when app/ changed (under host-cpu); a failure is a fix round (one of the two; free when only docs, the Docs step or size failed, A124) and never enters the queue"
   if git show-ref --verify --quiet "refs/heads/$branch"; then changed() { git diff --name-only "phase-1...$branch"; }; echo "checks for $branch as it is now: $(want_checks)"; fi
   echo "stray check (A88): before the worker and each fix or resolve round the top level of $(dirname "$main") and $main/.claude/worktrees is listed; afterwards one log line per new entry: pipeline #<n> $id: WARN new file outside the worktree: <path> (a worktree git knows is not new; warns only)"
   echo "locks: $branch_lock for the whole run (a second run on $branch is refused); integ and host-cpu wait up to 7200 s each; lock order integ before host-cpu"
@@ -844,23 +844,23 @@ machine_end() {  # <check> <log>: a machine failure ends the run, no fix round (
   echo "RESULT #$n $id: NOT MERGED (machine: $1: $mline; worktree $wt kept; see $2)"; exit 1
 }
 # A83: the pre-flight, after the worker and after each fix round, before queue_enter (--checks auto only): in the run's worktree,
-# without integ, the lint rules (preflight_lint), docs, typecheck and, when the list has it, size (under host-cpu). It stops at the
+# without integ, the lint rules (preflight_lint), the Docs step's files (docs_step_lint, A275; docsstep, free as docs is), docs, typecheck and, when the list has it, size (under host-cpu). It stops at the
 # first failure, writes preflight-<round>.txt and returns 1: a fix round, counted with the queue's. Every queue round runs the full list.
 preflight() {  # <round>
   local round="$1" name out rc=0 list t0=$SECONDS
   [[ "$checks" == auto ]] || return 0
   list="$(want_checks)"; : > "$run/preflight-$round.txt"
-  for name in lint docs typecheck size; do
-    [[ $name == lint || ",$list," == *",$name,"* ]] || continue
+  for name in lint docsstep docs typecheck size; do
+    [[ $name == lint || $name == docsstep || ",$list," == *",$name,"* ]] || continue
     out="$run/preflight-$round-$name.log"
     case "$name" in
-      lint) preflight_lint "$wt" > "$out" 2>&1 || rc=1;;
+      lint) preflight_lint "$wt" > "$out" 2>&1 || rc=1;;  docsstep) docs_step_lint "$wt" "$bundle" > "$out" 2>&1 || rc=1;;
       size) host_cpu_take "pipeline-$n" "pipeline #$n $id:" || die "host-cpu lock busy for 7200 s"
             cheap_check size "$out" || rc=1; host_cpu_drop;;
       *)    cheap_check "$name" "$out" || rc=1;;
     esac
     if [[ $rc -eq 1 ]]; then
-      [[ "$name" == lint ]] || ! machine_failure "$out" || machine_end "$name" "$out"
+      [[ "$name" == lint || "$name" == docsstep ]] || ! machine_failure "$out" || machine_end "$name" "$out"
       { echo "## $name failed (full log: $out)"; excerpt "$out"; echo; } > "$run/preflight-$round.txt"
       runlog "pre-flight $name: FAILED ($((SECONDS - t0)) s)"; return 1
     fi

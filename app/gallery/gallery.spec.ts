@@ -12,21 +12,21 @@ import { eiShots, entryShots, groupShots, ringShots, runShots, lookShots, markSh
 
 const OUT = new URL("../test/gallery/", import.meta.url).pathname, THEMES = ["light", "dark"] as const;
 
-/** R49: Mode › Settings and each of its levels, at the small phone and the Fairphone 6 (380 px over the maths rows). */
+/** R49, R927: Settings (the root, ⚙) and each of its levels, at the small phone and the Fairphone 6 (380 px over the maths rows). */
 function settingsShots(): Shot[] {
   const levels = [
-    { id: "", title: "Mode › Settings (R49): the next level of the sheet, the top cluster live", keys: [] },
-    { id: "-appearance", title: "Settings › Appearance (R50e): Theme with its dots, Brightness, High contrast, Plain keys, Key shadows (R156) and Key pop-ups (R163)", keys: ["d1"] },
-    { id: "-theme", title: "Appearance › Theme: the five families with their dots (a pick keeps the sheet open)", keys: ["d1", "enter"] },
-    { id: "-numbers", title: "Settings › Numbers: the Decimal mark (R57), the Fmt cycle (its hint under Standard) and Decimals in Fixed", keys: ["d2"] },
-    { id: "-vibration", title: "Settings › Key vibration, switched on (strength disabled with its reason), Try it", keys: ["d3", "d1"] },
-    { id: "-data", title: "Settings › Data (R38a, R96): Save a backup, Restore from a file, and the last row that says whether the data is kept", keys: ["d5"] },
-    { id: "-counters", title: "Settings › Counters: the presses, the Shift and Alpha counts, the presets switched (R89), since when, Reset", keys: ["d6"] },
-    { id: "-help", title: "Settings › Help and about (R87): the first-start tips row, About N62, Parts we use and their licences", keys: ["d7"] },
-    { id: "-about", title: "Help and about › About N62: version, licence, source, credits", keys: ["d7", "d3"] },
-    { id: "-trust", title: "Help and about › Why trust it (R174): the counts and the five traps, drawn from the generated facts, a level that scrolls", keys: ["d7", "d4"] },
-    { id: "-parts", title: "Help and about › Parts: a row per part of THIRD_PARTY.md with its licence, the copyright line under the list", keys: ["d7", "d5"] },
-    { id: "-licence", title: "Parts › a licence's full text, a level that scrolls", keys: ["d7", "d3", "d2"] },
+    { id: "", title: "Settings (R49, R927): the root, Mode its row 1, the top cluster live", keys: [] },
+    { id: "-appearance", title: "Settings › Appearance (R50e): Theme with its dots, Brightness, High contrast, Plain keys, Key shadows (R156) and Key pop-ups (R163)", keys: ["d2"] },
+    { id: "-theme", title: "Appearance › Theme: the five families with their dots (a pick keeps the sheet open)", keys: ["d2", "enter"] },
+    { id: "-numbers", title: "Settings › Numbers: the Decimal mark (R57), the Fmt cycle (its hint under Standard) and Decimals in Fixed", keys: ["d3"] },
+    { id: "-vibration", title: "Settings › Key vibration, switched on (strength disabled with its reason), Try it", keys: ["d4", "d1"] },
+    { id: "-data", title: "Settings › Data (R38a, R96): Save a backup, Restore from a file, and the last row that says whether the data is kept", keys: ["d6"] },
+    { id: "-counters", title: "Settings › Counters: the presses, the Shift and Alpha counts, the presets switched (R89), since when, Reset", keys: ["d7"] },
+    { id: "-help", title: "Settings › Help and about (R87): the first-start tips row, About N62, Parts we use and their licences", keys: ["d8"] },
+    { id: "-about", title: "Help and about › About N62: version, licence, source, credits", keys: ["d8", "d3"] },
+    { id: "-trust", title: "Help and about › Why trust it (R174): the counts and the five traps, drawn from the generated facts, a level that scrolls", keys: ["d8", "d4"] },
+    { id: "-parts", title: "Help and about › Parts: a row per part of THIRD_PARTY.md with its licence, the copyright line under the list", keys: ["d8", "d5"] },
+    { id: "-licence", title: "Parts › a licence's full text, a level that scrolls", keys: ["d8", "d3", "d2"] },
   ];
   const sizes = [
     { tag: "small", group: "Small phone (360 × 740)", viewport: { width: 360, height: 740 } },
@@ -40,7 +40,7 @@ function settingsShots(): Shot[] {
       viewport: z.viewport,
       setup: async (p: Page) => {
         await someHistory(p);
-        await tap(p, ["@mode", "d6", ...l.keys]);
+        await tap(p, ["help", ...l.keys]);
         await p.locator('[data-id="loading"]').waitFor({ state: "detached" }); // R87: the About chunk has arrived
       },
     })),
@@ -78,7 +78,7 @@ function presetShots(): Shot[] {
   const cases: { id: string; title: string; setup: (p: Page) => Promise<void> }[] = [
     {
       id: "mode-worst",
-      title: "Mode (R86): buttons for Angle, Format and Entry with DEG, PFX 30 and One line; Digits with its list; Preset; Settings ›",
+      title: "Settings › Mode (R86, R927): Preset first, then buttons for Angle, Format and Entry with DEG, PFX 30 and One line; Digits with its list",
       setup: async (p) => {
         await p.evaluate(() => {
           const s = window.n62.session;
@@ -92,7 +92,7 @@ function presetShots(): Shot[] {
     },
     {
       id: "presets-mode",
-      title: "Mode (R89): row 5 is Preset, the active one with what it holds; ◀ ▶ apply the next at once; Settings is row 6",
+      title: "Settings › Mode (R89, R927): row 1 is Preset, the active one with what it holds; ◀ ▶ apply the next at once",
       setup: async (p) => {
         await twoPresets(p);
         await tap(p, ["@mode"]);
@@ -100,10 +100,10 @@ function presetShots(): Shot[] {
     },
     {
       id: "presets-list",
-      title: "Mode › Presets: the presets with what each holds, the active one ticked; Save the current setup; Edit the presets ›",
+      title: "Settings › Mode › Presets: the presets with what each holds, the active one ticked; Save the current setup; Edit the presets ›",
       setup: async (p) => {
         await twoPresets(p);
-        await tap(p, ["@mode", "d5"]);
+        await tap(p, ["@mode", "d1"]);
       },
     },
     {
@@ -111,7 +111,7 @@ function presetShots(): Shot[] {
       title: "Presets › Edit › Lab: the five groups as ticks with their values, Update from the current setup, Rename or delete ›",
       setup: async (p) => {
         await twoPresets(p);
-        await tap(p, ["@mode", "d5", "d4", "d2"]);
+        await tap(p, ["@mode", "d1", "d4", "d2"]);
       },
     },
     {
@@ -119,7 +119,7 @@ function presetShots(): Shot[] {
       title: "Naming a preset: the sheet closed, the entry line under the label Preset name",
       setup: async (p) => {
         await someHistory(p);
-        await tap(p, ["@mode", "d5", "d1"]);
+        await tap(p, ["@mode", "d1", "d1"]);
         await p.keyboard.type("Chemistry");
         await settle(p);
       },
@@ -232,7 +232,7 @@ function unitFindShots(): Shot[] {
     { id: "leg", title: "A user cell being set: U1's tap, flick up and flick down", setup: (p) => inSlot(p, ["math", ...type("mpa"), "right", "d1"]) },
     { id: "set", title: "The unit pad with MPa put on U1's flick up (the legend) and the slot unchanged", setup: (p) => inSlot(p, ["math", ...type("mpa"), "right", "d1", "d2"]) },
     { id: "empty", title: "An empty user cell opens Find (U1's tap emptied in Settings first)", setup: async (p) => {
-      await tap(p, ["@mode", "d6", "d4"]);
+      await tap(p, ["help", "d5"]);
       await p.locator('[data-id="unitcells"]').tap();
       await p.locator('[data-id="u1:primary"]').tap();
       await p.locator('[data-id="empty"]').tap();
@@ -240,7 +240,7 @@ function unitFindShots(): Shot[] {
       await inSlot(p, ["u1"]);
     } },
     { id: "settings", title: "Settings › Your keys › Unit pad cells: U1–U6 with a tap, a flick up (⇧) and a flick down (α)", setup: async (p) => {
-      await tap(p, ["@mode", "d6", "d4"]);
+      await tap(p, ["help", "d5"]);
       await p.locator('[data-id="unitcells"]').tap();
     } },
   ];
@@ -394,7 +394,7 @@ const shots: Shot[] = [
   {
     id: "home-mode",
     group: "Home",
-    title: "Mode sheet (Shift + Deselect) over the keypad: buttons for Angle, Format and Entry, Digits with its list, Preset, Settings ›",
+    title: "Settings › Mode (the STD 12 ▾ chip) over the keypad: Preset, buttons for Angle, Format and Entry, Digits with its list",
     setup: async (p) => {
       await someHistory(p);
       await tap(p, ["@mode"]);
@@ -403,17 +403,17 @@ const shots: Shot[] = [
   {
     id: "home-mode-digits",
     group: "Home",
-    title: "Mode sheet, Significant digits (current value marked): nine rows fit over the keypad",
+    title: "Settings › Mode › Significant digits (current value marked): nine rows fit over the keypad",
     setup: async (p) => {
       await someHistory(p);
       await tap(p, ["@mode"]);
-      await p.getByRole("menuitem", { name: "3 Significant digits" }).tap(); // the 3 key is under the sheet
+      await p.getByRole("menuitem", { name: "4 Significant digits" }).tap(); // the 4 key is under the sheet
     },
   },
   {
     id: "home-mode-small",
     group: "Small phone (360 × 740)",
-    title: "Mode sheet over the keypad: buttons for Angle, Format and Entry, Digits with its list, Preset, Settings ›",
+    title: "Settings › Mode over the keypad: Preset, buttons for Angle, Format and Entry, Digits with its list",
     viewport: { width: 360, height: 740 },
     setup: async (p) => {
       await someHistory(p);
@@ -442,7 +442,7 @@ const shots: Shot[] = [
     title: "The tips: the screen dimmed, the place name and ☰ ringed, the seven lines (the last names the units key, R352), Got it",
     setup: async (p) => {
       await someHistory(p);
-      await tap(p, ["@mode", "d6", "d7"]);
+      await tap(p, ["help", "d8"]);
       await p.getByTestId("menu").locator('[data-id="tips"]').tap();
       await p.getByTestId("tips").waitFor();
     },
@@ -453,7 +453,7 @@ const shots: Shot[] = [
     title: "The tips at the small phone (360 × 740)",
     viewport: { width: 360, height: 740 },
     setup: async (p) => {
-      await tap(p, ["@mode", "d6", "d7"]);
+      await tap(p, ["help", "d8"]);
       await p.getByTestId("menu").locator('[data-id="tips"]').tap();
       await p.getByTestId("tips").waitFor();
     },

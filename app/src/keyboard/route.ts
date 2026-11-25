@@ -42,7 +42,7 @@ export interface RouteCtx {
   recallRow(item: HistoryItem): void;
   goTo(view: View): void;
   clearKey(): void;
-  /** Settings (Mode › Settings); `slot` (R705): its Your keys level, on that free key's slot row. */
+  /** The Settings root (R927: Mode is its row 1); `slot` (R705): its Your keys level, on that free key's slot row. */
   openSettings(slot?: { id: string; layer: Layer }): void;
   openMode(at?: string): void;
   openShiftPalette(id: "tmpl" | "rel" | "sym" | "chars"): void;

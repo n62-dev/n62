@@ -160,8 +160,7 @@ test("a preset's Numbers group holds the mark style", async ({ page }) => {
 });
 
 test("Settings › Numbers › Marks: three buttons, ⚠ + reason marked; a tap sets Muted", async ({ page }) => {
-  await page.getByTestId("chip-format").tap();
-  await tap(page, ["d6", "d2"]);
+  await tap(page, ["help", "d3"]); // ⚙, Numbers (R927: Mode is row 1)
   const row = page.getByTestId("menu").locator('[data-id="marks"]');
   await expect(row.locator(".opt")).toHaveText(["Muted", "⚠ coloured", "⚠ + reason"]);
   await expect(row.locator('[data-option="reason"]')).toHaveAttribute("aria-pressed", "true");

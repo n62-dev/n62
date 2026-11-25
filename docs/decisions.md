@@ -46,7 +46,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **Owner answers of 2026-11-02.** Stored names (R33) get a colour token per theme; the app's switch alone decides key vibration (A9, R112); the splash Dark (A59); the bars follow the look (owner, 2026-11-22, A266). Archived. Would change if: users want the system switch to mute the keys.
 - **Bulk resets ask once (owner, 2026-11-22, R857); one-slot clears do not.** Archived. Rule: docs/05 3.4.
 - **R4b's four defaults, as built:** Memory deletes a name without asking (Clear all asks once); a Find pick for a slot closes the sheets; a key's constant keeps its value and σ; Vars is dead without an entry line. Archived.
-- **Settings in the Mode sheet, and presets (owner, 2026-10-27; built by R49, R85–R89).** Settings is a level of the pick sheet; a preset snapshots any user settings. Rule: docs/05 3.4. Archived. Would change if: presets are switched under 5 times in 4 weeks (they go).
+- **Settings in the Mode sheet, and presets (owner, 2026-10-27; R49, R85–R89).** A preset snapshots any user settings. Rule: docs/05 3.4. Archived. Would change if: presets are switched under 5 times in 4 weeks. **Settings over Mode (owner, R927):** Mode is Settings' row 1.
 - **R15c1 menus (owner, 2026-10-20): a long menu scrolls** in the viewport (docs/05 3.1); the ⚙ in its title opens Settings (R145). Would change if: the scroll feels slow on the APK.
 - **M4-2 (owner, 2026-10-20):** the task budgets (t02 9 presses, t04 12, t10 25, t05 4), t09's two deviations, ± on Shift + `,` (R71), the unit result as its mockup (R62). Archived. Your hand timing stays the gate.
 - **S8 (owner, 2026-10-20):** every press is counted (R70); Android's backup is off (A23). Archived.
@@ -120,7 +120,6 @@ The defaults that bind code and tests, one line each. A default changes when its
 
 **Entry and keys**
 - **Built, archived ("2026-11-16, Ultra"):** Shift + 5's matrix (R185, R186); R194's word; The matrix grid (R188, R189, R300); R277's line scroll; R279's Select; R116, the entry's highlights; View keys and the load queue.
-- **R746's exact maths on the line (run 1400):** a result goes as its maths only when its drawing is its exact value (rule: docs/04 2.8, `render/exactMaths.ts`); `\left[…\right]` reads as Giac's vector, a typed bare `[` stays refused. Would change if: the owner wants `\cdot`, or a result kind that should go plain stays a chip.
 - **A digit on a disabled sheet row (R862; pass 232, docs/05 rule 4):** a dead press: the short haptic "no" in every sheet (`Sheet.activate` runs nothing today, silently); backlog "Without a package yet". Would change if: the owner wants disabled rows silent.
 - **R299's lock:** `UNPINNED_LISTS` stands; Plot's and Solve Num's ☰ are pinned with their last rows. Would change if: one of those lists gets a fixed row.
 - **R130's tenth ☰ row:** it keeps the 36 px floor and scrolls; rows 1–9 stay, key 0 opens Export › (docs/06 3b rule 2). Would change if: the owner's look on a phone.
@@ -132,7 +131,6 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R903's line hold (pass 243):** it copies the line (or the selection it had) and still lights the term under the finger (R277). Would change if: on the device the lit term reads as all that was copied.
 - **R198's typed names:** a typed FUNCS or Find function name before `(` is the function, drawn by name; Giac's program words stay letters (R198f1). Archived.
 - **R224's wide layout:** the keypad in a 42 % column of 400–560 px (`--keys-wide`). Archived. Would change if: the owner's look on the Tab One.
-- **A phone held sideways (R860; pass 230):** no layout of its own (mh-C decision 5: the wide layout is for tablets and desktops); at 915 × 412 the history is 16 px, the mark is left out and the hint's line sits mostly out of sight. Would change if: the owner uses a phone sideways.
 - **Nothing takes focus while the app is away** (R25a–c) and **Focus on return:** MathLive's own restore is off (R22). Would change if: a desktop browser loses the caret after switching windows.
 - **Flicks** (R9): arm at 20 px, cancel within 12 px; **Alpha lock:** Alpha twice locks capitals, Shift Alpha Alpha lower case. Archived.
 - **R58: in the CAS view Alpha types lower case.** Archived.
@@ -140,7 +138,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **The exponent mark** (R14): `\emark` drawn `ᴇ`, one number literal; `1ᴇ` on an empty line, after an operator, a bracket or a comma, and at a box's start (G2 item 40); a non-integer exponent is an error.
 - **Tmpl and a b/c** (R10): one toggle per result type; ° and DMS mean degrees in every angle mode. Archived.
 - **Enter during a job:** starts nothing, the line stays (`session.submit`). Would change if: the owner wants it queued.
-- **Sheets** (R7, R8, R21a): the last pick per sheet in memory only; Mode and Settings open on their first row. Archived.
+- **Sheets** (R7, R8, R21a): the last pick per sheet in memory only; Settings opens on its first row. Archived.
 - **User keys** (R15b): a slot is `{ label, action }` in keyboard.yaml's action form, null empties it, the user's choice wins over a default.
 - **Keypad legends** (R6): a key is dimmed when its layer gives nothing; 4.5:1 contrast. Shift + 4 reads Mat (R187, pass 170). Archived.
 - **The kept line** (R34): `{ view, latex, chips }` under `entry`, written on hide once settled, restored only into its view.
@@ -186,6 +184,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **G392's note:** "unit dropped" rides in the row, never in Copy as shown (R325). Archived.
 - **R201, R353:** Made of is typed text; a unit is not renamed; Store ▶'s title keeps the mark. Archived. Would change if: the owner, after his try on the phone.
 - **G370's shape:** `T1 − T2` is the whole formula; a bracketed difference inside a longer one stays refused. Archived. Would change if: G385.
+- **A constant's own unit (G801; pass 244):** NIST's CODATA unit column as Find ids (`find/units.yaml` ownUnit), except h and N_A·h in J·s (owner), c_1L in W·m² (no sr in the dimension key), G_F in J⁻² (GeV⁻² is not coherent), k_e in N·m²/C²; a product of constants' units only when it has fewer symbols than the base form (R·T/p in m³/mol). Would change if: an engineer reads one otherwise.
 
 - **A ratio chip (G369, G782; pass 229):** its pure number wherever it goes, the unit view's slot and Store ▶ too. Built, archived.
 - **The check of 2026-10-19:** a zero term keeps its dimension for the unit check (G35). Would change if: the per-term check costs more than the 5 ms p95 bar.

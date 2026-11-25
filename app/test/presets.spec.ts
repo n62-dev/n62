@@ -82,7 +82,7 @@ async function relaunch(page: Page): Promise<Page> {
 }
 /** Mode › Presets › Save (row 1 while there are none), then a name typed on a hardware keyboard. */
 async function startNaming(page: Page, name: string): Promise<void> {
-  await tap(page, ["@mode", "d5", "d1"]);
+  await tap(page, ["@mode", "d1", "d1"]);
   await expect(page.getByTestId("entry-label")).toHaveText("Preset name");
   await page.keyboard.type(name);
   expect(await entryValue(page)).toBe(name);
@@ -106,7 +106,7 @@ test("C while naming clears the name only: the line comes back after the prompt 
   await tap(page, ["d2", "add", "d3"]);
   await hidden(page, true); // the line is kept
   await hidden(page, false);
-  await tap(page, ["@mode", "d5", "d1"]);
+  await tap(page, ["@mode", "d1", "d1"]);
   await expect(page.getByTestId("entry-label")).toHaveText("Preset name");
   await tap(page, ["vars", "math"]); // a return drops the focus: the name by keys (a, b: Alpha is locked in lower case, R776)
   expect(await entryValue(page)).toBe("ab");

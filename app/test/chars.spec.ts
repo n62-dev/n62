@@ -121,7 +121,7 @@ test("Store ▶ on a result: Chars θ types the name, and the row is stored unde
 
 test("a name prompt takes every cell: Chars in a preset's name types the character, ≈ and µ too; Esc leaves the sheet and keeps the prompt", async ({ page }) => {
   await tap(page, ["d2", "add", "d3"]);
-  await tap(page, ["@mode", "d5", "d1"]);
+  await tap(page, ["@mode", "d1", "d1"]);
   await expect(page.getByTestId("entry-label")).toHaveText("Preset name");
   await tap(page, ["alpha"]); // R776: the name prompt starts with Alpha locked; under it Shift + Vars would type a letter
   await tap(page, CHARS);

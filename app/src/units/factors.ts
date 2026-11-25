@@ -3,6 +3,7 @@
 // dimension (`dim`), each prefix's power of ten (or of two), each constant's value, uncertainty and dimension. Built
 // once when the unit view first evaluates, never in the start chunk. Plain TS.
 import type { IndexItem } from "../find/types.ts";
+import type { UnitSlot } from "./types.ts";
 
 export interface UnitFactor {
   /** Exact factor to SI base units (p/q, with pi where needed); "a+b" for °C and °F (K = a·x + b); absent when the
@@ -26,6 +27,8 @@ export interface ConstFactor {
   basisLeaves?: Readonly<Record<string, { value: string; unc: string }>>;
   dim?: string;
   symbol: string;
+  /** G801: the index's `ownUnit` as slot tokens (J·s), each a unit of factor exactly 1. */
+  own?: UnitSlot;
 }
 
 export interface FactorTable {
@@ -68,6 +71,8 @@ export function factorTable(items: readonly IndexItem[]): FactorTable {
         basisLeaves: it.basisLeaves,
         ...(it.dim !== undefined ? { dim: it.dim } : {}),
         symbol: symbolOf(it),
+        // G801: "J*K^-1" as tokens, each id with its power, none below a ÷
+        ...(it.ownUnit ? { own: { tokens: it.ownUnit.split("*").map((p) => { const [unit, power] = p.split("^") as [string, string?]; return power ? { unit, power } : { unit }; }) } } : {}),
       });
   }
   return { units, prefixes, consts };

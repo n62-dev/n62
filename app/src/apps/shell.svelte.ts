@@ -87,9 +87,9 @@ export class AppShell {
   /** The Menu of Home and CAS (set by App.svelte); the apps bring their own. */
   homeMenu: (() => MenuItem[]) | undefined;
   /** Settings as a level of the sheet (set by App.svelte once the Mode code is in; R49): the ⚙ in every Menu's title
-   *  row (R145) opens it as the next level. Undefined until then: the ⚙ then opens Mode › Settings (openSettings). */
+   *  row (R145) opens it as the next level. Undefined until then: the ⚙ then opens the Settings root (openSettings; R927). */
   settingsMenu: (() => SubMenu | undefined) | undefined;
-  /** Opens Mode › Settings (set by App.svelte): a user key that holds Settings, or the ⚙ before the Mode code is in. */
+  /** Opens the Settings root, Mode its row 1 (set by App.svelte; R927): a user key that holds Settings, or the ⚙ before the Mode code is in. */
   openSettings: (() => void) | undefined;
   /** R785: an app's ☰ › Mode: the Mode sheet on Format, as the bar's chip opens it in Home and CAS (set by App.svelte). */
   openMode: (() => void) | undefined;
@@ -210,7 +210,7 @@ export class AppShell {
     return !this.entryEdited && (a?.undo?.(this.view) ?? false);
   }
   /** R145: where a ☰ sheet's ⚙ goes (and the ⚙ key over any sheet, R887): Settings as a level of the sheet (R49), else, before the
-   *  Mode code is in, Mode › Settings. */
+   *  Mode code is in, the Settings root (openSettings, R927). */
   readonly toSettings = (): SubMenu | (() => void) => this.settingsMenu?.() ?? (() => this.openSettings?.());
 
   // ---- sheets (docs/05 3.1)

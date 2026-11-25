@@ -54,7 +54,7 @@ test("Presets › Save: Undo in the name prompt stops at the empty name; Esc giv
   await page.setViewportSize({ width: 412, height: 915 });
   await open(page);
   await tap(page, ["d7", "add", "d1"]);
-  await tap(page, ["@mode", "d5", "d1"]);
+  await tap(page, ["@mode", "d1", "d1"]);
   await expect(label(page)).toHaveText("Preset name");
   expect(await entryValue(page)).toBe("");
   await tap(page, ["d2"]); // z (the prompt starts in Alpha, lower case)

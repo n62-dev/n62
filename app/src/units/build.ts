@@ -2,7 +2,7 @@
 // The builder of the unit view (P15, docs/04 4.2): a UnitRequest (the formula with a placeholder per slot and per
 // constant, the slots as tokens) becomes a UnitJob, Giac text in which every unit is its exact SI factor from the
 // Find index times the dimension symbols of dims.ts. Main thread, plain TS, no engine.
-import { BASES, dimKeyOf, dimSymbols, isExponent, parseDimKey, unitProduct } from "./dims.ts";
+import { BASES, dimKeyOf, dimSymbols, isExponent, parseDimKey, siSlot, unitProduct } from "./dims.ts";
 import { isOwnId, OWN_PREFIX, type FactorTable, type UnitFactor } from "./factors.ts";
 import { balanced, callsOf, closing, mapNames, names, topLevelArgs, unbracket, walk } from "../engine/giacPrint.ts";
 import { basisGiac, basisOf, correlated, LEAF_PREFIX } from "../engine/constBasis.ts";
@@ -468,6 +468,17 @@ export function shownUnits(req: UnitRequest, table: FactorTable): ShownUnit[] {
   return out;
 }
 
+/** G801: the units of the request's constants a result without an end slot may be shown in, best first: their product
+ *  (h·c in J·m), each constant's own unit (find/units.yaml constants.ownUnit) or base form standing for it, then each
+ *  alone (h·c/c in J·s; a repeat is harmless, the first that fits is taken). All have factor exactly 1. The product of several is taken only when it has fewer symbols than
+ *  the base form of its dimension (R·T/p is m³/mol, not J/(mol·Pa)); a pure number's constant (α) has none. */
+export function constUnits(req: UnitRequest, table: FactorTable): ShownUnit[] {
+  const slots = (req.consts ?? []).flatMap((id) => { const c = table.consts.get(id); return c?.dim ? [c.own ?? siSlot(c.dim)] : []; });
+  const all = shownOf(slots, table, () => true);
+  const one = slots.flatMap((s) => shownOf([s], table, () => true) ?? []);
+  return all && (slots.length < 2 || all.slot.tokens.length < parseDimKey(all.dim).size) ? [all, ...one] : one;
+}
+
 const PLACEHOLDER = /\bpas([uk])(\d+)\b/g;
 const HAS_SLOT = /\bpas[uk]\d+\b/;
 
@@ -650,6 +661,7 @@ function jobOf(req: UnitRequest, table: FactorTable): UnitJob | UnitError {
     const form = dimensionForm(formula, count);
     const check = count.k ? values(form.replace(PLACEHOLDER, (_, kind: string, n: string) => (kind === "u" ? slots[Number(n) - 1]! : consts[Number(n) - 1]!.giac))) : null;
     const shows = req.end ? [] : shownUnits(req, table);
+    const own = req.end ? [] : constUnits(req, table);
     const chip = sigmaFacts(req);
     const cycle = cycleUnit([...req.slots, ...(req.end ? [req.end] : [])]);
     return {
@@ -658,6 +670,7 @@ function jobOf(req: UnitRequest, table: FactorTable): UnitJob | UnitError {
       ...(check !== null ? { check, ...(count.sum ? { checkSum: true as const } : {}) } : {}),
       ...endJob(req, table),
       ...(shows.length ? { shows } : {}),
+      ...(own.length ? { constUnits: own } : {}),
       ...(cycle ? { cycle } : {}),
       ...(hasCycles([...req.slots, ...(req.end ? [req.end] : [])]) ? { cycles: true as const } : {}),
       ...(diff ? { kelvin: diff.kelvin } : {}),

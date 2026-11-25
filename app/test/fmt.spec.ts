@@ -6,25 +6,25 @@ import { open, recordVibrations, sheet, sheetKey, tap, tapTwice, vibrations, tap
 const lastText = (page: Page) => page.locator('[data-testid="result"] .result').last();
 const ready = (page: Page) => page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
 
-/** The Mode sheet (format chip, ▲), 5, then a section of Settings (R49, R50e: 2 Numbers, 3 Key vibration). */
-async function openSettings(page: Page, section: "d2" | "d3"): Promise<void> {
-  await tap(page, ["@mode", "d6", section]);
-  await expect(page.getByTestId("sheet-title")).toHaveText(section === "d2" ? "Mode › Settings › Numbers" : "Mode › Settings › Key vibration");
+/** ⚙, then a section of Settings (R49, R50e, R927: 3 Numbers, 4 Key vibration). */
+async function openSettings(page: Page, section: "d3" | "d4"): Promise<void> {
+  await tap(page, ["help", section]);
+  await expect(page.getByTestId("sheet-title")).toHaveText(section === "d3" ? "Settings › Numbers" : "Settings › Key vibration");
 }
 /** The Mode sheet (format chip, ▲; Shift + Apps before R15c2). */
 async function openMode(page: Page): Promise<void> {
   await tap(page, ["@mode"]);
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode");
+  await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Mode");
 }
-/** Settings is three levels deep: Esc goes back one each. */
+/** A section of Settings is two levels deep: Esc goes back one each. */
 const closeSettings = async (page: Page) => {
-  await tap(page, ["esc", "esc", "esc"]);
+  await tap(page, ["esc", "esc"]);
   await expect(sheet(page)).toBeHidden();
 };
 const row = (page: Page, id: string) => sheet(page).locator(`[data-id="${id}"]`);
 /** The Format key cycle's ticks: Settings › Numbers › Fmt key cycle (R40), four levels deep. */
 async function openCycle(page: Page): Promise<void> {
-  await openSettings(page, "d2");
+  await openSettings(page, "d3");
   await tap(page, ["d2"]);
   await expect(page.getByTestId("sheet-title")).toHaveText("Settings › Numbers › Fmt key cycle");
 }
@@ -37,7 +37,7 @@ async function toggleCycle(page: Page, modes: string[]): Promise<void> {
 }
 async function pickDigits(page: Page, valueKey: string): Promise<void> {
   await openMode(page);
-  await tap(page, ["d3", valueKey]);
+  await tap(page, ["d4", valueKey]);
   await expect(sheet(page)).toBeHidden();
 }
 
@@ -77,7 +77,7 @@ test("the Format key cycle and the vibration settings persist across a reload", 
   await ready(page);
   await toggleCycle(page, ["eng", "fix"]);
   // key vibration: a tap switches it on, ▶ ×5 sets the length from 15 to 40 ms
-  await openSettings(page, "d3");
+  await openSettings(page, "d4");
   await row(page, "haptics").tap();
   for (let i = 0; i < 5; i++) await row(page, "ms").getByTestId("step-up").tap();
   await closeSettings(page);
@@ -85,7 +85,7 @@ test("the Format key cycle and the vibration settings persist across a reload", 
   await page.reload();
   await page.waitForFunction(() => window.n62 !== undefined);
   await page.waitForFunction(() => window.n62.session.settings.haptics.on === true);
-  await openSettings(page, "d3");
+  await openSettings(page, "d4");
   await expect(row(page, "haptics")).toHaveAttribute("data-selected", "true");
   await expect(row(page, "ms").getByTestId("sheet-value")).toHaveText("40 ms");
   // the web build cannot set the strength, and the row says why
@@ -109,7 +109,7 @@ test("key vibration: off by default, and on it calls navigator.vibrate on key-do
   await open(page);
   await tap(page, ["d1", "d2"]);
   expect(await vib()).toEqual([]);
-  await openSettings(page, "d3");
+  await openSettings(page, "d4");
   await row(page, "haptics").tap();
   expect(await vib()).toEqual([]); // switched on from the sheet's row, where no key goes down
   await tapHistory(page); // a tap above the sheet closes it: no key either

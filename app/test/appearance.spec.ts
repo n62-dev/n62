@@ -42,8 +42,8 @@ test.beforeEach(async ({ page }, info) => {
 
 test.describe("the level", () => {
   test("Mode, 6, 1: Theme with its dots and name, Brightness, and five switches, four with a line (Key pop-ups: R163; Find opens full screen: R932)", async ({ page }) => {
-    await tap(page, ["@mode", "d6", "d1"]);
-    await expect(title(page)).toHaveText("Mode › Settings › Appearance");
+    await tap(page, ["help", "d2"]);
+    await expect(title(page)).toHaveText("Settings › Appearance");
     await expect(sheet(page).getByRole("menuitem")).toHaveCount(7);
     await expect(row(page, "theme").getByTestId("row-dots").locator("i")).toHaveCount(5);
     await expect(row(page, "theme").getByTestId("sheet-value")).toHaveText("N62");
@@ -57,7 +57,7 @@ test.describe("the level", () => {
   });
 
   test("by keys: ▶ ◀ step the theme in place, Enter lists the three, a digit picks and the sheet stays", async ({ page }) => {
-    await tap(page, ["@mode", "d6", "d1"]);
+    await tap(page, ["help", "d2"]);
     await sheetKey(page, ["right"]);
     await expect(root(page)).toHaveAttribute("data-family", "bw");
     await expect(row(page, "theme").getByTestId("sheet-value")).toHaveText("Black & White");
@@ -71,7 +71,7 @@ test.describe("the level", () => {
     await expect(root(page)).toHaveAttribute("data-family", "bw");
     await expect(title(page)).toHaveText("Settings › Appearance › Theme"); // a pick keeps the sheet open
     await tap(page, ["esc"]);
-    await expect(title(page)).toHaveText("Mode › Settings › Appearance");
+    await expect(title(page)).toHaveText("Settings › Appearance");
     await sheetKey(page, ["down", "right", "right"]); // Brightness: Light, Dark
     await expect(row(page, "brightness").getByTestId("sheet-value")).toHaveText("Dark");
     await tap(page, ["d3", "d4"]);
@@ -80,7 +80,7 @@ test.describe("the level", () => {
   });
 
   test("by touch: a tap on Theme lists the three with their dots; a pick keeps the sheet open and the page follows", async ({ page }) => {
-    await tap(page, ["@mode", "d6"]);
+    await tap(page, ["help"]);
     await row(page, "appearance").tap();
     await row(page, "theme").locator(".label").tap();
     await expect(title(page)).toHaveText("Settings › Appearance › Theme");
@@ -102,7 +102,7 @@ test.describe("the level", () => {
   });
 
   test("two theme picks in a row end in the last one", async ({ page }) => {
-    await tap(page, ["@mode", "d6", "d1", "enter", "d2", "d3"]);
+    await tap(page, ["help", "d2", "enter", "d2", "d3"]);
     await expect(root(page)).toHaveAttribute("data-family", "solarized");
     await page.waitForTimeout(400);
     await expect(root(page)).toHaveAttribute("data-family", "solarized");
@@ -132,7 +132,7 @@ test.describe("R153: N62 in teal, Black & White, Solarized", () => {
     return out;
   }
   test("Appearance lists N62, Black & White, Solarized in that order; N62 Dark is the deep teal", async ({ page }) => {
-    await tap(page, ["@mode", "d6", "d1", "enter"]);
+    await tap(page, ["help", "d2", "enter"]);
     await expect(title(page)).toHaveText("Settings › Appearance › Theme");
     await expect(sheet(page).getByRole("menuitem")).toHaveCount(3);
     await expect(sheet(page).getByRole("menuitem").locator(".label")).toHaveText(["N62", "Black & White", "Solarized"]);
@@ -153,7 +153,7 @@ test.describe("R153: N62 in teal, Black & White, Solarized", () => {
 
 test.describe("survives a reload", () => {
   test("each of the four values, set by touch", async ({ page }) => {
-    await tap(page, ["@mode", "d6"]);
+    await tap(page, ["help"]);
     await row(page, "appearance").tap();
     await row(page, "theme").getByTestId("step-up").tap();
     await row(page, "theme").getByTestId("step-up").tap(); // Solarized
@@ -164,7 +164,7 @@ test.describe("survives a reload", () => {
     await reload(page);
     expect(await look(page)).toEqual({ family: "solarized", brightness: "light", contrast: true, plain: true, shadow: true, pops: true, findFull: false });
     expect(await attrs(page)).toEqual(["solarized", "light", "high", "plain"]);
-    await tap(page, ["@mode", "d6", "d1"]);
+    await tap(page, ["help", "d2"]);
     await expect(row(page, "theme").getByTestId("sheet-value")).toHaveText("Solarized");
     await expect(row(page, "brightness").getByTestId("sheet-value")).toHaveText("Light");
     await expect(row(page, "contrast")).toHaveAttribute("data-selected", "true");
@@ -172,17 +172,17 @@ test.describe("survives a reload", () => {
   });
 
   test("each of the four values, set by keys", async ({ page }) => {
-    await tap(page, ["@mode", "d6", "d1"]);
+    await tap(page, ["help", "d2"]);
     await sheetKey(page, ["left", "down", "left", "d3", "d4"]); // Solarized (left wraps), Dark, High contrast, Plain keys
     await expect.poll(() => stored(page)).toEqual({ family: "solarized", brightness: "dark", contrast: true, plain: true, shadow: true, pops: true, findFull: false });
     await reload(page);
     expect(await attrs(page)).toEqual(["solarized", "dark", "high", "plain"]);
-    await tap(page, ["@mode", "d6", "d1"]);
+    await tap(page, ["help", "d2"]);
     await expect(row(page, "theme").getByTestId("sheet-value")).toHaveText("Solarized");
   });
 
   test("switching the switches off again survives too", async ({ page }) => {
-    await tap(page, ["@mode", "d6", "d1", "d3", "d4", "d3", "d4"]);
+    await tap(page, ["help", "d2", "d3", "d4", "d3", "d4"]);
     await expect.poll(() => attrs(page)).toEqual(["n62", "dark", null, null]);
     await expect.poll(() => stored(page)).toEqual({ family: "n62", brightness: "system", contrast: false, plain: false, shadow: true, pops: true, findFull: false });
     await reload(page);
@@ -192,7 +192,7 @@ test.describe("survives a reload", () => {
 
 test.describe("the first frame", () => {
   test("shows the stored theme before main.ts has run (its file held)", async ({ page }) => {
-    await tap(page, ["@mode", "d6", "d1"]);
+    await tap(page, ["help", "d2"]);
     await sheetKey(page, ["left", "d3", "d4"]); // Solarized, High contrast, Plain keys
     await expect.poll(() => page.evaluate(() => localStorage.getItem("n62.look"))).toContain('"plain":true');
     await expect.poll(() => page.evaluate(() => localStorage.getItem("n62.look"))).toContain('"bg":"#');
@@ -218,7 +218,7 @@ test.describe("the first frame", () => {
   });
 
   test("Brightness Light in a Dark-scheme browser: the first frame is light", async ({ page }) => {
-    await tap(page, ["@mode", "d6", "d1"]);
+    await tap(page, ["help", "d2"]);
     await sheetKey(page, ["down", "right"]); // Light
     await expect(root(page)).toHaveAttribute("data-brightness", "light");
     await page.waitForTimeout(300);

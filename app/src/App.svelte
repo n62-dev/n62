@@ -254,12 +254,11 @@
     tips: showTips, dead, chooseFor: (id: string, layer: Layer): void => openFind({ id, layer }), data: withClip }; // data: Settings › Data (R38a, R38b; as a hold on a history row: waits for the clipboard and Mode code if the sheet opened before they came; no import of its own in the start chunk)
   /** Settings as the ☰ menus' last row opens it (R49): one per session, its rows read the settings on every draw. */
   let settingsMenu: SubMenu | undefined;
-  /** A user key that holds Settings, or a ☰ menu's last row before the Mode code is in: Mode › Settings, on its first
-   *  row (R49, docs/05 3.4). `slot` (R705, an empty free key): Settings › Your keys, on that slot's row. */
+  /** The ⚙ key, a user key that holds Settings, or a ☰ menu's ⚙ before the Mode code is in: the Settings root, on its row 1, Mode
+   *  (R49, R927, docs/05 3.4). `slot` (R705, an empty free key): Settings › Your keys, on that slot's row. */
   function openSettings(slot?: FindSlot): void {
     onModeSheet((m) => {
-      shell.showMenu(t("mode.title"), m.modeItems(session, settingsEnv), { remember: false, at: "settings" }); // R901: the pick stays (a look at Settings changes nothing behind it)
-      shell.sheet?.enter(); // its submenu: a level on top
+      m.showSettings(shell, session, settingsEnv);
       if (slot) m.toSlot(shell.sheet, slot); // R705: on into Your keys
     });
   }
@@ -275,11 +274,10 @@
     });
   });
   /** A tap on the bar's format and digits chip (`at`: the row to start on), an app's ☰ › Mode, or a user key that holds
-   *  Mode: the Mode sheet. Without `at` it starts on Angle, so Mode, ▶, Enter always switches the angle unit. */
-  function openMode(at?: string): void {
-    onModeSheet((m) => {
-      shell.showMenu(t("mode.title"), m.modeItems(session, settingsEnv), { remember: false, at }); // R901: the pick stays, as for Settings
-    });
+   *  Mode: Settings › Mode (R927: the root with Mode pushed, so back walks up the tree). Without `at` it starts on Angle, so
+   *  Mode, ▶, Enter always switches the angle unit. */
+  function openMode(at = "angle"): void {
+    onModeSheet((m) => m.showSettings(shell, session, settingsEnv, at));
   }
   /** Run `open` at once when the lists are loaded; else after the load, with every key meanwhile waiting in the queue
    *  (decisions.md R8), so none of them lands on the line before the sheet is there. */

@@ -20,24 +20,24 @@ test("(a) a tap on an empty U3 opens Settings › Your keys on U3's tap row; Esc
   await expect(page.locator('[data-key="u3"]')).toHaveAttribute("data-user", "empty");
   await expect(page.locator('[data-key="u3"]')).not.toHaveAttribute("data-dead", "true"); // drawn live: a tap does something
   await tap(page, ["u3"]);
-  await expect(title(page)).toHaveText("Mode › Settings › Your keys");
+  await expect(title(page)).toHaveText("Settings › Your keys");
   await expect(mactive(page)).toHaveAttribute("data-id", "u3:primary");
   expect(await entryValue(page)).toBe("");
   await tap(page, ["esc"]); // (R704, once merged, closes the sheet here: it was opened at a level)
-  await expect(title(page)).toHaveText("Mode › Settings");
+  await expect(title(page)).toHaveText("Settings");
   await expect(mactive(page)).toHaveAttribute("data-id", "keys");
 });
 
 test("(b) Shift + an empty U5 opens the same level on U5's Shift row", async ({ page }) => {
   await tap(page, ["shift", "u5"]);
-  await expect(title(page)).toHaveText("Mode › Settings › Your keys");
+  await expect(title(page)).toHaveText("Settings › Your keys");
   await expect(mactive(page)).toHaveAttribute("data-id", "u5:shift");
   await expect(page.locator('[data-key="shift"]')).not.toHaveAttribute("aria-pressed", "true"); // the one-shot Shift is used up
 });
 
 test("(b) a flick up on an empty U6 opens its Shift row too", async ({ page }) => {
   await flick(page, "u6", "up");
-  await expect(title(page)).toHaveText("Mode › Settings › Your keys");
+  await expect(title(page)).toHaveText("Settings › Your keys");
   await expect(mactive(page)).toHaveAttribute("data-id", "u6:shift");
 });
 
@@ -52,7 +52,7 @@ test("(c) a set key is untouched: U1 set to sin from Find types sin( on a tap; A
   await expect(factive(page)).toHaveAttribute("data-id", "fn:sin");
   await tap(page, ["enter"]);
   await expect(find(page)).toBeHidden();
-  await tap(page, ["esc", "esc", "esc"]); // Your keys, Settings, Mode
+  await tap(page, ["esc", "esc", "esc"]); // (the Find pick closed the sheets, R4b: these reach the empty line)
   await expect(menu(page)).toHaveCount(0);
   await expect(page.locator('[data-key="u1"]')).toHaveAttribute("data-user", "set");
   await tap(page, ["u1"]);
@@ -76,36 +76,36 @@ test("(d) the press is counted under its key and layer, as before (R127)", async
 
 test("Alpha + an empty key is its tap (docs/04 5.1): U4's tap row", async ({ page }) => {
   await tap(page, ["alpha", "u4"]);
-  await expect(title(page)).toHaveText("Mode › Settings › Your keys");
+  await expect(title(page)).toHaveText("Settings › Your keys");
   await expect(mactive(page)).toHaveAttribute("data-id", "u4:primary");
 });
 
 test("a set tap with an empty Shift slot: Shift + the key opens its Shift row", async ({ page }) => {
   await page.evaluate(() => window.n62.userKeys.set("u2", "primary", { label: "Home", action: { special: "home" } }));
   await tap(page, ["shift", "u2"]);
-  await expect(title(page)).toHaveText("Mode › Settings › Your keys");
+  await expect(title(page)).toHaveText("Settings › Your keys");
   await expect(mactive(page)).toHaveAttribute("data-id", "u2:shift");
 });
 
 test.describe("controls", () => {
   test("inside Your keys a free key still goes to its own row (set or empty)", async ({ page }) => {
     await page.evaluate(() => window.n62.userKeys.set("u1", "primary", { label: "Home", action: { special: "home" } }));
-    await tap(page, ["@mode", "d6", "d4"]); // Mode, Settings, Your keys
-    await expect(title(page)).toHaveText("Mode › Settings › Your keys");
+    await tap(page, ["help", "d5"]); // ⚙: Settings, Your keys
+    await expect(title(page)).toHaveText("Settings › Your keys");
     await tap(page, ["u3"]);
     await expect(mactive(page)).toHaveAttribute("data-id", "u3:primary");
     await tap(page, ["u1"]);
     await expect(mactive(page)).toHaveAttribute("data-id", "u1:primary");
     await tap(page, ["shift", "u4"]);
     await expect(mactive(page)).toHaveAttribute("data-id", "u4:shift");
-    await expect(title(page)).toHaveText("Mode › Settings › Your keys"); // no level pushed, nothing reached the line
+    await expect(title(page)).toHaveText("Settings › Your keys"); // no level pushed, nothing reached the line
     expect(await entryValue(page)).toBe("");
   });
 
   test("a set key that holds Settings opens Settings on its first row", async ({ page }) => {
     await page.evaluate(() => window.n62.userKeys.set("u2", "primary", { label: "Settings", action: { special: "settings" } }));
     await tap(page, ["u2"]);
-    await expect(title(page)).toHaveText("Mode › Settings");
-    await expect(mactive(page)).toHaveAttribute("data-id", "appearance");
+    await expect(title(page)).toHaveText("Settings");
+    await expect(mactive(page)).toHaveAttribute("data-id", "mode"); // R927: Mode is row 1
   });
 });
