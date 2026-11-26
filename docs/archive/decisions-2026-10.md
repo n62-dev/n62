@@ -1426,3 +1426,14 @@ Synchronous `calc.cas` through Asyncify (amended D6), the runtime limits, the vi
 
 ### 2026-11-22 Bulk resets ask once (R857); one-slot clears do not
 Reset all your keys, Reset the unit pad cells and the three Reset the counter rows arm on the first pick (R281's ask: the armed label, the row in `--error`, a note naming what goes); Empty this slot and Back to the default clear at once. A digit key arms the reset and never runs it (R281's rule: every key but Enter disarms first; pass 230); Enter or a second tap runs it. Rule: docs/05 3.4.
+
+## Moved 2026-11-26 (Opus pass 249: decisions.md over 39 kB; rules in docs/04 5.1 and 6.1, docs/04 4 (angles), docs/05 3.2 and 3.4, engine/giac/README.md, archive/r9-unit-pad.md)
+
+- **Settings in the Mode sheet, and presets (owner, 2026-10-27; R49, R85–R89).** A preset snapshots any user settings. Rule: docs/05 3.4. Archived. Would change if: presets are switched under 5 times in 4 weeks. **Settings over Mode (owner, R927):** Mode is Settings' row 1.
+- **R15c (2026-10-17): the top cluster becomes R3; Apps, Menu and the views sit in the status line** (the bar on the keypad since R722, below). Rule: docs/04 5.1, docs/05 3.2. Archived.
+- **P18 (2026-10-20): Giac evaluates, our layer decides** what is shown; no other engine answers at run time. Rule: docs/04 6.1. Archived. Would change if: a feature needs a second engine at run time; the checks push the Tab One's Enter p95 past 150 ms.
+- **P21 (2026-10-20): Giac is pinned to Parisse's numbered Debian archive** (SHA-256 from its `.dsc`); a re-pin passes the golden gate. Archived. Would change if: a fix we need is only in a snapshot.
+- **P22 (2026-10-20): libqalculate leaves the build;** its numbers are checked in (`find/factors.yaml`), refreshed by a developer tool (A21, A60). Archived. Would change if: the unit view needs qalc at run time.
+- **P15 (2026-10-14): the unit view computes on Giac** with the Find index's exact SI factors; libqalculate never runs in the app (P22). Archived. Would change if: a unit need has no clean exact form; the unit view feels slow on the Tab One.
+- **P14 (2026-10-14) and the P14 arrangement (2026-10-18, S5): the unit pad.** Rule: [archive/r9-unit-pad.md](r9-unit-pad.md), `spec/unit-pad.yaml`; a hardware keyboard types a unit symbol in a slot (R313). Archived. Would change if: the owner's units take ≥ 3 presses; R24b's reach costs.
+- **Angles in the unit view (owner, 2026-10-19; built by G40):** an angle is a quantity both ways; the rad drop and the 2π·r·n note as built. Archived. Would change if: G2 item 68 shows the G2 refusing both.

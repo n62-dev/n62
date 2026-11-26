@@ -11,6 +11,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **G622f2, a singular float inv:** Recommended: refuse, as exact inv does. `inv(approx(10^-9*[[2.5,2E8,e],[2.5,π,2E-3],[5,2E8+π,e+2E-3]]))` is 1E14–1E22 noise, row 3 ≈.
 - **The release bar's week (A273, G799; pass 241):** Recommended: a night counts when every `NIGHTLY` finding falls under a package or bug line the pass names (no new cause), as the clock seed never repeats a known row. Night 1 (11-25): all 118 named (G802, G804, G805, G622f2, F145, F480, F487).
 - **R779, the drag after the arrow keys, on the Fairphone:** not reproduced in Chromium touch emulation (linetouch.spec.ts R779 cases); lineTouch.ts now ends a stale touch. Does the drag work on the Fairphone 6? If not, record `adb` pointer events for the sequence.
+- **A278, e2e on a built app (measured 2026-11-26):** Recommended: after the tag, and only if A281f1's clipboard per test leaves the e2e round over 450 s: a `vite build --mode e2e` served by `vite preview` is 26–34 % faster per test, but 73 of 207 spec files import `/src/` and need changes (about 1.5 days).
 
 ## Decided proposals
 
@@ -24,7 +25,6 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **P25 (owner, 2026-11-08): auto or hands-on, around the clock; on Max since 2026-11-20 (Pro 11-19 to 11-20, A262).** Rule and numbers: brief section 0; the daily stop (05:00, 07:00) and the day's budget: rules section 4a. Would change if: the plan cannot carry the queue.
 - **Owner answers of 2026-10-25 and 2026-11-02 to 11-08 (pipeline):** built; a 1507 ms CAS-last cold start does not hold v0.1.0. Archived.
 - **The name N62 (owner, 2026-11-05):** id `dev.n62.calc`, never changed after the v0.1.0 tag; the web `https://n62.dev/` from a release tag (A45); repo `n62-dev/n62`; spelling: docs/rules-core.md. Archived. Would change if: TMview finds N62 in class 9; the domain lapses.
-- **The declutter (owner, 2026-11-05 evening): history lives in git.** Rule: rules section 10. Archived. Would change if: a deleted file is needed back twice a month.
 - **P23 (2026-10-21, ended 2026-10-27, owner): the core freeze's net stays;** the list changes only with the owner. Rule: brief section 0, `tests/core/README.md`. Archived.
 - **The docs budgets stay (owner, 2026-10-20):** brief 40 kB (2026-11-10), backlog 20, decisions 40; when decisions.md has under 1 kB left, the Opus pass moves the full texts of built entries to the archive and keeps a short line.
   - **S55's targets:** brief, decisions and docs/04 at 90 % of their budgets; the backlog at 19 kB (its open lines stay word for word, S55 rule 1). Would change if: the backlog fails a package's docs check twice in a week.
@@ -47,13 +47,11 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **Owner answers of 2026-11-02.** Stored names (R33) get a colour token per theme; the app's switch alone decides key vibration (A9, R112); the splash Dark (A59); the bars follow the look (owner, 2026-11-22, A266). Archived. Would change if: users want the system switch to mute the keys.
 - **Bulk resets ask once (owner, 2026-11-22, R857); one-slot clears do not.** Archived. Rule: docs/05 3.4.
 - **R4b's four defaults, as built:** Memory deletes a name without asking (Clear all asks once); a Find pick for a slot closes the sheets; a key's constant keeps its value and σ; Vars is dead without an entry line. Archived.
-- **Settings in the Mode sheet, and presets (owner, 2026-10-27; R49, R85–R89).** A preset snapshots any user settings. Rule: docs/05 3.4. Archived. Would change if: presets are switched under 5 times in 4 weeks. **Settings over Mode (owner, R927):** Mode is Settings' row 1.
 - **R15c1 menus (owner, 2026-10-20): a long menu scrolls** in the viewport (docs/05 3.1); the ⚙ in its title opens Settings (R145). Would change if: the scroll feels slow on the APK.
 - **M4-2 (owner, 2026-10-20):** the task budgets (t02 9 presses, t04 12, t10 25, t05 4), t09's two deviations, ± on Shift + `,` (R71), the unit result as its mockup (R62). Archived. Your hand timing stays the gate.
 - **S8 (owner, 2026-10-20):** every press is counted (R70); Android's backup is off (A23). Archived.
 - **S6 (owner, 2026-10-20; A11, R38a, R38b): the backup** leaves by Android's "Save to" screen and returns by a file picker; restore checks the whole file. Archived. Would change if: a supported WebView has no Save-to screen.
 - **R15c Store (owner, 2026-10-19; G2 item 58, device):** Shift + ᴇ (Store ▶) on an empty line after a result starts `Ans ▶`, as + − × ÷ do; built in R15c2.
-- **R15c (2026-10-17): the top cluster becomes R3; Apps, Menu and the views sit in the status line** (the bar on the keypad since R722, below). Rule: docs/04 5.1, docs/05 3.2. Archived.
 - **The bar on the keypad (R722, R783, R785, R856) and P16's fold (R53, R283, R724, R786, R782, R868, R928):** built; rules docs/05 3.2, docs/03 rule 9; full text and the Would change if: archived ("Moved 2026-11-26").
 - **Keys of 2026-11-17 (owner, R723):** row 0, col 4 is Settings (⚙), Shift Help since R863; Shift + Select is Copy, Shift + Deselect Paste, Shift + Vars Chars (R725); Mode has no key (`STD 12 ▾`, an app's ☰ › Mode, a user key, Alt + Shift + O). Rule: docs/06 3b, docs/05 3.2. Would change if: Shift + Select is pressed fewer than 10 times in four weeks (`select:shift` and `select:up`); then that cell is reserved.
 - **Modifier locks (owner, 2026-11-17, R726; 2026-11-20, R783):** a Shift tap arms, a second locks, a third ends it, as Alpha's; with Alpha on, Shift stays one-shot; the sign's tap is a screen press (docs/04 5.2). Rule: docs/05 3.2, 3.10; docs/06 section 2, 3b. Would change if: the owner, after two weeks of daily use, misses the one-tap undo of a stray Shift.
@@ -81,10 +79,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **Built, archived ("2026-11-12, evening"):** G78f1, G68, G84, G70, G71, G67, G65; A20 (G82); A12 and A62 (G83); A16 after G53; F50, F51 (G78); G33 and R56; A4a point 1 (G52); G20 (G28).
 - **G58, G59:** a Giac call deaf to its interrupt gets a `control_c()` patch at its cause (P19); when the exact and numeric answers disagree Home shows ⚠. Archived.
 - **S13, G57 (owner, 2026-10-20; built by G65): names from Giac's state;** an undecided run-once store is refused as `a:=` is. Archived. Would change if: A16's RAD Enter p95 > 150 ms.
-- **P18 (2026-10-20): Giac evaluates, our layer decides** what is shown; no other engine answers at run time. Rule: docs/04 6.1. Archived. Would change if: a feature needs a second engine at run time; the checks push the Tab One's Enter p95 past 150 ms.
 - **P19 (2026-10-20): a Giac bug is fixed at its cause** (patch, canary, link to Parisse; a TypeScript workaround only for a cause that is not local, registered in S17). Rule: `docs/rules-core.md`. Archived.
 - **P20 (2026-10-20; narrowed by G85's GO, 2026-10-22): Giac's tree, not its text.** Names, stores, bound names, settings and a value's kind come from the bridge (`bridge.ts`); only Giac's print is read as text, in one module (G105); new code adds no bracket loop or name regex (the text baseline, G88). Would change if: a question the bridge cannot answer.
-- **P21 (2026-10-20): Giac is pinned to Parisse's numbered Debian archive** (SHA-256 from its `.dsc`); a re-pin passes the golden gate. Archived. Would change if: a fix we need is only in a snapshot.
 - **P24 (2026-11-08): commercial reuse of our Giac fixes** is permitted to B. Parisse (email 13). Archived. Would change if: a contributor other than the owner writes a Giac fix.
 - **R58b (2026-10-19; built by R67): a letter typed with Alpha is always a name,** in CAS too; e and i come only from their keys. Archived.
 - **S14: the angle mode, route R (owner, 2026-10-19; built by R64 and G46).** Giac runs in radians in every mode, our parser carries `pasdeg`; rule: docs/04 2.12. Archived.
@@ -106,10 +102,6 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **Ans in the unit view (R259; owner, 2026-11-12):** no slot before v0.1.0; an Ans with a unit or σ is refused, naming its row's chip. Would change if: daily use asks (≈0.5 d).
 - **Prefix entry (owner, 2026-10-31; night review fh-8):** Home has none; a prefix goes in the unit view's prefix cells (P11, docs/05 §7.2), and docs/04 2.7's prefix chip is dropped.
 - **Built, archived ("2026-11-12, evening"):** G81, R24d, R24b and R24c, G37, G15 and G25, the units menu ([spec/units-menu.yaml](../spec/units-menu.yaml)).
-- **P22 (2026-10-20): libqalculate leaves the build;** its numbers are checked in (`find/factors.yaml`), refreshed by a developer tool (A21, A60). Archived. Would change if: the unit view needs qalc at run time.
-- **Angles in the unit view (owner, 2026-10-19; built by G40):** an angle is a quantity both ways; the rad drop and the 2π·r·n note as built. Archived. Would change if: G2 item 68 shows the G2 refusing both.
-- **P15 (2026-10-14): the unit view computes on Giac** with the Find index's exact SI factors; libqalculate never runs in the app (P22). Archived. Would change if: a unit need has no clean exact form; the unit view feels slow on the Tab One.
-- **P14 (2026-10-14) and the P14 arrangement (2026-10-18, S5): the unit pad.** Rule: [archive/r9-unit-pad.md](archive/r9-unit-pad.md), `spec/unit-pad.yaml`; a hardware keyboard types a unit symbol in a slot (R313). Archived. Would change if: the owner's units take ≥ 3 presses; R24b's reach costs.
 - **S1 (2026-10-13): the unit slots.** The number comes before the units key; digits in a slot are only exponents; a live reading under the slot. Archived.
 - **S4 (2026-10-18): a library file carries definitions only;** settings and key slots go only in the backup. Archived. Would change if: keyboard set-ups are shared (a `// key:` line).
 - **U1–U6 over the unit pad (R838; pass 230):** while the pad is up they are its cells (R24d), so a user key that holds Settings or Mode does not open it there; Shift + Help, the bar's chip and Alt + Shift + O do. Would change if: the owner wants his user keys over the pad.
@@ -175,6 +167,8 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **`full` of a result that is not exact (G302):** the rpn stage compares it by value, an exact one as text. Archived. Would change if: a user sees the two forms differ.
 - **A complex element in median and the quartiles (pass 229, principle 3):** refused, never sorted as 0 (`median([1+i,2+i,3+i])` was 0); built by G786f1 (patch 0058). Would change if: the owner wants an order on complex data.
 - **arg(0) and atan2(0, 0) (G362):** both are 0, as Giac gives them and as C's atan2 and Python's cmath.phase do; Find's lines say so. Would change if: the owner wants the angle of 0 refused.
+- **G806's float pivots (pass 249):** det or rank of a float matrix is ⚠ without a count when patch 0071 warns, a singular typed one too: `rank(approx([[0.1,0.3],[0.2,0.6]]))` is ⚠ 1 (its doubles are exactly singular, 0.2 = 2·0.1, 0.6 = 2·0.3, but equal inexact products look like a coincidence; the golden row's note is wrong there); `rank(approx([[1,1],[1,1]]))` stays =. Would change if: the patch proves a product pair equal.
+- **G404's climb (pass 249):** its top level is CLIMB_TOP = 980 (the check's second run at MAX_EVAL_DIGITS); infinite at every level is ⚠ past the cap when its stated size is within MPFR's range, else an overflow; CAS approx and evalf climb as Home's; a list element past reach leaves Giac's text. Would change if: a value finite only from 981 digits.
 
 **Units**
 - **Built, archived ("2026-11-17, the fix lane"):** G17; G13, G7; R24a, R24af1; R61; R63; R92; The deep check of 2026-10-19 (G41).
