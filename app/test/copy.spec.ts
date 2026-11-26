@@ -283,7 +283,8 @@ test("a key right after Paste waits for the pasted number: ÷ with a slow clipbo
 
 // G784: Copy writes the names the screen shows. The letters i and β are names the parser stores as the stand-ins i_ and
 // beta_ (engine/standIns.ts, R58b); Giac prints those, the screen draws the letters, and Copy writes the letters too.
-/** The line typed on the hardware keyboard (its i is the letter, a name), then Enter. */
+/** The line typed on the hardware keyboard (its i is the letter, a name), then Enter. The word is rainbows: rainbow itself is
+ *  the R881 egg (Enter turns the colour mode on, no row), so the product of names this test needs has one letter more. */
 async function typed(page: Page, s: string, n: number): Promise<void> {
   await page.locator("math-field").first().focus();
   await page.keyboard.type(s);
@@ -291,14 +292,14 @@ async function typed(page: Page, s: string, n: number): Promise<void> {
   await done(page, n);
 }
 
-test("G784: 2i and rainbow (hardware i) copy as 2*i and r*a*i*n*b*o*w; β·2 (Chars) as β*2; As shown and Exact the same names", async ({ page }) => {
+test("G784: 2i and rainbows (hardware i) copy as 2*i and r*a*i*n*b*o*w*s; β·2 (Chars) as β*2; As shown and Exact the same names", async ({ page }) => {
   await typed(page, "2i", 1);
   await tap(page, KEYCOPY);
   await expect.poll(() => clipboard(page)).toBe("2*i");
   await expect(page.getByTestId("notice")).toHaveText("Copied: 2*i");
-  await typed(page, "rainbow", 2);
+  await typed(page, "rainbows", 2);
   await tap(page, KEYCOPY);
-  await expect.poll(() => clipboard(page)).toBe("r*a*i*n*b*o*w");
+  await expect.poll(() => clipboard(page)).toBe("r*a*i*n*b*o*w*s");
   await tap(page, ["shift", "vars"]);
   await page.getByTestId("menu").locator('[data-id="beta"]').tap();
   await tap(page, ["mul", "d2", "enter"]);

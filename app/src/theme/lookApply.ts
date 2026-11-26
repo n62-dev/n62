@@ -48,6 +48,7 @@ function shadow(look: Look, root: HTMLElement): void {
 
 async function put(look: Look): Promise<void> {
   const root = document.documentElement;
+  root.removeAttribute("data-rainbow"); // R881: a theme pick (or the phone's scheme, under System) ends the rainbow egg
   mirror(look, mirroredBg());
   shadow(look, root);
   await applyTheme(themeOf(look, scheme()?.matches === true), root);

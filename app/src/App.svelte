@@ -16,7 +16,7 @@
   import { keyboard, type Key, type Layer } from "./keyboard/keyboard.ts";
   import * as route from "./keyboard/route.ts";
   import type { RouteCtx } from "./keyboard/route.ts";
-  import { creditsAsked } from "./entry/credits.ts";
+  import { eggOf } from "./entry/credits.ts";
   import { ringState } from "./entry/ringState.ts";
   import type { UserKeys } from "./keyboard/userKeys.svelte.ts";
   import type { HistoryItem, Session, View } from "./state/session.svelte.ts";
@@ -153,17 +153,13 @@
       shell.enter(entry.value);
       return;
     }
-    const credits = creditsAsked(entry.value, session.userNames, entry.chips); // R149: N62 then Enter shows the credits sheet (a lazy chunk with the About data, reached through the Find chunk), submits nothing
+    const egg = eggOf(entry.value, session.userNames, entry.chips); // R149, R881: N62 or rainbow then Enter, an easter egg (a lazy chunk reached through the Find chunk), submits nothing
     const typedIn = entry.recalledIn !== null && entry.recalledIn !== session.settings.angle ? entry.recalledIn : undefined; // R265: an unchanged recall of a row typed in the other mode
-    if (credits || session.submit(entry.value, undefined, entry.chips, typedIn)) {
+    if (egg || session.submit(entry.value, undefined, entry.chips, typedIn)) {
       entry.clear();
       edited = false; // the line is empty again: an error outline (ringState) stays until the next key
-      if (credits) openCredits();
+      if (egg) onFind(finder().then((f) => f.loadEgg(egg)), (show) => { picked = null; show(shell, withClip); }); // the credits sheet (R149) or the rainbow (R881)
     }
-  }
-  /** The credits sheet (a lazy chunk with the About data, reached through the Find chunk): N62 then Enter (R149). */
-  function openCredits(): void {
-    onFind(finder().then((f) => f.loadCredits()), (m) => { picked = null; m.showCredits(shell); });
   }
 
   /** R154: a key was pressed or the line edited since the last Enter (an error outline lasts until then). Enter itself
@@ -240,8 +236,7 @@
   /** Store ▶ in Home or CAS (R281): "Store in" (views/storeSheet.svelte.ts, in Vars' chunk); `row`: the result on the line (none: the line, R301). */
   function openStore(row?: HistoryItem): void {
     if (shell.app !== null) return;
-    const store = (latex: string): void => { entry.insert(latex); route.enterLine(ctx); }; // the name after ▶, then Enter: the one store path (R298: before the field, Enter waits for it)
-    onFind(finder(), (m) => { picked = null; m.showStore({ shell, session, store, folded: () => folded, newName: () => { countUse("store.new"); unfold(); } }, m.storedText(session, row, entry.value)); });
+    onFind(finder(), (m) => { picked = null; m.openStore(ctx, row, () => folded, () => countUse("store.new")); }); // (R881: its wiring in Find's chunk, a start-chunk cut)
   }
   const finder = (): Promise<typeof import("./find/finder.ts")> => import("./find/finder.ts"); // (one import() site: each carries its own preload list)
   function onFind<T>(load: Promise<T>, show: (t: T) => void): void {

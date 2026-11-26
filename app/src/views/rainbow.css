@@ -1,0 +1,21 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* R881: the rainbow egg (views/rainbow.ts). The key colours are rainbow.ts's own sheet; here the history's wash and the
+   keypad's turn: one hue-rotate animation on the keypad's box, about 12 s a turn, run by the compositor (nothing is restyled
+   per frame). The owner's exception to docs/05 rule 6; under reduced motion the keys stand still. */
+:root[data-rainbow] .history {
+  background: linear-gradient(160deg, var(--rb-wash));
+}
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-rainbow] .pad {
+    animation: rb-turn 12s linear infinite;
+    will-change: filter;
+  }
+}
+@keyframes rb-turn {
+  from {
+    filter: hue-rotate(0deg);
+  }
+  to {
+    filter: hue-rotate(360deg);
+  }
+}
