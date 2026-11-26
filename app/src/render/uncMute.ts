@@ -57,7 +57,10 @@ export function muter(r: { facts?: { uncDigits?: number; uncSigma?: string }; va
   const cut = uncCut(r.facts, r.value);
   if (cut === undefined) return undefined;
   return (m, f) => {
-    const exp = f.prefix !== undefined ? prefixPower(f.prefix) : (f.exponent ?? 0);
+    const exp = powerOf(f);
     return exp === undefined ? m : mutedTail(m, exp, cut);
   };
 }
+
+/** The power of ten of a formatted mantissa (its exponent, or its PFX prefix's); undefined for an unknown prefix. */
+export const powerOf = (f: FormattedNumber): number | undefined => (f.prefix !== undefined ? prefixPower(f.prefix) : (f.exponent ?? 0));

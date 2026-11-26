@@ -85,7 +85,8 @@ function resultRows(s: UnitShown, v: UnitView, fit: (row: HTMLElement) => void, 
   if (s.sub) {
     const sub = el("div", "sub", "unit-sub", s.subMuted ? undefined : s.sub);
     // R883: the value's digits past σ in R40's muted span, as Home's row draws them
-    if (s.subMuted) sub.append(s.subMuted[0], el("span", "unc", "", s.subMuted[1]), s.subMuted[2]);
+    const m = s.subMuted;
+    if (m) sub.append(s.sub.slice(0, m[0]), el("span", "unc", "", s.sub.slice(...m)), s.sub.slice(m[1]));
     out.push(sub);
   }
   if (s.why) out.push(el("div", "why", "unit-why", s.why));

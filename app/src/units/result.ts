@@ -9,7 +9,7 @@ import { precisionFacts } from "../engine/precisionFacts.ts";
 import { unitText } from "../i18n/enUnits.ts";
 import { groupText } from "../render/groupText.ts";
 import { groupSepFor, type GroupSep } from "../render/home.ts";
-import { prefixPower, sigmaCut, tailAt } from "../render/uncMute.ts";
+import { powerOf, sigmaCut, tailAt } from "../render/uncMute.ts";
 import { commaResult, markText, withSigmaText } from "../state/displayMode.ts";
 import type { Alternative } from "./alternatives.ts";
 import { unitErrorMessage, unitNamesText, unitNoteText, unitWhyText } from "./messages.ts";
@@ -46,9 +46,9 @@ export interface UnitShown {
   dim?: string;
   /** With σ, muted under the value line: the value and σ at the digits setting. */
   sub?: string;
-  /** R883: `sub` cut where the value's digits past σ go muted, R40's rule (render/uncMute.ts): before, muted, after;
-   *  absent when no digit is. */
-  subMuted?: readonly [string, string, string];
+  /** R883: where in `sub` the value's digits past σ go muted, R40's rule (render/uncMute.ts): [from, to]; absent when no
+   *  digit is. */
+  subMuted?: readonly [number, number];
   /** The dimension key; "" for a pure number (no row). */
   dimension: string;
   /** The row's chips, fixed for as long as this result is on screen (not reordered); "More…" follows them. */
@@ -107,15 +107,14 @@ export function shownOf(q: Quantity | UnitError, u: UnitFormat, alts: readonly A
   };
 }
 
-/** R883: the line under the value line (`sub`), and with σ's cut (render/uncMute.ts sigmaCut) its value's mantissa
- *  split where its digits go muted (`subMuted`), as Home's row and a constant's (R40) draw them. `value` is drawn
- *  (groups, decimal comma); `re` its real part as formatted, for the mantissa's power of ten. */
+/** R883: the line under the value line (`sub`), and with σ's cut (render/uncMute.ts sigmaCut) where its value's digits
+ *  go muted (`subMuted`), as Home's row and a constant's (R40) draw them. `value` is drawn (groups, decimal comma); `re`
+ *  its real part as formatted, for the mantissa's power of ten. */
 function subLine(value: string, sigma: string, cut: number | undefined, re: FormattedNumber | undefined, mark: string): Pick<UnitShown, "sub" | "subMuted"> {
   const sub = unitText("units.result.sub", { value, sigma });
-  const exp = re === undefined ? undefined : re.prefix !== undefined ? prefixPower(re.prefix) : (re.exponent ?? 0);
-  const lead = /^-?\d(?:[\d.,’\s]*\d)?/.exec(value)?.[0];
-  const at = cut === undefined || exp === undefined || lead === undefined ? -1 : tailAt(lead, exp, cut, mark);
-  if (at < 0) return { sub };
-  const [pre, post] = unitText("units.result.sub", { value: "\0", sigma }).split("\0") as [string, string];
-  return { sub, subMuted: [pre + value.slice(0, at), value.slice(at, lead!.length), value.slice(lead!.length) + post] };
+  const exp = re && powerOf(re);
+  const lead = /^-?\d(?:[\d.,’\s]*\d)?/.exec(value)?.[0] ?? "";
+  const at = cut === undefined || exp === undefined ? -1 : tailAt(lead, exp, cut, mark);
+  const k = sub.indexOf(value);
+  return at < 0 ? { sub } : { sub, subMuted: [k + at, k + lead.length] };
 }
