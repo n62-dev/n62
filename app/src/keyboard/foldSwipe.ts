@@ -6,8 +6,11 @@
 // every other pointer stays the line's (a finger: entry/lineTouch.ts, R277, a tap places the caret, a sideways drag
 // scrolls, a hold selects; a mouse: MathLive's, a drag selects). A mouse's pointerdown reaches MathLive, so the caret it
 // placed there, and any selection the drag made before it was recognized, are put back from the snapshot taken at the
-// pointerdown: the swipe changes nothing on the line. Listeners in the capture phase on the line's box, so they run
-// before the field's own. No dependency.
+// pointerdown: the swipe changes nothing on the line. R868 (owner, 2026-11-22): folded, a finger's tap on the line (no
+// swipe, lifted within BACK_PX of its start and within SWIPE_MS) also unfolds, two frames after its lift, once the line
+// has put its caret where the finger landed (lineTouch.ts, in a frame asked for at the same lift), and with no click
+// (the keys are up under the finger by then); a mouse's click keeps the fold. Listeners in the capture phase on the
+// line's box, so they run before the field's own. No dependency.
 
 export const FOLD_PX = 24;
 export const SWIPE_MS = 400;
@@ -30,6 +33,11 @@ export function liftOf(dx: number, dy: number): Swipe | undefined {
   return dy > 0 ? "down" : "up";
 }
 
+/** R868: a pointer that lifts within BACK_PX of its start (each way) and within SWIPE_MS of its down is a tap. */
+export function isTap(dx: number, dy: number, ms: number): boolean {
+  return ms <= SWIPE_MS && Math.max(Math.abs(dx), Math.abs(dy)) < BACK_PX;
+}
+
 export interface SwipeEnv {
   /** Swipes are taken now (Home or CAS, no sheet over the keys). Read at each pointerdown. */
   on(): boolean;
@@ -37,6 +45,8 @@ export interface SwipeEnv {
   snapshot(): unknown;
   restore(snap: unknown): void;
   fire(s: Swipe): void;
+  /** R868: a finger's tap on the line now brings the keys back (they are folded); `fire("up")` then does it. */
+  tapUnfolds(): boolean;
 }
 
 /** Listen on `el` (the entry line's box); returns the remover. */
@@ -65,14 +75,21 @@ export function foldSwipe(el: HTMLElement, env: SwipeEnv): () => void {
     env.restore(t.snap);
   };
   /** A swipe's touch ends with no click and no tap (the browser's gesture code saw it as one in tests, and then took
-   *  the next tap within its double-tap time). */
+   *  the next tap within its double-tap time); so does R868's tap. */
   let swiped = false;
   const end = (e: PointerEvent): void => {
     const t = track;
     if (!t || e.pointerId !== t.id) return;
     track = undefined;
     swiped = t.done && e.pointerType === "touch";
-    if (!t.done) return;
+    if (!t.done) {
+      const tap = e.type === "pointerup" && e.pointerType === "touch" && isTap(e.clientX - t.x, e.clientY - t.y, e.timeStamp - t.t);
+      if (tap && env.tapUnfolds()) {
+        swiped = true; // no click: it would land on a key
+        requestAnimationFrame(() => requestAnimationFrame(() => env.fire("up")));
+      }
+      return;
+    }
     if (e.type === "pointerup" && t.armed && liftOf(e.clientX - t.x, e.clientY - t.y) === t.armed) {
       env.restore(t.snap);
       env.fire(t.armed);

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from "vitest";
-import { BACK_PX, FOLD_PX, SWIPE_MS, liftOf, swipeOf } from "./foldSwipe.ts";
+import { BACK_PX, FOLD_PX, SWIPE_MS, isTap, liftOf, swipeOf } from "./foldSwipe.ts";
 
 describe("the entry line's swipe (R53)", () => {
   it("is 24 px down or up, mostly vertical, within 400 ms", () => {
@@ -27,5 +27,12 @@ describe("the entry line's swipe (R53)", () => {
     expect(liftOf(0, 23)).toBeUndefined();
     expect(liftOf(0, 0)).toBeUndefined();
     expect(liftOf(20, 30)).toBeUndefined(); // gone sideways
+  });
+  it("a lift within BACK_PX of the start, each way, and within SWIPE_MS is a tap (R868)", () => {
+    expect(isTap(0, 0, 80)).toBe(true);
+    expect(isTap(-11, 11, SWIPE_MS)).toBe(true);
+    expect(isTap(0, BACK_PX, 80)).toBe(false); // moved too far: a swipe's start or a scroll
+    expect(isTap(BACK_PX, 0, 80)).toBe(false);
+    expect(isTap(0, 0, SWIPE_MS + 1)).toBe(false); // a hold: the line's
   });
 });
