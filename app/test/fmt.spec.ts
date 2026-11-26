@@ -483,6 +483,13 @@ test("R871: Say the format: off, 1/3 Enter Fmt says nothing; on, Fmt says Sci ·
   await expect(lastText(page)).toHaveAttribute("data-text", "1/3");
   await page.waitForTimeout(600);
   await expect(notice(page)).toHaveCount(0);
+  // a Home row with no notation of its own: 1/3 Enter, a b/c, Fmt goes back to the global STD, and says so (never Exact)
+  await tap(page, ["d1", "div", "d3", "enter", "frac"]);
+  await expect(lastText(page)).toHaveAttribute("data-text", "1/3");
+  await tap(page, ["fmt"]);
+  await expect(notice(page)).toHaveText("Std · this result", { timeout: 300 });
+  await expect(lastText(page)).toHaveAttribute("data-text", "0.333333333333");
+  await expect(notice(page)).toBeHidden({ timeout: 2000 });
   // a press that changes nothing (G785: cycle STD only, on 5) says nothing
   await page.evaluate(() => {
     window.n62.session.settings.fmtCycle = ["std"];

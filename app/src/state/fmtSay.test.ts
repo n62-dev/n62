@@ -45,12 +45,18 @@ describe("the key `fmtSay` (R871)", () => {
 });
 
 describe("fmtSaid (R871): the notice of a Fmt press that changed the row", () => {
-  const row = (fmt: HistoryItem["fmt"]): HistoryItem => ({ fmt }) as HistoryItem;
+  const at = (format: "std" | "sci" | "eng" | "pfx" | "fix") => ({ settings: { format } }) as Parameters<typeof fmtSaid>[0];
+  const row = (fmt: HistoryItem["fmt"], view: HistoryItem["view"] = "home"): HistoryItem => ({ fmt, view }) as HistoryItem;
+  const said = (item: HistoryItem) => fmtSaid(at("std"), item);
   it("names the row's notation now, in its short word", () => {
-    expect(fmtSaid(row("sci"))).toBe("Sci · this result");
-    expect([row("std"), row("eng"), row("pfx"), row("fix")].map(fmtSaid)).toEqual(["Std · this result", "Eng · this result", "Pfx · this result", "Fix · this result"]);
+    expect(said(row("sci"))).toBe("Sci · this result");
+    expect([row("std"), row("eng"), row("pfx"), row("fix")].map(said)).toEqual(["Std · this result", "Eng · this result", "Pfx · this result", "Fix · this result"]);
   });
   it("a CAS row back at its exact form says Exact", () => {
-    expect(fmtSaid(row(undefined))).toBe("Exact · this result");
+    expect(said(row(undefined, "cas"))).toBe("Exact · this result");
+  });
+  it("a Home row with no notation of its own (a b/c's form dropped) names the global format, never Exact", () => {
+    expect(said(row(undefined))).toBe("Std · this result");
+    expect(fmtSaid(at("eng"), row(undefined))).toBe("Eng · this result");
   });
 });

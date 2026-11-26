@@ -153,12 +153,16 @@ export function fmtStep(s: Session, item: HistoryItem): { mode: FmtMode | undefi
 export const formDead = (s: Session, item: HistoryItem, key: "cycleFormat" | "cycleForm"): boolean =>
   (key === "cycleFormat" ? fmtStep(s, item) : nextForm(item.form, factsOf(item), item.view === "cas")) === null;
 
-void fmtSay.restore(); // R871: read when this code loads, as the word; a Fmt press waits for this code, so it is read by its say
+void fmtSay.restore(); // R871: read when this code loads, as the word; cycleFormat awaits the read too (a press may load this code itself)
 
-/** R871: the notice a Fmt press that changed `item` shows with Say the format on: its notation now (a CAS row back at its
- *  exact form: Exact). */
-export const fmtSaid = (item: HistoryItem): string =>
-  fmtSayText("fmtSay.notice", { mode: fmtSayText(`fmtSay.${item.fmt && NOTATION_MODES.includes(item.fmt) ? item.fmt : "exact"}` as FmtSayKey) });
+/** R871: the notice a Fmt press that changed `item` shows with Say the format on: its notation now. A row with no notation of
+ *  its own (fmtStep left `fmt` undefined) is drawn as its view draws it: a CAS row in its exact form (Exact), a Home row in the
+ *  global format (Mode › Format). */
+export const fmtSaid = (s: Pick<Session, "settings">, item: HistoryItem): string => {
+  const own = item.fmt && NOTATION_MODES.includes(item.fmt) ? item.fmt : undefined;
+  const word = own ?? (item.view === "cas" ? "exact" : s.settings.format);
+  return fmtSayText("fmtSay.notice", { mode: fmtSayText(`fmtSay.${word}` as FmtSayKey) });
+};
 
 /** The Format key: `item` (the last result of the open view at the press, Session.lastForKey) in the next ticked mode
  *  (Settings) whose drawing differs (fmtStep), that result only. True when the display changed; with Say the format on
@@ -171,7 +175,8 @@ export async function cycleFormat(s: Session, calc: Calc, item: HistoryItem): Pr
   delete item.form; // a form chosen with a b/c: the Format key goes back to the number in its notation
   item.fmt = next.mode;
   s.saveHistory();
-  return fmtSay.on ? fmtSaid(item) : true;
+  await fmtSay.restore(); // (read once: a press right after a reload, before main.ts's idle load, reads the stored switch)
+  return fmtSay.on ? fmtSaid(s, item) : true;
 }
 
 /** The a b/c key on an empty line (R10): `item` (the last result at the press) in its other form (decimal ↔ fraction, a+bi ↔ polar), that result

@@ -441,7 +441,7 @@ desktop:
     d2: { primary: "2", shift: Alt+I, alpha: Z }
     d3: { primary: "3", shift: Alt+P, alpha: "#" }
     sub: { primary: "-", shift: Alt+B, alpha: ":" }
-    fmt: { primary: Alt+O, shift: { why: "Alt + Shift + O is Mode: Settings › Numbers › Fmt key cycle" } }  # R871
+    fmt: { primary: Alt+O, shift: { why: "Alt + Shift + O is Mode (docs/05 3.4); Shift + Fmt's page has no chord" } }  # R871
     d0: { primary: "0", shift: "%", alpha: { why: "dead: Alpha + 0 types nothing (docs/06 section 3 point 7)" } }
     dot: { primary: ".", shift: "=" }
     space: { primary: Space, shift: _ }

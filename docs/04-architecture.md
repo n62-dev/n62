@@ -298,7 +298,7 @@ Positions use our rows and columns (`spec/keyboard.yaml`); the reference's id is
 | Unit slots | the unit pad (`spec/unit-pad.yaml`, docs/archive/r9-unit-pad.md): prefix and unit cells over the maths rows, S5's arrangement, 18 user slots; Enter to the next slot, `→` the end slot. | P11, S1, P14 |
 | Fmt (row 9, col 0) | a tap cycles the format of the picked row, else the newest finished one (R775; an error or running pick: a dead press); a step that would draw what the row shows is skipped; when none changes it, the press is dead; a b/c on an empty line takes the same row, and a b/c with no other form is a dead press likewise (G785); Shift opens the Fmt key cycle's page (R871; Mode has no key since R723: the bar's STD and 12 chips) | ours; decisions.md "Settings in the Mode sheet, and presets" |
 | Shift + `( )` [r6c3]; Shift + 0 [r10c2] | ∥: Find's par() with the cursor inside (task t01); after a value it takes the value in, par(value, □) (R585); % (`\%`, the Shift + 9 palette's cell) | owner, 2026-11-14; docs/06 3b |
-| Unassigned Shift cells (a b/c, 7, Fmt; `,` is ± (R71), 1 the σ sheet (R327); the pad: none, P12 point 8) | they get the functions the task benchmark shows are pressed most, not a list made in advance | decisions.md "The letters stay" |
+| Unassigned Shift cells (a b/c, 7; `,` is ± (R71), 1 the σ sheet (R327), Fmt the Fmt key cycle's page (R871); the pad: none, P12 point 8) | they get the functions the task benchmark shows are pressed most, not a list made in advance | decisions.md "The letters stay" |
 
 
 ### 5.2 Decision: how key presses are counted (EN0)
