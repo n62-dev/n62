@@ -127,7 +127,7 @@ test("Shift + 9: the 8 × 3 grid (and the % of R110) has no key labels; digits d
   expect(await entryValue(page)).toBe("");
   await sheetKey(page, ["down", "right"]);
   await expect(active(page)).toHaveAttribute("data-id", "beta");
-  await expect(page.getByTestId("sheet-hint")).toHaveText("beta");
+  await expect(page.getByTestId("sheet-hint")).toHaveText("Beta");
   await sheetKey(page, ["enter"]);
   await expect(sheet(page)).toBeHidden();
   expect(await entryValue(page)).toBe("\\beta");
