@@ -246,6 +246,8 @@ test("the Find cell carries ▾ and fits at 360 px at the main keypad's size", a
 // pixels drawn); no other cell or key has one; the text and the spoken names stay the letter; face and line fit the key and are
 // centred in it together. In the unit view (5, then Shift + Tmpl), N62 Dark and Light, Plain keys off and on, High contrast.
 const PREFIXES: Record<string, string> = { d7: "G", d8: "M", d4: "k", d5: "c", d1: "m", d2: "µ", d0: "n", dot: "p" };
+/** R908: the prefix legends (T tera on G's Shift line, h hecto and f femto on k's and p's Alpha line) carry the slot too. */
+const PREFIX_LEGENDS = ["d7/shiftlegend::after", "d4/alphalegend::after", "dot/alphalegend::after"];
 const SLOT_LOOKS: [string, string, string][] = [["dark", "normal", "colour"], ["light", "normal", "colour"], ["dark", "normal", "plain"], ["light", "normal", "plain"], ["dark", "high", "colour"], ["light", "high", "plain"]];
 const setLook = (page: Page, brightness: string, contrast: string, keys: string): Promise<void> =>
   page.evaluate(async ([brightness, contrast, keys]) => {
@@ -342,8 +344,8 @@ for (const [w, h] of [[360, 740], [412, 915]] as const)
       const look = `N62 ${brightness}, ${contrast} contrast, ${keys} keys`;
       await setLook(page, brightness, contrast, keys);
       await page.waitForTimeout(150);
-      // only the prefix faces have one: no unit, op, keep or user cell, no legend
-      expect(await slotted(page), look).toEqual(ids.map((id) => `${id}/main::after`).sort());
+      // only the prefix faces and the prefix legends have one (R908): no unit, op, keep or user cell, no unit legend
+      expect(await slotted(page), look).toEqual([...ids.map((id) => `${id}/main::after`), ...PREFIX_LEGENDS].sort());
       const geo = await geometry(page, ids);
       const boxes = await drawn(page, geo);
       geo.forEach((k, i) => {
@@ -384,4 +386,43 @@ test("the unit pad's spec no longer says the prefix and unit cells never look al
   const yaml = readFileSync(new URL("../../spec/unit-pad.yaml", import.meta.url), "utf8");
   expect(yaml.includes("never look alike"), "spec/unit-pad.yaml still says \"never look alike\"").toBe(false);
   expect(yaml.includes("slot line"), "spec/unit-pad.yaml names the slot line").toBe(true);
+});
+
+// R908 (owner-style hunt 2026-11-23, h1 #6): the prefix legends T (tera), h (hecto) and f (femto) carry the slot line as the faces do,
+// scaled to the legend, so the hecto h on k's Alpha line and the hour h on s's Shift line differ at rest; no unit legend has one.
+test("the prefix legends end in a slot line too, scaled to the legend; no unit legend has one (R908)", async ({ page }) => {
+  await open(page);
+  await tap(page, ["d5", "shift", "tmpl"]);
+  await page.waitForFunction(() => window.n62.unitView !== undefined && document.querySelector('[data-pad="prefix"]') !== null);
+  const legs = await page.evaluate(() => {
+    const out: Record<string, { text: string; content: string; h: number; w: number; font: number; fits: boolean }> = {};
+    for (const k of document.querySelectorAll<HTMLElement>(".pad .key[data-pad]"))
+      for (const part of ["shiftlegend", "alphalegend"]) {
+        const el = k.querySelector<HTMLElement>(`.${part}`);
+        if (!el || el.textContent === "") continue;
+        const a = getComputedStyle(el, "::after");
+        out[`${k.dataset["key"]}/${part}`] = {
+          text: el.textContent ?? "", content: a.content, h: parseFloat(a.height) || 0, w: parseFloat(a.width) || 0,
+          font: parseFloat(getComputedStyle(el).fontSize), fits: k.scrollWidth <= k.clientWidth,
+        };
+      }
+    return out;
+  });
+  for (const [where, text] of [["d7/shiftlegend", "T"], ["d4/alphalegend", "h"], ["dot/alphalegend", "f"]] as const) {
+    const l = legs[where];
+    expect(l?.text, where).toBe(text);
+    expect(l?.content, `${where}: a drawn box`).toBe('""');
+    expect(l?.h ?? 0, `${where}: at least 1 px high`).toBeGreaterThanOrEqual(1);
+    expect(l?.w ?? 0, `${where}: at least 0.3 em of the legend wide`).toBeGreaterThanOrEqual(0.3 * (l?.font ?? 0));
+    expect(l?.w ?? 99, `${where}: scaled to the legend, not the face`).toBeLessThan(0.42 * 20);
+    expect(l?.fits, `${where}: the key does not overflow`).toBe(true);
+  }
+  // the hour h (s's Shift legend) and every other unit legend: none
+  expect(legs["d3/shiftlegend"]?.text).toBe("h");
+  const units = await page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>('.pad .key[data-pad="unit"] :is(.shiftlegend, .alphalegend)')]
+      .filter((el) => !["none", "normal"].includes(getComputedStyle(el, "::after").content))
+      .map((el) => `${el.closest<HTMLElement>(".key")?.dataset["key"]}/${el.className}`),
+  );
+  expect(units).toEqual([]);
 });
