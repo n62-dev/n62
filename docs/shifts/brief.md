@@ -67,7 +67,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 888e22 | R914 one name per sign | ron, Opus | `p1/ron-signnames` | – |
 | 888e23 | A270 phones stay in portrait | annabell, Sonnet | `p1/annabell-portrait` | – |
 | 888i | R868 a tap on the line unfolds the keys | ron, Opus | `p1/ron-linetapunfold` | R856 |
-| 888i1 | [R928](packages/R928.md) ⌄ folds the keys in Plot | ron, Opus | `p1/ron-plotfold` | R868, R924 |
+| 888i1 | R928 ⌄ folds the keys in Plot | ron, Opus | `p1/ron-plotfold` | R868, R924 |
 | 888j | [R869](packages/R869.md) Help on Find's row | ron, Opus | `p1/ron-helpfind` | – |
 | 888k | [R870](packages/R870.md) Help in the unit view | ron, Opus | `p1/ron-unithelp` | R869, R838, R862 |
 | 888l | [R871](packages/R871.md) Shift + Fmt opens its settings | ron, Opus | `p1/ron-fmtsettings` | G785 |
