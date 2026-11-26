@@ -135,3 +135,33 @@ test("folded, ☰ › Signed area, a tap on the graph moves the trace, ⌃ and E
   await tap(page, ["enter"]);
   await expect.poll(async () => Number(await page.getByTestId("readout-Signed area").textContent())).toBeCloseTo(b ** 3 / 3, 6); // ∫₀ᵇ x² dx (derived)
 });
+
+/** Fingers on the board through CDP: `from` and `to` are pairs of points (board fractions); one point is a pan, two a pinch. */
+async function fingers(p: Page, from: [number, number][], to: [number, number][]): Promise<void> {
+  const b = (await p.locator(".board").boundingBox())!;
+  const pts = (q: [number, number][]) => q.map(([fx, fy], i) => ({ x: Math.round(b.x + fx * b.width), y: Math.round(b.y + fy * b.height), id: i + 1 }));
+  const cdp = await p.context().newCDPSession(p);
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: pts(from) });
+  for (let i = 1; i <= 8; i++) {
+    const mid = from.map(([x, y], k) => [x + ((to[k]![0] - x) * i) / 8, y + ((to[k]![1] - y) * i) / 8] as [number, number]);
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: pts(mid) });
+  }
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await cdp.detach();
+}
+
+for (const fold of [false, true])
+  test(`control: Plot's pan and pinch work ${fold ? "folded" : "with the keys up"}`, async ({ page }) => {
+    await plot(page);
+    if (fold) await foldByTap(page);
+    await expect.poll(async () => (await win(page)).h).toBe(await page.evaluate(() => document.querySelector(".board")?.clientHeight)); // the resize is in
+    const a = (await win(page)).bb;
+    await fingers(page, [[0.5, 0.5]], [[0.3, 0.5]]); // a pan to the left: the window moves right, its spans stay
+    await expect.poll(async () => (await win(page)).bb[0]).toBeGreaterThan(a[0] + 0.5);
+    const b = (await win(page)).bb;
+    expect(b[2] - b[0]).toBeCloseTo(a[2] - a[0], 6);
+    expect(b[1] - b[3]).toBeCloseTo(a[1] - a[3], 6);
+    await fingers(page, [[0.4, 0.5], [0.6, 0.5]], [[0.2, 0.5], [0.8, 0.5]]); // a pinch out: it zooms in
+    await expect.poll(async () => { const c = (await win(page)).bb; return c[2] - c[0]; }).toBeLessThan(0.8 * (b[2] - b[0]));
+    await isFolded(page, fold);
+  });
