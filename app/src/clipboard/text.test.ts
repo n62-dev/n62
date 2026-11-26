@@ -426,3 +426,78 @@ describe("sessionCsv / sessionLatex (G232)", () => {
     expect(sessionLatex([g, ei, st, err], {}, CTX, "0.1.0")).not.toMatch(/\\(?:const|res|unit|pfx|ans|exponentialE|imaginaryI|blacktriangleright)(?![A-Za-z])/);
   });
 });
+
+// G796: a row nobody checked (a bare ⚠, `facts.warn`) copies no more digits than it shows (docs/04 2.6). Values derived:
+// 2^(1/3) = 1.2599210498948731647672106…, √2 = 1.4142135623730950488…, √3 = 1.7320508075688772935… (Python decimal, 50 digits).
+describe("G796: Copy of a row nobody checked copies what it shows", () => {
+  const CBRT2 = "1.259921049894873164767210607278228350570";
+  const cbrt2 = re(CBRT2);
+  it("a warn row with no count copies the 12 shown digits, not 40", () => {
+    expect(copyFull(done({ full: CBRT2, fullExact: false, value: cbrt2, facts: { exact: false, reliableDigits: null, warn: "unaudited" } }))).toBe("1.25992104989");
+  });
+  it("a warn row whose agreement count is 13 (fsolve's) still copies the 12 shown", () => {
+    expect(copyFull(done({ full: "1.259921049895", fullExact: false, value: cbrt2, facts: { exact: false, reliableDigits: 13, warn: "unaudited" } }))).toBe("1.25992104989");
+    expect(copyFull(done({ value: cbrt2, facts: { exact: false, reliableDigits: 13, warn: "unchecked" } }))).toBe("1.25992104989");
+  });
+  it("the shown digits follow the setting (TextOptions.digits) and the input's own (evalf(e,20))", () => {
+    const w = done({ full: CBRT2, value: cbrt2, facts: { exact: false, reliableDigits: 30, warn: "unaudited" } });
+    expect(copyFull(w, { display: { format: "std", digits: 8 } })).toBe("1.259921");
+    expect(copyFull({ ...w, facts: { ...w.facts!, digits: 20 } })).toBe("1.2599210498948731648");
+  });
+  it("a warn row's lower count still bounds it (5 confirmed: 5)", () => {
+    expect(copyFull(done({ value: cbrt2, facts: { exact: false, reliableDigits: 5, warn: "unaudited" } }))).toBe("1.2599");
+  });
+  it("a warned list copies each element to the shown digits", () => {
+    const items = [
+      { value: re("1.414213562373095048801688724"), exact: false, reliableDigits: 13 },
+      { value: re("1.732050807568877293527446341"), exact: false, reliableDigits: 13 },
+    ];
+    const list = done({ text: "[1.41421356237,1.73205080757]", full: "[1.414213562373,1.732050807569]", facts: { exact: false, reliableDigits: null, warn: "unaudited", items } });
+    expect(copyFull(list)).toBe("[1.41421356237,1.73205080757]");
+    expect(copyFull({ ...list, facts: { ...list.facts!, warn: undefined } })).toBe("[1.414213562373,1.732050807569]");
+  });
+  it("controls: an exact row copies 40 digits, a counted row (⚠ 11 of 12) its 11, Copy exact unchanged", () => {
+    const third = done({ full: "1/3", fullExact: true, value: ratio(1n, 3n), rational: { n: "1", d: "3" }, facts: { exact: true, reliableDigits: null } });
+    expect(copyFull(third)).toBe("0." + "3".repeat(40));
+    expect(copyFull(done({ full: CBRT2, value: cbrt2, facts: { exact: false, reliableDigits: 11 } }))).toBe("1.2599210499");
+    expect(copyFull(done({ full: CBRT2, value: cbrt2, facts: { exact: false, reliableDigits: null } }))).toBe(CBRT2.replace(/0+$/, ""));
+    expect(copyExact(third)).toBe("1/3");
+  });
+});
+
+// G796f1: a warned row copies the digits it draws: the base format of its mode (the Format key's FIX, SCI, …), the digits
+// setting or the input's own, FIX's decimals, as markFor counts them; per element in a list. Values derived (Python
+// decimal, 50 digits): 2^(1/3) = 1.2599210498948731647672106…, √2 = 1.4142135623730950488…, 10√3 = 17.320508075688772935….
+describe("G796f1: a warned row copies the digits its mode draws", () => {
+  const CBRT2 = "1.259921049894873164767210607278228350570";
+  const cbrt2 = re(CBRT2);
+  const d = (format: "std" | "sci", digits: number, fixDecimals = 4) => ({ display: { format, digits, fixDecimals } });
+  const warned = (o: Partial<CopySource>): CopySource => done({ full: CBRT2, fullExact: false, value: cbrt2, facts: { exact: false, reliableDigits: 13, warn: "unaudited" }, ...o });
+  it("FIX 4 (the Format key): fsolve's root copies 1.2599, as drawn", () => {
+    expect(copyFull(warned({ fmt: "fix" }), d("std", 12))).toBe("1.2599");
+    expect(copyFull(warned({ fmt: "fix" }), d("std", 12, 6))).toBe("1.259921");
+  });
+  it("FIX 4: a warned 1234.56789 copies 1234.5679", () => {
+    const v = re("1234.56789");
+    expect(copyFull(done({ full: "1234.56789", value: v, facts: { exact: false, reliableDigits: null, warn: "unchecked" }, fmt: "fix" }), d("std", 12))).toBe("1234.5679");
+  });
+  it("FIX 2: a warned list cuts each element to its own drawn digits", () => {
+    const items = [
+      { value: re("1.414213562373095048801688724"), exact: false, reliableDigits: 13 },
+      { value: re("17.32050807568877293527446341"), exact: false, reliableDigits: 13 },
+    ];
+    const list = done({ text: "[1.41,17.32]", full: "[1.414213562373,17.32050807569]", facts: { exact: false, reliableDigits: null, warn: "unaudited", items }, fmt: "fix" });
+    expect(copyFull(list, d("std", 12, 2))).toBe("[1.41,17.32]");
+    expect(copyFull(list, { ...d("std", 12, 2), decimalComma: true })).toBe("[1,41;17,32]");
+  });
+  it("SCI 3: the setting's format and digits give 3 digits, a row cycled to SCI too", () => {
+    expect(copyFull(warned({}), d("sci", 3))).toBe("1.26");
+    expect(copyFull(warned({ fmt: "sci" }), d("std", 3))).toBe("1.26");
+  });
+  it("controls: STD 12 copies 1.25992104989; an exact row 40 digits and a counted row its count, under FIX 4 too", () => {
+    expect(copyFull(warned({}), d("std", 12))).toBe("1.25992104989");
+    const third = done({ full: "1/3", fullExact: true, value: ratio(1n, 3n), rational: { n: "1", d: "3" }, facts: { exact: true, reliableDigits: null }, fmt: "fix" });
+    expect(copyFull(third, d("std", 12))).toBe("0." + "3".repeat(40));
+    expect(copyFull(done({ full: CBRT2, value: cbrt2, facts: { exact: false, reliableDigits: 11 }, fmt: "fix" }), d("std", 12))).toBe("1.2599210499");
+  });
+});

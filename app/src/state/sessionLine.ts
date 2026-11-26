@@ -23,7 +23,8 @@
 //   exact    the exact text (Giac's), when the row has one. Like `giac` it is Giac's text and always read in radians,
 //            whatever `angle` says: a DEG row `\sin(x)` has `exact` sin(pi*x/180) and `value` sin(x) (G46f1)
 //   value    the value as Copy writes it (every confirmed digit up to 40, docs/04 2.6), always with `.`; the number alone
-//            (a unit row's σ and unit are in their fields)
+//            (a unit row's σ and unit are in their fields); a warned row's too, not cut to its shown digits as Copy cuts it
+//            (G796: `warn` and `reliableDigits` say so, and Copy as Python matches it against the chips' values)
 //   mark     `=`, `≈` or `⚠`: the mark of the row at its digits, as Copy reads it
 //   warn     `unaudited` or `unchecked`: why a ⚠ although the digits agree
 //   reliableDigits  the digits the agreement check confirmed; null: none in doubt (absent: the row has no facts)
@@ -97,7 +98,7 @@ export function sessionLine(item: HistoryItem, o: LineOptions): string | undefin
     ok: done,
     error: done ? undefined : item.text,
     exact: done && item.fullExact ? item.full : undefined,
-    value: done ? copyFull(src) : undefined,
+    value: done ? copyFull(src, { kept: true }) : undefined,
     mark: done ? markOfRow(item) : undefined,
     warn: done ? item.facts?.warn : undefined,
     reliableDigits: done ? item.facts?.reliableDigits : undefined,

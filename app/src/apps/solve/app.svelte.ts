@@ -197,7 +197,16 @@ export class SolveApp implements AppInstance {
     return this.copies[name] ?? this.value(name);
   }
   async copyValue(name: string, shown = false): Promise<void> {
-    this.host.copy(shown ? this.fmtValue(name) : this.mark(await this.fullOf(name)));
+    this.host.copy(shown ? this.fmtValue(name) : this.mark(await this.copyText(name)));
+  }
+  /** G796: a ⚠ answer keeps every confirmed digit (known, toHome) but Copy writes no more than the settings' digits show. */
+  private async copyText(name: string): Promise<string> {
+    const full = await this.fullOf(name);
+    const k = this.known(name);
+    if (this.warned[name] !== true || !k.facts) return full;
+    const { copyFull } = await import("../../clipboard/impl.ts");
+    const s = this.host.settings; // G796f1: the format and digits fmtValue draws it with
+    return copyFull(numberSource(full, { full: k.value, facts: k.facts }), { display: { format: s.format, digits: s.digits } }) ?? full;
   }
   private settling: Promise<void> = Promise.resolve();
   /** Waits for keepFull; a failed copy load leaves the stored value as the known. */
@@ -220,7 +229,7 @@ export class SolveApp implements AppInstance {
   /** Keep the full value of an answer next to the stored one (lazy: the copy code is not in the start chunk). */
   private async keepFull(name: string, display: string, r: Parameters<typeof isWarned>[0] & { full?: string }): Promise<void> {
     const { copyFull } = await import("../../clipboard/impl.ts");
-    const text = copyFull(numberSource(display, r));
+    const text = copyFull(numberSource(display, r), { kept: true }); // every confirmed digit: Copy cuts a ⚠ one (copyText)
     if (text !== undefined && this.values[name] === display.replace("E", "e")) {
       this.copies = { ...this.copies, [name]: text };
       // An exact rational root (reliableDigits null) stays an exact known.
