@@ -1792,7 +1792,11 @@ case "\$*" in
   *"run -s typecheck"*) [ -z "\$AB_TC_FAIL" ] || { echo "error TS2322: the stand-in type error"; exit 1; };;
   *"run -s golden"*) echo "golden \$(git rev-parse HEAD)" >> "$ab/seen"; ! w "$ab/audit-on" || echo "golden beside the audit" >> "$ab/seen";;
   *"run -s test:e2e"*) : > "$ab/e2e-running"; echo "e2e \$(git rev-parse HEAD)" >> "$ab/seen"
-     ! w "$ab/audit-on" || echo "e2e beside the audit" >> "$ab/seen"; w "$ab/audit-saw-e2e"; rm -f "$ab/e2e-running"
+     ! w "$ab/audit-on" || echo "e2e beside the audit" >> "$ab/seen"; w "$ab/audit-saw-e2e"
+     if [ -n "\$AB_E2E_HANG" ] && { [ "\$AB_E2E_HANG" = always ] || [ ! -e "$ab/hung-once" ]; }; then  # A276: a dev server child on PW_PORT, then a long wait (once, or every round)
+       : > "$ab/hung-once"; node -e "require('net').createServer().listen(+process.env.PW_PORT)" & echo \$! > "$ab/vite.pid"; echo "\$PW_PORT" >> "$ab/pwport"; sleep 120
+     fi
+     [ -z "\$AB_E2E_SLOW" ] || sleep 4; rm -f "$ab/e2e-running"
      [ -z "\$AB_E2E_FAIL" ] || [ -e ../fix.txt ] || { echo "  ✘ c1 the stand-in e2e failure"; exit 1; };;
 esac
 exit 0
@@ -1803,16 +1807,17 @@ c() { git add -A; git -c user.name=t -c user.email=t@t commit -q "\$@"; }
 . "\$JOUT"
 case "\$*" in
   *"--agent sofia"*) echo "audit \$(git rev-parse HEAD)" >> "$ab/seen"; : > "$ab/audit-on"
-     i=0; while [ ! -e "$ab/e2e-running" ] && [ \$i -lt 80 ]; do sleep 0.1; i=\$((i + 1)); done
+     i=0; while [ ! -e "$ab/e2e-running" ] && [ \$i -lt 300 ]; do sleep 0.1; i=\$((i + 1)); done
      [ ! -e "$ab/e2e-running" ] || { echo "audit beside e2e" >> "$ab/seen"; : > "$ab/audit-saw-e2e"; }
-     if [ -n "\$AB_FIX" ] && [ ! -e "$ab/fixed-once" ]; then : > "$ab/fixed-once"; jout "\$*" "\$(printf 'FIX\napp/src/engine/x.ts:1 the stand-in audit finding: fix it')"; else jout "\$*" APPROVED; fi;;
-  *"fix round"*) date +%s%N > fix.txt; c -m fix; jout "\$*" fixed;;
+     [ -z "\$AB_AUDIT_LATE" ] || { while [ -e "$ab/e2e-running" ]; do sleep 0.1; done; sleep 2; }  # A276: the verdict comes after every check ended
+     if [ -n "\$AB_FIX" ] && { [ "\$AB_FIX" = always ] || [ ! -e "$ab/fixed-once" ]; }; then : > "$ab/fixed-once"; jout "\$*" "\$(printf 'FIX\napp/src/engine/x.ts:1 the stand-in audit finding: fix it')"; else jout "\$*" APPROVED; fi;;
+  *"fix round"*) echo fix-start >> "$ab/locks"; date +%s%N > fix.txt; c -m fix; jout "\$*" fixed;;
   *) if [ -n "\$AB_PLAIN" ]; then f=plain.txt; else mkdir -p app/src/engine; f=app/src/engine/x.ts; fi; date +%s%N > "\$f"; c -m "report: w" -m "Done: w.
 Tests: none."; jout "\$*" done;;
 esac
 STUB
 chmod +x "$ab/bin/"* "$ab/tools/devlock.sh"; git -C "$ab" add -A; gc "$ab" init; git -C "$ab" branch phase-1
-abrun() { rm -f "$ab/seen" "$ab/locks" "$ab"/audit-* "$ab/e2e-running" "$ab/fixed-once"
+abrun() { rm -f "$ab/seen" "$ab/locks" "$ab"/audit-* "$ab/e2e-running" "$ab/fixed-once" "$ab/vite.pid" "$ab/pwport" "$ab/hung-once"
   (cd "$ab" && unset N62_COORD PW_PORT N62_LOCK_PID && PATH="$ab/bin:$PATH" GIAC_OUT="$ab/engine" N62_BEHAVIOUR_TOOL="$ab/behaviour.mjs" "$@"); }
 out="$(abrun "$script" annabell "ab task" --id B1 --branch p1/b1 --checks docs,typecheck,golden,e2e 2>&1)"
 grep -q '^RESULT #[0-9]* B1: MERGED' <<<"$out" || fail "A84: a passing round with APPROVED does not merge: $out"
@@ -1864,6 +1869,51 @@ grep -q 'B2: checks failed (round 0)' "$ab/.coord/log.md" && grep -q 'B2: audit 
 out="$(AB_TC_FAIL=1 abrun "$script" annabell "ab task" --id B3 --branch p1/b3 --checks docs,typecheck,e2e 2>&1)"
 grep -q '^RESULT #[0-9]* B3: NOT MERGED (the checks failed twice' <<<"$out" || fail "A84 (d): a failing typecheck does not end as NOT MERGED after two fix rounds: $out"
 grep -q '^audit' "$ab/seen" 2>/dev/null && fail "A84 (d): a failed cheap check started an audit: $(cat "$ab/seen")"
+
+# A276: an audit FIX stops the round's long checks. The stand-in e2e starts a dev-server child on PW_PORT and waits 120 s; the stand-in audit
+# answers FIX within seconds (the verdict lands while e2e runs). The check must end in a few seconds with the stop line, integ and host-cpu
+# released before the fix round, no process of its group and its port free; the fix round reads the findings.
+tport_free() { ! (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null; }
+t0=$SECONDS
+out="$(AB_E2E_HANG=1 AB_FIX=1 abrun "$script" annabell "ab task" --id S1 --branch p1/s1 --checks docs,typecheck,golden,e2e 2>&1)"; took=$((SECONDS - t0))
+sl="$(grep -E 'pipeline #[0-9]+ S1: checks stopped after audit FIX' "$ab/.coord/log.md" || true)"
+grep -qE 'pipeline #[0-9]+ S1: checks stopped after audit FIX \(round 0; e2e ran [0-9]+ s\)$' <<<"$sl" && [[ "$(wc -l <<<"$sl")" -eq 1 ]] || fail "A276: no 'checks stopped after audit FIX (round 0; e2e ran <s> s)' line, once: $sl"
+echo "A276 stop line: $sl" >&2
+es="$(sed -nE 's/.*e2e ran ([0-9]+) s\)$/\1/p' <<<"$sl")"
+[[ -n "$es" && "$es" -le 12 ]] || fail "A276: the e2e was not stopped within a few seconds of the FIX (ran ${es:-?} s)"
+[[ $took -lt 100 ]] || fail "A276: the round took $took s (the stand-in e2e waits 120 s)"
+grep -q '^RESULT #[0-9]* S1: MERGED' <<<"$out" || fail "A276: the run does not merge after the fix round: $out"
+s1d="$(ls -d "$ab"/.tasks/*-s1 | head -n1)"
+grep -q 'the stand-in audit finding' "$s1d/fix-1.in" 2>/dev/null || fail "A276: the fix round's input lacks the audit's findings"
+[[ ! -e "$s1d/fix-2.in" ]] || fail "A276: a second fix round ran"
+grep -q 'S1: checks passed (round 0)' "$ab/.coord/log.md" && fail "A276: a stopped round is logged 'checks passed'"
+grep -q 'S1: round [0-9] free' "$ab/.coord/log.md" && fail "A276: a stopped round is logged free"
+pre="$(sed '/^fix-start$/q' "$ab/locks")"
+for r in host-cpu integ; do
+  [[ "$(grep -c "^acquire $r " <<<"$pre")" -ge 1 && "$(grep -c "^acquire $r " <<<"$pre")" -eq "$(grep -c "^release $r " <<<"$pre")" ]] || fail "A276: $r is not released before the fix round: $(tr '\n' ';' <<<"$pre")"
+done
+vp="$(cat "$ab/vite.pid" 2>/dev/null)"
+if [[ -n "$vp" ]]; then
+  st="$(ps -o stat= -p "$vp" 2>/dev/null)"; [[ -z "$st" || "$st" == Z* ]] || { fail "A276: the stopped check left its dev-server child $vp running"; kill -9 "$vp" 2>/dev/null; }
+else fail "A276: the stand-in e2e did not start its child"; fi
+pp="$(head -n1 "$ab/pwport" 2>/dev/null)"
+[[ -n "$pp" ]] && tport_free "$pp" || fail "A276: the stopped check's PW_PORT ${pp:-?} is still held (or never recorded)"
+# a FIX every round, a long e2e every round: three stopped rounds, each counted; two fix rounds, then NOT MERGED ("never free")
+out="$(AB_E2E_HANG=always AB_FIX=always abrun "$script" annabell "ab task" --id S2 --branch p1/s2 --checks docs,typecheck,e2e 2>&1)"
+grep -q '^RESULT #[0-9]* S2: NOT MERGED (the audit asked for fixes twice' <<<"$out" || fail "A276: a stopped round does not count as the audit's FIX round: $out"
+[[ "$(grep -cE 'S2: checks stopped after audit FIX' "$ab/.coord/log.md")" -eq 3 ]] || fail "A276: three stopped rounds expected: $(grep S2 "$ab/.coord/log.md" | tr '\n' ';' | cut -c1-600)"
+grep -q 'S2: round [0-9] free' "$ab/.coord/log.md" && fail "A276: a stopped round is free"
+for pt in $(sort -u "$ab/pwport"); do tport_free "$pt" || fail "A276: port $pt is held after three stopped rounds"; done
+# the audit APPROVED while the long check runs: the check runs to the end
+out="$(AB_E2E_SLOW=1 abrun "$script" annabell "ab task" --id S3 --branch p1/s3 --checks docs,typecheck,golden,e2e 2>&1)"
+grep -q '^RESULT #[0-9]* S3: MERGED' <<<"$out" || fail "A276: an APPROVED audit beside a slow e2e does not merge: $out"
+grep -q 'S3: checks stopped' "$ab/.coord/log.md" && fail "A276: an APPROVED audit stopped the checks"
+grep -q 'check e2e: ok' "$(ls -d "$ab"/.tasks/*-s3 | head -n1)/run.log" && grep -q 'S3: checks passed (round 0)' "$ab/.coord/log.md" || fail "A276: the long checks did not run to the end under an APPROVED audit"
+# the audit's FIX comes after every check finished: nothing changes (no stop line, 'checks passed', the FIX as before)
+out="$(AB_AUDIT_LATE=1 AB_FIX=1 abrun "$script" annabell "ab task" --id S4 --branch p1/s4 --checks docs,typecheck,golden,e2e 2>&1)"
+grep -q '^RESULT #[0-9]* S4: MERGED' <<<"$out" || fail "A276: a late FIX does not end in a merge after its fix round: $out"
+grep -q 'S4: checks stopped' "$ab/.coord/log.md" && fail "A276: a FIX after every check finished stopped something"
+grep -q 'S4: checks passed (round 0)' "$ab/.coord/log.md" && grep -q 'S4: audit FIX (round 0)' "$ab/.coord/log.md" || fail "A276: a late FIX is not logged as before: $(grep S4 "$ab/.coord/log.md" | tr '\n' ';' | cut -c1-500)"
 
 # A129: an e2e failure in a spec the branch did not change runs once more before a fix round (FLAKE line when it passes); a spec the
 # branch changed, a shared test helper, more than 5 failures, no parsed test and a count mismatch get no rerun. A sandbox with stand-in
