@@ -30,6 +30,7 @@ import { floatsAtView, shownOf } from "./shownText.ts";
 import { resolveAngle } from "./angleMigration.ts";
 import { isDimensionError, mayCombineLists, mayPowerMatrix, nonSquarePower, shapeRefusal, type Bodies, type KnownBody } from "./nonsquare.ts";
 import { unaskedPoly } from "./polyvec.ts";
+import { approxClimbed } from "./approxClimb.ts";
 import { approxRange, lostCas, mayApproxRange, mayBeNumbers, throughInfinity } from "./novalue.ts";
 import { listAsArguments, mayListAsArguments } from "./listargs.ts";
 import { callsIn, errorRefusal, floatBounds, giacPair, hasDefiniteIntegral, hasNestedIntegral, integratedNumerically, refusalOf } from "./converge.ts";
@@ -1127,7 +1128,7 @@ export class EngineHost implements FactsHost {
     // G57: a decision the precisions do not agree on, or a tie Giac cannot prove, is refused as in Home (nothing is stored).
     let refusedCut = false;
     if (!once && !inexactTest && !hasFloat(text) && restsOnDecision(decisionExpr, "typed", text, notBuiltin(this.giac), complexArg)) {
-      const d = decideTwice(this.watched, decisionExpr, text, digitsSet, digitsSet); // G806: with Giac's messages (roundedPivot)
+      const d = decideTwice(this.watched, decisionExpr, text, digitsSet, digitsSet, mayBeNumbers(text)); // G806: Giac's messages (roundedPivot); G404: it climbs as Home's
       if ("undecided" in d) undecided = true;
       if ("undecided" in d && d.refused) refusedCut = true;
       if (!("undecided" in d) && d.from !== undefined) {
@@ -1163,11 +1164,16 @@ export class EngineHost implements FactsHost {
     // G106 (F78): Giac's polynomial of a list plus a number (`[1,4]+1` = poly1[1,5]), which the input did not ask for.
     if (unaskedPoly(this.giac, "pcasans", asg0 ? asg0.rhs : exactInput, text, userFn)) return fail(enEngine["error.listPlusNumber"], "listPlusNumber");
     // G148: approx or evalf of a finite value past MPFR's range (±infinity, or a float 0) is refused as in Home.
-    const range = guarded || !single ? approxRange(this.giac, asg0 ? asg0.rhs : exactInput, text, valuePrecision(digitsSet), () => false, userFn) : null;
+    const range0 = guarded || !single ? approxRange(this.giac, asg0 ? asg0.rhs : exactInput, text, valuePrecision(digitsSet), () => false, userFn) : null;
+    // G404: one finite higher up the climb is that number, climbed as in Home (approxClimb.ts); past its reach Giac's text, ⚠
+    const climbed = range0 !== null && typeof range0 === "object" ? approxClimbed(this.giac, "pcasans", range0.bare, askedDigits(input) ?? digitsSet, digitsSet, performance.now() - t0) : null;
+    const pastCap = climbed !== null && typeof climbed === "object" && "pastReach" in climbed;
+    if (pastCap) text = climbed.pastReach;
+    const range = range0 !== null && typeof range0 === "object" ? (climbed === "undecided" ? climbed : climbed ? null : "noValue") : range0;
     if (range) return fail(enEngine[`error.${range}`], range);
     // G168 (F93): Giac's undef, or the call back with no free name (no number comes of it), is refused as in Home; an
     // assignment that ran once puts its name back, as a non-square power's (G171), so no name keeps Giac's word.
-    const lostAsked = !!guarded || !single || (onceRun && !!asg0 && !form.noValue);
+    const lostAsked = !pastCap && (!!guarded || !single || (onceRun && !!asg0 && !form.noValue));
     const lost = lostAsked ? lostCas(this.giac, "pcasans", asg0 ? asg0.rhs : exactInput, text, () => false, userFn, digitsSet, !!guarded || !single) : null;
     if (lost && onceRun && asg0) this.giac.eval(logged ? putBack([], [logged]) : `purge(${asg0.name})`);
     if (lost) return fail(enEngine[`error.${lost}`], lost);
@@ -1194,6 +1200,11 @@ export class EngineHost implements FactsHost {
       const fn = post.reads.fn ? fnFacts(facts ? [facts] : [], read) : null;
       return this.defsAfter(input, [exactInput], preview, storeFacts(facts, [], read), fn, "cas", Math.trunc(s.digits), s.angle, post);
     };
+    if (climbed && typeof climbed === "object" && "ok" in climbed) {
+      const post = after(); // the moved run of `inherited` would meet the input's infinity again: none
+      const numeric = inherited(this, climbed, post.reads, null, climbed.digits ?? digitsSet, digitsSet);
+      return { result: { ok: true, text: numeric.display, latex: numberLatex(numeric.display), timedOut: false, engineMs: performance.now() - t0, numeric, facts: numeric.facts }, defs: defsOf(post, numeric.display, resultFacts(numeric)) };
+    }
     // A number with a float in it: checked like Home (the value as `numeric`, its text and LaTeX from our formatter).
     // `evalf(e,n)` alone is shown with the n digits it asks for, checked at that precision (decisions M4-6).
     // G103: its shape from bridge-3's kind and elements (one call, only for a text with a float)
@@ -1230,7 +1241,7 @@ export class EngineHost implements FactsHost {
     // An == or ≠ test on a side with a float in it (input/emit.ts equalityTest): its true or false is approximate.
     // A float in a non-number (x-0.54764225985): nobody checked its digits, so ⚠ without a count (G27, docs/04 2.4),
     // as the definitions log records it.
-    const unchecked = hasFloat(text) || undecided || unverified;
+    const unchecked = hasFloat(text) || undecided || unverified || pastCap;
     // G51: a result without a float that read a stored name, or called a function, with facts takes their warn, why.inherited
     // and (R36f1) why.rounded, as `inherited` does for a number; one built from exact names stays unmarked.
     const post = after();
@@ -1242,7 +1253,7 @@ export class EngineHost implements FactsHost {
     const warn = own === "unaudited" || read?.facts.warn === "unaudited" ? "unaudited" : (own ?? read?.facts.warn);
     const symWhy = symbolicWhy(own, testSides(exactInput));
     // G38: "decided at limited precision"; the value was computed, not compared, so `once` is not said.
-    const why0 = pair ? { differ: true } : undecided ? { ...(symWhy && !symWhy.once ? symWhy : {}), decided: true } : symWhy;
+    const why0 = pastCap ? { pastCap: true as const } : pair ? { differ: true } : undecided ? { ...(symWhy && !symWhy.once ? symWhy : {}), decided: true } : symWhy;
     const why1 = refused === "unchecked" || square === "unchecked" ? { ...(why0 ?? {}), ...(refused === "unchecked" ? { existsUnchecked: true } : {}), ...(square === "unchecked" ? { squareUnchecked: true } : {}) } : why0;
     const why = read && (read.causes.length || read.rounded.length) ? { ...(why1 ?? {}), ...(read.causes.length ? { inherited: read.causes } : {}), ...(read.rounded.length ? { rounded: read.rounded } : {}) } : why1;
     // G46, G109, G173 (shownText.ts shownOf): Ans, chips (`full`) and pcasans keep the radian text, which means the same

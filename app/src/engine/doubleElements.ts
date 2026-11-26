@@ -35,8 +35,10 @@ export interface DoubleElementsRun {
 /**
  * G358 (be-4): the facts of the value in `slot` (exact text `text`, value `v`) when exactFacts found none because it is
  * MPFR's infinity at P: the agreement check from the first level of its climb where it is finite (novalue.ts
- * finiteLevel; 1/(1-tanh(50)) from P + 20). "overflow" when it is infinite at every level up to MAX_EVAL_DIGITS (G123),
- * "timeout" when Home's clock stops the climb, null when it is finite at P or that level gives no facts.
+ * finiteLevel; 1/(1-tanh(50)) from P + 20). "overflow" when it is infinite at every level up to MAX_EVAL_DIGITS (G123)
+ * and its size is past MPFR's range, "pastReach" when it is infinite at every level but not past the range by its size
+ * (G404: 1/(1-tanh(5000)), never an overflow), "timeout" when Home's clock stops the climb, null when it is finite at P
+ * or that level gives no facts.
  */
 export function climbedFacts(
   giac: Giac,
@@ -47,7 +49,7 @@ export function climbedFacts(
   maxExactDigits: number,
   late: () => boolean,
   underflowAt?: (k: number) => boolean,
-): ElementFacts[] | "overflow" | "timeout" | null {
+): ElementFacts[] | "overflow" | "pastReach" | "timeout" | null {
   const at = finiteLevel(giac, slot, text, valuePrecision(digits), late);
   return at === null || typeof at === "string" ? at : exactFacts(giac, slot, SCALAR, digits, maxExactDigits, text, v, underflowAt, at);
 }
@@ -104,6 +106,8 @@ function oneElement(giac: Giac, run: DoubleElementsRun, k: number, P: number, co
   // G123 (F123), G358: MPFR's infinity at P is an overflow only when it is infinite at every level of the climb
   const f0 = exactFacts(giac, EL, SCALAR, digits, maxExactDigits, ev.text, ev, underflowAt);
   const f = f0 ?? (once || late() ? null : climbedFacts(giac, EL, ev.text, ev, digits, maxExactDigits, late, underflowAt));
+  // G404: an element past the climb's reach has no number here, and is no overflow: the list stays Giac's text
+  if (f === "pastReach") return null;
   if (typeof f === "string") return f;
   if (f) {
     // G84: an element that reads as 0 while its exact answer is not 0 (after G126's question, when exactFacts asked it)

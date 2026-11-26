@@ -122,7 +122,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | B6h | G806 det and rank of a float matrix: no `=` on a pivot the rounding decided (pass 244) | gorge, Opus | `p1/gorge-floatpivot` | – |
 | B6i | [G800](packages/G800.md) a unit sweep | gorge, Opus | `p1/gorge-unitsweep` | R885 |
 | B7 | G405 solve keeps close real roots | gorge, Opus | `p1/gorge-closeroots` | – |
-| B8 | [G404](packages/G404.md) G358's climb on every path | gorge, Opus | `p1/gorge-climball` | – |
+| B8 | G404 G358's climb on every path | gorge, Opus | `p1/gorge-climball` | – |
 | B9 | [G403](packages/G403.md) a tiny constant raises the check's start | gorge, Opus | `p1/gorge-tinyconst` | – |
 | B9a | [G791](packages/G791.md) hamdist: signed reads, opposite signs refused | gorge, Opus | `p1/gorge-hamdistsigned` | – |
 | B10 | [G385](packages/G385.md) a bracketed ΔT in arithmetic | gorge, Opus | `p1/gorge-tempdiffarith` | – |

@@ -10,7 +10,7 @@ import { defaultCasSettings } from "./types.ts";
 import { giacAvailable, loadNodeGiac } from "./nodeGiac.ts";
 import { rewriteAngles } from "./angles.ts";
 import type { Giac } from "./numeric.ts";
-import { approxRange, finiteLevel, lostNumber, overflowAt, powerAtTop, powerPastRange, throughInfinity, underflow, zeroElements } from "./novalue.ts";
+import { approxRange, climbLevels, CLIMB_TOP, finiteLevel, lostNumber, overflowAt, powerAtTop, powerPastRange, throughInfinity, underflow, zeroElements } from "./novalue.ts";
 
 describe.skipIf(!giacAvailable())("G78 on the real engine", () => {
   let host: EngineHost;
@@ -161,6 +161,17 @@ describe.skipIf(!giacAvailable())("G78 on the real engine", () => {
       // Not infinite at P: nothing to climb (a value, and a typed infinity).
       expect(level("tanh(100)-1")).toBe(null);
       expect(finiteLevel(giac, "infinity", "+infinity", 40, () => false)).toBe(null);
+      // G404: the climb's last level is CLIMB_TOP (980 digits), past P + 640: 1-tanh(800) = 2/(e^1600+1), 10^-694.9, and
+      // 1-tanh(1000), 10^-868.7, are 0 at every doubling level (680 digits at most); they showed Overflow.
+      expect(climbLevels(40)).toEqual([60, 80, 120, 200, 360, 680, CLIMB_TOP]);
+      expect(CLIMB_TOP).toBe(980);
+      expect(level("ln(1-tanh(800))")).toBe(CLIMB_TOP);
+      expect(level("1/(1-tanh(1000))")).toBe(CLIMB_TOP);
+      expect(level("1/(1-tanh(300))")).toBe(360);
+      // G404: infinite at every level, with a size within MPFR's range ((e^10000+1)/2, 10^4342.6): past the climb's
+      // reach, no overflow; a size Giac cannot state stays an overflow (sinh(218167208000), 10^(9.5E10)).
+      expect(level("1/(1-tanh(5000))")).toBe("pastReach");
+      expect(level("sinh(218167208000)")).toBe("overflow");
       // The clock stops the climb: a time-out, not an overflow.
       giac.eval("pasov:=exp(10^20)");
       expect(finiteLevel(giac, "pasov", giac.eval("pasov"), 40, () => true)).toBe("timeout");
@@ -367,12 +378,21 @@ describe.skipIf(!giacAvailable())("G148f2 approxRange on the real engine", () =>
   });
   // The outputs Home's exact path gives on phase-1 (probe through the engine host; Giac's own eval of the product, outside
   // Home's settings, is 0.0).
-  const range = (input: string, output: string): string | null => approxRange(giac, input, output, 40, () => false, () => false);
+  const range = (input: string, output: string): ReturnType<typeof approxRange> => approxRange(giac, input, output, 40, () => false, () => false);
   it("refuses an infinity or undef that approx made from a finite value", () => {
     expect(range("ln(approx(exp(-10^20)))", "-infinity")).toBe("underflow");
     expect(range("ln(approx(exp(-10^20)))/ln(10)", "-infinity")).toBe("underflow");
     expect(range("approx(exp(-10^20))*exp(10^20)", "undef")).toBe("underflow");
     expect(range("approx(exp(10^20))/exp(10^20)", "undef")).toBe("overflow");
+  });
+  it("gives the bare input of a value finite higher up the climb, or past its reach, never an overflow (G404)", () => {
+    // approx(ln(1-tanh(50))) showed Overflow: 1-tanh(50) is 0 at P = 40 only (home.yaml g404-approx-ln-1-tanh50)
+    expect(range("approx(ln(1-tanh(50)))", "-infinity")).toEqual({ bare: "(ln(1-tanh(50)))" });
+    expect(range("1/approx(1-tanh(50))", "infinity")).toEqual({ bare: "1/(1-tanh(50))" });
+    expect(range("approx(1/(1-tanh(5000)))", "+infinity")).toEqual({ bare: "(1/(1-tanh(5000)))" });
+    // controls: past MPFR's range at every level (G148)
+    expect(range("approx(exp(10^20))", "+infinity")).toBe("overflow");
+    expect(range("approx(sinh(218167208000))", "+infinity")).toBe("overflow");
   });
   it("keeps the answer of a bare input that is undef or infinite, or exactly 0", () => {
     const kept: [string, string][] = [["1/approx(0)", "infinity"], ["approx(1/0)", "infinity"], ["approx(0)/0", "undef"], ["ln(approx(0))", "-infinity"], ["2*approx(0)", "0.0"], ["approx(sin(pi))", "0.0"], ["approx(limit(1/x^2,x,0))", "+infinity"]];
