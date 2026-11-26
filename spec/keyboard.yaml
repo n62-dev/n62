@@ -32,6 +32,8 @@
 #                                  An insert with one #0 may carry `infix: true` (R585, ∥): with nothing selected and a
 #                                  term right before the cursor (entry/term.ts) the term becomes the first argument and
 #                                  the cursor goes to a second box (entry/field.ts selectOperand).
+#                                  An insert may carry `opens: true` (R912, Store ▶): the app opens a sheet after it, so
+#                                  its legend carries the mark ▾ (R143, keyboard/opens.ts).
 #                                  Any action may carry `line: <action>`, used instead of it when the
 #                                  one-line entry mode is on (a linear form of the same key).
 #   { cmd: "moveToNextChar" }      a MathLive editing command
@@ -276,7 +278,8 @@ keys:
     label: { primary: "$key.emark", shift: "$key.sto", alpha: P }
     # the exponent mark ᴇ as one token (R14, P12 point 4): 1.5ᴇ-3 = 1.5·10⁻³; on an empty line it starts with 1 (1ᴇ)
     primary: { insert: "\\emark", sample: ["1.5\\emark-3", "1.5*10^(-3)"] }
-    shift: { insert: "\\blacktriangleright", sample: ["5\\blacktriangleright A", "A:=5"] }
+    # `opens: true` (R912): Home and CAS open "Store … in" after the ▶ (R281, route.ts), so the legend Store carries ▾ (R143)
+    shift: { insert: "\\blacktriangleright", opens: true, sample: ["5\\blacktriangleright A", "A:=5"] }
     alpha: { type: P }
     source: virtual-calc  # r7c1 (exponent mark ᴇ, a leading 1 on an empty line; shift store ▶: value, ▶, name)
   - { id: d7, row: 6, col: 1, cls: num, label: { primary: "7", alpha: Q }, primary: { type: "7" }, alpha: { type: Q }, source: virtual-calc }  # r7c2 (shift List not ours)

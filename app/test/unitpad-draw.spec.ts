@@ -417,11 +417,12 @@ test("the prefix legends end in a slot line too, scaled to the legend; no unit l
     expect(l?.w ?? 99, `${where}: scaled to the legend, not the face`).toBeLessThan(0.42 * 20);
     expect(l?.fits, `${where}: the key does not overflow`).toBe(true);
   }
-  // the hour h (s's Shift legend) and every other unit legend: none
+  // the hour h (s's Shift legend) and every other unit legend: none (Store on the mol cell, Shift + ᴇ passed through, ends in
+  // the mark ▾ instead, R912: menumark.spec.ts)
   expect(legs["d3/shiftlegend"]?.text).toBe("h");
   const units = await page.evaluate(() =>
     [...document.querySelectorAll<HTMLElement>('.pad .key[data-pad="unit"] :is(.shiftlegend, .alphalegend)')]
-      .filter((el) => !["none", "normal"].includes(getComputedStyle(el, "::after").content))
+      .filter((el) => el.dataset["opens"] !== "true" && !["none", "normal"].includes(getComputedStyle(el, "::after").content))
       .map((el) => `${el.closest<HTMLElement>(".key")?.dataset["key"]}/${el.className}`),
   );
   expect(units).toEqual([]);

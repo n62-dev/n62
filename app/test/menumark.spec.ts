@@ -147,7 +147,7 @@ test("at 360 px the mark never shrinks Vars, Math, Tmpl or α∞ by more than 5 
 
 // R861 (the owner's bug list 2026-11-22, point 12): in the unit view (Shift + Tmpl) the pad's Math cell still opens a sheet (Find on
 // units), so its face "Find" keeps its ▾; σ (Shift + 1's uncertainty sheet, passed through over the prefix cell d1, R327) keeps its
-// own; no other cell (units, prefixes, ops, ⌫, Enter and Eval, the user cells) carries one, and the keys that are no cell keep the
+// own, and so does Store (Shift + ᴇ's "Store in", passed through over the mol cell emark, R353, R912); no other cell (units, prefixes, ops, ⌫, Enter and Eval, the user cells) carries one, and the keys that are no cell keep the
 // main view's rule. N62 Dark and Light, Plain keys off and on, at both phone widths.
 for (const [w, h] of [[412, 915], [360, 740]] as const)
   test(`in the unit view the legends that open a sheet carry ▾: ${w} × ${h}`, async ({ page }) => {
@@ -166,7 +166,7 @@ for (const [w, h] of [[412, 915], [360, 740]] as const)
         const where = `${brightness} ${keys}: ${s.key} ${s.part} "${s.text}"`;
         const k = spec.find((x) => x.id === s.key);
         const want = cells.includes(s.key)
-          ? (s.key === "math" && s.part === "main") || (s.key === "d1" && s.part === "shiftlegend")
+          ? (s.key === "math" && s.part === "main") || (["d1", "emark"].includes(s.key) && s.part === "shiftlegend")
           : s.part === "alphalegend" ? false : s.part === "shiftlegend" ? k?.label?.shift !== undefined && opens(k.shift) : opens(k?.primary);
         expect(s.opens === "true", where).toBe(want);
         if (!want) {
@@ -179,6 +179,6 @@ for (const [w, h] of [[412, 915], [360, 740]] as const)
         expect(s.after, where).toBe('"▾"');
         expect(s.afterColor, `${where}: the mark has the legend's colour`).toBe(s.color);
       }
-      expect(marked.sort(), `${brightness} ${keys}: the cells with ▾`).toEqual(["d1/shiftlegend σ", "math/main Find"]);
+      expect(marked.sort(), `${brightness} ${keys}: the cells with ▾`).toEqual(["d1/shiftlegend σ", "emark/shiftlegend Store", "math/main Find"]);
     }
   });
