@@ -294,7 +294,7 @@
     overflow-y: auto;
     /* R742: the rows carry the space between them as their own padding (--row-pad above and below, so the pitch is the
        10 px gap's of before); the history's 8 px above and below gives back the first and last row's, so no row moves */
-    --row-pad: 5px;
+    --row-pad: calc(var(--sp-25) / 2);
     padding: calc(var(--sp-2) - var(--row-pad)) var(--sp-3);
     display: flex;
     flex-direction: column;
