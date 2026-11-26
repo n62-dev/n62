@@ -7,7 +7,7 @@
 export { muter } from "./uncMute.ts";
 export { sigmaOf } from "../state/sigmaLine.ts";
 // R885: a unit row's value and σ drawn by one rule (Session.displayContext)
-export { sigmaDrawn } from "./sigmaForm.ts";
+export { sigmaRow, withSigma } from "./sigmaForm.ts";
 // R124: a ⚠ row's reason line (R36's words) rides here too: the chunk is in before the first result, so the line is
 // drawn with its row; until then its place is kept (Session.reason)
 export { whyLine } from "../clipboard/whyLine.ts";

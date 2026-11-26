@@ -3,10 +3,13 @@
 // last digit, never cut above it (the digits setting may draw more: R883 mutes the digits past σ, render/uncMute.ts),
 // with no zeros padded past σ's place that the value does not have (SCI's 9.81000000000E0 ± 0.050 reads 9.810E0); value
 // and σ in the same form: σ in the value's prefix or exponent (4.70 k ± 0.10 k, 9.810E-6 ± 0.050E-6; an exponent of 0
-// is not written). FIX keeps its decimals while they reach σ's place. Home's unit row and Copy as shown
-// (state/displayMode.ts renderPoint, through DisplayContext.sigma) and the unit view's second line (units/result.ts)
-// draw through it. Pure text arithmetic on DecimalValue; in the tidy chunk (render/tidy.ts), off the start chunk.
-import { formatReal, isZero, PREFIXES, roundSignificant, trimZeros, type DecimalValue, type FormatOptions, type FormattedNumber } from "../engine/format.ts";
+// is not written). FIX keeps its decimals while they reach σ's place. Home's unit row and Copy as shown (renderPoint
+// through DisplayContext.sigma = sigmaRow, Session.display through withSigma) and the unit view's second line
+// (units/result.ts) draw through it. Pure text arithmetic on DecimalValue; in the tidy chunk (render/tidy.ts), off the
+// start chunk.
+import { decimalFromString, formatReal, isZero, PREFIXES, roundSignificant, toText, trimZeros, type ComplexValue, type DecimalValue, type FormatOptions, type FormattedComplex, type FormattedNumber } from "../engine/format.ts";
+import { withUnit } from "../state/results.ts";
+import { complexToLatex } from "./home.ts";
 
 /** The value and σ of one "value ± σ", each in the same form (σ never negative). */
 export interface SigmaDrawn {
@@ -96,4 +99,34 @@ export function sigmaAlone(sv: DecimalValue, o: FormatOptions): FormattedNumber 
   if (isZero(sv)) return null;
   const s2 = roundSignificant({ ...sv, neg: false }, 2);
   return sigmaDrawn({ neg: false, digits: trimZeros(s2.digits), exp: s2.exp, sticky: false }, sv, o)?.sigma ?? null;
+}
+
+/** A Home row with σ as renderPoint passes it (state/displayMode.ts NumericResult): a unit row's σ is in `units.unc`, its
+ *  full σ in `facts.uncSigma` (R883). */
+type SigmaRowIn = { value?: ComplexValue; facts?: { uncSigma?: string }; units?: { unc?: unknown } };
+
+/** R885: a unit row's real value drawn with `o` (renderPoint's options, after confirmedOptions) and σ in its form, σ's
+ *  LaTeX with the groups `group` (GROUP_LATEX; undefined: none); undefined for a row without σ, a σ of 0 and a complex
+ *  value (drawn by the digits setting). DisplayContext.sigma, in the tidy chunk. */
+export function sigmaRow(r: SigmaRowIn, o: FormatOptions, group: string | undefined): { c: FormattedComplex; sigma: { text: string; latex: string } } | undefined {
+  const sv = r.units?.unc && r.facts?.uncSigma !== undefined && r.value && isZero(r.value.im) ? decimalFromString(r.facts.uncSigma) : null;
+  const d = sv && r.value ? sigmaDrawn(r.value.re, sv, o) : null;
+  if (!d) return undefined;
+  const sigma: FormattedComplex = { re: d.sigma, im: null, text: toText(d.sigma) };
+  return { c: { re: d.value, im: null, text: toText(d.value) }, sigma: { text: sigma.text, latex: complexToLatex(sigma, group) } };
+}
+
+/** state/results.ts withUnit with `r.sigma` (sigmaRow's σ, drawn in the value's form) in place of the row's stored ` ± σ`
+ *  (UnitRow.unc.text, read back unchecked), the decimal comma's rewrite `comma` applied to it as to the rest; withUnit
+ *  itself for a row drawn without it, or one whose stored text does not start with that σ. Session.display's writer once
+ *  the tidy chunk is in: the row's drawing, its data-text and Copy as shown. */
+export function withSigma(
+  r: { text: string; latex: string; sigma?: { text: string; latex: string } },
+  u: { text?: unknown; latex?: unknown; unc?: unknown },
+  comma?: (s: string, latex: boolean) => string,
+): { text: string; latex: string } {
+  const st = (u.unc as { text?: unknown } | undefined)?.text;
+  const tx = ` ± ${String(st)}`, lx = `\\pm${String(st)}`;
+  if (!r.sigma || typeof st !== "string" || typeof u.text !== "string" || typeof u.latex !== "string" || !u.text.startsWith(tx) || !u.latex.startsWith(lx)) return withUnit(r, u, comma);
+  return withUnit(r, { text: ` ± ${r.sigma.text}${u.text.slice(tx.length)}`, latex: `\\pm${r.sigma.latex}${u.latex.slice(lx.length)}` }, comma);
 }
