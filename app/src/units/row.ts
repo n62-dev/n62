@@ -10,6 +10,7 @@ import { homeResultToLatex } from "../render/home.ts";
 import { HISTORY_LIMIT } from "../state/results.ts";
 import { homeItem, placed, readsAngleOf } from "../state/resultItem.ts";
 import { uncDigitsOf } from "../engine/constUnc.ts";
+import { decimalToString } from "../engine/format.ts";
 import type { AngleUnit } from "../calc/port.ts";
 import type { HistoryItem, Session } from "../state/session.svelte.ts";
 import { quantityChip } from "./chip.ts";
@@ -52,10 +53,13 @@ export function unitRow({ line, chips, q, slots, input, digits, job }: RowIn): O
     ...(chip ? { chip } : {}),
   };
   // σ's digits (R61): the shown value's digits past σ's first are not confirmed, as for a chip with σ in Home. R271f1:
-  // the mark is the worse of the value's and σ's, as q.value's facts hold it (evaluate.ts done, units/sigmaFacts.ts)
+  // the mark is the worse of the value's and σ's, as q.value's facts hold it (evaluate.ts done, units/sigmaFacts.ts).
+  // R883: σ itself too (`uncSigma`, as constUnc.ts gives a constant's row), so R40's muter, σ line, the row's chip and a
+  // name stored from it read the one σ whatever its source (a typed ±, a name or chip that carries one)
   const home = homeItem(q.value, inexact);
-  const n = q.value.value && q.unc?.value.value ? uncDigitsOf(q.value.value.re, q.unc.value.value.re, Math.trunc(q.value.digits ?? digits)) : null;
-  if (n !== null && home.facts) home.facts = { ...home.facts, uncDigits: n };
+  const sd = q.unc?.value.value?.re;
+  const n = q.value.value && sd ? uncDigitsOf(q.value.value.re, sd, Math.trunc(q.value.digits ?? digits)) : null;
+  if (n !== null && sd && home.facts) home.facts = { ...home.facts, uncDigits: n, uncSigma: decimalToString(sd) };
   return {
     view: "home",
     latex: line,

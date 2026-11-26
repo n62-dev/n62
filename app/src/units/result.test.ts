@@ -105,6 +105,20 @@ describe("shownOf with the decimal comma and digit groups (R120)", () => {
     const r = result(shownOf(qty(num("1"), { dimension: "", unit: "", dimensionText: "1", unc }), { ...STD, grouped: true, decimalComma: true }));
     expect(r).toMatchObject({ text: "1,0000 ± 0,0071", sub: `1 · σ 0,007${T}071${T}067${T}811${T}87` });
   });
+
+  // R883: the sub line's value mutes its digits from σ's first digit's place on, as R40 cuts a constant's (uncMute.ts)
+  it("the sub line's value is cut where its digits past σ go muted: groups, the decimal comma, the comma groups", () => {
+    const sigma = (v: string, s: string) => qty(num(v, { exact: false }), { unc: { value: num(s, { exact: false }), text: "", shown: "" } } as Partial<Quantity>);
+    expect(result(shownOf(sigma("9.81065219207", "0.0526983346596"), { ...STD, grouped: true })).subMuted).toEqual(["9.8", `10${T}652${T}192${T}07`, ` · σ 0.052${T}698${T}334${T}659${T}6`]);
+    expect(result(shownOf(sigma("39.488", "1.244"), { ...STD, grouped: true, decimalComma: true })).subMuted).toEqual(["3", "9,488", " · σ 1,244"]);
+    expect(result(shownOf(sigma("12345.6", "100"), { ...STD, grouped: true, groupSep: "comma" })).subMuted).toEqual(["12,", "345.6", " · σ 100"]);
+    expect(result(shownOf(sigma("-9.81", "0.02"), STD)).subMuted).toEqual(["-9.8", "1", " · σ 0.02"]);
+    // every digit above σ's place, a σ of zero, no σ: nothing muted
+    expect(result(shownOf(sigma("2.5", "0.01"), STD))).toMatchObject({ sub: "2.5 · σ 0.01" });
+    expect(result(shownOf(sigma("2.5", "0.01"), STD)).subMuted).toBeUndefined();
+    expect(result(shownOf(sigma("2.5", "0"), STD)).subMuted).toBeUndefined();
+    expect(result(shownOf(qty(num("2.5")), STD)).subMuted).toBeUndefined();
+  });
 });
 
 describe("the unit a chip reads as after a tap (R62)", () => {

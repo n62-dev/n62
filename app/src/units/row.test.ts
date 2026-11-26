@@ -131,6 +131,8 @@ describe.skipIf(!giacAvailable())("the unit row (R63, real Giac)", () => {
     // σ = 1.2 (R61's uncDigits, uncDigitsOf: exp 1 − exp 0), as the row worked out from the chip carries it: the digits
     // of 39.488 past σ's first are not confirmed (R40 mutes them from this fact); kept across a relaunch
     expect(it.facts?.uncDigits).toBe(1);
+    // R883: σ itself too, as a constant's row has it (R40's muter, σ line and Store read it): sqrt(1548381)/1000
+    expect(Number(it.facts?.uncSigma)).toBeCloseTo(1.2443396, 6);
     const kv = fakeKv([], { cloneReads: true });
     const s2 = await session(kv);
     putRow(s2, row);

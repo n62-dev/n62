@@ -2,7 +2,7 @@
 // R40: the digits past what a constant's σ leaves (G26), muted on the screen's result row. A chunk of its own, off the
 // start chunk (docs/04 8.3): the session loads it once a row has σ (Session.display), and the row is drawn unmuted
 // until it is in. The text, the chips and Copy never take the span.
-import { decimalFromString, isZero, PREFIXES, type ComplexValue, type FormattedNumber } from "../engine/format.ts";
+import { decimalFromString, isZero, PREFIXES, type ComplexValue, type DecimalValue, type FormattedNumber } from "../engine/format.ts";
 
 /** The power of ten a PFX prefix puts on a mantissa, from format.ts's own table (PREFIXES); undefined for a text that
  *  is not one of its prefixes. */
@@ -17,16 +17,24 @@ export function prefixPower(p: string): number | undefined {
  * mantissa's last ones, so the span is its tail.
  */
 export function mutedTail(m: string, exp: number, cut: number): string {
-  const point = m.indexOf(".");
+  const i = tailAt(m, exp, cut);
+  return i < 0 ? m : `${m.slice(0, i)}\\class{unc}{${m.slice(i)}}`;
+}
+
+/** Where mutedTail's span starts in `m`: the index of its first digit whose place value is below 10^`cut`; -1 for none.
+ *  `m` may hold group separators of any kind; `mark` is its decimal mark (R883: the unit view's text line, with the
+ *  decimal comma, units/result.ts). */
+export function tailAt(m: string, exp: number, cut: number, mark = "."): number {
+  const point = m.indexOf(mark);
   // the place of the digit before the next one: past the digits before the point
   let place = exp + [...(point < 0 ? m : m.slice(0, point))].filter((c) => c >= "0" && c <= "9").length;
   for (let i = 0; i < m.length; i++) {
     const c = m.charAt(i);
     if (c < "0" || c > "9") continue;
     place--;
-    if (place < cut) return `${m.slice(0, i)}\\class{unc}{${m.slice(i)}}`;
+    if (place < cut) return i;
   }
-  return m;
+  return -1;
 }
 
 /** The place value below which a real result's digits are uncertain: one above σ's first digit (the digits from σ's
@@ -34,7 +42,11 @@ export function mutedTail(m: string, exp: number, cut: number): string {
  *  a value whose rounding moves its exponent (9.999…ᴇ14 at 12 digits is 1ᴇ15) keeps its cut at any digits setting.
  *  Undefined without σ (`uncDigits` and `uncSigma`), for a σ of zero, and for a zero or complex value. */
 export function uncCut(facts: { uncDigits?: number; uncSigma?: string } | undefined, value: ComplexValue | undefined): number | undefined {
-  const s = facts?.uncDigits === undefined || facts.uncSigma === undefined ? null : decimalFromString(facts.uncSigma);
+  return sigmaCut(facts?.uncDigits === undefined || facts.uncSigma === undefined ? null : decimalFromString(facts.uncSigma), value);
+}
+
+/** uncCut from σ itself (R883: the unit view, which holds σ as a value). */
+export function sigmaCut(s: DecimalValue | null | undefined, value: ComplexValue | undefined): number | undefined {
   if (!s || isZero(s) || !value || !isZero(value.im) || isZero(value.re)) return undefined;
   return s.exp + 1;
 }

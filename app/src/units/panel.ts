@@ -82,7 +82,12 @@ function resultRows(s: UnitShown, v: UnitView, fit: (row: HTMLElement) => void, 
   // R353: Store ▶ beside the result (the key's job: the result's chip into "Store in")
   if (store) r.append(tapped(el("button", "store", "unit-store", unitText("units.store.button")), store));
   const out = [r];
-  if (s.sub) out.push(el("div", "sub", "unit-sub", s.sub));
+  if (s.sub) {
+    const sub = el("div", "sub", "unit-sub", s.subMuted ? undefined : s.sub);
+    // R883: the value's digits past σ in R40's muted span, as Home's row draws them
+    if (s.subMuted) sub.append(s.subMuted[0], el("span", "unc", "", s.subMuted[1]), s.subMuted[2]);
+    out.push(sub);
+  }
   if (s.why) out.push(el("div", "why", "unit-why", s.why));
   if (s.note) out.push(el("div", "note", "unit-note", s.note));
   if (s.names) out.push(el("div", "note", "unit-names", s.names));
