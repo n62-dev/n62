@@ -36,15 +36,13 @@ import { matrixRows, MATRIX_ROWS } from "../views/matrixSheet.ts";
 import { modeItems, settingsSections } from "../views/modeSheet.ts";
 import { loadKeyboard, keyboard } from "./keyboard.ts";
 import { UserKeys } from "./userKeys.svelte.ts";
-import { applyMoves, compareLayout, compareToRelease, layerPins, LIST_BUILDERS, listSlots, modifierPins, paletteSlots, parseLock, releaseLock, UNPINNED_LISTS, type Lock, type Pins } from "./layoutLock.ts";
+import { applyMoves, compareLayout, compareToRelease, decisionsText, layerPins, LIST_BUILDERS, listSlots, modifierPins, paletteSlots, parseLock, releaseLock, UNPINNED_LISTS, type Lock, type Pins } from "./layoutLock.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 const LOCK = "spec/layout-lock.yaml";
 const read = (p: string): string => readFileSync(join(root, p), "utf8");
 const specDoc = (): { keys: Record<string, unknown>[] } => parse(read("spec/keyboard.yaml")) as { keys: Record<string, unknown>[] };
-// decisions.md and its archive (docs/archive/decisions-*.md): an entry the Opus pass archives still binds, found there by its name
-// (decisions.md, its line 4); pass 249 archived "Settings over Mode", which the lock's mode and settings moves name
-const decisions = [read("docs/decisions.md"), ...readdirSync(join(root, "docs/archive")).filter((f) => /^decisions-[\d-]+\.md$/.test(f)).sort().map((f) => read(`docs/archive/${f}`))].join("\n");
+const decisions = decisionsText(root);
 const ids = (rows: readonly { id: string }[]): Record<string, string> => listSlots(rows.map((r) => r.id));
 
 /** The Find items by id as the shipped app has them: the generated index, so a row whose Find item is missing there
@@ -410,6 +408,23 @@ describe("a move is a line the owner's decision backs", () => {
     expect(archive).toContain("**Settings over Mode (owner, R927):**");
     if (m === undefined) throw new Error("the lock has no move of Settings over Mode");
     expect(applyMoves({ pins: lock.pins, moves: [m] }, archive).problems).toEqual([]);
+    expect(applyMoves({ pins: lock.pins, moves: [m] }, decisionsText(root)).problems).toEqual([]);
+  });
+  it("decisionsText reads docs/decisions.md and each docs/archive/decisions-*.md, nothing else of the archive", () => {
+    const d = mkdtempSync(join(tmpdir(), "decisions-"));
+    try {
+      mkdirSync(join(d, "docs/archive"), { recursive: true });
+      writeFileSync(join(d, "docs/decisions.md"), "**Kept (owner):** now\n");
+      writeFileSync(join(d, "docs/archive/decisions-2026-10.md"), "**Moved (owner):** then\n");
+      writeFileSync(join(d, "docs/archive/brief-2026-10.md"), "**Elsewhere (owner):** not a decision\n");
+      const text = decisionsText(d);
+      const move = (decision: string): Lock => ({ pins: { layers: { "undo.primary": "a" } }, moves: [{ entry: "layers/undo.primary", from: "a", to: "b", version: "v0.2", decision }] });
+      expect(applyMoves(move("Kept"), text).problems).toEqual([]);
+      expect(applyMoves(move("Moved"), text).problems).toEqual([]);
+      expect(applyMoves(move("Elsewhere"), text).problems).toEqual(['move layers/undo.primary: decisions.md has no entry titled "Elsewhere"']);
+    } finally {
+      rmSync(d, { recursive: true, force: true });
+    }
   });
   it("R863: Settings and Help swapped at row 0, col 4 are two moves; the pinned lines stay, and without the moves the lock fails", () => {
     expect(lock.pins["layers"]?.["help.primary"]).toBe("special help");
