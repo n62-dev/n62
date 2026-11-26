@@ -198,6 +198,7 @@ export function sheetJob(key: Key, s: SheetCtx, mods: Mods, layer: Layer | undef
   if (s.paste && isPaste(key, mods, layer)) return { kind: "paste" };
   if (s.kind === "store") return storeKey(key, mods.shift, mods.alpha, s.cas, s.empty);
   if (s.kind === "find" && isHelp(key, mods, layer)) return { kind: "help" }; // R869: Help on Find's highlighted row
+  if (s.of?.helpCloses && isHelp(key, mods, layer)) return { kind: "back" }; // R870: a second Help closes the unit view's Help sheet
   // R887: the ⚙ key's tap opens Settings on the sheet; Shift + it is Help, which stays dead in any other sheet (R863)
   if (p?.kind === "special" && p.name === "settings" && !key.user && (mods.shift || layer === "shift")) return { kind: "none" };
   if (s.kind === "find") return findKey(key, layer, mods.shift, s.empty, s.numbered, mods.alpha);
@@ -265,8 +266,9 @@ export function sheetAct(c: RouteCtx, key: Key, layer: Layer | undefined, mods?:
   // Alpha + Vars A, lower case in CAS, R58; a flick as its layer), so the typed path stores as before; a key that types no name goes on to
   // the line (`line`) with its Shift or Alpha, and one the sheet takes uses a one-shot Shift or Alpha up, as on the line
   const m = find ? { shift: c.session.shift, alpha: c.session.alpha } : (mods ?? modsFor(c, layer));
-  const k = sheetJob(key, { kind: find ? "find" : store ? "store" : "other", filter: level.filterable, numbered: level.numbered, empty: level.filter === "", cas: c.casKeys, paste: pastes(sheet) }, m, layer);
+  const k = sheetJob(key, { kind: find ? "find" : store ? "store" : "other", filter: level.filterable, numbered: level.numbered, empty: level.filter === "", cas: c.casKeys, paste: pastes(sheet), of: sheet }, m, layer);
   if (store && k.kind !== "line" && layer === undefined) c.session.clearModifiers();
+  if (sheet.helpCloses && k.kind === "back" && layer === undefined && isHelp(key, m, layer)) c.session.clearModifiers(); // R870: Shift + ⚙ uses its one-shot Shift up
   // in Find a one-shot Shift or Alpha is used up by the key it types (a lock stays, R889); elsewhere a sheet leaves it as it is
   if (find && ((c.session.shift && !c.session.shiftLock) || (c.session.alpha && !c.session.alphaLock))) c.session.clearModifiers();
   switch (k.kind) {

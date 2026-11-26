@@ -125,6 +125,7 @@ export const UNPINNED_LISTS: Readonly<Record<string, string>> = {
   "views/libraryJobs.ts": "the names a library import clashes with (stored content)",
   "sync/live.ts": "the start's one offer of another device's backup: its first row names the file (content), then Restore and Not now (R128)",
   "views/helpSheet.ts": "the rows of the Find item at the cursor (its syntax and examples, content)",
+  "units/slotHelp.ts": "the factors of the unit view's active slot, each with its size (content: the units typed, R870)",
   "views/uncSheet.ts": "no rows: the head is text (R327); R328's rows are the result's inputs (content)",
   "find/finder.ts": "an empty placeholder while the matrix sheet loads",
 };

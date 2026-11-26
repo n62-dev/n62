@@ -4,7 +4,8 @@
 // keys (R24b). Key owners while it is up (docs/04 5.5): an open sheet (Find on units), then the pad's cells
 // (UnitPad.route), then this view for the keys that are no cell (◀ ▶ between slots, Esc leaves and the line keeps its
 // slots, a key that changes place leaves first, Settings and Mode open over the view and close back onto it, R838, Store ▶
-// stores the result with its unit, R353, ☰ opens its tools and Constants over it, R862; any other key is dead). A hardware key on the field takes the keypad's
+// stores the result with its unit, R353, ☰ opens its tools and Constants over it, R862, Help the active slot's units with their exact
+// sizes or the units tip on an empty slot, R870 (units/slotHelp.ts); any other key is dead). A hardware key on the field takes the keypad's
 // path through the entry line's own map (entry/hwkeys.ts, `onKey`), so it reaches the pad's actions or does nothing, and
 // does on the field what it does on the line; R313: letters first go into the slot as a unit's symbol (units/typed.ts).
 // The view writes a slot only with setPromptValue. What it takes from the start chunk is the route context `c` alone,
@@ -19,6 +20,7 @@ import type { HistoryItem } from "../state/session.svelte.ts";
 import type { FindItem } from "../find/types.ts";
 import { engineFormat } from "../calc/port.ts";
 import { ANS_KEY, type ChipTable } from "../input/chips.ts";
+import { END } from "../input/unitFormula.ts";
 import { openLayer } from "../input/backLayer.ts";
 import { userValuesOf } from "../input/latex-to-giac.ts";
 import { unitText } from "../i18n/enUnits.ts";
@@ -345,6 +347,18 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem, unit?: FindItem)
       else if (a?.kind === "special" && a.name === "menu") {
         // R862: the view's tools and Constants over it (a second ☰, Esc or Back closes the sheet: sheetKeys.ts, watchSheet)
         void unitFind().then((m) => current?.view === view && c2.shell.sheet === null && m.showUnitMenu(c2.shell, index, tools(), constant), () => c2.dead());
+      }
+      else if (a?.kind === "special" && a.name === "help") {
+        // R870: the active slot's units with their exact sizes, or the units tip, as a sheet over the view (R838's path; Esc, Back, ×
+        // or a second Help close it: sheetKeys.ts, watchSheet). A chunk of its own, and for an empty slot the tip from the tips' chunk
+        // (views/tipsHost.ts); the keys pressed while they load wait for them
+        const id = view.activeId;
+        lazy(c2, import("./slotHelp.ts").then(async (h) => {
+          const m = view.model(id);
+          const tip = m && h.wantsTip(m) ? (await import("../views/tipsHost.ts")).tipsText("tips.units") : undefined;
+          if (m && current?.view === view && c2.shell.sheet === null) h.showSlotHelp(c2.shell, h.slotHelp(m, id === END, { byId: index.byId, cat, table, tip }));
+          else c2.dead();
+        }));
       }
       else if (a?.kind === "special" && a.name === "uncertainty") {
         const row = rowId === undefined ? undefined : c2.session.home.find((r) => r.id === rowId); // R327: the result's row

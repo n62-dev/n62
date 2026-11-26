@@ -82,7 +82,7 @@ export function approx(n: bigint, d: bigint): string {
 }
 
 /** An exact factor with π as a fraction of integers close enough for SIG digits: π^k through PI60. */
-function withPi(x: Exact): { n: bigint; d: bigint } {
+export function withPi(x: Exact): { n: bigint; d: bigint } {
   let { n, d } = x;
   for (let i = 0; i < Math.abs(x.pi); i++) {
     if (x.pi > 0) [n, d] = [n * PI60, d * PI_SCALE];
@@ -166,10 +166,10 @@ export function quantityOf(dim: string | undefined): string | undefined {
 const info = (id: string, label: string, hint?: string): MenuItem => ({ id, label, keep: true, ...(hint ? { hint } : {}) });
 
 /** "1" with a unit symbol: a space before a letter (1 ft, 1 °C), none before ° ′ ″ (1°). */
-const one = (sym: string): string => (/^[°′″]$/.test(sym) ? `1${sym}` : `1 ${sym}`);
+export const one = (sym: string): string => (/^[°′″]$/.test(sym) ? `1${sym}` : `1 ${sym}`);
 
-/** A unit's value line: `1 ft = 0.3048 m` exact; `1 x = p/q m` with ≈; `1° = π/180 rad` with ≈; an offset scale's formula. */
-function unitValue(it: FindItem, sym: string): MenuItem | undefined {
+/** A unit's value line (R870: also each factor's row of the unit view's Help, units/slotHelp.ts): `1 ft = 0.3048 m` exact; `1 x = p/q m` with ≈; `1° = π/180 rad` with ≈; an offset scale's formula. */
+export function unitValue(it: FindItem, sym: string): MenuItem | undefined {
   if (it.si === undefined) {
     const note = unitNote(it);
     return note ? info("value", note) : undefined;
@@ -199,7 +199,7 @@ function unitValue(it: FindItem, sym: string): MenuItem | undefined {
 }
 
 /** A prefix's factor: "× 1000 = 10³", "× 1024 = 2¹⁰"; past 12 digits the power alone ("× 10⁻³⁰"). */
-function prefixValue(it: FindItem): MenuItem | undefined {
+export function prefixValue(it: FindItem): MenuItem | undefined {
   const x = it.si === undefined ? undefined : exactFactor(it.si);
   if (!x || x.pi) return undefined;
   const power = (base: bigint): number | undefined => {
