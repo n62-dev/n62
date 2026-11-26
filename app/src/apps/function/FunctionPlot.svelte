@@ -37,7 +37,14 @@
     const w = box?.clientWidth || 1;
     const h = box?.clientHeight || 1;
     const half = ((DEFAULT_X[1] - DEFAULT_X[0]) / 2) * (h / w);
-    return { xmin: DEFAULT_X[0], xmax: DEFAULT_X[1], ymin: -half, ymax: half };
+    return { xmin: DEFAULT_X[0], xmax: DEFAULT_X[1], ymin: -half, ymax: half, h };
+  }
+  /** R928: a window saved at another board height (folded, then Symb, Num or a reload) at the box's height now: ymax stays,
+   *  ymin = ymax − span·hNow/hSaved. */
+  function fit(w: PlotWindow): PlotWindow {
+    const h = box?.clientHeight || 0;
+    if (!h || !w.h || !Number.isFinite(w.h) || w.h <= 0 || w.h === h) return w;
+    return { ...w, ymin: w.ymax - ((w.ymax - w.ymin) * h) / w.h, h };
   }
   const bbox = (w: PlotWindow): [number, number, number, number] => [w.xmin, w.ymax, w.xmax, w.ymin];
 
@@ -46,7 +53,8 @@
     if (!board) return;
     const [x1, y1, x2, y2] = board.getBoundingBox() as [number, number, number, number];
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => app.setWindow({ xmin: x1, xmax: x2, ymin: y2, ymax: y1 }), 150);
+    const h = board.canvasHeight;
+    saveTimer = setTimeout(() => app.setWindow({ xmin: x1, xmax: x2, ymin: y2, ymax: y1, h }), 150);
     if (!moving) {
       moving = true;
       setAdaptive(false);
@@ -73,7 +81,7 @@
     const ymin = hOld > 0 ? y1 - ((y1 - y2) * h) / hOld : y2;
     board.setBoundingBox([x1, y1, x2, ymin], false);
     clearTimeout(saveTimer);
-    app.setWindow({ xmin: x1, xmax: x2, ymin, ymax: y1 });
+    app.setWindow({ xmin: x1, xmax: x2, ymin, ymax: y1, h });
   }
 
   onMount(() => {
@@ -88,8 +96,9 @@
       if (disposed || !box) return;
       const t1 = performance.now();
       JXG = (m as unknown as { default: JXGModule }).default;
+      const win = app.win ? fit(app.win) : defaultWindow();
       const b = JXG.JSXGraph.initBoard(box, {
-        boundingbox: bbox(app.win ?? defaultWindow()),
+        boundingbox: bbox(win),
         axis: true,
         grid: false,
         renderer: "canvas",
@@ -137,7 +146,7 @@
       );
       b.unsuspendUpdate();
       b.on("boundingbox", windowChanged);
-      if (!app.win) app.setWindow({ ...defaultWindow() });
+      if (win !== app.win) app.setWindow({ ...win });
       ready = true;
       sized.observe(box);
       plotHook.board = b;

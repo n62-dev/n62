@@ -35,6 +35,8 @@ export interface PlotWindow {
   xmax: number;
   ymin: number;
   ymax: number;
+  /** R928: the board's height in px the window was drawn at; Plot opening in another height keeps the units per pixel. */
+  h?: number;
 }
 /** Default window: x from -10 to 10, y at the same scale as x, centred on 0 (assumed, docs/decisions.md). */
 export const DEFAULT_X: readonly [number, number] = [-10, 10];

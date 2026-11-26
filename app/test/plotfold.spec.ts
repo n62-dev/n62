@@ -113,6 +113,35 @@ for (const view of ["symb", "num"] as const)
     await expect(chevron(page)).toHaveCount(0);
   });
 
+// R928f1: the folded window is saved with its board height; Plot opening again with the keys up (after Symb, or a reload: the
+// observer was gone when the keys came up) scales it back to the board's height, so the graph keeps its scale.
+for (const via of ["symb", "reload"] as const)
+  test(`folded, then ${via === "symb" ? "Symb" : "a reload"} and Plot again with the keys up: the window is the unfolded one`, async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 740 });
+    await plot(page);
+    const before = await win(page);
+    await foldByTap(page);
+    await expect.poll(async () => (await win(page)).h).toBeGreaterThan(before.h + 300);
+    const folded = (await win(page)).bb;
+    await expect.poll(async () => (await saved(page))?.ymin).toBeCloseTo(folded[3], 6);
+    if (via === "symb") {
+      await page.getByTestId("folded-bar").getByTestId("tab-symb").tap();
+      await isFolded(page, false);
+      await tap(page, ["@plot"]);
+    } else {
+      await page.evaluate(() => window.n62.shell.flush());
+      await page.waitForTimeout(300);
+      await page.reload();
+      await page.waitForFunction(() => window.n62?.shell?.current !== undefined, undefined, { timeout: 20_000 });
+      await expect(page.getByTestId("place")).toHaveAttribute("data-view", "plot");
+      await isFolded(page, false);
+    }
+    await page.waitForFunction(() => window.n62.plot.board !== undefined && window.n62.shell.loading === null);
+    const again = await win(page);
+    expect(again.h).toBe(before.h);
+    for (let i = 0; i < 4; i++) expect(again.bb[i]).toBeCloseTo(before.bb[i]!, 6);
+  });
+
 test("folded, ☰ › Signed area, a tap on the graph moves the trace, ⌃ and Enter finish it", async ({ page }) => {
   await plot(page);
   await foldByTap(page);
