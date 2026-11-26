@@ -136,6 +136,9 @@ export interface DisplayContext {
   groupSep?: GroupSep;
   /** R40: the muted digits' code (render/uncMute.ts muter), once loaded; absent: every digit drawn plain. */
   mute?: (r: NumericResult) => Mute | undefined;
+  /** R885: the σ drawing rule's code (render/sigmaForm.ts sigmaRow), once loaded: a unit row's value drawn with `o`, and
+   *  σ in its form; absent, or undefined for a row without σ: drawn by the digits setting (its stored ` ± σ` after it). */
+  sigma?: (r: NumericResult, o: FormatOptions, group: string | undefined) => { c: FormattedComplex; sigma: { text: string; latex: string } } | undefined;
 }
 
 /** The mode an item is drawn in: the a b/c form when one is chosen, else the Format key's notation (`dec`: the notation,
@@ -212,6 +215,9 @@ export interface Drawn {
   latex: string;
   wrap?: string[];
   gap?: true;
+  /** R885: a unit row's σ drawn in the value's form, the point as `.` (render/sigmaForm.ts sigmaRow); its withSigma puts
+   *  it in place of the row's stored σ text. */
+  sigma?: { text: string; latex: string };
 }
 
 /** R158: the pieces of a plain number's one-line `latex` (the sign, the exponent and the separators are its own: one
@@ -245,13 +251,16 @@ function renderPoint(r: NumericResult, mode: FmtMode | undefined, ctx: DisplayCo
     const p = formatPolar(pol.value, confirmedOptions(pol.value, pol.reliableDigits, opts(ctx.format)));
     return { text: p.text, latex: polarToLatex(p, group) };
   }
-  const c = formatComplex(r.value, confirmedOptions(r.value, r.facts?.reliableDigits ?? null, opts(base)));
+  const o = confirmedOptions(r.value, r.facts?.reliableDigits ?? null, opts(base));
+  // R885: a unit row's ± σ draws the value and σ by one rule (render/sigmaForm.ts): never cut above σ, the same form
+  const ps = ctx.sigma?.(r, o, group);
+  const c = ps?.c ?? formatComplex(r.value, o);
   // R40: only the screen's row mutes the digits past a constant's σ (`grouped`): the text, chips and Copy keep them all
   const mute = grouped ? ctx.mute?.(r) : undefined;
   const latex = complexToLatex(c, group, mute);
   // muted digits (R40) draw markup of their own: that row keeps the one line
   const wrap = latex === complexToLatex(c, group) ? wrapPieces(c, latex, group) : undefined;
-  return { text: c.text, latex, ...(wrap ? { wrap } : {}), ...(wrap && group === GROUP_LATEX.thin ? { gap: true as const } : {}) };
+  return { text: c.text, latex, ...(wrap ? { wrap } : {}), ...(wrap && group === GROUP_LATEX.thin ? { gap: true as const } : {}), ...(ps ? { sigma: ps.sigma } : {}) };
 }
 
 /**

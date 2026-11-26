@@ -62,7 +62,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Opus | `p1/ron-keepline` | – |
-| 888n1 | [R885](packages/R885.md) one σ drawing rule | ron, Opus | `p1/ron-sigmarule` | R883 |
+| 888n1 | R885 one σ drawing rule | ron, Opus | `p1/ron-sigmarule` | R883 |
 | 888n2 | [R886](packages/R886.md) a unit row keeps σ's ⚠ | ron, Opus | `p1/ron-sigmawarn` | R885 |
 | 888o | [R884](packages/R884.md) Settings › Uncertainty: "Rounded to σ" | ron, Opus | `p1/ron-uncround` | R885 |
 | 890 | [R742](packages/R742.md) zebra history rows; the picked row's edge | ron, Opus | `p1/ron-zebra` | R832, R743 |

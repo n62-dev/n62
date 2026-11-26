@@ -560,7 +560,8 @@ export class Session {
     if (item.status === "done" && shown) {
       const r = (formsCode?.drawnIn ?? renderNumeric)(item, modeOf(item, this.settings), this.displayContext(), grouped); // R192: a base form, lazy
       // R63: a unit row draws ± σ and its unit, set apart, after the number; its text has them too (Copy as shown)
-      if (r) return item.units ? withUnit(r, item.units, this.decimalComma ? commaResult : undefined) : r;
+      // R885: with the σ rule's code in, its σ drawn in the value's form takes the stored one's place (sigmaForm.ts withSigma)
+      if (r) return item.units ? (sigmaCode?.withSigma ?? withUnit)(r, item.units, this.decimalComma ? commaResult : undefined) : r;
     }
     // (R57) what the engine wrote, with the decimal comma, is drawn as the numbers above
     if (item.status === "done" && this.decimalComma) return { text: commaResult(item.text, false), latex: commaResult(item.resultLatex, true) };
@@ -584,10 +585,11 @@ export class Session {
     return (formsCode?.baseMark ?? markFor)(item, modeOf(item, this.settings), this.displayContext()); // R192: a base form's, lazy
   }
 
-  /** `mute` (R40), `groupSep` (R125): the muted digits' code once in, the separator; only the screen's row uses them. */
+  /** `mute` (R40), `groupSep` (R125): the muted digits' code once in, the separator; only the screen's row uses them.
+   *  `sigma` (R885): a unit row's σ drawing rule, once in (the row and Copy as shown). */
   displayContext(): DisplayContext {
     const s = this.settings;
-    return { format: s.format, digits: s.digits, fixDecimals: s.fixDecimals, angle: s.angle, ...(this.decimalComma ? { decimalComma: true } : {}), groupSep: s.groupSep, mute: sigmaCode?.muter };
+    return { format: s.format, digits: s.digits, fixDecimals: s.fixDecimals, angle: s.angle, ...(this.decimalComma ? { decimalComma: true } : {}), groupSep: s.groupSep, mute: sigmaCode?.muter, sigma: sigmaCode?.sigmaRow };
   }
 
   /** The row the Format key (cycleFormat) or the a b/c key on an empty line (cycleForm, R10; cycleForms.ts) takes: the picked

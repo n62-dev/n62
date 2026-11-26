@@ -5,7 +5,8 @@
 // (constUnc.ts uncDigitsOf: the digits before σ's first digit's place hold; R40's cut, render/uncMute.ts uncCut):
 // 4π²(1 ± 0.002)/(2.006 ± 0.005)² = 9.81065219207 with σ ≈ 0.0527 (its first digit at 10⁻²), so 9.8 holds;
 // 9.81 ± 0.02: 9.8 holds, the 1 at σ's place is muted; 2.5 ± 0.1: 2 holds, the 5 at σ's place is muted; 2.5 ± 0.01:
-// every digit is above σ's place, nothing is muted.
+// every digit is above σ's place, nothing is muted. R885: the unit row draws the value to σ's last digit (9.810 ± 0.020,
+// 2.50 ± 0.10, 2.500 ± 0.010), so its muted span holds the digits drawn from σ's first digit's place on (10, 50, 00).
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { flick, lastResult, open, tap } from "./helpers.ts";
 
@@ -80,23 +81,23 @@ test.describe("a typed ± mutes the digits past σ (R883)", () => {
     await mutedIs(sub(page).locator(".unc"), "1");
     await mutedShows(page);
     await leave(page, 1);
-    await mutedIs(rowMuted(page), "1");
+    await mutedIs(rowMuted(page), "10");
     await page.evaluate(() => (window.n62.session.settings.uncertainty = "muted"));
     await inUnits(page, NINE81, M_S2);
     await mutedIs(sub(page).locator(".unc"), "1");
     await leave(page, 2);
-    await mutedIs(rowMuted(page), "1");
+    await mutedIs(rowMuted(page), "10");
   });
 
-  test("2.5 ± 0.1 m mutes the 5 at σ's place; 2.5 ± 0.01 m and 5 m mute nothing", async ({ page }) => {
+  test("2.5 ± 0.1 m mutes the 5 at σ's place; 2.5 ± 0.01 m mutes only the row's 00 drawn to σ (R885); 5 m nothing", async ({ page }) => {
     await inUnits(page, ["d2", "dot", "d5", "shift", "comma", "d0", "dot", "d1"], ["d9"]);
     await leave(page, 1);
-    await mutedIs(rowMuted(page), "5");
+    await mutedIs(rowMuted(page), "50");
     await inUnits(page, ["d2", "dot", "d5", "shift", "comma", "d0", "dot", "d0", "d1"], ["d9"]);
     await expect(sub(page).locator(".unc")).toHaveCount(0);
     await leave(page, 2);
-    await expect(lastResult(page)).toHaveAttribute("data-text", "2.5 ± 0.010 m");
-    await expect(rowMuted(page)).toHaveCount(0);
+    await expect(lastResult(page)).toHaveAttribute("data-text", "2.500 ± 0.010 m");
+    await mutedIs(rowMuted(page), "00");
     await inUnits(page, ["d5"], ["d9"]);
     await leave(page, 3);
     await expect(rowMuted(page)).toHaveCount(0);

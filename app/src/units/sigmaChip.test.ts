@@ -89,7 +89,7 @@ describe.skipIf(!giacAvailable())("R271: a σ chip evaluated (real Giac)", () =>
     return s;
   };
 
-  it("10.1 ± sem chip m: σ is the chip's full value (oracle to its 12 digits), ≈, σ at the chip's digits", () => {
+  it("10.1 ± sem chip m: σ is the chip's full value (oracle to its 12 digits), ≈, σ at 2 significant digits under the value line (R885)", () => {
     const q = run("10.1\\pm\\res{3}{0.0707106781187}\\placeholder[u1]{}", { "res:3": SEM }, [M]);
     if (isUnitError(q) || !q.unc) throw new Error(JSON.stringify(q));
     const sigma = Number(giac.eval(`evalf(${q.unc.value.exact ?? q.unc.value.full},20)`));
@@ -99,13 +99,13 @@ describe.skipIf(!giacAvailable())("R271: a σ chip evaluated (real Giac)", () =>
     expect(q.unc.value.facts.reliableDigits).toBe(12);
     const s = shown(q);
     expect([s.mark, s.text, s.warn]).toEqual(["≈", "10.100 ± 0.071", false]);
-    expect(s.sub).toBe("10.1 · σ 0.0707106781187");
+    expect(s.sub).toBe("10.1 · σ 0.071");
   });
 
   it("a σ chip marked ⚠ makes the result ⚠: one shown as ⚠ 6 (σ's 3 digits end at 10^-4), one with a reason", () => {
     // R286: σ 0.0707 (exp -2) with 3 confirmed digits ends at 10^-4; 10.1 (exp 1) is known to it: 3 + 1 + 2 = 6 of 12
     const few = shown(run("10.1\\pm\\res{3}{0.0707}\\placeholder[u1]{}", { "res:3": { value: "0.0707", exact: false, reliableDigits: 3 } }, [M]));
-    expect([few.mark, few.markText, few.text, few.warn, few.sub]).toEqual(["⚠", "⚠ 6", "10.100 ± 0.071", true, "10.1 · σ 0.0707"]);
+    expect([few.mark, few.markText, few.text, few.warn, few.sub]).toEqual(["⚠", "⚠ 6", "10.100 ± 0.071", true, "10.1 · σ 0.071"]);
     const q = run("10.1\\pm\\res{3}{0.0707106781187}\\placeholder[u1]{}", { "res:3": { ...SEM, warn: "unaudited" } }, [M]);
     if (isUnitError(q)) throw new Error(q.error);
     expect(q.value.facts.warn).toBe("unaudited");

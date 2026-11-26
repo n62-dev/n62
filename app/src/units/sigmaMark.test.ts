@@ -210,7 +210,8 @@ describe.skipIf(!giacAvailable())("R271f1: a σ chip's mark in the view, the row
       const s = shown(q, { format: "STD", digits: d });
       return [d, s.mark, s.markText, s.text, s.warn, s.sigma?.tail];
     });
-    expect(view).toEqual(STD.map((d) => [d, "⚠", "⚠ 4", "10.123 ± 0.071", true, "0.071"]));
+    // R885: the view draws as the row, never past the value's 4 confirmed digits (render/sigmaForm.ts sigmaDrawn)
+    expect(view).toEqual(STD.map((d) => [d, "⚠", "⚠ 4", "10.12 ± 0.071", true, "0.071"]));
     const r = row(q, line, { "res:3": one });
     const s = await session();
     putRow(s, r);
