@@ -8,12 +8,10 @@
 // (1/3 = 0.333…, 2+3 = 5). Real engine (1/3 to 40 digits); the two phone widths of the app.
 import { expect, test, type Page } from "@playwright/test";
 import { finger, STILL_MS } from "./core-lib.ts";
-import { entryValue, KEYCOPY, open, setClipboard, tap, useClipboardLock } from "./helpers.ts";
+import { entryValue, KEYCOPY, open, setClipboard, tap } from "./helpers.ts";
 import type * as Finder from "../src/find/finder.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
-
-useClipboardLock(); // first hook: Shift + Select and a hold write the clipboard
 
 const clipboard = (page: Page): Promise<string> => page.evaluate(() => navigator.clipboard.readText());
 const rows = (page: Page) => page.locator("article.item[data-status]");

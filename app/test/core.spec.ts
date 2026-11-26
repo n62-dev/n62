@@ -2,7 +2,6 @@
 // R74: replays tests/core/core.yaml (the core list, decisions.md "P23") on the real engine, one fresh page per case.
 // `known:` cases are expected failures (a ratchet); `needs:` cases are skipped with the reason.
 import { expect, test } from "@playwright/test";
-import { useClipboardLock } from "./helpers.ts";
 import { keyIds } from "./tasks-lib.ts";
 import { check, loadCore, morningIds, openBugIds, replay, start, templateIds, validate, type CoreCase } from "./core-lib.ts";
 
@@ -58,7 +57,6 @@ test.describe("core list", () => {
   test.describe("the clipboard", () => {
     // one worker, in order (a known case's expected failure counts as a pass, so it skips nothing after it)
     test.describe.configure({ mode: "serial" });
-    useClipboardLock(); // and the lock shared with copy.spec, appcopy.spec and rows.spec
     for (const c of cases) if (usesClipboard(c)) caseTest(c);
   });
 });

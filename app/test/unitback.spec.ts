@@ -7,7 +7,7 @@
 // chip's unit. Expected values: oracle (mpmath, tasks.yaml t04: 2π·0.025 = 0.1570796326794896619…, so 4π·0.025 =
 // 0.3141592653589793238…) and derived (t10: 12.34·3.2 = 39.488, σ² = 1.548381 by G41, decisions.md R61).
 import { expect, test, type Page } from "@playwright/test";
-import { COPY, entryValue, flick, open, PASTE, savePicker, savedText, tap, useClipboardLock } from "./helpers.ts";
+import { COPY, entryValue, flick, open, PASTE, savePicker, savedText, tap } from "./helpers.ts";
 import { DATA_VERSION } from "../src/state/storage.ts";
 
 const up = (page: Page): Promise<unknown> =>
@@ -526,7 +526,6 @@ test.describe("a Home row that reads a name stored with a unit (G392)", () => {
 test.describe("Copy as shown on a unit row (R63f1)", () => {
   test.use({ permissions: ["clipboard-read", "clipboard-write"] });
   test.describe.configure({ mode: "serial" });
-  useClipboardLock(); // first hook, so the lock is held before the page opens
   test.beforeEach(async ({ page }) => {
     await open(page, "");
     await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });

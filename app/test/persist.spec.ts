@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // History persistence and the lazy-loaded entry line.
 import { expect, test } from "@playwright/test";
-import { entryValue, open, PASTE, setClipboard, sheet, sheetKey, tap, tapTwice, useClipboardLock } from "./helpers.ts";
+import { entryValue, open, PASTE, setClipboard, sheet, sheetKey, tap, tapTwice } from "./helpers.ts";
 import { DATA_VERSION } from "../src/state/storage.ts";
 
 // Not helpers.lastResult: this one is the whole result row, not its `.result` part.
@@ -401,8 +401,6 @@ test("R255f1: 5 then the units key before the field: the unit view opens on the 
 // input reads the queued keys as text on the line (R273: text on the line stays, the pick drops).
 test.describe("R298: inserts before the field", () => {
   test.use({ permissions: ["clipboard-read", "clipboard-write"] });
-  test.describe.configure({ mode: "serial" }); // (one system clipboard for the whole browser)
-  useClipboardLock();
   test("R298: 2, then Paste of 3 before the field: Enter gives 23", async ({ page }) => {
     const { next, release, releaseAlso } = await heldStart(page, ["d5"], [], /\/src\/clipboard\/actions\.svelte\.ts/);
     await setClipboard(next, "3");

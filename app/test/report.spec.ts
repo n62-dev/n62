@@ -5,12 +5,10 @@
 // browser returns null even when the form opened, so the fallback would always show).
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
-import { open, tap, useClipboardLock } from "./helpers.ts";
+import { open, tap } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 test.describe.configure({ mode: "serial" });
-
-useClipboardLock();
 
 const version = (JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as { version: string }).version;
 

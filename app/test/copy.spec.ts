@@ -3,13 +3,9 @@
 // trip, by key sequences on the real engine. Expected values are derived: the decimal expansion of 1/3 and 2/3.
 import { expect, test, type Page } from "@playwright/test";
 import { finger } from "./core-lib.ts";
-import { COPY, KEYCOPY, KEYPASTE, PASTE, entryValue, recordVibrations, vibrations, lastResult, open, savePicker, savedText, setClipboard, tap, useClipboardLock } from "./helpers.ts";
+import { COPY, KEYCOPY, KEYPASTE, PASTE, entryValue, recordVibrations, vibrations, lastResult, open, savePicker, savedText, setClipboard, tap } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
-// The system clipboard is one for the whole browser: these tests run one after another.
-test.describe.configure({ mode: "serial" });
-
-useClipboardLock(); // R74f1: first hook, so the lock is held before the page opens
 
 test.beforeEach(async ({ page }) => {
   await open(page, "");

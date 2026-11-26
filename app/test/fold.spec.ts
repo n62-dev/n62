@@ -3,11 +3,10 @@
 // the handle on the keypad's top edge is gone) folds the keypad into the 44 px folded bar, and the history gets the screen;
 // its ⌃ (the slice), a swipe up, Android back and Esc bring it back. By touch (synthetic touches through CDP, helpers.ts `touch`) and by keys. The fake engine.
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, open, sheet, tap, touch, useClipboardLock } from "./helpers.ts";
+import { entryValue, open, sheet, tap, touch } from "./helpers.ts";
 import { finger, STILL_MS } from "./core-lib.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
-useClipboardLock(); // Copy writes the clipboard: first hook, so the lock is held before the page opens
 
 const HANDLE = '[data-testid="fold-handle"]'; // R283: it is no longer drawn; one test asserts that
 const SLICE = '[data-testid="fold-slice"]';

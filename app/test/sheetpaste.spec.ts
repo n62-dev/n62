@@ -5,13 +5,9 @@
 // Find took it as a dead press. Controls: Memory's Paste (R816 is still to come: a dead press, nothing typed), Paste on the line.
 // The real engine; the expected values are the typed names themselves.
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, open, recordVibrations, setClipboard, tap, useClipboardLock, vibrations } from "./helpers.ts";
+import { entryValue, open, recordVibrations, setClipboard, tap, vibrations } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
-// The system clipboard is one for the whole browser: these tests run one after another.
-test.describe.configure({ mode: "serial" });
-
-useClipboardLock();
 
 const store = (page: Page) => page.getByTestId("store");
 const find = (page: Page) => page.getByTestId("find");
