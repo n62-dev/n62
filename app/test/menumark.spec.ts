@@ -10,12 +10,13 @@ import { parse } from "yaml";
 import { open, tap } from "./helpers.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
-interface Act { special?: string }
+interface Act { special?: string; opens?: boolean }
 interface SpecKey { id: string; label?: { primary?: string; shift?: string }; primary?: Act; shift?: Act }
 const spec = (parse(readFileSync(join(here, "../../spec/keyboard.yaml"), "utf8")) as { keys: SpecKey[] }).keys;
 // the specials that open a sheet (opens.ts), spelled out here on purpose: the test is the owner's list
 const SHEET = new Set(["vars", "find", "memory", "tmpl", "relations", "symbols", "chars", "mode", "settings", "apps", "menu", "base", "help", "matrix", "uncertainty"]);
-const opens = (a: Act | undefined): boolean => a?.special !== undefined && SHEET.has(a.special);
+// (and an insert flagged `opens: true`: Store ▶ on Shift + ᴇ, whose sheet "Store in" route.ts opens after it, R912)
+const opens = (a: Act | undefined): boolean => a?.opens === true || (a?.special !== undefined && SHEET.has(a.special));
 
 const look = (page: Page, brightness: string, contrast: string, keys: string): Promise<void> =>
   page.evaluate(async ([brightness, contrast, keys]) => {
@@ -69,14 +70,27 @@ for (const [brightness, contrast, keys] of LOOKS)
           expect(s.afterColor, `${where}: the mark has the legend's colour`).toBe(s.color);
         } else expect(["none", "normal"], where).toContain(s.after);
       }
-      // the tap layer: Vars, Math, Tmpl; Help and its Shift legend Settings (r0c4, R723), the Shift legends: Memory (Math), ≤≠, α∞, Base (Shift + −), Matrix (Shift + 4, R187), σ (Shift + 1, the uncertainty sheet, R327), Chars (Shift + Vars, R725); Copy and Paste (Shift + Select and Shift + Deselect, R723) open no sheet; Shift armed: those as faces
+      // the tap layer: Vars, Math, Tmpl; Help and its Shift legend Settings (r0c4, R723), the Shift legends: Memory (Math), ≤≠, α∞, Base (Shift + −), Matrix (Shift + 4, R187), σ (Shift + 1, the uncertainty sheet, R327), Chars (Shift + Vars, R725), Store (Shift + ᴇ, R912); Copy and Paste (Shift + Select and Shift + Deselect, R723) open no sheet; Shift armed: those as faces
       expect(marked.sort(), shift ? "Shift armed" : "tap").toEqual(
         shift
-          ? ["d1/main", "d4/main", "d6/main", "d9/main", "help/main", "math/main", "sub/main", "vars/main"]
-          : ["d1/shiftlegend", "d4/shiftlegend", "d6/shiftlegend", "d9/shiftlegend", "help/main", "help/shiftlegend", "math/main", "math/shiftlegend", "sub/shiftlegend", "tmpl/main", "vars/main", "vars/shiftlegend"],
+          ? ["d1/main", "d4/main", "d6/main", "d9/main", "emark/main", "help/main", "math/main", "sub/main", "vars/main"]
+          : ["d1/shiftlegend", "d4/shiftlegend", "d6/shiftlegend", "d9/shiftlegend", "emark/shiftlegend", "help/main", "help/shiftlegend", "math/main", "math/shiftlegend", "sub/shiftlegend", "tmpl/main", "vars/main", "vars/shiftlegend"],
       );
     }
   });
+
+// R912 (owner-style hunt 2026-11-23, h1 #7): Shift + ᴇ opens the "Store … in" sheet (R281), so its legend Store ends in ▾ as
+// Mat▾, σ▾ and Chars▾ do; its tap ᴇ types and has none
+test("Store, the Shift legend of ᴇ, carries ▾; ᴇ does not", async ({ page }) => {
+  await open(page);
+  const seen = (part: string): Promise<[string | undefined, string]> =>
+    page.evaluate((part) => {
+      const el = document.querySelector<HTMLElement>(`.pad [data-key="emark"] .${part}`);
+      return [el?.dataset["opens"], el ? getComputedStyle(el, "::after").content : ""] as [string | undefined, string];
+    }, part);
+  expect(await seen("shiftlegend")).toEqual(["true", '"▾"']);
+  expect((await seen("main"))[0]).toBeUndefined();
+});
 
 test("a user key set to Menu (or any sheet) shows the mark on that layer; one set to a typing action does not", async ({ page }) => {
   await open(page);
@@ -133,7 +147,7 @@ test("at 360 px the mark never shrinks Vars, Math, Tmpl or α∞ by more than 5 
 
 // R861 (the owner's bug list 2026-11-22, point 12): in the unit view (Shift + Tmpl) the pad's Math cell still opens a sheet (Find on
 // units), so its face "Find" keeps its ▾; σ (Shift + 1's uncertainty sheet, passed through over the prefix cell d1, R327) keeps its
-// own; no other cell (units, prefixes, ops, ⌫, Enter and Eval, the user cells) carries one, and the keys that are no cell keep the
+// own, and so does Store (Shift + ᴇ's "Store in", passed through over the mol cell emark, R353, R912); no other cell (units, prefixes, ops, ⌫, Enter and Eval, the user cells) carries one, and the keys that are no cell keep the
 // main view's rule. N62 Dark and Light, Plain keys off and on, at both phone widths.
 for (const [w, h] of [[412, 915], [360, 740]] as const)
   test(`in the unit view the legends that open a sheet carry ▾: ${w} × ${h}`, async ({ page }) => {
@@ -152,7 +166,7 @@ for (const [w, h] of [[412, 915], [360, 740]] as const)
         const where = `${brightness} ${keys}: ${s.key} ${s.part} "${s.text}"`;
         const k = spec.find((x) => x.id === s.key);
         const want = cells.includes(s.key)
-          ? (s.key === "math" && s.part === "main") || (s.key === "d1" && s.part === "shiftlegend")
+          ? (s.key === "math" && s.part === "main") || (["d1", "emark"].includes(s.key) && s.part === "shiftlegend")
           : s.part === "alphalegend" ? false : s.part === "shiftlegend" ? k?.label?.shift !== undefined && opens(k.shift) : opens(k?.primary);
         expect(s.opens === "true", where).toBe(want);
         if (!want) {
@@ -165,6 +179,6 @@ for (const [w, h] of [[412, 915], [360, 740]] as const)
         expect(s.after, where).toBe('"▾"');
         expect(s.afterColor, `${where}: the mark has the legend's colour`).toBe(s.color);
       }
-      expect(marked.sort(), `${brightness} ${keys}: the cells with ▾`).toEqual(["d1/shiftlegend σ", "math/main Find"]);
+      expect(marked.sort(), `${brightness} ${keys}: the cells with ▾`).toEqual(["d1/shiftlegend σ", "emark/shiftlegend Store", "math/main Find"]);
     }
   });

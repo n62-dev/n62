@@ -127,13 +127,13 @@ describe("what a cell shows and emits", () => {
     expect(pad.press("esc", "primary")).toBeUndefined();
   });
 
-  it("R861: draws the Math cell as Find, a sheet (its face carries ▾); no other cell's layer opens one but σ, and Find stays its name", () => {
+  it("R861: draws the Math cell as Find, a sheet (its face carries ▾); no other cell's layer opens one but σ and Store (Shift + ᴇ passed through, R912), and Find stays its name", () => {
     const marked: string[] = [];
     for (const c of pad.cells) {
       const k = pad.key(keyboard.byId.get(c.key) as Key, undefined) as Key;
       for (const layer of ["primary", "shift", "alpha"] as const) if (opensSheet(k.actions[layer])) marked.push(`${c.key} ${layer}`);
     }
-    expect(marked).toEqual(["math primary", "d1 shift"]);
+    expect(marked).toEqual(["math primary", "d1 shift", "emark shift"]);
     const math = pad.key(keyboard.byId.get("math") as Key, undefined) as Key;
     expect(keyLabels(math, false, false, false).label).toBe("Find");
     expect(shown(pad, "math", false, false)).toMatchObject({ face: "Find", dead: false });
