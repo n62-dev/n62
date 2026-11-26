@@ -34,6 +34,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **Small packages (2026-10-14, the owner's rule).** One concern each, about a day or less, with its own reading list; placed by importance, then dependencies.
 
 ### Feel, keys and screen (milestone 4a)
+- **Rainbow egg (owner, 2026-11-22, R881):** docs/05.
 - **Help explains the highlight (owner, 2026-11-22):** cursor, Find's row, then the unit view; cards from the index only (R869, R870).
 - **Enter's rule (owner, 2026-11-22, R872):** docs/05 3.10; values: theme-gen.test.ts. Would change if: his phone.
 - **Round pad and key line floors (owner, 2026-11-22, R873):** docs/05 3.10; values: theme-gen.test.ts. Would change if: his phone.
