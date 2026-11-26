@@ -1549,16 +1549,56 @@ outside_reads() {  # <e2e|build>: the repo paths read from a file at depth d und
   for f in "${files[@]}"; do
     rel="${f#"$root"/}"; d="$(tr -cd '/' <<<"$rel" | wc -c)"; ups="$(printf '../%.0s' $(seq 1 "$d"))"
     grep -hoE "[\"'\`]${ups//./\\.}(spec|tests|tools|docs|find|engine|THIRD_PARTY|LICENSES)[^\"'\`?\$]*" "$f" 2>/dev/null | sed -E "s|^.${ups//./\\.}||" | grep -vE '_out|_gen' || true
+    grep -hoE "[\"'\`][^\"'\`?\$ ]*_gen/[^\"'\`?\$ ]*" "$f" 2>/dev/null | while IFS= read -r p; do  # A280f1: a generated file, inside app/ too, as gen:<its repo path>
+      p="${p:1}"; [[ "$p" == app/* ]] || p="$(realpath -m --relative-to="$root" "$(dirname "$f")/$p")"; echo "gen:$p"
+    done
   done | sort -u
 }
 for kind in e2e build; do
   reads="$(outside_reads "$kind")"; [[ $(wc -l <<<"$reads") -gt 5 ]] || fail "A280: the $kind scan found fewer than 6 paths outside app/: $reads"
   while IFS= read -r p; do
-    [[ -n "$p" && "$p" != docs/backlog.md ]] || continue
+    [[ -n "$p" && "$p" != docs/backlog.md && "$p" != gen:* ]] || continue  # (a gen: line: gen_misses, below)
     if [[ "$kind" == e2e ]]; then printf '%s\n' "$p" | e2e_selected || fail "A280: an e2e spec reads $p, which E2E_RE does not select"
     else printf '%s\n' "$p" | build_selected || fail "A280: the app's build reads $p, which BUILD_RE does not select"; fi
   done <<<"$reads"
 done
+# A280f1: a generated file (a path with _gen/: gitignored, so in no diff) changes with its sources, which the scan dropped: the app imports the Find
+# index (app/src/find/finder.ts) and the build holds it (size-check.ts "Find index asset"), yet a diff of find/ or tools/find-index/ planned
+# neither e2e nor size (golden only). Each source alone plans both now.
+for f in find/units.yaml find/factors.yaml find/functions.yaml tools/find-index/generate.mjs tools/find-index/units-items.mjs; do
+  [[ "$(want_for "$f")" == docs,typecheck,size,vitest,golden,e2e ]] || fail "A280f1: a diff of only $f is not docs, typecheck, size, vitest, golden, e2e: $(want_for "$f")"
+done
+# gen_sources <repo path of a generated file>: the tracked paths it is generated from, one a line: its generator's folder (this table is the one
+# place a generated file is mapped) and every repo path the generator's files read (loadYaml("..."), join(REPO, "...")), without the untracked
+# caches (_downloads, _out, _gen). A generated file without a row fails.
+gen_sources() {
+  local tool
+  case "$1" in
+    app/src/find/_gen/find-index.json) tool=tools/find-index;;  # app/package.json "index": tools/find-index/generate.mjs
+    *) return 1;;
+  esac
+  echo "$tool/"; grep -rhoE '(loadYaml\(|REPO, )"[^"]+"' "$repo/$tool" | sed -E 's/^[^"]*"//; s/"$//' | grep -vE '_downloads|_out|_gen' | sort -u
+}
+gen_misses() {  # <e2e|build>: a line for each source of a generated file the kind's files read that E2E_RE (build: or BUILD_RE) does not select
+  local p g s srcs
+  while IFS= read -r p; do
+    g="${p#gen:}"; srcs="$(gen_sources "$g")" && [[ $(wc -l <<<"$srcs") -gt 5 ]] || { echo "$g has no row in gen_sources, or fewer than 6 sources: $srcs"; continue; }
+    while IFS= read -r s; do
+      [[ "$s" != tests/golden ]] || continue  # generate.mjs reads it only to refuse a `golden:` id no file has: no byte of the index comes from it (every branch's vitest check runs npm run index)
+      printf '%s\n' "$s" | e2e_selected || echo "$g is generated from $s, which E2E_RE does not select"
+      [[ "$1" != build ]] || printf '%s\n' "$s" | build_selected || echo "the app's build holds $g, generated from $s, which BUILD_RE does not select"
+    done <<<"$srcs"
+  done < <(outside_reads "$1" | grep '^gen:')
+}
+grep -qxF 'gen:app/src/find/_gen/find-index.json' <<<"$(outside_reads build)" || fail "A280f1: the build scan does not see finder.ts's import of the Find index"
+gen_sources app/src/x/_gen/y.json >/dev/null && fail "A280f1: gen_sources maps a generated file it has no row for"
+for kind in e2e build; do out="$(gen_misses "$kind")"; [[ -z "$out" ]] || fail "A280f1 ($kind scan): $out"; done
+# the scan has teeth: with A280's two lists it names find/ and the generator's folder, for e2e and for size
+out="$(E2E_RE='^(app/|spec/|tests/(core|tasks|fixtures)/|tools/(trust/|probes/(library/|find-cost\.mjs$|unit-presses\.mjs$)))'; BUILD_RE='^(app/|spec/|tests/(golden|tasks)/|tools/(trust|third-party)/|THIRD_PARTY\.md$|LICENSES/|engine/giac/patches/)'; gen_misses build)"
+for want in 'find/units.yaml, which E2E_RE' 'find/factors.yaml, which E2E_RE' 'tools/find-index/, which E2E_RE' 'find/units.yaml, which BUILD_RE' 'tools/find-index/, which BUILD_RE'; do
+  grep -qF "generated from $want does not select" <<<"$out" || fail "A280f1: with A280's lists the scan does not say '$want': $out"
+done
+grep -qE 'spec/keyboard.yaml|app/src/i18n' <<<"$out" && fail "A280f1: with A280's lists the scan names a source they select: $out"
 grep -qE 'oracle-counts|THIRD_PARTY\.md|LICENSES' "$repo/app/vite-plugin-about.ts" || fail "A280: the About plugin no longer reads the files BUILD_RE names; revisit BUILD_RE"
 grep -q 'e2e_selected' "$here/pipeline.sh" && grep -q 'build_selected' "$here/pipeline.sh" || fail "A280: pipeline.sh does not use e2e_selected and build_selected"
 # (b) the lint rules: a new patch without its README row, a branch without a report commit (brief section 2)
