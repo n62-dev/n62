@@ -4,7 +4,7 @@
 // mark as Home draws it, the value at the digits setting, the unit, the dimension), σ with its ⚠ and why-line, a note and
 // the alternatives row.
 // Plain TS; units/panel.ts draws it. Loaded with the unit view.
-import { confirmedOptions, formatComplex, markOf, type FormatOptions, type FormattedNumber, type Mark } from "../engine/format.ts";
+import { confirmedOptions, formatComplex, markOf, type FormatOptions, type Mark } from "../engine/format.ts";
 import { precisionFacts } from "../engine/precisionFacts.ts";
 import { unitText } from "../i18n/enUnits.ts";
 import { groupText } from "../render/groupText.ts";
@@ -83,6 +83,7 @@ export function shownOf(q: Quantity | UnitError, u: UnitFormat, alts: readonly A
   const mark: Mark = m?.mark === "⚠" ? "⚠" : q.unc ? "≈" : (m?.mark ?? "≈");
   const formatted = (v: Quantity["value"]) => (v.value ? formatComplex(v.value, confirmedOptions(v.value, v.facts.reliableDigits, o)) : undefined);
   const number = (v: Quantity["value"]): string => formatted(v)?.text ?? v.display;
+  const re = formatted(q.value)?.re;
   const value = number(q.value);
   const why = q.unc?.why;
   const dimension = q.dimension ?? "";
@@ -101,20 +102,19 @@ export function shownOf(q: Quantity | UnitError, u: UnitFormat, alts: readonly A
     ...(q.note ? { note: unitNoteText(q.note) } : {}),
     ...(q.names?.length ? { names: unitNamesText(q.names) } : {}),
     ...(dim ? { dim } : {}),
-    ...(q.unc ? subLine(drawn(value), drawn(number(q.unc.value)), sigmaCut(q.unc.value.value?.re, q.value.value), formatted(q.value)?.re, decimalComma ? "," : ".") : {}),
+    ...(q.unc ? subLine(drawn(value), drawn(number(q.unc.value)), sigmaCut(q.unc.value.value?.re, q.value.value), re && [(re.neg ? "-" : "") + drawn(re.mantissa), powerOf(re)], decimalComma ? "," : ".") : {}),
     dimension,
     alts: dimension === "" ? [] : alts,
   };
 }
 
 /** R883: the line under the value line (`sub`), and with σ's cut (render/uncMute.ts sigmaCut) where its value's digits
- *  go muted (`subMuted`), as Home's row and a constant's (R40) draw them. `value` is drawn (groups, decimal comma); `re`
- *  its real part as formatted, for the mantissa's power of ten. */
-function subLine(value: string, sigma: string, cut: number | undefined, re: FormattedNumber | undefined, mark: string): Pick<UnitShown, "sub" | "subMuted"> {
+ *  go muted (`subMuted`), as Home's row and a constant's (R40) draw them. `value` is drawn (groups, decimal comma);
+ *  `m` its real part's mantissa drawn the same way, with its sign, and the mantissa's power of ten. */
+function subLine(value: string, sigma: string, cut: number | undefined, m: [string, number | undefined] | undefined, mark: string): Pick<UnitShown, "sub" | "subMuted"> {
   const sub = unitText("units.result.sub", { value, sigma });
-  const exp = re && powerOf(re);
-  const lead = /^-?\d(?:[\d.,’\s]*\d)?/.exec(value)?.[0] ?? "";
-  const at = cut === undefined || exp === undefined ? -1 : tailAt(lead, exp, cut, mark);
+  const [lead, exp] = m ?? [""];
+  const at = cut === undefined || exp === undefined || !value.startsWith(lead) ? -1 : tailAt(lead, exp, cut, mark);
   const k = sub.indexOf(value);
   return at < 0 ? { sub } : { sub, subMuted: [k + at, k + lead.length] };
 }
