@@ -698,10 +698,11 @@ export function homeEval(
   }
 
   const shape = shapeOfValue(value);
-  const symbolic = (forced?: "unaudited"): HomeResult => {
+  const symbolic = (forced?: "unaudited" | "pastCap"): HomeResult => {
     // G78: Giac's text with no free name where a number was asked for (asin(acos(π²)), sinh(6020³)), or undef through ∞.
     // G168: a polish that could not replace Giac's undef is a lost answer too, ⚠ or not (only an infinity stays Giac's word).
-    const lost = once || (forced && (undefStands || exactOut.trim() !== "undef")) || inexactTest ? null : lostNumber(giac, ans, exactBody, exactOut, late, exactMs, userFn, undefStands);
+    // G404: a value past the climb's reach is no lost number (lostNumber would call its infinity at Digits an overflow).
+    const lost = once || forced === "pastCap" || (forced && (undefStands || exactOut.trim() !== "undef")) || inexactTest ? null : lostNumber(giac, ans, exactBody, exactOut, late, exactMs, userFn, undefStands);
     if (lost) return refuse(lost, "exact");
     // Not a number (symbolic, a set, a nested list…): show Giac's text. This build does not apply the
     // "regroup" autosimplify at the top level (x*x stays x*x), so collect equal factors here.
@@ -731,8 +732,8 @@ export function homeEval(
     const latex = isError(tex) || rows ? {} : { latex: unquote(tex) };
     // A float in a non-number (x-0.54764225985): nobody checked its digits, so ⚠ without a count (G27, docs/04 2.4).
     const unchecked = hasFloat(text) || forced !== undefined;
-    const warn = decided?.warn ?? forced ?? (unchecked ? "unchecked" : undefined);
-    const why = symbolicWhy(warn, testSides(exactBody));
+    const warn = decided?.warn ?? (forced === "pastCap" ? "unchecked" : forced) ?? (unchecked ? "unchecked" : undefined);
+    const why = forced === "pastCap" ? { pastCap: true as const } : symbolicWhy(warn, testSides(exactBody));
     return done({ ok: true, display, ...(listed ? { braces: true as const } : {}), exact: text, ...(deg !== null || listed || shownText !== plainShown ? { full: text } : {}), ...latex, path: "exact", approximate: inexactTest || unchecked, facts: { exact: false, reliableDigits: null, ...(warn ? { warn } : {}), ...(why ? { why } : {}) } });
   };
   // G44f1: Giac's inverse distribution function gives ±infinity for some p inside (0, 1) (fisher_icdf(3,4,1-10^-20)):
@@ -750,6 +751,14 @@ export function homeEval(
 
   // G148: approx or evalf of a finite value past MPFR's range (Giac's ±infinity, or a float 0) is refused as the bare value.
   const range = once || late() ? null : approxRange(giac, exactBody, exactOut, P, late, userFn);
+  // G404: Giac's infinity of a bare value that is finite higher up the climb (approx(ln(1-tanh(50))): 1-tanh(50) is 0 at
+  // P), or past its reach: the bare input is the value asked for, evaluated as typed (its decisions and its climb)
+  if (range && typeof range === "object") {
+    const asked = askedDigits(input);
+    const bareForm = asg ? { ...form, assignment: { name: asg.name, rhs: range.bare } } : form;
+    const r = homeEval(giac, asg ? `${asg.name}:=${range.bare}` : range.bare, asked === null ? s : { ...s, digits: asked }, now, bareForm, fnBody, undefStands, logged);
+    return { ...r, approximate: true, ...(asked !== null && r.ok ? { digits: asked } : {}) };
+  }
   if (range) return refuse(range, "exact");
   // A list holding an open == or ≠ test (R18f3): its numeric value would be Giac's structural verdict, 0 or 1.
   if (!shape || /==|<>/.test(exactOut)) return symbolic();
@@ -792,6 +801,9 @@ export function homeEval(
   // G358 (G123): MPFR's infinity at P is an overflow only when it is infinite at every level of the check's climb
   const climbed = facts || once || shape.kind !== "scalar" || late() ? null : climbedFacts(giac, ans, exactOut, value, s.digits, s.maxExactDigits, late, underflowAt);
   if (climbed === "timeout" || climbed === "overflow") return climbed === "overflow" ? refuse(climbed, "exact") : { ...failed(enEngine["error.timeout"], "exact"), error: "timeout" };
+  // G404: infinite at every level of the climb, its size not past MPFR's range (1/(1-tanh(5000))): no overflow; Giac's
+  // text with ⚠ and the cap's words (F155: past the cap a value is shown ⚠, not refused)
+  if (climbed === "pastReach") return symbolic("pastCap");
   if (Array.isArray(climbed) && decidedBelow) undecided = true;
   facts ??= climbed;
   if (!facts) {

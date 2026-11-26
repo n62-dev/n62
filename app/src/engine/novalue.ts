@@ -17,7 +17,7 @@
 //   and of an answer with no free name whose evalf is no number (lostCas).
 // Runs synchronously next to the engine; only erasable TypeScript syntax.
 import { callsIn, type Refusal } from "./converge.ts";
-import { DOUBLE_DIGITS, hasFloat, MAX_EVAL_DIGITS, withDigits, type ElementFacts, type Giac, type Shape } from "./numeric.ts";
+import { DOUBLE_DIGITS, hasFloat, MAX_EVAL_DIGITS, REGROUP_MAX, withDigits, type ElementFacts, type Giac, type Shape } from "./numeric.ts";
 import { namesOf } from "./lname.ts";
 import { callsOf, firstNameIn, functionsIn, isError, isTimeout, LIST_TYPE, names, parsePrinted, topLevelArgs, type PrintedNode, type Quoting, withoutStrings } from "./giacPrint.ts";
 import { decimalFromString, isZero, type DecimalValue } from "./format.ts";
@@ -224,22 +224,73 @@ export function overflowAt(giac: Giac, slot: string, output: string, P: number):
 
 /**
  * G358 (be-4): G123's overflow, asked along the agreement check's climb. The value in `slot` (exact text `output`) that
- * is MPFR's infinity at `P` (overflowAt) is evaluated again at each level the check climbs to, P + 20, P + 40, P + 80, …
- * up to MAX_EVAL_DIGITS, and the first level where it is a number is returned: the check starts there. 1-tanh(50) =
- * 2/(e^100+1), 7.4E-44, is 0 at P = 40, so 1/(1-tanh(50)) is infinite there and finite from P + 20; 1-tanh(100), 2.8E-87,
- * from P + 80. "overflow" when no level gives a number (1.000000000000001^(10^50), exp(10^20)); "timeout" when `late()`
- * or Giac's interrupt stops the climb first; null when the value is not infinite at P. One engine call per level.
+ * is MPFR's infinity at `P` (overflowAt) is evaluated again at each level the check climbs to, P + 20, P + 40, P + 80, …,
+ * and G404: last at CLIMB_TOP (MAX_EVAL_DIGITS - 20, so the check's second run stays within the cap) when the doubling
+ * steps over it; the first level where it is a number is returned: the check starts there. 1-tanh(50) = 2/(e^100+1),
+ * 7.4E-44, is 0 at P = 40, so 1/(1-tanh(50)) is infinite there and finite from P + 20; 1-tanh(100), 2.8E-87, from P + 80;
+ * 1-tanh(1000), 2.0E-869, from CLIMB_TOP only. At the cap, infinite at every level: "pastReach" when the value's size is
+ * within MPFR's range (rangeBySize: 1/(1-tanh(5000)), 10^4343), a value the climb cannot reach and never an overflow
+ * (G404); else "overflow", its size past the range (1.000000000000001^(10^50), exp(10^20)) or one Giac cannot state
+ * (sinh(218167208000)). "timeout" when `late()` or Giac's interrupt stops the climb first; null when the value is not
+ * infinite at P. One engine call per level, and one or two for the size at the cap.
  */
-export function finiteLevel(giac: Giac, slot: string, output: string, P: number, late: () => boolean): number | "overflow" | "timeout" | null {
+export function finiteLevel(giac: Giac, slot: string, output: string, P: number, late: () => boolean): number | "overflow" | "pastReach" | "timeout" | null {
   if (!overflowAt(giac, slot, output, P)) return null;
-  for (let step = 20; P + step <= MAX_EVAL_DIGITS; step *= 2) {
+  for (const level of climbLevels(P)) {
     if (late()) return "timeout";
-    const t = giac.eval(`string(evalf(${slot},${P + step}))`).trim();
+    const t = giac.eval(`string(evalf(${slot},${level}))`).trim();
     if (isTimeout(t)) return "timeout";
     // an undef or an error at a level is no number either: the climb goes on
-    if (!infinite(t) && !t.includes("undef") && !isError(t)) return P + step;
+    if (!infinite(t) && !t.includes("undef") && !isError(t)) return level;
   }
-  return "overflow";
+  if (late()) return "timeout";
+  // a size Giac cannot state stays an overflow, as before G404 (sinh(218167208000), 10^(9.5E10))
+  return rangeBySize(giac, slot, output, P) === "within" ? "pastReach" : "overflow";
+}
+
+/** G404: the highest level the climb starts the agreement check at: its second run, 20 digits up, is MAX_EVAL_DIGITS. */
+export const CLIMB_TOP = MAX_EVAL_DIGITS - 20;
+
+/** G358, G404: the levels of the climb above `P`: P + 20, P + 40, P + 80, … while within CLIMB_TOP, then CLIMB_TOP. */
+export function climbLevels(P: number): number[] {
+  const out: number[] = [];
+  for (let step = 20; P + step <= CLIMB_TOP; step *= 2) out.push(P + step);
+  if (P < CLIMB_TOP && out[out.length - 1] !== CLIMB_TOP) out.push(CLIMB_TOP);
+  return out;
+}
+
+/**
+ * G404: where the value in `slot` (exact text `output`) lies against MPFR's range by its size, as G187's powerPastRange
+ * tells a power's: log10|v| = re(lnexpand(ln(v)))/ln(10) (exp(10^20): 10^20/ln(10); a power a^b: b*ln(a)), read at `P`
+ * and P + 20 in one engine call and taken when the two agree to SIZE_AGREE: "overflow" or "underflow" past
+ * ±MPFR_LOG10_RANGE, "within" inside it. When Giac cannot state it so (ln of the value is infinite at P too), the same is
+ * asked of normal(hyp2exp(v)) in one more call, for a text up to REGROUP_MAX: 1/(1-tanh(5000)) becomes (exp(10000)+1)/2,
+ * whose size is 4342.6. Null when neither states it (sinh(218167208000): ln(exp(2*218167208000)-1) is infinite at P).
+ */
+export function rangeBySize(giac: Giac, slot: string, output: string, P: number): NoValue | "within" | null {
+  const size = (e: string): string => `[evalf(re(lnexpand(ln(${e})))/ln(10),${P}),evalf(re(lnexpand(ln(${e})))/ln(10),${P + 20})]`;
+  const forms = output.length > REGROUP_MAX ? [slot] : [slot, `normal(hyp2exp(${slot}))`];
+  for (const e of forms) {
+    const z = sizesAgreed(giac.eval(size(e)).trim());
+    if (z) return pastRange(z) ? (z.neg ? "underflow" : "overflow") : "within";
+  }
+  return null;
+}
+
+/** G187, G404: Giac's print `[a,b]` of a size at P and P + 20: the size at P + 20 when both are read and agree. */
+function sizesAgreed(out: string): DecimalValue | null {
+  const parts = out.startsWith("[") && out.endsWith("]") ? out.slice(1, -1).split(",") : [];
+  const [a, b] = parts.map((t) => decimalFromString(t, 12));
+  return parts.length === 2 && a && b && sameSize(a, b) ? b : null;
+}
+
+/** G187: Giac's print `[a,b]` of a size at two precisions: "overflow" or "underflow" when both are past the range on
+ *  the same side and agree, else null. */
+function sizesPast(out: string): NoValue | null {
+  const parts = out.startsWith("[") && out.endsWith("]") ? out.slice(1, -1).split(",") : [];
+  const [a, b] = parts.map((t) => decimalFromString(t, 12));
+  if (parts.length !== 2 || !a || !b || !pastRange(a) || !pastRange(b) || !sameSize(a, b)) return null;
+  return b.neg ? "underflow" : "overflow";
 }
 
 /** G187: log10 of the largest number MPFR holds here, (2^30-1)*log10(2) = 323228496.32 rounded up (its smallest is
@@ -266,11 +317,7 @@ export function powerAtTop(tree: ParseNode | null | undefined): boolean {
 export function powerPastRange(giac: Giac, slot: string, tree: ParseNode | null | undefined, P: number): NoValue | null {
   if (!powerAtTop(tree)) return null;
   const size = `re(([op(${slot})][1])*ln([op(${slot})][0]))/ln(10)`;
-  const out = giac.eval(`[evalf(${size},${P}),evalf(${size},${P + 20})]`).trim();
-  const parts = out.startsWith("[") && out.endsWith("]") ? out.slice(1, -1).split(",") : [];
-  const [a, b] = parts.map((t) => decimalFromString(t, 12));
-  if (parts.length !== 2 || !a || !b || !pastRange(a) || !pastRange(b) || !sameSize(a, b)) return null;
-  return b.neg ? "underflow" : "overflow";
+  return sizesPast(giac.eval(`[evalf(${size},${P}),evalf(${size},${P + 20})]`).trim());
 }
 
 /** G187: the relative difference within which the sizes at P and P+20 agree (their first six digits, about). */
@@ -311,15 +358,17 @@ function bareOf(t: string): string {
  * evalf took a finite, non-zero exact value past MPFR's exponent range and Giac's answer is ±infinity, an infinite part,
  * undef or a float 0 (approx(exp(10^20)), approx(exp(10^20)*i), approx(exp(-10^20)), 1/approx(exp(-10^20)),
  * 2*approx(exp(-10^20)), ln(approx(exp(-10^20))), approx(exp(10^20))/exp(10^20)): the bare input (each call replaced by
- * its first argument) is evaluated exactly in `pasq` and asked what the bare input is asked (overflowAt, then underflow
- * at P), and refused with its reason. A bare input whose exact form is infinite, undef or an error (1/approx(0),
+ * its first argument) is evaluated exactly in `pasq` and asked what the bare input is asked (G404: an overflow along
+ * the agreement check's climb, finiteLevel; then underflow at P), and refused with its reason. G404: a bare input that
+ * is infinite at P only (approx(ln(1-tanh(50))): 1-tanh(50) is MPFR's 0 at 40 digits), finite at a level of the climb
+ * or past its reach, gives `{ bare }`, its text: the caller evaluates it as typed. A bare input whose exact form is infinite, undef or an error (1/approx(0),
  * approx(1/0), approx(0)/0, ln(approx(0)), a limit) keeps its answer, as does one that is exactly 0 (2*approx(0)). For an
  * infinity or undef the bare input gives no reason for, each call's first argument is asked the same (approx overflowed
  * or underflowed on its way). Nothing is asked for an output that is not infinite nor undef and does not read as 0, an
  * input with no approx or evalf, one with a typed infinity, one that changes state or calls a function of the user's,
  * nor once `late()`.
  */
-export function approxRange(giac: Giac, input: string, output: string, P: number, late: () => boolean, userFn: (name: string) => boolean): NoValue | null {
+export function approxRange(giac: Giac, input: string, output: string, P: number, late: () => boolean, userFn: (name: string) => boolean): NoValue | { bare: string } | null {
   // G148f2: Giac's undef of a finite bare input (approx(exp(10^20))/exp(10^20)) is asked as an infinity is.
   const over = infinite(output) || output.trim() === "undef";
   const read = over || !hasFloat(output) ? null : decimalFromString(output);
@@ -330,15 +379,26 @@ export function approxRange(giac: Giac, input: string, output: string, P: number
   if (firstNameIn(t, TYPED_INF, "typed") !== null || changesState(t, "typed") || functionsIn(t, "typed").some(userFn)) return null;
   const finite = (exact: string): boolean => !isError(exact) && exact !== "undef" && !infinite(exact);
   try {
-    const bare = giac.eval(`pasq:=(${bareOf(t)})`).trim();
+    const bareInput = bareOf(t);
+    const bare = giac.eval(`pasq:=(${bareInput})`).trim();
     if (!finite(bare)) return null;
-    // The value in pasq, whose exact text is `exact`, asked as the bare input is: past MPFR's range up, then down.
+    // The value in pasq, whose exact text is `exact`, asked as the bare input is: past MPFR's range up, then down. G404:
+    // up along the agreement check's climb (finiteLevel): a value finite at a higher level, or past the climb's reach, is
+    // no overflow (approx(ln(1-tanh(50))): 1-tanh(50) is 0 at P), and `reached` is set.
+    let reached = false;
     const past = (exact: string): NoValue | null => {
       if (exact === "0") return null;
-      if (overflowAt(giac, "pasq", exact, P)) return "overflow";
+      const level = finiteLevel(giac, "pasq", exact, P, late);
+      if (level === "overflow") return "overflow";
+      if (level !== null) {
+        reached = level !== "timeout";
+        return null;
+      }
       return !late() && underflow(giac, ["pasq"], P) ? "underflow" : null;
     };
     const whole = past(bare);
+    // G404: the bare input itself is the value approx asked for: the caller evaluates it (its decisions and the climb)
+    if (!whole && reached) return { bare: bareInput };
     if (whole || !over) return whole;
     for (const c of calls) {
       if (late()) return null;
