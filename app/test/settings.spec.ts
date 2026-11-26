@@ -49,14 +49,14 @@ test.describe("by keys", () => {
     expect(await entryValue(page)).toBe(""); // no key reached the line
   });
 
-  test("⚙, 3: Numbers holds the Decimal mark, the Fmt key cycle ›, Decimals in Fixed and Uncertainty (R40); 2 opens the cycle's five ticks, the hint a second line under Standard", async ({ page }) => {
+  test("⚙, 3: Numbers holds the Decimal mark, the Fmt key cycle ›, Decimals in Fixed and Uncertainty (R40); 2 opens the cycle's five ticks, the hint a second line under Standard, and Say the format last (R871)", async ({ page }) => {
     await tap(page, ["help", "d3"]);
     await expect(title(page)).toHaveText("Settings › Numbers");
     expect(await rowIds(page)).toEqual(["mark", "fmtCycle", "decimals", "uncertainty", "marks", "groups", "word"]); // R124: Marks, R125: Digit groups, R194: Word
     await expect(row(page, "fmtCycle").getByTestId("sheet-value")).toHaveText("STD SCI ENG");
     await tap(page, ["d2"]);
     await expect(title(page)).toHaveText("Settings › Numbers › Fmt key cycle");
-    expect(await rowIds(page)).toEqual(["std", "sci", "eng", "pfx", "fix"]);
+    expect(await rowIds(page)).toEqual(["std", "sci", "eng", "pfx", "fix", "fmtSay"]);
     await expect(row(page, "std").getByTestId("row-hint")).toBeVisible();
     await expect(sheet(page).getByTestId("row-hint")).toHaveCount(1);
     await expect(row(page, "pfx")).toHaveAttribute("data-selected", "false");
