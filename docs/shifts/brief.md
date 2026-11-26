@@ -121,7 +121,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 |---|---|---|---|---|
 | B5i | A277 golden planned by its import closure | annabell, Sonnet | `p1/annabell-goldenclosure` | A276 |
 | B5j | A278 measure e2e: built app against dev server | annabell, Sonnet | `p1/annabell-e2emeasure` | A277 |
-| B5k | [A281](packages/A281.md) e2e: a clipboard per test, the shared lock only where the real clipboard is the subject (A278; owner, 2026-11-26) | annabell, Sonnet | `p1/annabell-pageclip` | – |
+| B5k | A281 e2e: a clipboard per test, the shared lock only where the real clipboard is the subject (A278; owner, 2026-11-26) | annabell, Sonnet | `p1/annabell-pageclip` | – |
 | B6h | G806 det and rank of a float matrix: no `=` on a pivot the rounding decided (pass 244) | gorge, Opus | `p1/gorge-floatpivot` | – |
 | B6i | [G800](packages/G800.md) a unit sweep | gorge, Opus | `p1/gorge-unitsweep` | R885 |
 | B7 | G405 solve keeps close real roots | gorge, Opus | `p1/gorge-closeroots` | – |
