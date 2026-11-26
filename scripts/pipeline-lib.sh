@@ -284,6 +284,11 @@ host_cpu_drop() {
 # which kills the whole session (timeout's group included) and waits until it is empty, and only then do the traps drop the locks.
 # own_sh and owned_kill work in the main shell only: in $( ) or a pipe the registry and the traps are lost.
 owned_sessions=()
+# pid_running <pid>: succeeds while the process runs (a zombie, not yet reaped by wait, does not; kill -0 would say it does).
+pid_running() { local st; st="$(ps -o stat= -p "$1" 2>/dev/null || true)"; [[ -n "$st" && "$st" != Z* ]]; }
+# own_tick_on / own_tick <pid> (A276): own_sh, with own_tick_on=1, calls own_tick <the session's pid> once a second while the child runs;
+# pipeline.sh defines it (the audit's verdict: a FIX ends the running long check). Unset or 0: own_sh just waits.
+own_tick_on=0
 # session_alive <sid>: succeeds while a process of the session is not a zombie.
 session_alive() { ps -o stat= --sid "$1" 2>/dev/null | grep -qv '^Z'; }
 # session_kill <sid>: TERM to the whole session, KILL after N62_KILL_GRACE seconds (20), then waits (at most 10 s more) until it is empty.
@@ -323,6 +328,9 @@ own_sh() {
   setsid bash -c "$1" _ "${@:2}" <&0 &
   pid=$!
   owned_sessions+=("$pid")
+  if [[ "${own_tick_on:-0}" -eq 1 ]]; then  # A276: a long check: once a second own_tick may end the session (it returns 0 when it did)
+    while pid_running "$pid"; do own_tick "$pid" && break; sleep 1 & wait $! || true; done
+  fi
   wait "$pid" || rc=$?
   session_kill "$pid" || true
   for s in "${owned_sessions[@]}"; do [[ "$s" == "$pid" ]] || keep+=("$s"); done
