@@ -112,6 +112,15 @@ describe.skipIf(!giacAvailable())("a unit row's value ± σ (R885, real Giac)", 
     expect(r.text).toBe(`${rowText} m`);
   });
 
+  it("the headline of (1000 ± 100) − (997 ± 50) m, 3 ± 111.8, reads 0 ± 110, not 00 ± 110 (R885f1); the row 3 ± 110", async () => {
+    const f = "(pasupm(1000,100)-pasupm(997,50))*pasu1";
+    const r = await drawn(f, "std", 12);
+    const v = shownOf(r.q, { format: "STD", digits: 12 }) as UnitShown;
+    expect(v.text).toBe("0 ± 110");
+    expect(v.sigma && v.sigma.head + v.sigma.tail).toBe("0 ± 110");
+    expect(r.text).toBe("3 ± 110 m");
+  });
+
   it("the second line of G·M writes σ in E form, as its value (bug list 4): σ 9.0E9, not 9000000000", async () => {
     const q = units("pasupm(6.67430e-11,1.5e-15)*5.972e24*pasu1", 12);
     expect((shownOf(q, { format: "STD", digits: 12 }) as UnitShown).sub).toBe("3.98589196E14 · σ 9.0E9");

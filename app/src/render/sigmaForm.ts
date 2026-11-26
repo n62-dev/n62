@@ -96,12 +96,15 @@ export function sigmaDrawn(v: DecimalValue, sv: DecimalValue, o: FormatOptions, 
   const last = isZero(v) ? Math.min(0, k) : Math.max(wanted, floor);
   const r = roundAt(v, last);
   const zero = /^0+$/.test(r.digits);
-  const e = zero ? Math.max(0, last) : r.exp;
-  const d = zero ? "0".repeat(e - last + 1) : r.digits;
+  // a value that rounds to zero is written from the units place: its decimals down to σ's place (0.00 ± 0.10), and
+  // the single digit 0 when σ's place is above the units (0 ± 120, not 00 ± 120: no zeros padded for a zero)
+  const vl = zero ? Math.min(0, last) : last;
+  const e = zero ? 0 : r.exp;
+  const d = zero ? "0".repeat(1 - vl) : r.digits;
   const f = zero ? { p: 0, ...(o.format === "PFX" ? { prefix: "" } : {}) } : powerOf(o, e, last, fixSci);
   // STD and FIX drawn plain have no exponent; the other forms write theirs, E0 too (sci, eng in format.ts)
   const plainValue = f.prefix === undefined && f.p === 0 && (o.format === "STD" || (o.format === "FIX" && !fixSci));
-  const value = written(v.neg && !zero, d, e, last, f, plainValue);
+  const value = written(v.neg && !zero, d, e, vl, f, plainValue);
   // σ in the value's prefix or exponent; an exponent of 0 is not written on σ (9.810E0 ± 0.050). A σ finer than the
   // value's confirmed digits: in its own form (3.14159265359E20 ± 3.0, not 0.000000000000000000030E20)
   const sigma = last > k ? sigmaAlone(sv, o) : written(false, s2.digits, s2.exp, k, f, f.p === 0);

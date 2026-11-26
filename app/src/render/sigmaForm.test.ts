@@ -87,6 +87,24 @@ describe("sigmaDrawn: value and σ in the same form (R885, h3 #5, #12, bug list 
   });
 });
 
+describe("sigmaDrawn at σ: a value that rounds to zero above the units is the single digit 0 (R885f1)", () => {
+  // (1000 ± 100) − (997 ± 50) = 3 ± 111.8: the unit view's headline cut at σ's 10¹ read 00 ± 110; 40 ± 1234 read 000 ± 1200
+  it.each([
+    ["3", "120", STD(), "0 ± 120"],
+    ["3", "111.8", STD(), "0 ± 110"],
+    ["40", "1234", STD(), "0 ± 1200"],
+    ["-40", "1234", STD(), "0 ± 1200"],
+    ["3", "120", { format: "SCI", digits: 12 }, "0E0 ± 120"],
+    ["40", "1234", { format: "PFX", digits: 12 }, "0 ± 1200"],
+    // controls: a zero below the units keeps its decimals to σ's place; a nonzero value is drawn as before
+    ["0.003", "0.12", STD(), "0.00 ± 0.12"],
+    ["40", "123", STD(), "40 ± 120"],
+  ] as [string, string, FormatOptions, string][])("%s ± %s at %o → %s", (v, s, o, want) => {
+    const r = sigmaDrawn(dec(v), dec(s), o, null, true);
+    expect(r && `${toText(r.value)} ± ${toText(r.sigma)}`).toBe(want);
+  });
+});
+
 describe("sigmaAlone: the unit view's second line (R885, h3 #12)", () => {
   it.each([
     ["0.05", "STD", "0.050"],
