@@ -363,10 +363,43 @@ done
 printf '%s\n' app/src/ui/foo.ts app/scripts/gate.ts docs/backlog.md | golden_selected && fail "A25: an unrelated diff plans the golden check"
 grep -q 'golden_selected' "$here/pipeline.sh" || fail "A25: pipeline.sh does not use golden_selected for the golden check"
 # A136: every module the golden gate runs (the value-import closure of app/scripts/golden.ts) is selected; a file outside it is not
-miss="$(node "$here/../tools/golden-closure.mjs" | while IFS= read -r f; do printf '%s\n' "$f" | golden_selected || printf '%s ' "$f"; done)"
+clo="$(node "$here/../tools/golden-closure.mjs")"  # (A277: one walk; golden_selected reads it from GOLDEN_CLOSURE_LIST)
+miss="$(while IFS= read -r f; do printf '%s\n' "$f" | GOLDEN_CLOSURE_LIST="$clo" golden_selected || printf '%s ' "$f"; done <<<"$clo")"
 [[ -z "$miss" ]] || fail "A136: modules the golden gate runs are not in GOLDEN_RE: $miss"
-[[ "$(node "$here/../tools/golden-closure.mjs" | wc -l)" -gt 50 ]] || fail "A136: the golden closure walk found fewer than 50 modules"
+[[ "$(wc -l <<<"$clo")" -gt 50 ]] || fail "A136: the golden closure walk found fewer than 50 modules"
 printf '%s\n' app/src/keyboard/Keypad.svelte | golden_selected && fail "A136: a file outside the golden closure (Keypad.svelte) plans the golden check"
+# A277: app/src/input/ and app/src/units/ plan golden by the closure, not by folder; data files and the other folders stay selected
+for f in app/src/units/open.ts app/src/input/tapGuard.ts app/src/units/view.ts app/src/units/kept.ts app/src/input/backLayer.ts app/src/units/entry.test.ts; do
+  printf '%s\n' "$f" | golden_selected && fail "A277: a diff of only $f (outside the golden closure) plans the golden check"
+done
+printf '%s\n' app/src/units/open.ts app/src/input/tapGuard.ts docs/backlog.md | golden_selected && fail "A277: two files outside the closure plan the golden check"
+for d in input units; do
+  for f in $(grep -E "^app/src/$d/" <<<"$clo" | head -n 2); do
+    printf '%s\n' "$f" | golden_selected || fail "A277: a closure file ($f) does not plan the golden check"
+  done
+done
+printf '%s\n' app/src/units/open.ts app/src/units/build.ts | golden_selected || fail "A277: a diff with one closure file and one outside does not plan the golden check"
+for f in engine/giac/x.patch tests/golden/x.yaml find/x.yaml tools/find-index/x.mjs app/src/units/x.yaml app/src/units/x.json app/src/input/x.yaml app/src/input/x.json; do
+  printf '%s\n' "$f" | golden_selected || fail "A277: a diff touching only $f does not plan the golden check"
+done
+# a GOLDEN_CLOSURE_LIST given is the closure (the pipeline's one walk per plan)
+GOLDEN_CLOSURE_LIST=$'app/src/units/open.ts' bash -c 'source "$1"; printf "%s\n" app/src/units/open.ts | golden_selected' _ "$here/pipeline-lib.sh" || fail "A277: GOLDEN_CLOSURE_LIST is not read"
+# the tool failing plans golden for the folders (never a silent skip), and says so
+ft="$tmp/fakelib"; mkdir -p "$ft/scripts" "$ft/tools"; cp "$here/pipeline-lib.sh" "$ft/scripts/"; echo 'process.exit(3);' > "$ft/tools/golden-closure.mjs"
+out="$(bash -c 'source "$1"; printf "%s\n" app/src/units/open.ts | golden_selected' _ "$ft/scripts/pipeline-lib.sh" 2>&1)"; rc=$?
+[[ $rc -eq 0 ]] && grep -q 'golden-closure.mjs failed' <<<"$out" || fail "A277: a failing closure tool does not plan golden loudly (rc $rc): $out"
+# an alias or a bare path into app/src makes the walk fail loudly; a relative path and a package do not
+ct="$tmp/closure"; mkdir -p "$ct/app/src/sub"
+echo 'export const y = 1;' > "$ct/app/src/y.ts"; echo 'export const z = 1;' > "$ct/app/src/sub/z.ts"
+closure_in() { printf '%s\n' "$1" > "$ct/app/src/a.ts"; GOLDEN_CLOSURE_ROOT="$ct" node "$here/../tools/golden-closure.mjs" app/src/a.ts 2>&1; }
+for imp in 'import { y } from "@/y.ts";' 'import { y } from "~/y.ts";' 'import { y } from "src/y.ts";' 'import { y } from "app/src/y.ts";' 'import { z } from "sub/z.ts";' 'const m = await import("@/y.ts");' 'import "@/y.ts";' 'export { y } from "@/y.ts";'; do
+  out="$(closure_in "$imp")"; rc=$?
+  [[ $rc -ne 0 ]] && grep -q 'alias or bare path into app/src' <<<"$out" || fail "A277: the closure tool accepts '$imp' (rc $rc): $out"
+done
+for imp in 'import { y } from "./y.ts";' 'import { z } from "./sub/z.ts";' 'import { MathfieldElement } from "mathlive";' 'import { readFileSync } from "node:fs";' 'import { x } from "@capacitor/clipboard";'; do
+  out="$(closure_in "$imp")"; rc=$?
+  [[ $rc -eq 0 ]] || fail "A277: the closure tool refuses '$imp' (rc $rc): $out"
+done
 # A25 item 5: a stage line NEW / NOW PASSING / CHANGED / GONE fails the engine stages even at exit 0
 printf 'x\n  sweep NOW PASSING a1: remove it\nSWEEP PASSED: 1\n' > "$tmp/st1.log"; printf '  seq known y\nSEQ PASSED: 1\n' > "$tmp/st2.log"
 stage_findings "$tmp/st1.log" >/dev/null || fail "A25: a NOW PASSING stage line is not a finding"
