@@ -84,8 +84,10 @@ for (const [w, h] of [[412, 915], [360, 740]] as const) {
 
     test("a tap on the reading, then the hardware key m, still types into the slot", async ({ page }) => {
       await tapSlot(page, 0); // (a tap on the field moved the focus onto MathLive's own element)
+      await expect.poll(() => focusOnView(page)).toBe(true);
+      await page.waitForTimeout(200); // (MathLive's own late focus of that tap has landed: with every worker busy it came after the next click)
       await page.getByTestId("unit-reading").click();
-      expect(await focusOnView(page)).toBe(true);
+      await expect.poll(() => focusOnView(page)).toBe(true); // (the focus comes back in a timeout after the tap, units/open.ts: late on a loaded host)
       await page.keyboard.press("m");
       expect(await slot(page, "u1")).toBe("m");
     });

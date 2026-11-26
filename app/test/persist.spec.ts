@@ -288,7 +288,7 @@ async function heldStart(page: Page, stored: string[], kept: string[] = [], also
   }
   if (kept.length > 0) await tap(page, kept);
   await page.waitForTimeout(800); // the history write is debounced (400 ms) and asynchronous
-  await hide(page);
+  await hide(page, await entryValue(page)); // (the kept line's write waited for, not a fixed 300 ms: slow on a loaded host)
   await page.evaluate(() => window.n62.yieldWriter());
   let release = (): void => {};
   const gate = new Promise<void>((r) => (release = r));
