@@ -14,7 +14,7 @@
   "src/engine/giacPrint.ts": 17,
   "src/engine/giacPrintStart.ts": 7,
   "src/engine/homeEval.ts": 5,
-  "src/engine/host.ts": 3,
+  "src/engine/host.ts": 4,
   "src/engine/icdf.ts": 3,
   "src/engine/library.ts": 8,
   "src/engine/nonsquare.ts": 1,

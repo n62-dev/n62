@@ -41,6 +41,8 @@ export interface Giac {
   /** G97: the last eval printed Giac's "^ is ambiguous on non square matrices" (a power met a list that is not a square
    *  matrix); absent when the messages are not read (then unknown). */
   ambiguousPower?(): boolean;
+  /** G806: the last eval printed patch 0071's warning (rank or det decided a float pivot within the rounding); absent: not read. */
+  roundedPivot?(): boolean;
   /** G102: sets Giac's Digits through bridge-1 (`giac_ctx_set` of decimal_digits) before the next Giac call, so two sets
    *  with no call between them are one (host.ts gated); absent: `Digits:=` as text. */
   digits?(d: number): void;

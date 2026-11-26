@@ -279,6 +279,9 @@ const CANARIES: [string, string, RegExp, string][] = [
   ["0070-vector-entry-mpfr-precision.patch", "giac-2.1.0/src/gen.cc", /b2=accurate_evalf\(b,mpfr_get_prec\(a\._REALptr->inf\)\);\s*if \(b2\.is_approx\(\)\)\s*return a\+b2;/, "gen sym_add(const gen & a,const gen & b,GIAC_CONTEXT){"],
   // ... and Eta (under Zeta) sums its series with the terms of 16 digits at any precision (Zeta(1/2+i) right to about 20 digits at Digits 40)
   ["0070-vector-entry-mpfr-precision.patch", "giac-2.1.0/src/usual.cc", /int ndigits=16; \/\/ FIXME\? use decimal_digits;\s*double n=/, "gen Eta(const gen & s,int ndiff,GIAC_CONTEXT){"],
+  // G806 (F486), patch 0071: rref_reduce's det of a matrix with a column of zeros is the exact integer 0, for a float matrix too, so a
+  // column the rounding took for 0 read as exact (det(exp(approx([[9.81,2,10!],[pi,7,pi],[0.3,pi,2.5]]))) = 0 at any Digits)
+  ["0071-float-pivot-rounding-decision.patch", "giac-2.1.0/src/vecteur.cc", /status=3;\s*if \(rref_or_det_or_lu==1\)\{\s*det=0;\s*return 1;/, "else { // if pivot is 0 increment either the line or the col"],
 ];
 
 const tar = tarball(SOURCES.giac);

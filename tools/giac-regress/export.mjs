@@ -650,6 +650,8 @@ export const PATCHED_IDS = new Map([
   // near-singular rank rows fail on a build without 0068 alone; in this file a line before them leaves context0's epsilon at 1e-180
   // (F478), which masks their is_zero fault there, so the written g622-* lines, first in the file, test the same inputs
   ...["rank-approx-123", "linsolve-approx-tiny-0-20", "rank-approx-123-20", "rank-approx-near-singular-1e-20", "det-approx-tiny", "inv-approx-tiny-10-20", "det-approx-tiny-20", "det-approx-diag-tiny", "det-approx-block-tiny", "det-approx-diag-1e-13-40"].map((k) => [`g622-${k}`, "0068-float-rref-cancelled-pivot.patch"]),
+  // G806: its 30-digit control runs g622-rank-approx-123's line (Digits 40), which stock gets wrong (F436: 0, right 2)
+  ["g806-keep-rank-approx-123-30", "0068-float-rref-cancelled-pivot.patch"],
   // G793, G793f1: usual.cc _lcm kept the sign of the product of integers and of fractions of integers (lcm(-4,6) = -12, lcm(1/2,-1/3) = -1); the
   // g793*-keep-* rows pass on stock and stay in the check file (the list results of the *-pairs-* rows and the *-cas-* rows are not exported)
   ...["lcm-neg4-6", "lcm-4-neg6", "lcm-list-neg4-6-10", "lcm-neg3-neg5-neg7", "lcm-neg2^70-3", "lcm-neg4-alone"].map((k) => [`g793-${k}`, "0065-lcm-integers-positive.patch"]),
@@ -1109,6 +1111,17 @@ export function build(cases) {
     ["g804-mult-vector-approx-e-30", "((2*[approx(1/10),exp(1)])[1]-5)*10^14", "(2*exp(1)-5)*10^14", "1/10^8"],
   ]) {
     patched.push("// patch 0070-vector-entry-mpfr-precision.patch", `// ${id} (derived: the exact value)`, `Digits:=30:; pc("${id}",'${input}',${value},${tol});`);
+    nPatched++;
+  }
+  // Patch 0071 (G806, F486), written lines: rref_reduce's det of a matrix with a zero column was the exact integer 0 for a float matrix
+  // too, so det(e^M), whose zero column is the rounding's (e^M's small directions need 1400 digits), read as exact; now a float 0 at the
+  // matrix's precision. A line passes when the det is a float (pasr 1); stock gives DOM_INT. Expected (derived): det e^A = e^trace A, never
+  // an exact 0. The warning patch 0071 prints is read by the host (golden g806-*), not here.
+  for (const [id, m] of [
+    ["g806-det-expm-float-40", "[[9.81,2,10!],[pi,7,pi],[0.3,pi,2.5]]"],
+    ["g806-det-expm-fact-float-40", "[[1,2,3628800],[3,4,2],[1,1,1]]"],
+  ]) {
+    patched.push("// patch 0071-float-pivot-rounding-decision.patch", `// ${id} (derived: det e^A = e^trace A, never an exact 0)`, `Digits:=40:; pasr:=when(type(det(exp(approx(${m}))))==DOM_FLOAT,1,0):; pc("${id}",'pasr',1,1/10^30);`);
     nPatched++;
   }
   // Patch 0067 (G803, F240), written lines: prog.cc _convert took the list's subtype from a last argument that is no _INT_ (its
