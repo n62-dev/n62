@@ -156,8 +156,9 @@ for (const [w, h] of [[412, 915], [360, 740]] as const)
           : s.part === "alphalegend" ? false : s.part === "shiftlegend" ? k?.label?.shift !== undefined && opens(k.shift) : opens(k?.primary);
         expect(s.opens === "true", where).toBe(want);
         if (!want) {
-          // (a prefix cell's face ends in its slot line instead, R866: an empty pseudo-element, unitpad-draw.spec.ts)
-          expect(s.pad === "prefix" && s.part === "main" ? ['""'] : ["none", "normal"], where).toContain(s.after);
+          // (a prefix cell's face and its prefix legends T, h, f end in their slot line instead, R866 and R908: an empty
+          // pseudo-element, unitpad-draw.spec.ts)
+          expect(s.pad === "prefix" ? ['""'] : ["none", "normal"], where).toContain(s.after);
           continue;
         }
         if (cells.includes(s.key)) marked.push(`${s.key}/${s.part} ${s.text}`);
