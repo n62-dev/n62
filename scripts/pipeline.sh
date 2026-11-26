@@ -871,16 +871,33 @@ preflight() {  # <round>
 # A84: golden, its stages, e2e and shell are the long checks: the audit starts before the first of them (audit_start), so it runs beside
 # them; a round whose cheap checks (docs, typecheck, size, redfirst, vitest) fail starts no audit.
 long_check() { case "$1" in golden|stages|e2e|shell) return 0;; *) return 1;; esac; }
+# A276: a FIX of the audit ends the round's long checks: they would run on, holding integ and host-cpu, for a commit the fix round replaces.
+# own_tick (pipeline-lib.sh own_sh, once a second while a long check runs) and run_checks (between the long checks) ask audit_fix_ready;
+# on a FIX the running check's session gets TERM, KILL after 30 s (N62_STOP_GRACE), checks_stopped is set and run_checks goes to the fix round.
+checks_stopped=0
+audit_fix_ready() {  # succeeds when the audit has ended with a FIX (audit_finish ran: verdict, log line, audit_ran)
+  [[ -n "$audit_pid" ]] && ! pid_running "$audit_pid" || return 1
+  audit_finish
+  [[ "$verdict" == FIX ]]
+}
+own_tick() {  # <pid of the running check's session>: 0 when the audit's FIX ended it
+  audit_fix_ready || return 1
+  checks_stopped=1; N62_KILL_GRACE="${N62_STOP_GRACE:-30}" session_kill "$1" || true
+}
 run_checks() {  # <round>; returns 1 and writes fail-<round>.txt on failure; once the cheap checks passed, the audit runs (audit_start)
   local round="$1" list name rc=0 why redwhy="" kind p1_engine="${N62_P1_ENGINE:-$GIAC_OUT}"
   [[ $engine_managed -eq 0 ]] || p1_engine="$engine_root/key-$p1key"
   list="$(want_checks)"; [[ ",$list," == *,stages,* ]] || list="${list//golden/golden,stages}"  # A25: the engine stages follow golden
   [[ -n "$list" ]] || { runlog "checks: none"; audit_start; return 0; }
   host_cpu_take "pipeline-$n" "pipeline #$n $id:" || die "host-cpu lock busy for 7200 s"
-  : > "$run/fail-$round.txt"
+  : > "$run/fail-$round.txt"; checks_stopped=0
   for name in ${list//,/ }; do
-    ! long_check "$name" || [[ -n "$audit_pid" ]] || audit_start
-    local out="$run/check-$round-$name.log"
+    ! long_check "$name" || [[ -n "$audit_pid" || $audit_ran -eq 1 ]] || audit_start
+    if long_check "$name" && audit_fix_ready; then  # A276: the FIX came before this long check started
+      checks_stopped=1; log "pipeline #$n $id: checks stopped after audit FIX (round $round; $name ran 0 s)"; host_cpu_drop; return 0
+    fi
+    local out="$run/check-$round-$name.log" ct0=$SECONDS
+    ! long_check "$name" || own_tick_on=1
     case "$name" in
       typecheck|size|docs) cheap_check "$name" "$out" || rc=1;;  # A83
       vitest)    own_sh 'cd "$1" && timeout 1800 npm run -s index && FORCE_COLOR=0 NO_COLOR=1 FIND_INDEX=required timeout 1800 npm run -s test' "$wt/app" > "$out" 2>&1 < /dev/null || rc=1;;
@@ -888,6 +905,7 @@ run_checks() {  # <round>; returns 1 and writes fail-<round>.txt on failure; onc
       golden)    own_sh 'cd "$1" && timeout 2700 npm run -s golden' "$wt/app" > "$out" 2>&1 < /dev/null || rc=1;;
       stages)    : > "$out"; local st sc=0
                  for st in "${ENGINE_STAGES[@]}"; do
+                   [[ $checks_stopped -eq 0 ]] || break  # A276
                    echo "== $st" >> "$out"; own_sh 'cd "$1" && timeout 600 node "scripts/$2.ts"' "$wt/app" "$st" >> "$out" 2>&1 < /dev/null || sc=1
                  done
                  # each is a FAIL on NEW or NOW PASSING (the script's exit code too)
@@ -909,6 +927,10 @@ run_checks() {  # <round>; returns 1 and writes fail-<round>.txt on failure; onc
                  fi;;
       *) die "unknown check $name";;
     esac
+    own_tick_on=0
+    if [[ $checks_stopped -eq 1 ]]; then  # A276: the audit's FIX ended this check; the fix round gets the findings (the caller reads the audit)
+      log "pipeline #$n $id: checks stopped after audit FIX (round $round; $name ran $((SECONDS - ct0)) s)"; host_cpu_drop; return 0
+    fi
     if [[ $rc -eq 1 && ( "$name" == e2e || "$name" == vitest ) ]] && mm="$(node "$wt/app/scripts/pipeline-logs.ts" mismatch "$name" "$out")"; then
       # the parsed failures differ from the runner's own count: no timing re-run can be trusted; a failure for the fix round
       runlog "check $name: count mismatch: $mm"; echo "count mismatch: $mm" >> "$out"
@@ -925,7 +947,7 @@ run_checks() {  # <round>; returns 1 and writes fail-<round>.txt on failure; onc
     fi
     runlog "check $name: ok"
   done
-  [[ -n "$audit_pid" ]] || audit_start  # a list without a long check
+  [[ -n "$audit_pid" || $audit_ran -eq 1 ]] || audit_start  # a list without a long check
   host_cpu_drop
   return 0
 }
@@ -1081,7 +1103,7 @@ audit_start() {
   audit_pid="$agent_pid"; runlog "audit $rounds started beside the long checks"
 }
 audit_finish() {
-  agent_end "$audit_pid" "audit-$n-$rounds" "$run/audit-$rounds.log"; audit_pid=""
+  agent_end "$audit_pid" "audit-$n-$rounds" "$run/audit-$rounds.log"; audit_pid=""; audit_ran=1
   verdict="$(grep -m1 -oE '^(APPROVED|FIX)' "$run/audit-$rounds.log" || true)"
   if [[ "$verdict" == APPROVED ]]; then log "pipeline #$n $id: audit APPROVED (round $rounds)"
   else log "pipeline #$n $id: audit ${verdict:-unclear} (round $rounds): $(grep -vE '^(FIX|APPROVED)?$' "$run/audit-$rounds.log" | head -n 1 | cut -c1-120)"; fi
@@ -1104,7 +1126,7 @@ while :; do
     if [[ $crc -eq 1 ]]; then
       log "pipeline #$n $id: checks failed (round $rounds): $(fail_line "$run/fail-$rounds.txt" "$run/fail-$rounds.names")"
       queue_leave  # nothing merges this round: the audit, if it runs, finishes outside the queue
-    else log "pipeline #$n $id: checks passed (round $rounds)"; fi
+    elif [[ $checks_stopped -eq 0 ]]; then log "pipeline #$n $id: checks passed (round $rounds)"; fi  # A276: a stopped round logged its stop line
     [[ -z "$audit_pid" ]] || { audit_finish; audit_ran=1; }
     [[ $crc -eq 1 || "$verdict" != APPROVED ]] || break
     afix=0; [[ $audit_ran -eq 0 || "$verdict" == APPROVED ]] || afix=1  # A124: a free round has no audit FIX
