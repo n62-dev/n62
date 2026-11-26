@@ -1388,6 +1388,9 @@ Digits:=40:; pc("g622-rank-approx-123-20",'(rank(approx([[1,2,3],[4,5,6],[7,8,9]
 // patch 0069-vector-mpfr-arith-recursion.patch
 // g802-home-inv-exp-approx-entry-scaled-00-40 (precision.yaml, oracle)
 Digits:=50:; pc("g802-home-inv-exp-approx-entry-scaled-00-40",'(inv(exp([[approx((1/10^1)),exp(1),pi],[5,2,7],[exp(1),7,(981/10^2)]]/10^4))[0][0])',(9999901106595578860437560849212499637944/10^40),5/10^41);
+// patch 0068-float-rref-cancelled-pivot.patch
+// g806-keep-rank-approx-123-30 (precision.yaml, derived)
+Digits:=40:; pc("g806-keep-rank-approx-123-30",'(rank(approx([[1,2,3],[4,5,6],[7,8,9]])))',2,5/10^30);
 // patch 0006-reim-root-of-unknown-sign.patch
 // g96-cas-im-2sqrt (bench.yaml, derived)
 Digits:=40:; pc("g96-cas-im-2sqrt",'subst(im(2*sqrt(x)),x,-1)',2,1/10^30);

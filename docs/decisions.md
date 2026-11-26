@@ -8,7 +8,6 @@ Phase 0 (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md). This fil
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
 - **G784, Paste of a copied name:** Copy writes letters (`2*i`, `β*2`); Paste reads one number, so `2*i` copied from the name i came back as the constant i (principle 3); G784f1 refuses a text copied from a row with a stand-in. Recommended: keep Paste a number reader; reading expressions is its own package (the letter i against the constant i needs a rule first).
-- **G806, inexact singular floats:** Recommended: keep ⚠. `rank(approx([[0.1,0.3],[0.2,0.6]]))` is ⚠ 1 (was = 1): the rounded entries are no singular matrix.
 - **G622f2, a singular float inv:** Recommended: refuse, as exact inv does. `inv(approx(10^-9*[[2.5,2E8,e],[2.5,π,2E-3],[5,2E8+π,e+2E-3]]))` is 1E14–1E22 noise, row 3 ≈.
 - **The release bar's week (A273, G799; pass 241):** Recommended: a night counts when every `NIGHTLY` finding falls under a package or bug line the pass names (no new cause), as the clock seed never repeats a known row. Night 1 (11-25): all 118 named (G802, G804, G805, G622f2, F145, F480, F487).
 - **R779, the drag after the arrow keys, on the Fairphone:** not reproduced in Chromium touch emulation (linetouch.spec.ts R779 cases); lineTouch.ts now ends a stale touch. Does the drag work on the Fairphone 6? If not, record `adb` pointer events for the sequence.

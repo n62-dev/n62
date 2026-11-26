@@ -650,6 +650,8 @@ export const PATCHED_IDS = new Map([
   // near-singular rank rows fail on a build without 0068 alone; in this file a line before them leaves context0's epsilon at 1e-180
   // (F478), which masks their is_zero fault there, so the written g622-* lines, first in the file, test the same inputs
   ...["rank-approx-123", "linsolve-approx-tiny-0-20", "rank-approx-123-20", "rank-approx-near-singular-1e-20", "det-approx-tiny", "inv-approx-tiny-10-20", "det-approx-tiny-20", "det-approx-diag-tiny", "det-approx-block-tiny", "det-approx-diag-1e-13-40"].map((k) => [`g622-${k}`, "0068-float-rref-cancelled-pivot.patch"]),
+  // G806: its 30-digit control runs g622-rank-approx-123's line (Digits 40), which stock gets wrong (F436: 0, right 2)
+  ["g806-keep-rank-approx-123-30", "0068-float-rref-cancelled-pivot.patch"],
   // G793, G793f1: usual.cc _lcm kept the sign of the product of integers and of fractions of integers (lcm(-4,6) = -12, lcm(1/2,-1/3) = -1); the
   // g793*-keep-* rows pass on stock and stay in the check file (the list results of the *-pairs-* rows and the *-cas-* rows are not exported)
   ...["lcm-neg4-6", "lcm-4-neg6", "lcm-list-neg4-6-10", "lcm-neg3-neg5-neg7", "lcm-neg2^70-3", "lcm-neg4-alone"].map((k) => [`g793-${k}`, "0065-lcm-integers-positive.patch"]),
