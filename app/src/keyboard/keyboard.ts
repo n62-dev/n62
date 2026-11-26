@@ -97,8 +97,6 @@ export interface Key {
   readonly user?: true;
   /** Set only on a key drawn as a unit pad cell (R24b, units/pad.ts): its kind, "empty" for an unset user cell. */
   readonly pad?: "prefix" | "unit" | "op" | "keep" | "user" | "empty";
-  /** R908: the legends of a prefix cell that are prefixes (T, h, f): they carry its slot line (not σ, Shift + 1, passed through). */
-  readonly pfx?: Readonly<Partial<Record<"shift" | "alpha", true>>>;
 }
 
 /** A template action (and its one-line form, if any). */

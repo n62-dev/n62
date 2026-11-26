@@ -432,9 +432,9 @@
       data-pad={key.pad}
       data-v={varsOf(key)}
     >
-      <span class="shiftlegend" data-fit="legend" data-opens={opensSheet(key.actions.shift) || undefined} data-pfx={key.pfx?.shift}>{hint(key)}</span>
+      <span class="shiftlegend" data-fit="legend" data-opens={opensSheet(key.actions.shift) || undefined}>{hint(key)}</span>
       <span class="main" data-fit="face" data-opens={(typed(key) === undefined && opensSheet(act(key))) || undefined}>{face(key)}</span>
-      {#if lettered}<span class="alphalegend" data-fit="legend" data-pfx={key.pfx?.alpha}>{alphaHint(key)}</span>{/if}
+      {#if lettered}<span class="alphalegend" data-fit="legend">{alphaHint(key)}</span>{/if}
     </button>
   {/each}
   {#if padArea}<div class="hub" data-trackpad data-testid="pad-hub" style:grid-row={padArea.rows} style:grid-column={padArea.cols}></div>{/if}
@@ -593,13 +593,13 @@
   }
   /* R866: the slot line (G_), drawn, never typed: text and spoken name stay the letter. An empty inline block sits on the baseline in
      any font; its negative margin hangs it out of the flow as ▾ hangs (fit.ts counts it), the face shifted left by half to stay
-     centred. In the face's colour at 80 %, Plain keys too. σ (Shift + 1, a sheet) is no prefix: ▾ only. R908: a prefix legend (T, h, f;
-     data-pfx) ends in it too, in its em and 1 px high, so the hecto h and the hour h differ at rest; a legend is left-aligned: no shift */
+     centred. In the face's colour at 80 %, Plain keys too. σ (Shift + 1, a sheet) is no prefix: ▾ only. R908: a prefix cell's legend (T, h, f)
+     ends in it too, in its em and 1 px high, so the hecto h and the hour h differ at rest; a legend is left-aligned: no shift */
   .key[data-pad="prefix"] .main:not([data-opens="true"], :empty) {
     translate: var(--slot-shift) 0;
   }
   .key[data-pad="prefix"] .main:not([data-opens="true"], :empty)::after,
-  [data-pfx]:not(:empty)::after {
+  .key[data-pad="prefix"] [data-fit="legend"]:not([data-opens="true"], :empty)::after {
     content: "";
     display: inline-block;
     vertical-align: baseline;
@@ -610,7 +610,7 @@
     background: currentColor;
     opacity: 0.8;
   }
-  [data-pfx]:not(:empty)::after {
+  .key[data-pad="prefix"] [data-fit="legend"]:not([data-opens="true"], :empty)::after {
     height: var(--stroke-thin);
   }
   /* High contrast leaves the key colours little room to differ: the prefix cells keep an outline there too */

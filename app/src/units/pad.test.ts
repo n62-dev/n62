@@ -197,10 +197,4 @@ describe("the keypad's drawing of a cell", () => {
     expect(pad.key(keyboard.byId.get("esc") as Key, undefined)).toBeUndefined();
     expect(pad.key(keyboard.byId.get("u3") as Key, undefined)?.user).toBeUndefined();
   });
-
-  it("marks the prefix legends (T, h, f) for the slot line, not σ passed through d1 nor a unit's legend (R908)", () => {
-    const pfx = (id: string) => pad.key(keyboard.byId.get(id) as Key, undefined)?.pfx;
-    expect([pfx("d7"), pfx("d4"), pfx("dot")]).toEqual([{ shift: true }, { alpha: true }, { alpha: true }]);
-    expect([pfx("d1"), pfx("d8"), pfx("d3"), pfx("d9")]).toEqual([undefined, undefined, undefined, undefined]);
-  });
 });
