@@ -88,12 +88,12 @@ test("from the clipboard: beams.txt imports; a bad text is refused whole with it
 
   // a good definition, then a line that is not one: nothing of it is defined
   await fromClipboard(page, "// n62 library 4\n// fine\nokfn(x):=x+1\nassume(x>0)\n");
-  await expect(notice(page)).toContainText("line 4");
+  await expect(notice(page)).toContainText("line 4", { timeout: 30_000 });
   await expect(notice(page)).toContainText("nothing changed");
   expect(Object.keys(await names(page))).not.toContain("okfn");
   // a failing test: refused, with its line, and the engine is back without the definition
   await fromClipboard(page, "// n62 library 4\n// twice\ntw(x):=2*x\n// test: tw(2) == 4\n// test: tw(3) == 7\n");
-  await expect(notice(page)).toContainText("line 5");
+  await expect(notice(page)).toContainText("line 5", { timeout: 30_000 }); // (the engine runs the library's tests: slow with every worker busy)
   expect(Object.keys(await names(page))).not.toContain("tw");
   await page.waitForFunction(() => window.n62.session.engineState === "ready");
   expect(await cas(page, "type(tw)")).not.toBe("func");

@@ -47,7 +47,7 @@ test("a job over a second: the dash shows 150 ms after Enter and is gone with th
 
 test("a job under 50 ms never shows the dash", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  await open(page, "engine=fake&delay=30");
+  await open(page, "engine=fake&delay=5"); // (5 ms, far under the 150 ms: with every worker busy a 30 ms timer came 150 ms late)
   await watchDash(page);
   await tap(page, ["d2", "add", "d3", "enter"]);
   await expect(page.locator('[data-status="done"]')).toHaveCount(1);
