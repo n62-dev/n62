@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R197: the Help key's words (views/helpSheet.ts; R869: the cards, views/helpCard.ts). A table of its own, so the chunks that share Find's table (the unit
+// R197: the Help key's words (views/helpSheet.ts; R869: the cards, views/helpCard.ts; R870: the unit view's, units/slotHelp.ts). A table of its own, so the chunks that share Find's table (the unit
 // view's) do not carry them. English only so far.
 export const enHelp = {
   "title": "Help: {name}",
@@ -15,6 +15,9 @@ export const enHelp = {
   "card.step": "a difference of 1 {unit} is {size} {si}",
   "card.notChecked": "not checked",
   "card.insert": "Insert",
+  // R870: Help in the unit view (units/slotHelp.ts): a factor's row, and the title of an empty slot's help
+  "unit.row": "{names}: {value}",
+  "unit.empty": "unit slot",
 } as const;
 
 export type HelpMessageKey = keyof typeof enHelp;

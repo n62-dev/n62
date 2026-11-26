@@ -111,12 +111,12 @@ for (const width of [412, 360]) {
       expect(await slotText(page, "u1")).toBe("k:m");
     });
 
-    test("Shift + the ⚙ key (Help, R863) does not open Settings over the view and leaves it as it was", async ({ page }) => {
+    test("Shift + the ⚙ key (Help, R863) does not open Settings: R870's help of the active slot, and Esc leaves the view as it was", async ({ page }) => {
       await kmPerH(page);
       await tap(page, ["shift", "help"]);
-      await page.waitForTimeout(300); // (a sheet would be up by now)
-      await expect(page.getByTestId("menu")).toBeHidden();
+      await expect(page.getByTestId("menu").getByTestId("sheet-title")).toHaveText("Help: h"); // (u2, the active slot; not Settings)
       expect(await page.evaluate(() => window.n62.session.shift)).toBe(false);
+      await tap(page, ["esc"]);
       await sameView(page);
     });
 
