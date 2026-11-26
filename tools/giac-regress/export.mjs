@@ -920,6 +920,13 @@ export function build(cases) {
     // G364 (night review 2026-11-14, vg-2): the 10^-80 form gave three roots at Digits 30 and 40 before G359 took it to realroot
     ["g364-size-solve-x3-3x+2+1e-80-12", 12, "size(solve(x^3-3*x+2+10^-80=0,x))", "1", "1/10^30"],
     ["g364-size-solve-x3-3x+2+1e-80-30", 30, "size(solve(x^3-3*x+2+10^-80=0,x))", "1", "1/10^30"],
+    // G405 (night review 2026-11-16, vg-2, be-3): the minus sign, three real roots, two 1 -+ 5.7735E-16 apart, were one root
+    // (protect_sort and comprim: == of two reals is an absolute 1e-12); the quintic takes Giac's own realroot path, the same merge
+    ["g405-size-solve-x3-3x+2-1e-30-12", 12, "size(solve(x^3-3*x+2-10^-30=0,x))", "3", "1/10^30"],
+    ["g405-size-solve-x3-3x+2-1e-30-40", 40, "size(solve(x^3-3*x+2-10^-30=0,x))", "3", "1/10^30"],
+    ["g405-solve-x3-3x+2-1e-30-third-40", 40, "solve(x^3-3*x+2-10^-30=0,x)[2]", "10000000000000005773502691896257089535932249464153/10^49", "1/10^35"],
+    ["g405-size-solve-x5-5x+4-1e-30-12", 12, "size(solve(x^5-5*x+4-10^-30=0,x))", "3", "1/10^30"],
+    ["g405-size-solve-x3-5x2+7x-3+1e-60-40", 40, "size(solve(x^3-5*x^2+7*x-3+10^-60=0,x))", "3", "1/10^30"],
   ]) {
     patched.push(`// patch ${G359_PATCH}`, `// ${id} (${value.includes("/") ? "oracle: mpmath polyroots" : "derived: nops(realroot(p)), or the degree for three distinct roots"})`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;

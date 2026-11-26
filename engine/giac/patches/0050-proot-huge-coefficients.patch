@@ -94,7 +94,7 @@
  	    res.push_back(*it);
  	}
  	return res;
-@@ -664,6 +694,105 @@
+@@ -664,6 +694,114 @@
      return res;
    }
  
@@ -142,13 +142,22 @@
 +  // 1 +- 5.7735E-16*i), and realroot to epsilon (1e-12), which leaves digits past the 12th wrong at Digits 40.
 +  static vecteur cubic_huge_roots(const gen & c,bool complexmode,GIAC_CONTEXT){
 +    int D=decimal_digits(contextptr);
-+    // G405: a double holds 17 digits: isolated to 10^-20 at Digits <= 17, two roots closer than 10^-(Digits+3) (1 -+ 5.7735E-16
-+    // of x^3-3*x+2-10^-30) stay two doubles, which solve_same_root keeps apart
-+    gen eps=inv(pow(gen(10),(D<17?17:D)+3),contextptr);
-+    gen r=_realroot(gen(makevecteur(c,eps,at_evalf),_SEQ__VECT),contextptr);
++    // G405: at Digits <= 14 isolated to 10^-20 and each centre rounded to the nearest double from 128 bits, so two roots
++    // closer than 10^-(Digits+3) (1 -+ 5.7735E-16 of x^3-3*x+2-10^-30) stay two doubles, which solve_same_root keeps apart
++    // (realroot's own evalf gave 1.0 for both)
++    gen eps=inv(pow(gen(10),(D>14?D+3:20)),contextptr);
++    gen r=_realroot(D>14?gen(makevecteur(c,eps,at_evalf),_SEQ__VECT):gen(makevecteur(c,eps),_SEQ__VECT),contextptr);
 +    vecteur res;
-+    if (r.type==_VECT)
++    if (r.type==_VECT && D>14)
 +      res=*r._VECTptr;
++    for (int k=0;D<=14 && r.type==_VECT && k<int(r._VECTptr->size());++k){
++      gen it=(*r._VECTptr)[k];
++      if (it.type!=_VECT || it._VECTptr->empty())
++	continue;
++      gen I=it._VECTptr->front();
++      gen m=(I.type==_VECT && I._VECTptr->size()==2)?(I._VECTptr->front()+I._VECTptr->back())/2:I;
++      res.push_back(evalf_double(accurate_evalf(m,128),1,contextptr));
++    }
 +    if (!complexmode)
 +      return res;
 +    gen b=_complexroot(gen(makevecteur(c,inv(pow(gen(10),2*D+20),contextptr)),_SEQ__VECT),contextptr);
@@ -200,7 +209,7 @@
    // inner solver
    void in_solve(const gen & e,const identificateur & x,vecteur &v,int isolate_mode,GIAC_CONTEXT){
      if (has_op(e,*at_equal) || has_op(e,*at_equal2)){
-@@ -1029,6 +1158,12 @@
+@@ -1029,6 +1167,12 @@
  	return;
        }
        int n=is_cyclotomic(w,epsilon(contextptr));
@@ -213,7 +222,7 @@
        if (!n){
  	if (
  #ifdef GIAC_GGB
-@@ -3347,7 +3482,7 @@
+@@ -3347,7 +3491,7 @@
      gen res=_solve_uncompressed(args,postprocess,contextptr);
      if (res.type==_VECT){
        vecteur v=*res._VECTptr;
