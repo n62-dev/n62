@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // History persistence and the lazy-loaded entry line.
 import { expect, test } from "@playwright/test";
-import { entryValue, open, PASTE, setClipboard, sheet, sheetKey, tap, tapTwice } from "./helpers.ts";
+import { entryValue, open, PASTE, setClipboard, sheet, sheetKey, tap, tapTwice, waitKeptLine } from "./helpers.ts";
 import { DATA_VERSION } from "../src/state/storage.ts";
 
 // Not helpers.lastResult: this one is the whole result row, not its `.result` part.
@@ -69,13 +69,14 @@ test("a single-letter function survives a reload (R56: the parser reads the stor
 // fires no pagehide, so the "kill" here is a hide (visibilitychange) followed by a fresh page on the same store,
 // with the old page left as it was.
 type Page = import("@playwright/test").Page;
-async function hide(page: Page): Promise<void> {
+async function hide(page: Page, kept?: string): Promise<void> {
   await page.evaluate(() => {
     Object.defineProperty(document, "hidden", { value: true, configurable: true });
     Object.defineProperty(document, "visibilityState", { value: "hidden", configurable: true });
     document.dispatchEvent(new Event("visibilitychange"));
   });
-  await page.waitForTimeout(300); // the store write is asynchronous
+  if (kept !== undefined) await waitKeptLine(page, kept); // the store write is asynchronous (and slow on a loaded host)
+  else await page.waitForTimeout(300);
 }
 /** A fresh start of the app on the same IndexedDB, as after a kill. A killed page also lets go of the store's writer
  *  lock (R95): the old page does that here, without a flush, so the new one is the writer. */
@@ -103,7 +104,7 @@ test("a half-typed line with a fraction and a result chip survives a kill (F30)"
   const line = await entryValue(page);
   expect(line).toBe("\\res{1}{0.333333333333}+\\frac12");
   const chips = await page.evaluate(() => window.n62.entry.chips);
-  await hide(page);
+  await hide(page, line);
   const next = await relaunch(page, "");
   expect(await entryValue(next)).toBe(line);
   expect(await next.evaluate(() => window.n62.entry.chips)).toEqual(chips);
@@ -120,19 +121,19 @@ test("a half-typed line with a fraction and a result chip survives a kill (F30)"
 test("Home and CAS share one line, kept with the view it was typed in; an empty line stays empty", async ({ page }) => {
   await open(page);
   await tap(page, ["d2", "add", "d3"]);
-  await hide(page);
+  await hide(page, "2+3");
   const home = await relaunch(page, "engine=fake");
   expect(await home.evaluate(() => window.n62.session.view)).toBe("home");
   expect(await entryValue(home)).toBe("2+3");
   // Esc empties the line; the kill after it must not bring the old line back
   await tap(home, ["esc"]);
-  await hide(home);
+  await hide(home, "");
   const empty = await relaunch(home, "engine=fake");
   expect(await entryValue(empty)).toBe("");
   // a CAS line comes back in CAS
   await tap(empty, ["@cas", "d7", "mul", "d8"]);
   expect(await empty.evaluate(() => window.n62.session.view)).toBe("cas");
-  await hide(empty);
+  await hide(empty, "7\\times8");
   const cas = await relaunch(empty, "engine=fake");
   expect(await cas.evaluate(() => window.n62.session.view)).toBe("cas");
   expect(await entryValue(cas)).toBe("7\\times8");

@@ -271,6 +271,27 @@ export async function drag(page: Page, id: string, dx: number, dy: number): Prom
 /** Flick a key up (its shift layer) or down (its letter): a 40 px slide, then lift (R9; FlickTracker arms at 20 px). */
 export const flick = (page: Page, id: string, dir: "up" | "down"): Promise<void> => drag(page, id, 0, dir === "up" ? -40 : 40);
 
+/** After a hide (visibilitychange): wait until the kept line (R34) in the page's store is `latex` ("" for none), at most 8 s,
+ *  then go on (the test's own check says what it saw). The fixed 300 ms the specs waited was too short on a loaded host: with
+ *  no clipboard lock (A281) every worker is busy at once. */
+export async function waitKeptLine(page: Page, latex: string): Promise<void> {
+  await page.waitForTimeout(300);
+  try {
+    await page.waitForFunction(
+      async (want) => {
+        const url = "/src/state/storage.ts";
+        const { kvGet } = (await import(/* @vite-ignore */ url)) as typeof import("../src/state/storage.ts");
+        const r = await kvGet<{ latex?: string } | null>("entry");
+        return (r.kind === "value" && r.value ? (r.value.latex ?? "") : "") === want;
+      },
+      latex,
+      { timeout: 8000, polling: 100 },
+    );
+  } catch (e) {
+    if (!(e instanceof errors.TimeoutError)) throw e;
+  }
+}
+
 /** Record navigator.vibrate calls (call before `open`); read them with `vibrations`. */
 export async function recordVibrations(page: Page): Promise<void> {
   await page.addInitScript(() => {
