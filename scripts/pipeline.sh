@@ -636,12 +636,12 @@ want_checks() {
   case "$checks" in
     none) echo "";;
     auto)  # A83: the cheap checks first (medians: docs 3 s, typecheck 15 s, size 20 s, redfirst 5 s, vitest 53 s, golden 240 s, e2e 607 s)
-      local f app=0 list="docs,typecheck"; f="$(changed)"; grep -q '^app/' <<<"$f" && app=1
-      [[ $app -eq 0 ]] || list="$list,size"
+      local f list="docs,typecheck"; f="$(changed)"  # A280: size and e2e by the paths the build and the specs read (pipeline-lib.sh BUILD_RE, E2E_RE)
+      ! build_selected <<<"$f" || list="$list,size"
       ! red_first_wanted "$spec_file" || list="$list,redfirst"
       list="$list,vitest"
       ! golden_selected <<<"$f" || list="$list,golden"
-      [[ $app -eq 0 ]] || list="$list,e2e"
+      ! e2e_selected <<<"$f" || list="$list,e2e"
       ! shell_selected <<<"$f" || list="$list,shell"
       echo "$list";;
     *) echo "$checks";;
@@ -670,7 +670,7 @@ if [[ $dry -eq 1 ]]; then
     echo "red-first's stock engine (a package that says its tests fail on the stock build): $engine_root/stock-<key of build-wasm.sh stock-key>, built once with GIAC_PATCHES=none under host-cpu when missing"
   fi
   echo "checks: $checks; merge: $merge; audit model: $audit_model; no-worker: $nowork"
-  echo "checks: docs,typecheck,vitest always; + size, e2e when app/ changed; + redfirst when the package says its tests fail on phase-1 or the stock build; + golden and its stages when engine or parser changed; + shell when scripts/ or tools/*.sh changed"
+  echo "checks: docs,typecheck,vitest always; + size when app/ or a file the build reads changed, e2e when app/ or a file the e2e specs read changed (E2E_RE, BUILD_RE: spec/, tests/core/, tests/tasks/, ...; A280); + redfirst when the package says its tests fail on phase-1 or the stock build; + golden and its stages when engine or parser changed; + shell when scripts/ or tools/*.sh changed"
   echo "checks order (auto): docs, typecheck, size, redfirst, vitest, golden, stages, e2e, shell (A83: the cheap ones first); every queue round runs the whole list"
   if [[ -n "$pkg_drop" ]]; then echo "package file: $pkg_drop deleted on $branch in a commit of its own before each queue entry (A75; phase-1 keeps it until the merge, so <merge>^1 has it)"
   else echo "package file: none deleted (a FIX id or a task text)"; fi

@@ -1475,6 +1475,49 @@ spec_file="$tmp/spec-plain"; changed() { echo docs/x.md; }
 [[ "$(want_checks)" == docs,typecheck,vitest ]] || fail "A83: want_checks for a docs diff: $(want_checks)"
 out="$("$script" ron "$ron_pkg" --dry-run 2>&1)"
 grep -q '^checks order (auto): docs, typecheck, size' <<<"$out" && grep -q '^pre-flight (auto' <<<"$out" || fail "A83: the dry run shows no order or pre-flight: $(grep -E '^(checks|pre-flight)' <<<"$out")"
+# A280: e2e (and size) also run when a file outside app/ that the e2e specs or the app's build read changes. Each case is a diff of that
+# one file through want_checks (checks auto, no red-first spec); a docs or engine-only diff plans no e2e, as before.
+spec_file="$tmp/spec-plain"
+want_for() { want_file="$1"; changed() { printf '%s\n' "$want_file"; }; want_checks; }  # (want_checks has its own local f)
+for f in tests/core/core.yaml tests/core/MORNING.md tests/core/showcase.yaml tests/tasks/tasks.yaml tests/tasks/benchmark.yaml tests/fixtures/update-from-ef857a6.json \
+         tools/probes/library/beams.txt tools/probes/find-cost.mjs tools/probes/unit-presses.mjs tools/trust/wording.mts; do
+  [[ ",$(want_for "$f")," == *,e2e,* ]] || fail "A280: a diff of only $f does not plan e2e: $(want_for "$f")"
+done
+for f in spec/keyboard.yaml spec/unit-pad.yaml spec/units-menu.yaml spec/layout-lock.yaml; do
+  w=",$(want_for "$f"),"; [[ "$w" == *,e2e,* && "$w" == *,size,* ]] || fail "A280: a diff of only $f does not plan e2e and size: $(want_for "$f")"
+done
+[[ "$(want_for tests/core/core.yaml)" == docs,typecheck,vitest,e2e ]] || fail "A280: the core list alone plans more than docs, typecheck, vitest, e2e: $(want_for tests/core/core.yaml)"
+# what only the build reads (the About text, the golden files the worker and the About page import): size, no e2e
+for f in THIRD_PARTY.md LICENSES/GPL-3.0-or-later.txt tools/third-party/parse.mts tests/golden/precision.yaml engine/giac/patches/0001-a.patch; do
+  w=",$(want_for "$f"),"; [[ "$w" == *,size,* && "$w" != *,e2e,* ]] || fail "A280: a diff of only $f is not size without e2e: $(want_for "$f")"
+done
+# controls: docs plan none of them; the engine plans golden as it did; a change under app/ plans size and e2e as now
+[[ "$(want_for docs/05-ui-plan.md)" == docs,typecheck,vitest ]] || fail "A280: a diff of only docs/05-ui-plan.md plans more than docs, typecheck, vitest: $(want_for docs/05-ui-plan.md)"
+[[ "$(want_for engine/giac/patches/0001-a.patch)" == docs,typecheck,size,vitest,golden ]] || fail "A280: a diff of only engine/giac/patches/ is not docs, typecheck, size, vitest, golden: $(want_for engine/giac/patches/0001-a.patch)"
+[[ "$(want_for app/src/ui/x.ts)" == docs,typecheck,size,vitest,e2e ]] || fail "A280: a change under app/ does not plan size and e2e: $(want_for app/src/ui/x.ts)"
+[[ "$(want_for docs/backlog.md)" == docs,typecheck,vitest ]] || fail "A280: a diff of only docs/backlog.md plans more than docs, typecheck, vitest: $(want_for docs/backlog.md)"
+# the list is read from the files: every path outside app/ that an e2e spec (app/test) or the app's build (app/src, app/vite*.ts) reads is selected
+# by E2E_RE or BUILD_RE. docs/backlog.md is the one exemption: core.spec checks the `known:` ids against it, but every package ticks its line there.
+repo="$(cd "$here/.." && pwd)"
+outside_reads() {  # <e2e|build>: the repo paths read from a file at depth d under the repo, as "../" x d then the path
+  local root="$repo" f rel d ups; local -a files
+  if [[ "$1" == e2e ]]; then mapfile -t files < <(find "$root/app/test" -name '*.ts' -not -path '*/gallery/*')
+  else mapfile -t files < <(find "$root/app/src" "$root/app" -maxdepth 1 -name 'vite*.ts' -o -path "$root/app/src/*" -name '*.ts' -not -name '*.test.ts' -o -path "$root/app/src/*" -name '*.svelte' | sort -u); fi
+  for f in "${files[@]}"; do
+    rel="${f#"$root"/}"; d="$(tr -cd '/' <<<"$rel" | wc -c)"; ups="$(printf '../%.0s' $(seq 1 "$d"))"
+    grep -hoE "[\"'\`]${ups//./\\.}(spec|tests|tools|docs|find|engine|THIRD_PARTY|LICENSES)[^\"'\`?\$]*" "$f" 2>/dev/null | sed -E "s|^.${ups//./\\.}||" | grep -vE '_out|_gen' || true
+  done | sort -u
+}
+for kind in e2e build; do
+  reads="$(outside_reads "$kind")"; [[ $(wc -l <<<"$reads") -gt 5 ]] || fail "A280: the $kind scan found fewer than 6 paths outside app/: $reads"
+  while IFS= read -r p; do
+    [[ -n "$p" && "$p" != docs/backlog.md ]] || continue
+    if [[ "$kind" == e2e ]]; then printf '%s\n' "$p" | e2e_selected || fail "A280: an e2e spec reads $p, which E2E_RE does not select"
+    else printf '%s\n' "$p" | build_selected || fail "A280: the app's build reads $p, which BUILD_RE does not select"; fi
+  done <<<"$reads"
+done
+grep -qE 'oracle-counts|THIRD_PARTY\.md|LICENSES' "$repo/app/vite-plugin-about.ts" || fail "A280: the About plugin no longer reads the files BUILD_RE names; revisit BUILD_RE"
+grep -q 'e2e_selected' "$here/pipeline.sh" && grep -q 'build_selected' "$here/pipeline.sh" || fail "A280: pipeline.sh does not use e2e_selected and build_selected"
 # (b) the lint rules: a new patch without its README row, a branch without a report commit (brief section 2)
 pl="$tmp/pl"; mkdir -p "$pl/engine/giac/patches"; git init -q -b phase-1 "$pl"
 printf '| Patch | Why |\n|---|---|\n| `0001-a.patch` | x |\n' > "$pl/engine/giac/patches/README.md"; echo a > "$pl/engine/giac/patches/0001-a.patch"
