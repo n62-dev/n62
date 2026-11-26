@@ -9,6 +9,7 @@
 // fraction (ℏ, σ, K_J) written with π and powers of ten (exactText), then 12 digits after ≈, as a unit's.
 import raw from "../../../spec/units-menu.yaml";
 import type { MenuItem } from "../apps/types.ts";
+import { entryText } from "../clipboard/plaintext.ts";
 import { unitNote } from "../find/finder.ts";
 import type { FindItem } from "../find/types.ts";
 import { helpText as t } from "../i18n/enHelp.ts";
@@ -133,26 +134,12 @@ function exactConstant(value: string, u: string): MenuItem[] | undefined {
   return [info("value", `${exactText(x)}${u}`, t("card.definition")), info("approx", `≈ ${approx(v.n, v.d)}${u}`)];
 }
 
-/** The symbol a unit is drawn with on the line (its insert's \mathrm{…}: °C, Ω), a leading 1 dropped (the degree's `1°`). */
-function unitSymbol(it: FindItem): string {
-  const m = /\\mathrm\{([^{}]*)\}\}?$/.exec(it.insert);
-  const s = m?.[1]?.replace(/^1(?=\D)/, "") ?? "";
-  return s || (it.names[0] ?? it.id.slice(it.id.indexOf(":") + 1));
-}
-
-/** A constant's LaTeX symbol (its chip's second argument) as plain text: `\mu_{0}` → μ_0, `\mathrm{V\_m101}` → V_m101. */
-const GREEK: Readonly<Record<string, string>> = {
-  alpha: "α", beta: "β", gamma: "γ", delta: "δ", varepsilon: "ε", epsilon: "ε", theta: "θ", lambda: "λ", mu: "μ", pi: "π", sigma: "σ",
-  tau: "τ", phi: "φ", Phi: "Φ", Omega: "Ω", hbar: "ℏ", infty: "∞",
-};
-export function constSymbol(it: FindItem): string {
-  const m = /^\\const\{[^{}]*\}\{(.*)\}$/.exec(it.insert);
-  if (!m) return it.names[0] ?? it.id.slice(it.id.indexOf(":") + 1);
-  return (m[1] as string)
-    .replace(/\\_/g, "_")
-    .replace(/\\(mathrm|text)\{([^{}]*)\}/g, "$2")
-    .replace(/\\([A-Za-z]+)/g, (all, w: string) => GREEK[w] ?? w)
-    .replace(/[{}]/g, "");
+/** An item's symbol as plain text: its insert's chip (`\unit`, `\pfx`, `\const`) by the rule Copy and export use (clipboard/plaintext.ts
+ *  entryText: `\%` → %, `\hbar` → ħ, `\mu_{0}` → μ_0, `N\cdot\,m` → N· m), a unit's leading 1 dropped (the degree's `1°`); no insert:
+ *  its first name. */
+export function itemSymbol(it: FindItem): string {
+  const s = entryText(it.insert);
+  return (it.kind === "unit" ? s.replace(/^1(?=\D)/, "") : s) || (it.names[0] ?? it.id.slice(it.id.indexOf(":") + 1));
 }
 
 /** The symbol, then the other names a user may type (not the identifier forms with `_`): "ft · foot, feet". */
@@ -235,14 +222,14 @@ function prefixValue(it: FindItem): MenuItem | undefined {
 export function cardRows(it: FindItem): MenuItem[] | undefined {
   const rows: (MenuItem | undefined)[] = [];
   if (it.kind === "unit") {
-    const sym = unitSymbol(it);
+    const sym = itemSymbol(it);
     const q = quantityOf(it.dim);
     rows.push(info("names", namesLine(sym, it)), q ? info("quantity", q) : undefined, unitValue(it, sym));
   } else if (it.kind === "pfx") {
-    const sym = it.insert.match(/^\\pfx\{[^{}]*\}\{\\mathrm\{([^{}]*)\}\}$/)?.[1] ?? it.names[0] ?? "";
+    const sym = itemSymbol(it);
     rows.push(info("names", namesLine(sym, it)), prefixValue(it));
   } else if (it.kind === "const") {
-    const sym = constSymbol(it);
+    const sym = itemSymbol(it);
     const unit = it.ownUnit ?? it.unit;
     const u = unit ? ` ${unitExprText(unit)}` : "";
     const value = it.value ?? "?";

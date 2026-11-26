@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
 import type { MenuItem } from "../apps/types.ts";
+import { entryText } from "../clipboard/plaintext.ts";
 import { unitNote } from "../find/finder.ts";
 import type { FindItem, IndexItem } from "../find/types.ts";
 import { siUnit } from "../units/dims.ts";
@@ -110,7 +111,7 @@ describe.skipIf(!hasIndex)("R869: the help card from the Find index", () => {
   it("const:c is exact (SI definition); G is the index's value ± unc with CODATA; h is in J·s (G801)", () => {
     const c = item("const:c");
     expect(c.unc).toBeUndefined();
-    expect(rowOf("const:c", "names")?.label).toMatch(/^c · /);
+    expect(rowOf("const:c", "names")?.label?.startsWith(`${entryText(item("const:c").insert)} · `)).toBe(true);
     expect(rowOf("const:c", "value")?.label).toBe(`${c.value} m/s`);
     expect(rowOf("const:c", "value")?.hint).toBe("exact (SI definition)");
     const g = item("const:G");
@@ -120,7 +121,7 @@ describe.skipIf(!hasIndex)("R869: the help card from the Find index", () => {
     const h = item("const:planck");
     expect(h.ownUnit).toBe("J*s");
     expect(rowOf("const:planck", "value")?.label).toBe(`${h.value} J·s`);
-    expect(rowOf("const:planck", "names")?.label).toMatch(/^h · /);
+    expect(rowOf("const:planck", "names")?.label?.startsWith(`${entryText(h.insert)} · `)).toBe(true);
   });
 
   // the audit of run 1638: an exact constant the index holds as qalc's fraction text (ℏ, σ) showed it raw (`*pi^5`, 41 zeros)
@@ -142,7 +143,8 @@ describe.skipIf(!hasIndex)("R869: the help card from the Find index", () => {
     expect(gcd(big(num), big(den))).toBe(1n);
     const [d, k] = zeros(den);
     const u = unitOf(h);
-    expect(rowOf("const:planck2pi", "names")?.label).toMatch(/^ℏ · /);
+    // one symbol for ℏ: Copy's and export's (clipboard/plaintext.ts), not a table of the card's own (the audit of run 1638)
+    expect(rowOf("const:planck2pi", "names")?.label?.startsWith(`${entryText(h.insert)} · `)).toBe(true);
     expect(rowOf("const:planck2pi", "value")?.label).toBe(`${num}/(${d}·10${sup(k)}·π)${u}`);
     expect(rowOf("const:planck2pi", "value")?.label).not.toMatch(/\*|pi|\^/);
     expect(rowOf("const:planck2pi", "value")?.hint).toBe("exact (SI definition)");
@@ -164,6 +166,22 @@ describe.skipIf(!hasIndex)("R869: the help card from the Find index", () => {
     expect(rowOf("const:sigma", "approx")?.label).toBe(`≈ ${((Number(num) * Math.PI ** 5) / Number(den)).toPrecision(12).replace("e", "E")}${u}`);
     // an exact constant whose decimal ends keeps it, with no ≈ row
     expect(rowOf("const:c", "approx")).toBeUndefined();
+  });
+
+  // the audit of run 1638, round 2: the symbol came from a regex over the insert's \mathrm{…}, so `\%` showed raw ("\% · %", "1 \% = 0.01")
+  it("unit:percent: its symbol as plain text (%), its value 1 % = 0.01; no card row holds a backslash", () => {
+    const pc = item("unit:percent");
+    const sym = entryText(pc.insert);
+    expect(sym).toBe("%");
+    const [n, d] = fraction(pc.si ?? "") ?? [0n, 1n];
+    expect(rowOf("unit:percent", "names")?.label).toBe(`${sym} · ${pc.names.filter((x) => x !== sym).join(", ")}`);
+    expect(rowOf("unit:percent", "value")?.label).toBe(`1 ${sym} = ${exactDecimal(n, d)}`);
+    expect(rowOf("unit:percent", "value")?.hint).toBe("exact");
+    const raw = items
+      .filter((x) => x.kind === "unit" || x.kind === "pfx" || x.kind === "const")
+      .flatMap((x) => card(x.id).map((r) => `${x.id}: ${r.label} ${r.hint ?? ""}`))
+      .filter((line) => line.includes("\\"));
+    expect(raw).toEqual([]);
   });
 
   it("a unit without si says unitNote's words; a tier-1 unit says not checked", () => {
