@@ -236,7 +236,7 @@ export function unitRequest(f: SlotFormula, slot: (id: string) => UnitSlot | und
   return { formula: r.giac, slots: u.slots.map(at), ...(u.consts.length ? { consts: u.consts } : {}), ...(u.end ? { end: at(u.end) } : {}), ...(sigmas ? { sigmas } : {}), ...(uncChips.length ? { uncChips } : {}) };
 }
 
-/** R929: `latex` (the formula as the field shows it) with each constant chip's own unit after it, muted and read-only
+/** R929: `latex` (the formula as the field shows it) with each constant chip's own unit after it (after its power, if any), muted and read-only
  *  (unitLatex, as after a result chip): `unit(id)` is its text (J·s for h), undefined for a pure number (α). The field's
  *  LaTeX only: never in slotFormula's text, so filledLatex and unitRequest read the same request with it or without. */
 export function constLabels(latex: string, unit: (id: string) => string | undefined): string {
@@ -244,7 +244,9 @@ export function constLabels(latex: string, unit: (id: string) => string | undefi
   let out = "";
   let i = 0;
   for (let m = re.exec(latex); m; m = re.exec(latex)) {
-    const end = groupEnd(latex, re.lastIndex); // the symbol's group (k_{\mathrm{B}})
+    let end = groupEnd(latex, re.lastIndex); // the symbol's group (k_{\mathrm{B}})
+    // a power or a subscript on the constant stays on it (c², not "c m/s²"): the label goes after them
+    for (let k = /^\s*[\^_]/.exec(latex.slice(end)); k; k = /^\s*[\^_]/.exec(latex.slice(end))) end = groupEnd(latex, end + k[0].length);
     const text = unit(m[1] as string);
     out += latex.slice(i, end) + (text ? unitLatex(text) : "");
     i = re.lastIndex = end;

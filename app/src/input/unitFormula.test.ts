@@ -193,6 +193,13 @@ describe("constLabels (R929): a constant's own unit after its chip, muted and re
     expect(constLabels("\\const{alpha}{\\alpha}", own)).toBe("\\const{alpha}{\\alpha}");
     expect(constLabels("\\frac{\\const {planck} {h}}{2}", own)).toBe(`\\frac{\\const {planck} {h}${unitLatex("J·s")}}{2}`);
   });
+  it("puts the unit after a power on the constant, never under it (E = mc² must not read c m/s²)", () => {
+    const own2 = (id: string): string | undefined => ({ c: "m/s", planck: "J·s" })[id];
+    expect(constLabels("m\\const{c}{c}^{2}", own2)).toBe(`m\\const{c}{c}^{2}${unitLatex("m/s")}`);
+    expect(constLabels("\\const{planck}{h}^2", own2)).toBe(`\\const{planck}{h}^2${unitLatex("J·s")}`);
+    expect(constLabels("\\const{planck}{h} ^ {2}+1", own2)).toBe(`\\const{planck}{h} ^ {2}${unitLatex("J·s")}+1`);
+    expect(constLabels("\\const{c}{c}_{0}^{2}", own2)).toBe(`\\const{c}{c}_{0}^{2}${unitLatex("m/s")}`);
+  });
   it("leaves a line without a constant as it is, and the slots' formula untouched (no label in slotFormula)", () => {
     expect(constLabels("5\\placeholder[u1]{}\\res{3}{7}", own)).toBe("5\\placeholder[u1]{}\\res{3}{7}");
     expect(slotFormula("2\\const{planck}{h}").latex).not.toContain("htmlStyle");

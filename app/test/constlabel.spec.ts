@@ -52,6 +52,25 @@ test.describe("R929: a constant's own unit after its chip in the unit view", () 
     expect(await labels(page)).toEqual([]);
   });
 
+  test("a power stays on the constant: m·c² shows c² then m/s (never c m/s²), h² shows h² then J·s", async ({ page }) => {
+    /** The superscripts' left edges and the label's, in px: every ² must sit left of the label, none after it. */
+    const boxes = (): Promise<{ sups: number[]; label: number }> =>
+      page.evaluate(() => {
+        const root = window.n62.unitView?.field.shadowRoot;
+        const label = root?.querySelector('[style*="--muted"]')?.getBoundingClientRect().left ?? Number.NaN;
+        return { sups: [...(root?.querySelectorAll(".ML__msubsup") ?? [])].map((e) => e.getBoundingClientRect().left), label };
+      });
+    for (const [line, unit, power] of [["m\\const{c}{c}^{2}", "m/s", "\\^\\{?2\\}?"], ["\\const{planck}{h}^2", "J·s", "\\^\\{?2\\}?"]] as const) {
+      await unitsOn(page, line);
+      await expect.poll(() => labels(page)).toEqual([unit]);
+      expect(await value(page)).toMatch(new RegExp(`${power}\\\\htmlStyle\\{color:var\\(--muted\\)`));
+      const b = await boxes();
+      expect(b.sups.length).toBeGreaterThan(0);
+      for (const x of b.sups) expect(x).toBeLessThan(b.label);
+      await tap(page, ["esc"]);
+    }
+  });
+
   test("◀ ▶ and a tap skip the label: 2h·3 goes u1 → u2, a tap on J·s changes no slot", async ({ page }) => {
     await unitsOn(page, "2\\const{planck}{h}\\times3");
     await expect.poll(() => labels(page)).toEqual(["J·s"]);
