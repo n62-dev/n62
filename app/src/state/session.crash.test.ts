@@ -7,7 +7,7 @@ import type { Request, Response } from "../engine/protocol.ts";
 import { createRequestHandler } from "../engine/host.ts";
 import { giacAvailable, loadNodeGiac } from "../engine/nodeGiac.ts";
 import { WorkerEngine, type WorkerLike } from "../engine/workerEngine.ts";
-import { t } from "../i18n/index.ts";
+import { jobText } from "../i18n/enJob.ts";
 import { Session } from "./session.svelte.ts";
 import { fakeKv } from "./fakeKv.ts";
 
@@ -29,7 +29,7 @@ class InProcessWorker implements WorkerLike {
 }
 
 describe.skipIf(!giacAvailable())("a stack overflow inside Giac in the app (G183, real Giac)", () => {
-  it("shows error.crashed; then 1+1 is 2 and a stored name is back", async () => {
+  it("shows job.crashed; then 1+1 is 2 and a stored name is back", async () => {
     const workers: InProcessWorker[] = [];
     const engine = new WorkerEngine({ baseUrl: "/", createWorker: () => (workers.push(new InProcessWorker()), workers.at(-1)!) });
     const s = new Session(new EngineCalc(engine), fakeKv());
@@ -42,7 +42,7 @@ describe.skipIf(!giacAvailable())("a stack overflow inside Giac in the app (G183
     const crash = "(sin@@20000)(x)";
     s.setView("cas");
     await s.submit(crash, crash);
-    expect(s.cas.at(-1)).toMatchObject({ status: "error", text: t("error.crashed") });
+    expect(s.cas.at(-1)).toMatchObject({ status: "error", text: jobText("job.crashed") });
     s.setView("home");
     expect(workers).toHaveLength(2);
     expect(workers[0]!.terminated).toBe(true);

@@ -130,7 +130,7 @@ layers:
   "sub.shift": "special base"
   "sub.alpha": "type :"
   "fmt.primary": "special fmt"
-  "fmt.shift": "reserved"
+  "fmt.shift": "special fmtSettings"
   "d0.primary": "type 0"
   "d0.shift": "insert \\%"
   "dot.primary": "type ."

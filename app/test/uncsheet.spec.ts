@@ -205,11 +205,11 @@ test("2·π·50, Enter, Shift + 1: a dead press (the double pulse, counted under
   await t10Head(page);
 });
 
-test("controls: σ over 1, live; 1 types 1, Alpha + 1 types Y; a b/c, 7 and Fmt still reserved on Shift", async ({ page }) => {
+test("controls: σ over 1, live; 1 types 1, Alpha + 1 types Y; a b/c and 7 still reserved on Shift (Fmt's is R871's)", async ({ page }) => {
   expect(await shiftLegend(page, "d1")).toContain("σ");
   await tap(page, ["shift"]);
   await expect(key(page, "d1")).not.toHaveAttribute("data-dead", "true");
-  for (const id of ["frac", "d7", "fmt"]) {
+  for (const id of ["frac", "d7"]) {
     await expect(key(page, id), id).toHaveAttribute("data-dead", "true");
     expect(await shiftLegend(page, id), id).toBe("");
   }

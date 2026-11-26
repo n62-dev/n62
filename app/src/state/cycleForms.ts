@@ -15,6 +15,7 @@ import {
   factsOf,
   FMT_MODES,
   type FmtMode,
+  NOTATION_MODES,
   type FormStep,
   markFor,
   type NumericResult,
@@ -23,6 +24,8 @@ import {
 } from "./displayMode.ts";
 import type { HistoryItem, Session } from "./session.svelte.ts";
 import { wordStore } from "./wordStore.svelte.ts";
+import { fmtSay } from "./fmtSay.svelte.ts";
+import { fmtSayText, type FmtSayKey } from "../i18n/enFmtSay.ts";
 export { wordStore };
 export { passCas, passHome } from "../calc/portKeys.ts"; // R930: the Calc port's pass of a result, loaded with the word store (calc/engine.ts word)
 
@@ -150,9 +153,21 @@ export function fmtStep(s: Session, item: HistoryItem): { mode: FmtMode | undefi
 export const formDead = (s: Session, item: HistoryItem, key: "cycleFormat" | "cycleForm"): boolean =>
   (key === "cycleFormat" ? fmtStep(s, item) : nextForm(item.form, factsOf(item), item.view === "cas")) === null;
 
+void fmtSay.restore(); // R871: read when this code loads, as the word; cycleFormat awaits the read too (a press may load this code itself)
+
+/** R871: the notice a Fmt press that changed `item` shows with Say the format on: its notation now. A row with no notation of
+ *  its own (fmtStep left `fmt` undefined) is drawn as its view draws it: a CAS row in its exact form (Exact), a Home row in the
+ *  global format (Mode › Format). */
+export const fmtSaid = (s: Pick<Session, "settings">, item: HistoryItem): string => {
+  const own = item.fmt && NOTATION_MODES.includes(item.fmt) ? item.fmt : undefined;
+  const word = own ?? (item.view === "cas" ? "exact" : s.settings.format);
+  return fmtSayText("fmtSay.notice", { mode: fmtSayText(`fmtSay.${word}` as FmtSayKey) });
+};
+
 /** The Format key: `item` (the last result of the open view at the press, Session.lastForKey) in the next ticked mode
- *  (Settings) whose drawing differs (fmtStep), that result only. True when the display changed. */
-export async function cycleFormat(s: Session, calc: Calc, item: HistoryItem): Promise<boolean> {
+ *  (Settings) whose drawing differs (fmtStep), that result only. True when the display changed; with Say the format on
+ *  (R871), the notice to show instead (fmtSaid). */
+export async function cycleFormat(s: Session, calc: Calc, item: HistoryItem): Promise<boolean | string> {
   const next = fmtStep(s, item);
   if (!next) return false;
   if (next.mode === "polar" && item.value && polarStale(item, s.settings.angle) && !(await computePolar(s, calc, item, item.value)))
@@ -160,7 +175,8 @@ export async function cycleFormat(s: Session, calc: Calc, item: HistoryItem): Pr
   delete item.form; // a form chosen with a b/c: the Format key goes back to the number in its notation
   item.fmt = next.mode;
   s.saveHistory();
-  return true;
+  await fmtSay.restore(); // (read once: a press right after a reload, before main.ts's idle load, reads the stored switch)
+  return fmtSay.on ? fmtSaid(s, item) : true;
 }
 
 /** The a b/c key on an empty line (R10): `item` (the last result at the press) in its other form (decimal ↔ fraction, a+bi ↔ polar), that result

@@ -42,8 +42,9 @@ export interface RouteCtx {
   recallRow(item: HistoryItem): void;
   goTo(view: View): void;
   clearKey(): void;
-  /** The Settings root (R927: Mode is its row 1); `slot` (R705): its Your keys level, on that free key's slot row. */
-  openSettings(slot?: { id: string; layer: Layer }): void;
+  /** The Settings root (R927: Mode is its row 1); `at` a free key's slot (R705): its Your keys level, on that slot's row; a path
+   *  of row ids (R871): those levels, one in the other. */
+  openSettings(at?: { id: string; layer: Layer } | readonly string[]): void;
   openMode(at?: string): void;
   openShiftPalette(id: "tmpl" | "rel" | "sym" | "chars"): void;
   /** Math (R4a): open Find (inside Find, Math types b; docs/04 3.7). */
@@ -147,8 +148,11 @@ export function special(c: RouteCtx, name: Special): void {
       break;
     case "fmt":
       // Format key: Home and CAS show the last result in the next mode; the apps have no such result, and a press with no row
-      // to take is dead (deadPress, asked by run)
-      if (c.shell.app === null) void c.session.formKey("cycleFormat", c.picked, c.dead);
+      // to take is dead (deadPress, asked by run). R871: a text back (Say the format on, cycleForms.ts) shows as Copied does
+      if (c.shell.app === null) void c.session.formKey("cycleFormat", c.picked, c.dead).then((say) => typeof say == "string" && c.withClip((x) => x.say(say, 1500)));
+      break;
+    case "fmtSettings":
+      c.openSettings(["numbers", "fmtCycle"]); // R871 (in an app a dead press: deadPress)
       break;
     case "tmpl":
       c.openShiftPalette("tmpl");
@@ -306,7 +310,7 @@ const isStore = (a: ActionBody): boolean => a.kind === "insert" && a.latex === S
  *  `sheetPress` call c.dead() where it says true, and Keypad asks it at finger-down (quietDown), so such a press gets no look, no
  *  pop and no click, only the double pulse. Home and CAS: Fmt, and a b/c on an empty line, with no row to take or no step that
  *  changes it (Session.formRow, G785), Store ▶ with no value on the line and no result to store (R702, a picked row that is not
- *  done too, R280), ◀ on a picked row still running with an empty line (R720). An app: Fmt, and Ans (± too, R71: the unit view's
+ *  done too, R280), ◀ on a picked row still running with an empty line (R720). An app: Fmt and Shift + Fmt (R871), and Ans (± too, R71: the unit view's
  *  line reads it); Plot (no entry line, R279) also the keys that need the line (Select, Deselect, Paste, Find, Help, the matrix,
  *  Vars, the palettes) and every command (⌫, Del, Undo, Redo, ⇤ ⇥), not the four arrows, which the shell may take (nav). A sheet:
  *  ⌫ with nothing typed in a list that is not Find's (R770). The unit pad's own dead presses are not asked (its cells take keys
@@ -318,7 +322,7 @@ export function deadPress(c: RouteCtx, key: Key, mods: Mods = modsFor(c, undefin
   if (!action) return false;
   const app = shell.app !== null;
   const noLine = app && !shell.showsEntry; // Plot
-  if (action.kind === "special") return action.name === "fmt" ? app || !session.formRow("cycleFormat", c.picked) : noLine && NEEDS_LINE.test(action.name); // (the rest open a sheet or edit the line, and Plot has none)
+  if (action.kind === "special") return /^fmt/.test(action.name) ? app || (action.name === "fmt" && !session.formRow("cycleFormat", c.picked)) : noLine && NEEDS_LINE.test(action.name); // (the rest open a sheet or edit the line, and Plot has none)
   if (noLine) return action.kind !== "cmd" || NAV[action.name] === undefined;
   if (app) return action.kind === "insert" && (action.latex === ANS_CHIP || action.units === true);
   if (entry.empty && key.id === "frac" && layerOf(mods) === "primary") return !session.formRow("cycleForm", c.picked); // a b/c on an empty line (G785)
@@ -405,7 +409,7 @@ function replay(c: RouteCtx): void {
     else if (!(c.shell.sheet && sheetPress(c, w.key, w.layer, w.mods)) && !sheetChunk.pad?.route(c, w.key, w.mods)) run(c, w.key, w.mods); // a sheet or the unit pad opened meanwhile takes its keys
 }
 
-const SHEET_KEYS: readonly string[] = OPENS_SHEET.slice(2); // all but settings and mode (OPENS_SHEET lists those two first)
+const SHEET_KEYS: readonly string[] = OPENS_SHEET.slice(3); // all but settings, mode and fmtSettings (OPENS_SHEET lists those three first)
 /** Does this key open a sheet? (Mode and Settings load the view with their lists.) */
 function opensSheet(key: Key, mods: Mods): boolean {
   const a = actionFor(key, mods.shift, mods.alpha);
@@ -505,8 +509,8 @@ export function run(c: RouteCtx, key: Key, mods: Mods): void {
     if (action.kind !== "special" && !abc) c.picked = null;
     return c.dead();
   }
-  // R901: Fmt, and a look at Settings or Mode (⚙, the format chip, a user key), keep the pick: Fmt and Copy act on it after Esc
-  if (shell.app === null && !cell && !abc && !(action.kind === "special" && ["fmt", "settings", "mode"].includes(action.name)) && historyKey(c, action)) return;
+  // R901: Fmt, and a look at Settings or Mode (⚙, the format chip, a user key, Shift + Fmt R871), keep the pick: Fmt and Copy act on it after Esc
+  if (shell.app === null && !cell && !abc && !(action.kind === "special" && /^(fmt|settings|mode)/.test(action.name)) && historyKey(c, action)) return;
   if (action.kind === "special") return special(c, action.name);
   if (shell.app !== null) {
     const dir = action.kind === "cmd" ? NAV[action.name] : undefined;

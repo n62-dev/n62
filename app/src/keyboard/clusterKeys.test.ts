@@ -111,7 +111,7 @@ describe("Shift + Select is Copy (R723)", () => {
   });
 });
 
-describe("Mode has no key (R723); Shift + Fmt is reserved (Shift + Vars is Chars, R725)", () => {
+describe("Mode has no key (R723); Shift + Fmt opens its cycle's page (R871; Shift + Vars is Chars, R725)", () => {
   test("no key's layer holds mode; Shift + Deselect does not open it", () => {
     const holders = keyboard.keys.flatMap((k) => Object.entries(k.actions).filter(([, a]) => a?.kind === "special" && a.name === "mode").map(([l]) => `${k.id}.${l}`));
     expect(holders).toEqual([]);
@@ -127,16 +127,21 @@ describe("Mode has no key (R723); Shift + Fmt is reserved (Shift + Vars is Chars
     none.press("fmt");
     expect(none.log).toEqual(["dead"]);
   });
-  for (const id of ["fmt"])
-    test(`Shift + ${id} is dead and changes nothing on the line: no action, no legend`, () => {
-      const { press, log, entry } = ctx();
-      const before = entry.value;
-      press(id, "shift");
-      expect(log).toEqual(["dead"]);
-      expect(entry.value).toBe(before);
-      expect(keyboard.byId.get(id)?.actions.shift).toBeUndefined();
-      expect(keyboard.byId.get(id)?.label.shift).toBeUndefined();
-    });
+  test("Shift + Fmt (R871) opens Settings › Numbers › Fmt key cycle and changes nothing on the line; in an app it is a dead press", () => {
+    const { c, press, log, entry } = ctx([done("1")]);
+    const paths: unknown[] = [];
+    c.openSettings = (at?: unknown) => void paths.push(at);
+    const before = entry.value;
+    press("fmt", "shift");
+    expect(paths).toEqual([["numbers", "fmtCycle"]]);
+    expect(log).toEqual([]);
+    expect(entry.value).toBe(before);
+    expect(keyboard.byId.get("fmt")?.actions.shift).toEqual({ kind: "special", name: "fmtSettings" });
+    expect(keyboard.byId.get("fmt")?.label.shift).toBe("$key.fmtSettings");
+    const app = ctx([done("1")], "function");
+    app.press("fmt", "shift");
+    expect(app.log).toEqual(["dead"]);
+  });
   test("Vars' tap still opens Find on the user's names", () => {
     const { press, log } = ctx();
     press("vars");

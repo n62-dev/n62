@@ -296,9 +296,9 @@ Positions use our rows and columns (`spec/keyboard.yaml`); the reference's id is
 | Shift + 5 [r8c3]; Shift + 8 [r7c3] | `[ ]` vector or matrix template (EN5); `{ }` list | reference |
 | Shift + 4 [r8c2]; Shift + 7 [r7c2] | the matrix sheet (built, R187–R190: functions 1–8, New 9, stored matrices, grid); the list editor, deferred with Statistics | reference: Matrix, List |
 | Unit slots | the unit pad (`spec/unit-pad.yaml`, docs/archive/r9-unit-pad.md): prefix and unit cells over the maths rows, S5's arrangement, 18 user slots; Enter to the next slot, `→` the end slot. | P11, S1, P14 |
-| Fmt (row 9, col 0) | a tap cycles the format of the picked row, else the newest finished one (R775; an error or running pick: a dead press); a step that would draw what the row shows is skipped; when none changes it, the press is dead; a b/c on an empty line takes the same row, and a b/c with no other form is a dead press likewise (G785); Shift is reserved (R322; Mode has no key since R723: the bar's STD and 12 chips) | ours; decisions.md "Settings in the Mode sheet, and presets" |
+| Fmt (row 9, col 0) | a tap cycles the format of the picked row, else the newest finished one (R775; an error or running pick: a dead press); a step that would draw what the row shows is skipped; when none changes it, the press is dead; a b/c on an empty line takes the same row, and a b/c with no other form is a dead press likewise (G785); Shift opens the Fmt key cycle's page (R871; Mode has no key since R723: the bar's STD and 12 chips) | ours; decisions.md "Settings in the Mode sheet, and presets" |
 | Shift + `( )` [r6c3]; Shift + 0 [r10c2] | ∥: Find's par() with the cursor inside (task t01); after a value it takes the value in, par(value, □) (R585); % (`\%`, the Shift + 9 palette's cell) | owner, 2026-11-14; docs/06 3b |
-| Unassigned Shift cells (a b/c, 7, Fmt; `,` is ± (R71), 1 the σ sheet (R327); the pad: none, P12 point 8) | they get the functions the task benchmark shows are pressed most, not a list made in advance | decisions.md "The letters stay" |
+| Unassigned Shift cells (a b/c, 7; `,` is ± (R71), 1 the σ sheet (R327), Fmt the Fmt key cycle's page (R871); the pad: none, P12 point 8) | they get the functions the task benchmark shows are pressed most, not a list made in advance | decisions.md "The letters stay" |
 
 
 ### 5.2 Decision: how key presses are counted (EN0)
@@ -355,6 +355,7 @@ One IndexedDB database `n62`, store `kv` (`state/storage.ts`). Keys:
 | `presets` | `state/presetRecord.ts`: `{ presets: [{ id, name, groups }], active, next }`; groups `mode`, `numbers`, `look`, `vibration`, `keys` (both key records, migrated too); AI format: `views/aiFormat.md` part 2 |
 | `units.targets`, `units.own` | the last target per dimension; your units (`units/ownRecord.ts`, as strict at a restore as at the start; ids `@name`, G233) |
 | `word` | `{ bits, signed }` (R194) |
+| `fmtSay` | `true` or `false`: Say the format on each Fmt press (R871, `state/fmtSay.svelte.ts`) |
 | `rpn` | `{ levels: [{ uid, chip, shown, inputs }] }`, level 1 first (R252, `entry/rpnStore.ts`) |
 | `uses`, `bar-uses` | the results mode's counts (R53, `state/uses.svelte.ts`) and the bar's angle-chip taps (R722), each with its own since, for decisions.md's removal tests; not backed up |
 | `backup.last`, `backup.offered`, `backup.undo`, `sync.queue`, `sync` | not backed up |

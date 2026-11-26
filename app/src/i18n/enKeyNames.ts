@@ -93,6 +93,7 @@ export const enKeyNames = {
   "sub.shift": "Base",
   "sub.alpha": "Colon",
   fmt: "Format",
+  "fmt.shift": "Fmt key cycle",
   d0: "0",
   "d0.shift": "Percent",
   dot: "Decimal point",
