@@ -5,6 +5,7 @@
 import { CalcCancelled, type CalcError, type CalcSettings, type ConstTable } from "../calc/port.ts";
 import { EngineCrashError, EngineMemoryError } from "../engine/types.ts";
 import { hasMessage, t, type MessageKey } from "../i18n/index.ts";
+import { jobText } from "../i18n/enJob.ts";
 import type { ChipTable } from "../input/chips.ts";
 import { homeResultToLatex } from "../render/home.ts";
 import { casItem, chipFactsOf, homeItem } from "./resultItem.ts";
@@ -55,7 +56,7 @@ export async function runJob(session: Session, live: HistoryItem, view: View, gi
     } else {
       live.status = "error";
       // G183: our own line, never a JS error's text
-      live.text = t(e instanceof EngineMemoryError ? "error.memory" : e instanceof EngineCrashError ? "error.crashed" : "error.engine");
+      live.text = e instanceof EngineMemoryError ? jobText("job.memory") : e instanceof EngineCrashError ? jobText("job.crashed") : t("error.engine");
     }
   }
 }

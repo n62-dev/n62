@@ -5,6 +5,7 @@ import { CalcCancelled, type Calc, type CasOutcome, type HomeOutcome, type UserN
 import type { ComplexValue } from "../engine/format.ts";
 import { safePrecision } from "../engine/homeEval.ts";
 import { t } from "../i18n/index.ts";
+import { jobText } from "../i18n/enJob.ts";
 import { loadRemoved, Session } from "./session.svelte.ts";
 import { fakeKv } from "./fakeKv.ts";
 import { EngineCrashError, EngineLoadError, EngineMemoryError } from "../engine/types.ts";
@@ -374,11 +375,11 @@ describe("an engine that stopped on the input (G183)", () => {
   const failing = (e: unknown): Calc =>
     Object.assign(new FakeCalc(), { ready: () => Promise.resolve(), home: () => Promise.reject(e), cas: () => Promise.reject(e), cancel: () => Promise.resolve() });
 
-  it("a crashed engine shows error.crashed, never the JS text", async () => {
+  it("a crashed engine shows job.crashed, never the JS text", async () => {
     const s = new Session(failing(new EngineCrashError("Maximum call stack size exceeded")), fakeKv());
     await s.submit("1+1");
-    expect(s.home[0]).toMatchObject({ status: "error", text: t("error.crashed") });
-    expect(t("error.crashed")).toBe("The engine stopped on this input and was restarted");
+    expect(s.home[0]).toMatchObject({ status: "error", text: jobText("job.crashed") });
+    expect(jobText("job.crashed")).toBe("The engine stopped on this input and was restarted");
   });
 
   it("any other rejection shows error.engine, not its text (Home and CAS)", async () => {
@@ -394,7 +395,7 @@ describe("an engine that stopped on the input (G183)", () => {
   it("out of memory keeps its own line (G24)", async () => {
     const s = new Session(failing(new EngineMemoryError()), fakeKv());
     await s.submit("1+1");
-    expect(s.home[0]).toMatchObject({ status: "error", text: t("error.memory") });
+    expect(s.home[0]).toMatchObject({ status: "error", text: jobText("job.memory") });
   });
 });
 

@@ -10,6 +10,7 @@ import type { AppShell } from "../apps/shell.svelte.ts";
 import type { ClipActions } from "../clipboard/actions.svelte.ts";
 import { findText as t, type FindMessageKey } from "../i18n/enFind.ts";
 import { legend, t as tr } from "../i18n/index.ts";
+import { shellText } from "../i18n/enShell.ts";
 import type { Layer, Special } from "../keyboard/keyboard.ts";
 import type { DecimalMark } from "../state/session.svelte.ts";
 import { USER_KEY_IDS, USER_LAYERS, type UserKeys } from "../keyboard/userKeys.svelte.ts";
@@ -32,7 +33,7 @@ export interface SettingsEnv extends PresetsHost {
 const PLACES: readonly { name: Special; label: () => string }[] = [
   { name: "home", label: () => tr("view.home") },
   { name: "cas", label: () => tr("view.cas") },
-  { name: "apps", label: () => tr("apps.title") },
+  { name: "apps", label: () => shellText("apps.title") },
   { name: "menu", label: () => t("keys.menu") },
   { name: "mode", label: () => tr("mode.title") },
   { name: "settings", label: () => tr("key.settings") },

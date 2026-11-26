@@ -58,6 +58,8 @@ const clip = {
   "report.notRecorded": "not recorded",
   "report.digits": "Digits",
   "report.format": "Number format",
+  "report.rad": "Radians",
+  "report.deg": "Degrees",
   "report.decimalMark": "Decimal mark",
   // R305: the word a base form is drawn in, and a signed negative's decimal beside its two's complement
   "report.word": "Word",

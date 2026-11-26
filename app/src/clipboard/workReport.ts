@@ -109,7 +109,7 @@ function valueOf(item: HistoryItem, look: ReportLook, based: { any: boolean }): 
   const n = item.rational?.n;
   return n?.startsWith("-") ? `${code(shown)} (${tc("report.inDecimal").replace("{n}", code(n))})` : code(shown);
 }
-const angleName = (a: AngleUnit): string => t(a === "deg" ? "angle.deg" : "angle.rad");
+const angleName = (a: AngleUnit): string => tc(a === "deg" ? "report.deg" : "report.rad");
 
 /** The block of one step; null for a row that is no step (running, cancelled, a note). */
 function step(item: HistoryItem, n: number, look: ReportLook, based: { any: boolean }): string[] | null {

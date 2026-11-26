@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// The words only the shell's app-opening chunk reads (apps/shellOpen.ts with views/AppViews.svelte, R362): a table of its
-// own, so the start chunk does not carry them (it is pinned, size-check.ts; R862, G399). English only so far.
+// The words only the shell's app-opening chunk reads (apps/shellOpen.ts with views/AppViews.svelte, R362), and the titles of the
+// Apps and ☰ sheets (apps/shellSheets.ts, the sheet model's chunk; R871's cut): a table of its own, so the start chunk does not
+// carry them (it is pinned, size-check.ts; R862, G399). English only so far.
 export const enShell = {
+  "apps.title": "Apps",
+  /** R782: the Apps sheet a second tap on the current slot-2 place opens. */
+  "apps.slot": "Slot 2",
+  "menu.title": "{view} menu",
   /** The Menu's row that opens another view's menu (R83): its first two labels, then the view. */
   "menu.inView": "{labels} in {view}",
   /** The view tabs' group in an open app's bay. */

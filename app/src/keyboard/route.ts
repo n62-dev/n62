@@ -354,7 +354,7 @@ export const sheetPress = (c: RouteCtx, key: Key, layer: Layer | undefined, mods
 // the status line's controls too (they go through press(), R15b, R15c1), and a user key while it holds Home or CAS; a
 // user key that holds anything else waits like the key it stands for. The exception is a view key (Symb, Plot, Num):
 // it runs at once only when no key is waiting, else it joins the queue behind the typing it would overtake (R148f2).
-const AT_ONCE: readonly string[] = ["esc", "home", "cas", "switch", "apps", "slot", "symb", "plot", "num", "settings", "mode", "fmtSettings"];
+const AT_ONCE: readonly string[] = ["esc", "home", "cas", "switch", "apps", "slot", "symb", "plot", "num", "settings", "mode"];
 const VIEW_KEYS: readonly string[] = ["symb", "plot", "num"];
 /** During a load: does this action run at once? (AT_ONCE; a view key only when no key is waiting.) */
 const runsAtOnce = (c: RouteCtx, name: string): boolean => AT_ONCE.includes(name) && (c.waiting.length === 0 || !VIEW_KEYS.includes(name));
@@ -510,7 +510,7 @@ export function run(c: RouteCtx, key: Key, mods: Mods): void {
     return c.dead();
   }
   // R901: Fmt, and a look at Settings or Mode (⚙, the format chip, a user key, Shift + Fmt R871), keep the pick: Fmt and Copy act on it after Esc
-  if (shell.app === null && !cell && !abc && !(action.kind === "special" && /^(fmt|settings$|mode$)/.test(action.name)) && historyKey(c, action)) return;
+  if (shell.app === null && !cell && !abc && !(action.kind === "special" && /^(fmt|settings|mode)/.test(action.name)) && historyKey(c, action)) return;
   if (action.kind === "special") return special(c, action.name);
   if (shell.app !== null) {
     const dir = action.kind === "cmd" ? NAV[action.name] : undefined;
