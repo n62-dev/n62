@@ -20,6 +20,7 @@ import { isUnitError, type Quantity, type UnitRequest } from "./types.ts";
 import { fakeKv } from "../state/fakeKv.ts";
 import type { AppShell } from "../apps/shell.svelte.ts";
 import { ClipActions } from "../clipboard/actions.svelte.ts";
+import { sessionLatex } from "../clipboard/text.ts";
 import type { ClipboardPort } from "../clipboard/port.ts";
 import type { EntryController } from "../entry/controller.ts";
 
@@ -143,6 +144,31 @@ describe.skipIf(!giacAvailable())("the unit row (R63, real Giac)", () => {
     s.setDecimalMark("comma");
     expect(s.display(it).latex).toContain("\\pm1{,}2");
     expect(s.display(it).text).toBe("39,488 ± 1,2 m²");
+  });
+
+  // R886 (h3 #6): ln(1 ± 0.5)'s σ has the view's ⚠ (G41 singular): the row draws it before σ, keeps the view's reason for
+  // its reason line (Session.reason), and the LaTeX export writes it as \triangle
+  it("R886: a σ with ⚠ keeps it and its reason in the row; a σ without one keeps neither", async () => {
+    const q = units({ formula: "ln(pasupm(1,0.5))", slots: [] });
+    expect(q.unc?.why).toBe("singular");
+    const row = unitRow({ line: "\\ln(1\\pm0.5)", chips: {}, q, slots: {}, input: "", digits: 12 });
+    expect(row.units?.text).toBe(" ± ⚠0.64");
+    expect(row.units?.latex).toBe("\\pm⚠0.64");
+    expect(row.units?.why).toBe("the interval reaches a singular point");
+    const s = await session(fakeKv([], { cloneReads: true }));
+    putRow(s, row);
+    const it = s.home[0] as HistoryItem;
+    expect(s.display(it).text).toMatch(/ ± ⚠0\.64$/);
+    expect(s.reason(it)).toContain("the interval reaches a singular point");
+    s.settings.marks = "colour";
+    expect(s.reason(it)).toBeNull();
+    s.settings.marks = "reason";
+    expect(sessionLatex([it], {}, s.displayContext(), "t")).toContain("\\pm\\triangle 0.64");
+    const plain = unitRow({ line: "", chips: {}, q: units({ formula: "pasupm(12.34,0.05)*pasu1*pasupm(3.2,0.1)*pasu2", slots: [M, M] }), slots: { u1: M, u2: M }, input: "", digits: 12 });
+    expect(plain.units?.text).toBe(" ± 1.2 m²");
+    expect(plain.units).not.toHaveProperty("why");
+    putRow(s, plain);
+    expect(s.reason(s.home[1] as HistoryItem)).toBeNull();
   });
 
   // G273: the row keeps everything of σ but its HomeResult (the strings, the terms, the second-order part), through a JSON
