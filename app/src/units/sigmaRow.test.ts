@@ -91,6 +91,32 @@ describe.skipIf(!giacAvailable())("a unit row's value ± σ (R885, real Giac)", 
     expect(plain.text).toBe("2.50000000000E0 m");
   });
 
+  // R885 FIX round 2: the view's headline (UnitShown.text) is drawn by the row's function (sigmaDrawn), cut at σ's last
+  // digit (the row's digits past it are muted, R883): the same form, the same σ. Bug list 4's G·5.972ᴇ24 kg
+  // (6.67430ᴇ-11 · 5.972ᴇ24 = 3.98589196ᴇ14, σ 1.5ᴇ-15 · 5.972ᴇ24 = 8.958ᴇ9: σ's last digit at 10⁸) read
+  // ≈ 3.985892E14 ± 9000000000 in the view, the value in E form and σ not
+  it.each([
+    ["pasupm(6.67430e-11,1.5e-15)*5.972e24*pasu1", "std", 12, "3.985892E14 ± 0.000090E14", "3.98589196E14 ± 0.000090E14"],
+    ["pasupm(6.67430e-11,1.5e-15)*5.972e24*pasu1", "std", 7, "3.985892E14 ± 0.000090E14", "3.985892E14 ± 0.000090E14"],
+    ["pasupm(4.7,0.1)*10^3*pasu1", "pfx", 12, `4.70${ts}k ± 0.10${ts}k`, `4.70${ts}k ± 0.10${ts}k`],
+    ["pasupm(9.81,0.05)*10^(-6)*pasu1", "pfx", 12, `9.810${ts}µ ± 0.050${ts}µ`, `9.810${ts}µ ± 0.050${ts}µ`],
+    ["pasupm(1234567890.12345,0.0001)*pasu1", "std", 12, "1234567890.12345 ± 0.00010", "1234567890.12345 ± 0.00010"],
+    ["pasupm(2.5,0.1)*pasu1", "std", 1, "2.50 ± 0.10", "2.50 ± 0.10"],
+    ["pasupm(9.81,0.05)*pasu1", "sci", 12, "9.810E0 ± 0.050", "9.810E0 ± 0.050"],
+    ["pasupm(9.81065219207,0.0526983)*pasu1", "std", 12, "9.811 ± 0.053", "9.81065219207 ± 0.053"],
+  ] as [string, NumberFormat, number, string, string][])("the view's headline of %s in %s at %i: %s, the row %s", async (f, format, digits, head, rowText) => {
+    const r = await drawn(f, format, digits);
+    const v = shownOf(r.q, { format: format.toUpperCase() as "STD", digits }) as UnitShown;
+    expect(v.text).toBe(head);
+    expect(v.sigma && v.sigma.head + v.sigma.tail).toBe(head);
+    expect(r.text).toBe(`${rowText} m`);
+  });
+
+  it("the second line of G·M writes σ in E form, as its value (bug list 4): σ 9.0E9, not 9000000000", async () => {
+    const q = units("pasupm(6.67430e-11,1.5e-15)*5.972e24*pasu1", 12);
+    expect((shownOf(q, { format: "STD", digits: 12 }) as UnitShown).sub).toBe("3.98589196E14 · σ 9.0E9");
+  });
+
   it("the unit view's second line writes σ at 2 significant digits in the format's form (h3 #12)", async () => {
     const q = units("pasupm(9.81,0.05)*pasu1", 12);
     const sub = (format: "SCI" | "STD" | "PFX") => (shownOf(q, { format, digits: 12 }) as UnitShown).sub;

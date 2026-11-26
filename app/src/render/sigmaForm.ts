@@ -5,9 +5,9 @@
 // with no zeros padded past σ's place that the value does not have (SCI's 9.81000000000E0 ± 0.050 reads 9.810E0); value
 // and σ in the same form: σ in the value's prefix or exponent (4.70 k ± 0.10 k, 9.810E-6 ± 0.050E-6; an exponent of 0
 // is not written). FIX keeps its decimals while they reach σ's place. Home's unit row and Copy as shown (renderPoint
-// through DisplayContext.sigma = sigmaRow, Session.display through withSigma) and the unit view's second line
-// (units/result.ts) draw through it. Pure text arithmetic on DecimalValue; in the tidy chunk (render/tidy.ts), off the
-// start chunk.
+// through DisplayContext.sigma = sigmaRow, Session.display through withSigma) and the unit view (units/result.ts: its
+// headline through sigmaDrawn, its second line through sigmaAlone) draw through it. Pure text arithmetic on
+// DecimalValue; in the tidy chunk (render/tidy.ts), off the start chunk.
 import { decimalFromString, formatReal, isZero, PREFIXES, roundSignificant, toText, trimZeros, type ComplexValue, type DecimalValue, type FormatOptions, type FormattedComplex, type FormattedNumber } from "../engine/format.ts";
 import { withUnit } from "../state/results.ts";
 import { complexToLatex } from "./home.ts";
@@ -39,6 +39,11 @@ function roundAt(v: DecimalValue, last: number): { digits: string; exp: number }
 function lastAt(v: DecimalValue, n: number): number {
   const r = roundSignificant(v, n);
   return r.exp - trimZeros(r.digits).length + 1;
+}
+
+/** The place of the last of `n` significant digits of `v` (after its rounding there: 9.99996 at 5 → 10.000, 10⁻³). */
+function placeAt(v: DecimalValue, n: number): number {
+  return roundSignificant(v, n).exp - n + 1;
 }
 
 /** The power of ten the form puts on a value whose rounded first digit is at `e` and that is drawn down to `last`: 0 for
@@ -74,18 +79,20 @@ function written(neg: boolean, d: string, e: number, last: number, f: { p: numbe
  * confirmedOptions gave them), `reliable` the value's confirmed significant digits (ValueFacts.reliableDigits; null or
  * absent: every digit `v` has). Never drawn below the value's confirmed last place: a σ finer than it leaves the value at
  * its confirmed digits (no zeros padded in for digits not known) and σ at 2 digits in its own form (sigmaAlone). Null
- * for a σ of 0: the caller draws as before.
+ * for a σ of 0: the caller draws as before. `atSigma`: the value cut at σ's last digit whatever the digits setting (the unit
+ * view's headline, value line of `39.5 ± 1.2`: the row may draw more, R883 mutes them; the form still the setting's).
  */
-export function sigmaDrawn(v: DecimalValue, sv: DecimalValue, o: FormatOptions, reliable?: number | null): SigmaDrawn | null {
+export function sigmaDrawn(v: DecimalValue, sv: DecimalValue, o: FormatOptions, reliable?: number | null, atSigma = false): SigmaDrawn | null {
   if (isZero(sv)) return null;
   const s2 = roundSignificant({ ...sv, neg: false }, 2);
   const k = s2.exp - 1; // σ's last digit's place
   // FIX: its decimals, or its SCI fallback's digits, when format.ts draws that
   const fixSci = o.format === "FIX" && formatReal(v, o).exponent !== null;
   const n = o.format === "FIX" ? (o.sciDigits ?? (o.fixed ?? 4) + 1) : o.digits;
-  const wanted = o.format === "FIX" && !fixSci ? Math.min(-(o.fixed ?? 4), k) : Math.min(lastAt(v, n), k);
-  // the value's confirmed last place bounds it (at least one digit, as confirmedOptions draws)
-  const floor = reliable === null || reliable === undefined ? -Infinity : lastAt(v, Math.max(1, reliable));
+  const wanted = atSigma ? k : o.format === "FIX" && !fixSci ? Math.min(-(o.fixed ?? 4), k) : Math.min(lastAt(v, n), k);
+  // the value's confirmed last place bounds it (at least one digit, as confirmedOptions draws); its zeros count:
+  // 10.1 confirmed to 6 digits is known to 10⁻⁴ and draws 10.100 ± 0.071
+  const floor = reliable === null || reliable === undefined ? -Infinity : placeAt(v, Math.max(1, reliable));
   const last = isZero(v) ? Math.min(0, k) : Math.max(wanted, floor);
   const r = roundAt(v, last);
   const zero = /^0+$/.test(r.digits);
@@ -101,12 +108,14 @@ export function sigmaDrawn(v: DecimalValue, sv: DecimalValue, o: FormatOptions, 
   return sigma && { value, sigma };
 }
 
-/** σ alone, as the second line of the unit view writes it: 2 significant digits in the format's own form for σ
- *  ("0.050", SCI "5.0E-2", ENG "50E-3", PFX "50 m"; sigmaDrawn with σ at 2 digits as the value). Null for a σ of 0. */
+/** σ alone: 2 significant digits in the format's own form for σ ("0.050", SCI "5.0E-2", ENG "50E-3", PFX "50 m";
+ *  sigmaDrawn with σ at 2 digits as the value); drawn plain with its last digit above the units place, in E form (9.0E9,
+ *  1.2E3: 9000000000 would read as ten digits). Null for a σ of 0. */
 export function sigmaAlone(sv: DecimalValue, o: FormatOptions): FormattedNumber | null {
   if (isZero(sv)) return null;
   const s2 = roundSignificant({ ...sv, neg: false }, 2);
-  return sigmaDrawn({ neg: false, digits: trimZeros(s2.digits), exp: s2.exp, sticky: false }, sv, o)?.sigma ?? null;
+  const s = sigmaDrawn({ neg: false, digits: trimZeros(s2.digits), exp: s2.exp, sticky: false }, sv, o)?.sigma ?? null;
+  return s && s.exponent === null && s.prefix === undefined && s2.exp - 1 > 0 ? written(false, s2.digits, s2.exp, s2.exp - 1, { p: s2.exp }, false) : s;
 }
 
 /** A Home row with σ as renderPoint passes it (state/displayMode.ts NumericResult): a unit row's σ is in `units.unc`, its

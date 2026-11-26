@@ -74,6 +74,9 @@ describe("sigmaDrawn: value and σ in the same form (R885, h3 #5, #12, bug list 
     // a bound above the digits setting's place: drawn to the confirmed digits; within it: as before
     const c = sigmaDrawn(dec("9.81065219207"), dec("0.0526983"), STD(3), 3);
     expect(c && `${toText(c.value)} ± ${toText(c.sigma)}`).toBe("9.81 ± 0.053");
+    // the confirmed place counts the value's zeros: 10.1 known to 6 digits reaches σ's 10⁻³ (round 1 stopped at 10.1)
+    const z = sigmaDrawn(dec("10.1"), dec("0.0707"), STD(), 6);
+    expect(z && `${toText(z.value)} ± ${toText(z.sigma)}`).toBe("10.100 ± 0.071");
     const w = sigmaDrawn(dec("1234567890.12345"), dec("0.0001"), STD(), 15);
     expect(w && `${toText(w.value)} ± ${toText(w.sigma)}`).toBe("1234567890.12345 ± 0.00010");
   });
@@ -91,9 +94,12 @@ describe("sigmaAlone: the unit view's second line (R885, h3 #12)", () => {
     ["0.05", "ENG", "50E-3"],
     ["0.05", "PFX", `50${ts}m`],
     ["0.0996", "SCI", "1.0E-1"],
-    ["8958000000", "STD", "9000000000"],
+    // drawn plain above the units place, σ takes the E form: 9000000000 read as ten digits (bug list 4's G·M)
+    ["8958000000", "STD", "9.0E9"],
     ["8958000000", "SCI", "9.0E9"],
-    ["1234", "STD", "1200"],
+    ["1234", "STD", "1.2E3"],
+    ["12", "STD", "12"],
+    ["8958000000", "PFX", `9.0${ts}G`],
   ] as [string, FormatOptions["format"], string][])("σ %s in %s → %s", (s, format, want) => {
     const f = sigmaAlone(dec(s), { format, digits: 12 });
     expect(f && toText(f)).toBe(want);

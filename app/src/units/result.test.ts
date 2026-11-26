@@ -120,7 +120,7 @@ describe("shownOf with the decimal comma and digit groups (R120)", () => {
     };
     expect(cut(result(shownOf(sigma("9.81065219207", "0.0526983346596"), { ...STD, grouped: true })))).toBe(`9.8[10${T}652${T}192${T}07] · σ 0.053`); // R885: σ at 2 significant digits
     expect(cut(result(shownOf(sigma("39.488", "1.244"), { ...STD, grouped: true, decimalComma: true })))).toBe("3[9,488] · σ 1,2");
-    expect(cut(result(shownOf(sigma("12345.6", "100"), { ...STD, grouped: true, groupSep: "comma" })))).toBe("12,[345.6] · σ 100");
+    expect(cut(result(shownOf(sigma("12345.6", "100"), { ...STD, grouped: true, groupSep: "comma" })))).toBe("12,[345.6] · σ 1.0E2"); // R885: 100 would read as 3 digits
     expect(cut(result(shownOf(sigma("-9.81", "0.02"), STD)))).toBe("-9.8[1] · σ 0.020");
     expect(cut(result(shownOf(sigma("98100", "200"), { format: "SCI", digits: 3 })))).toBe("9.8[1]E4 · σ 2.0E2"); // the exponent stays plain
     // every digit above σ's place, a σ of zero, no σ: nothing muted

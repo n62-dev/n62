@@ -4,7 +4,7 @@
 // 2026-11-23 (h3 #4, #5, #12, #13) in the unit view, ↑Enter, Esc: the Home row it leaves, Copy as shown the same text,
 // and the view's second line. The real engine. Expected values: derived from the rule (1234567890.12345 ± 0.0001: σ's
 // last digit at 10⁻⁵; (4.7 ± 0.1)·10³ = 4700 ± 100: σ's last digit at 10¹, the value's prefix k).
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { flick, lastResult, open, tap, useClipboardLock } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
@@ -14,6 +14,8 @@ useClipboardLock(); // R74f1: first hook, so the lock is held before the page op
 const ts = " "; // PFX's thin space before the prefix
 const done = (page: Page) => page.locator('[data-status="done"]');
 const sub = (page: Page) => page.getByTestId("unit-sub");
+/** A locator's text without R55's digit groups (the thin spaces between groups). */
+const ungrouped = async (l: Locator): Promise<string | undefined> => (await l.textContent())?.replace(/[\u2009\u202f]/g, "");
 const clipboard = (page: Page): Promise<string> => page.evaluate(() => navigator.clipboard.readText());
 
 /** `latex` on Home's line, the units key, m in its slot, Eval (↑Enter): the unit view's result. */
@@ -94,6 +96,24 @@ test.describe("a value with σ is drawn by one rule (R885)", () => {
     await expect(page.getByTestId("unit-result").locator(".value")).toHaveText("9.810 ± 0.050");
     await leave(page, 1);
     await expect(lastResult(page)).toHaveAttribute("data-text", "9.810 ± 0.050 m");
+  });
+
+  // R885 FIX round 2: the view's headline and second line draw through the row's function (units/result.ts)
+  test("bug list 4, G·5.972ᴇ24: the view's headline and the row put σ in the value's exponent; its second line σ 9.0E9", async ({ page }) => {
+    await inUnits(page, "(6.6743\\pm0.00015)\\cdot10^{-11}\\cdot5.972\\cdot10^{24}");
+    // the headline is cut at σ's last digit (10⁸), the row keeps the digits setting's (muted past σ); groups dropped
+    await expect.poll(() => ungrouped(page.getByTestId("unit-result").locator(".value"))).toBe("3.985892E14 ± 0.000090E14");
+    await expect.poll(() => ungrouped(sub(page))).toBe("3.98589196E14 · σ 9.0E9");
+    await leave(page, 1);
+    await expect(lastResult(page)).toHaveAttribute("data-text", "3.98589196E14 ± 0.000090E14 m");
+  });
+
+  test("PFX: the view's headline is the row's, 4.70 k ± 0.10 k", async ({ page }) => {
+    await page.evaluate(() => (window.n62.session.settings.format = "pfx"));
+    await inUnits(page, "(4.7\\pm0.1)\\cdot10^3");
+    await expect(page.getByTestId("unit-result").locator(".value")).toHaveText(`4.70${ts}k ± 0.10${ts}k`);
+    await leave(page, 1);
+    await expect(lastResult(page)).toHaveAttribute("data-text", `4.70${ts}k ± 0.10${ts}k m`);
   });
 
   test("never below the value's confirmed digits: 10²⁰·π at 12 digits ± 3 pads no zeros above σ's place (R885 FIX 1)", async ({ page }) => {
