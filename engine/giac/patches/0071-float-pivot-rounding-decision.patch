@@ -1,0 +1,287 @@
+# Upstream: giac 2.1.0 vecteur.cc rref_reduce, mrref, lc_sum (patch 0068), _det and misc.cc _rank (G806, backlog F486): a float row reduction decides at the working precision that a pivot is 0 (patch 0068's window, or a column of exact zeros) or not (a pivot kept below the rounding of its column), and nothing says so. det of a float matrix with a zero column was the exact integer 0 (det(exp(approx([[9.81,2,10!],[pi,7,pi],[0.3,pi,2.5]]))) = 0 at any Digits, right e^19.31); it is now a float 0 at the matrix's precision, as det(approx([[1,1],[1,1]])) already was. And _rank and _det print 'Warning: a pivot of this float matrix was decided within the rounding of its entries' when their reduction took a sum that was not exactly 0 for 0, or kept a pivot u (the Bareiss pivot over the one before) at or below 2^(12-prec) of its column's largest entry before elimination; the host reads it and shows such a rank with a warning (rank(e^M) was 1, right 3; F486's product rank 3, right 2).
+# Changed by Pascaline contributors, 2026-11-26
+--- a/src/misc.cc
++++ b/src/misc.cc
+@@ -373,7 +373,9 @@ namespace giac {
+     matrice mr(*args._VECTptr);
+     if (!ckmatrix(mr))
+       return gensizeerr(contextptr);
++    unsigned rounded=float_pivot_rounding_count(); // N62 (G806): the host reads the warning (a rank the rounding decided)
+     mr=mrref(mr,contextptr);
++    float_pivot_rounding_warn(rounded,contextptr);
+     int r=int(mr.size());
+     for (;r;--r){
+       if (!rank_row_zero(mr[r-1]))
+--- a/src/vecteur.cc
++++ b/src/vecteur.cc
+@@ -35,6 +35,7 @@
+  */
+ using namespace std;
+ #include <cmath>
++#include <climits>
+ #include <stdexcept>
+ #include <map>
+ #include <iostream>
+@@ -5135,6 +5136,90 @@ namespace giac {
+     return mpfr_get_exp(p._REALptr->inf)<=e-long(mpfr_get_prec(p._REALptr->inf))+12;
+   }
+ #endif
++  // N62 (G806): the pivot decisions of a float row reduction that the rounding made: a sum lc_sum takes for 0 that was
++  // not exactly 0, and a pivot kept below the rounding of its column's largest entry before elimination (rref_reduce).
++  // _rank and _det print a warning when theirs made one, which the host reads (the rank of e^M, whose small directions
++  // need 1400 digits, was 1 at any Digits we run, with nothing to say so).
++  static unsigned float_pivot_rounded=0;
++  unsigned float_pivot_rounding_count(){ return float_pivot_rounded; }
++  void float_pivot_rounding_warn(unsigned before,GIAC_CONTEXT){
++    if (float_pivot_rounded!=before)
++      *logptr(contextptr) << "Warning: a pivot of this float matrix was decided within the rounding of its entries" << '\n';
++  }
++#if defined HAVE_LIBMPFR && !defined BF2GMP_H
++  // the largest exponent of the MPFR parts of g (any: one was nonzero) and their largest precision
++  static void fp_scale(const gen & g,long & e,bool & any,long & prec){
++    if (g.type==_REAL){
++      if (!mpfr_number_p(g._REALptr->inf))
++	return;
++      long p=long(mpfr_get_prec(g._REALptr->inf));
++      if (p>prec) prec=p;
++      if (!mpfr_zero_p(g._REALptr->inf)){
++	long ge=mpfr_get_exp(g._REALptr->inf);
++	if (!any || ge>e) e=ge;
++	any=true;
++      }
++      return;
++    }
++    if (g.type==_CPLX){
++      fp_scale(*g._CPLXptr,e,any,prec);
++      fp_scale(*(g._CPLXptr+1),e,any,prec);
++    }
++  }
++#endif
++  // the scale of each column j in [c,cmax) of M's rows [l,lmax) (its largest MPFR exponent; LONG_MIN when it has none),
++  // and the largest MPFR precision of them (0: no MPFR entry)
++  static long float_col_scale(const std_matrix<gen> & M,int l,int lmax,int c,int cmax,std::vector<long> & colexp){
++    colexp.assign(cmax>0?cmax:0,LONG_MIN);
++    long prec=0;
++#if defined HAVE_LIBMPFR && !defined BF2GMP_H
++    for (int j=c;j<cmax;++j){
++      long e=0; bool any=false;
++      for (int i=l;i<lmax && i<int(M.size());++i){
++	if (j<int(M[i].size()))
++	  fp_scale(M[i][j],e,any,prec);
++      }
++      if (any) colexp[j]=e;
++    }
++#endif
++    return prec;
++  }
++  // a pivot of column j kept below the rounding of the column's largest entry: u = pivot/prev (prev the Bareiss divisor,
++  // 1 for Gauss-Jordan) at most 2^(12-prec) of it, the window lc_sum takes a cancelled sum in
++  static void float_pivot_check(const gen & pivot,const gen & prev,int j,const std::vector<long> & colexp){
++#if defined HAVE_LIBMPFR && !defined BF2GMP_H
++    if (j<0 || j>=int(colexp.size()) || colexp[j]==LONG_MIN)
++      return;
++    long pe=0,pp=0; bool pany=false;
++    fp_scale(pivot,pe,pany,pp);
++    if (!pany || pp==0)
++      return;
++    long be=0,bp=0; bool bany=false;
++    fp_scale(prev,be,bany,bp);
++    if (bany)
++      pe-=be;
++    else if (!is_one(prev))
++      return;
++    if (pe<=colexp[j]-pp+12)
++      ++float_pivot_rounded;
++#endif
++  }
++  // N62 (G806): the scale mrref divides a float row by, its largest entry, as the power of 2 at or below it when that is
++  // an MPFR value: an exact division, so the rows of a float matrix of integers stay exact and their cancellations exactly
++  // 0 (the row [1,2,3] divided by 3 left rank(approx([[1,2,3],[4,5,6],[7,8,9]]))'s cancelled pivot to the rounding)
++  static gen float_row_scale(const gen & m){
++#if defined HAVE_LIBMPFR && !defined BF2GMP_H
++    if (m.type==_REAL && mpfr_number_p(m._REALptr->inf) && !mpfr_zero_p(m._REALptr->inf)){
++      mpfr_t t;
++      mpfr_init2(t,mpfr_get_prec(m._REALptr->inf));
++      mpfr_set_ui_2exp(t,1,mpfr_get_exp(m._REALptr->inf)-1,MPFR_RNDN);
++      real_object r(t);
++      mpfr_clear(t);
++      return r;
++    }
++#endif
++    return m;
++  }
+   static gen lc_sum(const gen & t1,const gen & t2){
+     gen s=t1+t2;
+ #if defined HAVE_LIBMPFR && !defined BF2GMP_H
+@@ -5143,8 +5228,53 @@ namespace giac {
+     long e=0; bool any=false;
+     if (!lc_real_exp(t1,e,any) || !lc_real_exp(t2,e,any) || !any)
+       return s;
+-    if (s.type==_REAL ? lc_part_cancelled(s,e) : (lc_part_cancelled(*s._CPLXptr,e) && lc_part_cancelled(*(s._CPLXptr+1),e)))
++    if (s.type==_REAL ? lc_part_cancelled(s,e) : (lc_part_cancelled(*s._CPLXptr,e) && lc_part_cancelled(*(s._CPLXptr+1),e))){
++      if (!is_exactly_zero(s))
++	++float_pivot_rounded; // N62 (G806): the rounding decided this 0
+       return 0;
++    }
++#endif
++    return s;
++  }
++#if defined HAVE_LIBMPFR && !defined BF2GMP_H
++  // N62 (G806): the significant bits of an MPFR real or an integer (its mantissa without trailing zeros); -1 for any other
++  static long lc_sigbits(const gen & g){
++    if (g.type==_INT_){
++      unsigned long v=g.val<0?-(unsigned long)(long)g.val:(unsigned long)g.val;
++      long n=0;
++      while (v && !(v&1)) v>>=1;
++      while (v){ ++n; v>>=1; }
++      return n;
++    }
++    if (g.type!=_REAL || !mpfr_number_p(g._REALptr->inf))
++      return -1;
++    if (mpfr_zero_p(g._REALptr->inf))
++      return 0;
++    mpz_t m; mpz_init(m);
++    mpfr_get_z_2exp(m,g._REALptr->inf);
++    long n=long(mpz_sizeinbase(m,2))-long(mpz_scan1(m,0));
++    mpz_clear(m);
++    return n;
++  }
++  // c*x was computed exactly (its result t holds every bit of the product)
++  static bool lc_exact_product(const gen & c,const gen & x,const gen & t){
++    if (t.type!=_REAL)
++      return t.type==_INT_ || t.type==_ZINT;
++    long a=lc_sigbits(c),b=lc_sigbits(x);
++    return a>=0 && b>=0 && a+b<=long(mpfr_get_prec(t._REALptr->inf));
++  }
++#endif
++  // N62 (G806): c1*x1+c2*x2 by lc_sum; a sum that is exactly 0 because two rounded products rounded alike is a decision
++  // the rounding made too (an entry of e^M at Digits 80), unless it is the pivot column's c1 = x2, c2 = -x1, which the
++  // elimination makes 0 by construction
++  static gen lc_sum4(const gen & c1,const gen & x1,const gen & c2,const gen & x2){
++    gen t1=c1*x1,t2=c2*x2;
++    gen s=lc_sum(t1,t2);
++#if defined HAVE_LIBMPFR && !defined BF2GMP_H
++    if (is_exactly_zero(s) && t1.type==_REAL && !mpfr_zero_p(t1._REALptr->inf)
++	&& !(is_exactly_zero(c1-x2) && is_exactly_zero(c2+x1))
++	&& !(lc_exact_product(c1,x1,t1) && lc_exact_product(c2,x2,t2)))
++      ++float_pivot_rounded;
+ #endif
+     return s;
+   }
+@@ -5199,7 +5329,7 @@ namespace giac {
+     if (it1==jt1){
+       if (is_one(c)){
+ 	for (;jt1!=it1end;++jt1,++it2){
+-	  *jt1=trim(lc_sum(c1*(*jt1),c2*(*it2)),c1,eps);
++	  *jt1=trim(lc_sum4(c1,*jt1,c2,*it2),c1,eps);
+ 	}
+       }
+       else {
+@@ -5226,7 +5356,7 @@ namespace giac {
+ 	    *jt1=exact_div(tmp,c);
+ 	    continue;
+ 	  }
+-	  *jt1=trim(exact_div(lc_sum(c1*(*jt1),c2*(*it2)),c),c1,eps);
++	  *jt1=trim(exact_div(lc_sum4(c1,*jt1,c2,*it2),c),c1,eps);
+ 	}
+       }
+       return;
+@@ -5235,11 +5365,11 @@ namespace giac {
+     v.reserve(it1end-it1);
+     if (is_one(c)){
+       for (;it1!=it1end;++it1,++it2)
+-	v.push_back(trim(lc_sum(c1*(*it1),c2*(*it2)),c1,eps));
++	v.push_back(trim(lc_sum4(c1,*it1,c2,*it2),c1,eps));
+     }
+     else {
+       for (;it1!=it1end;++it1,++it2)
+-	v.push_back(trim(exact_div(lc_sum(c1*(*it1),c2*(*it2)),c),c1,eps));
++	v.push_back(trim(exact_div(lc_sum4(c1,*it1,c2,*it2),c),c1,eps));
+     }
+   }
+ 
+@@ -7120,6 +7250,9 @@ namespace giac {
+     int pivotline,pivotcol;
+     matrice res;
+     int status=2;
++    // N62 (G806): each column's scale before elimination, for float_pivot_check; the precision of the float entries
++    std::vector<long> colexp;
++    long fprec=num_mat?float_col_scale(M,l,lmax,c,cmax,colexp):0;
+     for (;(l<lmax) && (c<cmax);){
+ #ifdef TIMEOUT
+       control_c();
+@@ -7177,6 +7310,8 @@ namespace giac {
+       if (!is_exactly_zero(pivot)
+ 	  //!is_zero(pivot,contextptr)
+ 	  ){
++	if (num_mat)
++	  float_pivot_check(pivot,algorithm!=RREF_GAUSS_JORDAN?bareiss:gen(1),pivotcol,colexp);
+ 	if (step_rref){
+ 	  std_matrix_gen2matrice(M,res);
+ 	  gen pivot1=pivot;
+@@ -7290,7 +7425,10 @@ namespace giac {
+       else { // if pivot is 0 increment either the line or the col
+ 	status=3;
+ 	if (rref_or_det_or_lu==1){
+-	  det=0;
++	  // N62 (G806): a float matrix's det is a float 0 at its precision, as the last pivot's cancellation gives
++	  // (det(approx([[1,1],[1,1]]))); the exact 0 read as exact: det(exp(approx([[9.81,2,10!],[pi,7,pi],[0.3,pi,2.5]])))
++	  // was the integer 0 at any Digits (right e^19.31), a column taken for 0 within the rounding
++	  det=num_mat?(fprec>0?accurate_evalf(gen(0),int(fprec)):gen(0.0)):gen(0);
+ 	  return 1;
+ 	}
+ 	if (l>=dont_swap_below)
+@@ -7597,7 +7735,7 @@ namespace giac {
+       iterateur it=res.begin(),itend=res.end();
+       for (;it!=itend;++it){
+ 	if (num_mat){ // divide each line by max coeff in abs value
+-	  lcm_deno=linfnorm(*it,contextptr);
++	  lcm_deno=float_row_scale(linfnorm(*it,contextptr));
+ 	  detnum=lcm_deno*detnum;
+ 	  // N62 (G622): a zero line stays as it is (1/0 made it undef: rank(evalf([[0,0],[0,1]])) was 2 at Digits 40)
+ 	  if (!is_exactly_zero(lcm_deno))
+@@ -7860,6 +7998,10 @@ namespace giac {
+     pivots.reserve(cmax-c);
+     bool fullreductionafter=rref_or_det_or_lu==0 && dont_swap_below==0 && cmax-c>=lmax-linit && step_infolevel(contextptr)==0 && fullreduction && algorithm!=RREF_GAUSS_JORDAN;
+     gen detnumsave=detnum;
++    // N62 (G806): the columns' scale before elimination, for the last pivot of the Cramer branch below
++    std::vector<long> colexp;
++    if (num_mat && fullreductionafter)
++      float_col_scale(M,l,lmax,c,cmax,colexp);
+     int status=rref_reduce(M,pivots,permutation,det,detnum,algorithm,l,lmax,c,cmax,dont_swap_below,rref_or_det_or_lu,(fullreductionafter?0:fullreduction),eps,step_rref,lv,convert_internal,num_mat,contextptr);
+     if (status!=2 && status!=3)
+       return status;
+@@ -7877,6 +8019,8 @@ namespace giac {
+ 	vecteur & Mlast=M[lmax-1];
+ 	int shift=c-linit;
+ 	gen d=Mlast[shift+lmax-1];
++	if (num_mat && lmax-1>linit) // N62 (G806): rref_reduce stopped before this pivot
++	  float_pivot_check(d,algorithm!=RREF_GAUSS_JORDAN?M[lmax-2][shift+lmax-2]:gen(1),shift+lmax-1,colexp);
+ 	for (l=lmax-2;l>=linit;--l){
+ 	  vecteur Mlcopy(M[l]);
+ 	  vecteur & Ml=M[l];
+@@ -12313,10 +12457,12 @@ namespace giac {
+     matrice res;
+     gen determinant;
+     int s=int(a.size());
++    unsigned rounded=float_pivot_rounding_count(); // N62 (G806)
+     if (!mrref(a,res,pivots,determinant,0,s,0,s,
+ 	  /* fullreduction */0,0,convert_internal,algorithm,-1/* det */,
+ 	       contextptr))
+       return gendimerr(contextptr);
++    float_pivot_rounding_warn(rounded,contextptr);
+     return determinant;
+   }
+   static const char _det_s []="det";
+--- a/src/vecteur.h
++++ b/src/vecteur.h
+@@ -346,6 +346,9 @@ namespace giac {
+   vecteur fracmod(const vecteur & v,const gen & modulo,gen * den=0,int prealloc=128);
+   gen modproduct(const vecteur & v, const gen & modulo);
+   matrice mrref(const matrice & a,GIAC_CONTEXT);
++  // N62 (G806): the count of float pivot decisions the rounding made, and the warning when it moved since `before`
++  unsigned float_pivot_rounding_count();
++  void float_pivot_rounding_warn(unsigned before,GIAC_CONTEXT);
+   gen _rref(const gen & a,GIAC_CONTEXT); // first non 0 elem in row is 1
+   extern const unary_function_ptr * const  at_rref ;
+   void add_identity(matrice & arref);

@@ -82,6 +82,9 @@ interface AfterInput {
 
 /** G97: what Giac's pow prints for a base that is a list but not a square matrix (gen.cc:6881). */
 const AMBIGUOUS_POWER = /\^ is ambiguous on non square matrices/;
+/** G806: patch 0071's warning, printed by rank and det when a pivot of their float row reduction was decided within the
+ *  rounding of its entries. */
+const ROUNDED_PIVOT = /pivot of this float matrix was decided within the rounding/;
 
 const NO_READS: InputReads = { names: [], targets: [], fn: false };
 
@@ -176,10 +179,10 @@ export class EngineHost implements FactsHost {
   private parsed: { text: string; tree: GiacParse } | null = null;
   /** `giac.eval` that throws GiacSyntaxError instead of quietly returning `undef` (which would
    *  otherwise leave the previous answer in place and show it again). */
-  private readonly strict: { eval(input: string): string; value(text: string, precisions: readonly number[], tree?: boolean): GiacValue; ambiguousPower(): boolean; digits(d: number): void };
+  private readonly strict: { eval(input: string): string; value(text: string, precisions: readonly number[], tree?: boolean): GiacValue; ambiguousPower(): boolean; roundedPivot(): boolean; digits(d: number): void };
   /** G97: `giac.eval` that reads Giac's messages after each eval for ambiguousPower(), and throws nothing (Num's
    *  cells, where a syntax error is a cell's own error). Without it a power's shape walk would run on every cell. */
-  private readonly watched: { eval(input: string): string; value(text: string, precisions: readonly number[], tree?: boolean): GiacValue; ambiguousPower(): boolean; digits(d: number): void };
+  private readonly watched: { eval(input: string): string; value(text: string, precisions: readonly number[], tree?: boolean): GiacValue; ambiguousPower(): boolean; roundedPivot(): boolean; digits(d: number): void };
 
   /** Our definitions already loaded into this Giac instance (ENGINE_DEFINITIONS, loaded on first use). */
   private readonly loaded = new Set<string>();
@@ -295,6 +298,7 @@ export class EngineHost implements FactsHost {
     // replay paths have no mode setup of their own
     giac.eval(angleCommand("rad"));
     let ambiguous = false;
+    let rounded = false;
     let msg = "";
     // Giac's messages of one call (an eval, or G103's bridge-3 value)
     const heard = <T>(call: () => T): T => {
@@ -302,6 +306,7 @@ export class EngineHost implements FactsHost {
       const out = call();
       msg = giac.messages();
       ambiguous = AMBIGUOUS_POWER.test(msg);
+      rounded = ROUNDED_PIVOT.test(msg);
       return out;
     };
     const read = (input: string): string => heard(() => giac.eval(input));
@@ -321,9 +326,10 @@ export class EngineHost implements FactsHost {
         return v;
       },
       ambiguousPower: () => ambiguous,
+      roundedPivot: () => rounded,
       digits: giac.digits,
     };
-    this.watched = { eval: read, value, ambiguousPower: () => ambiguous, digits: giac.digits };
+    this.watched = { eval: read, value, ambiguousPower: () => ambiguous, roundedPivot: () => rounded, digits: giac.digits };
   }
 
   /** Replays definitions (a fresh engine: at init, or the stored log on first launch) and adds them to the log.
@@ -1123,7 +1129,7 @@ export class EngineHost implements FactsHost {
     // G57: a decision the precisions do not agree on, or a tie Giac cannot prove, is refused as in Home (nothing is stored).
     let refusedCut = false;
     if (!once && !inexactTest && !hasFloat(text) && restsOnDecision(decisionExpr, "typed", text, notBuiltin(this.giac), complexArg)) {
-      const d = decideTwice(this.giac, decisionExpr, text, digitsSet, digitsSet);
+      const d = decideTwice(this.watched, decisionExpr, text, digitsSet, digitsSet); // G806: with Giac's messages (roundedPivot)
       if ("undecided" in d) undecided = true;
       if ("undecided" in d && d.refused) refusedCut = true;
       if (!("undecided" in d) && d.from !== undefined) {
