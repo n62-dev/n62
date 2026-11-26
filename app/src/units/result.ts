@@ -9,6 +9,7 @@ import { precisionFacts } from "../engine/precisionFacts.ts";
 import { unitText } from "../i18n/enUnits.ts";
 import { groupText } from "../render/groupText.ts";
 import { groupSepFor, type GroupSep } from "../render/home.ts";
+import { powerOf, sigmaCut, tailAt } from "../render/uncMute.ts";
 import { commaResult, markText, withSigmaText } from "../state/displayMode.ts";
 import type { Alternative } from "./alternatives.ts";
 import { unitErrorMessage, unitNamesText, unitNoteText, unitWhyText } from "./messages.ts";
@@ -45,6 +46,9 @@ export interface UnitShown {
   dim?: string;
   /** With σ, muted under the value line: the value and σ at the digits setting. */
   sub?: string;
+  /** R883: where in `sub` its value stands and its digits past σ go muted (R40's rule, render/uncMute.ts):
+   *  [value from, muted from, muted to, value to]; the muted part is empty when no digit is. */
+  subCut?: readonly [number, number, number, number];
   /** The dimension key; "" for a pure number (no row). */
   dimension: string;
   /** The row's chips, fixed for as long as this result is on screen (not reordered); "More…" follows them. */
@@ -77,7 +81,9 @@ export function shownOf(q: Quantity | UnitError, u: UnitFormat, alts: readonly A
   const limit = q.unc?.chip;
   const sigmaWarn = m?.mark === "⚠" && !!limit && (!!limit.warn || (q.unc?.limit ?? -1) === facts.reliableDigits);
   const mark: Mark = m?.mark === "⚠" ? "⚠" : q.unc ? "≈" : (m?.mark ?? "≈");
-  const number = (v: Quantity["value"]): string => (v.value ? formatComplex(v.value, confirmedOptions(v.value, v.facts.reliableDigits, o)).text : v.display);
+  const formatted = (v: Quantity["value"]) => (v.value ? formatComplex(v.value, confirmedOptions(v.value, v.facts.reliableDigits, o)) : undefined);
+  const number = (v: Quantity["value"]): string => formatted(v)?.text ?? v.display;
+  const re = formatted(q.value)?.re;
   const value = number(q.value);
   const why = q.unc?.why;
   const dimension = q.dimension ?? "";
@@ -96,8 +102,20 @@ export function shownOf(q: Quantity | UnitError, u: UnitFormat, alts: readonly A
     ...(q.note ? { note: unitNoteText(q.note) } : {}),
     ...(q.names?.length ? { names: unitNamesText(q.names) } : {}),
     ...(dim ? { dim } : {}),
-    ...(q.unc ? { sub: unitText("units.result.sub", { value: drawn(value), sigma: drawn(number(q.unc.value)) }) } : {}),
+    ...(q.unc ? subLine(drawn(value), drawn(number(q.unc.value)), sigmaCut(q.unc.value.value?.re, q.value.value), re && [(re.neg ? "-" : "") + drawn(re.mantissa), powerOf(re)], decimalComma ? "," : ".") : {}),
     dimension,
     alts: dimension === "" ? [] : alts,
   };
+}
+
+/** R883: the line under the value line (`sub`), and with σ's cut (render/uncMute.ts sigmaCut) where its value's digits
+ *  go muted (`subCut`), as Home's row and a constant's (R40) draw them. `value` is drawn (groups, decimal comma);
+ *  `m` its real part's mantissa drawn the same way, with its sign, and the mantissa's power of ten. */
+function subLine(value: string, sigma: string, cut: number | undefined, m: [string, number | undefined] | undefined, mark: string): Pick<UnitShown, "sub" | "subCut"> {
+  const sub = unitText("units.result.sub", { value, sigma });
+  const [lead, exp] = m ?? [""];
+  const at = cut === undefined || exp === undefined || !value.startsWith(lead) ? -1 : tailAt(lead, exp, cut, mark);
+  const k = sub.indexOf(value);
+  const e = k + value.length;
+  return { sub, subCut: at < 0 ? [k, e, e, e] : [k, k + at, k + lead.length, e] };
 }
