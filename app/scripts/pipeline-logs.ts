@@ -104,7 +104,31 @@ const FLAGS_LOAD_ITEMS = /^(?:patch-canary\.ts|canaries\.mjs): timed out after \
  *  well inside it alone): the miss, and at most the stop it gives ("got error: Stopped: it took too long, expect ..."). */
 const PRECISION_LOAD_ITEMS = /^g58-factorial-\S+: took \d+ ms > budgetMs \d+(?:; got error: Stopped: it took too long, expect [^;]*)?$/;
 
-/** A wall-clock test: the Find 16 ms/key test, the golden units p95 bar, the golden invariants 60 s limit (G154f1), two golden steps cases and two flags sub-tests (A51), the g58-factorial precision cases that only missed their budgetMs (G153f1), solve.spec.ts persistence, the clipboard poll, the G78 timing case, Home's acos deadline, the G83 library restore and first call, the Esc-before-Working test; FLAKES 1: G39's 3*int(1/x), the CAS -> Home budget, 10^1000000+7, the parser fuzz, Working… after 150 ms.
+/** The wall-clock e2e tests, one place (A281f1): isTiming reads them (a failure of only these is run once more, A25/A51), and
+ *  playwright.config.ts runs them in a project of their own, after the main one, with one worker (E2E_TIMING_GREP), so the
+ *  parallel files never run beside them. `title` matches the test's title as the log gives it (describes joined by " › ").
+ *  Solve's persistence, copy.spec's clipboard poll and Working…'s 150 ms (A25); and what #1645 lost to load once the
+ *  clipboard lock was gone (A281): R255's kept line (the 1 s cap on its read, entry/controller.ts; backlog "Flaky (R255f2)"),
+ *  MathLive's late focus of a unit slot, a 30 ms job against the dash's 150 ms, the engine running a library's tests within
+ *  an expect's 5 s, the first sheet's lazy chunk, the Menu's rows' code held back. */
+export const E2E_TIMING: readonly { file: string; title: RegExp }[] = [
+  { file: "working.spec.ts", title: /Esc stops a job before Working… shows|a job shows Working… and Cancel only after 150 ms/ },
+  { file: "solve.spec.ts", title: /equations and values are stored|kept across a reload/ },
+  { file: "copy.spec.ts", title: /copy → paste gives the value back/ },
+  { file: "persist.spec.ts", title: /R255: a kept 5, then \+ 3 Enter before the field/ },
+  { file: "unittap.spec.ts", title: /a tap on the reading, then the hardware key m, still types into the slot/ },
+  { file: "entrydash.spec.ts", title: /a job under 50 ms never shows the dash/ },
+  { file: "library.spec.ts", title: /from the clipboard: beams\.txt imports/ },
+  { file: "sheetsview.spec.ts", title: /\(a\) Base: the sheet lies in the history area/ },
+  { file: "startcut.spec.ts", title: /Menu, then 3, typed before the Menu's rows' code is in/ },
+];
+
+/** E2E_TIMING as Playwright `grep` patterns: its grep title is the file path under testDir, the describes and the title,
+ *  joined by spaces (" › " in the log), so a title pattern is matched after its file's name. */
+const escapeRe = (s: string): string => s.replace(/[.*+?^$()|[\]\\{}]/g, "\\$&");
+export const E2E_TIMING_GREP: RegExp[] = E2E_TIMING.map((t) => new RegExp(`(?:^|[ /])${escapeRe(t.file)} .*(?:${t.title.source})`));
+
+/** A wall-clock test: the Find 16 ms/key test, the golden units p95 bar, the golden invariants 60 s limit (G154f1), two golden steps cases and two flags sub-tests (A51), the g58-factorial precision cases that only missed their budgetMs (G153f1), the e2e tests of E2E_TIMING, the G78 timing case, Home's acos deadline, the G83 library restore and first call, the Esc-before-Working test; FLAKES 1: G39's 3*int(1/x), the CAS -> Home budget, 10^1000000+7, the parser fuzz, Working… after 150 ms.
  *  The golden g58-factorial cases count only when every failing case line of the precision stage (m - n of them) is such a
  *  miss; a value or mark mismatch, or another case id, is not timing (G153f1). */
 export function isTiming(check: Check, item: Item): boolean {
@@ -121,11 +145,7 @@ export function isTiming(check: Check, item: Item): boolean {
       (item.file.endsWith("engine/valueKind.test.ts") && /10\^1000000\+7 is exact/.test(item.title)) ||
       (item.file.endsWith("input/fuzz.test.ts") && /20000 random token strings parse or fail/.test(item.title));
   }
-  if (check === "e2e") {
-    return (item.file === "working.spec.ts" && /Esc stops a job before Working… shows|a job shows Working… and Cancel only after 150 ms/.test(item.title)) ||
-      (item.file === "solve.spec.ts" && /equations and values are stored|kept across a reload/.test(item.title)) ||
-      (item.file === "copy.spec.ts" && /copy → paste gives the value back/.test(item.title));
-  }
+  if (check === "e2e") return E2E_TIMING.some((t) => t.file === item.file && t.title.test(item.title));
   if (item.file === "steps") return STEPS_LOAD_ITEMS.has(item.title);
   if (item.file === "flags") return FLAGS_LOAD_ITEMS.test(item.title);
   if (item.file === "precision") return PRECISION_LOAD_ITEMS.test(item.title);

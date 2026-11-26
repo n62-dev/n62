@@ -127,6 +127,20 @@ test("A281: two contexts of one browser each get their own text back from Copy a
   }
 });
 
+// A281f1: the store lives in the test process (helpers.ts ownClipboard), not in the page an init script re-creates on each
+// load: a text copied before a reload is pasted after it, and on a fresh page of the same context (persist.spec's relaunch).
+test("A281f1: a text copied before reload() is pasted after it, and on a fresh page of the same context", async ({ page }) => {
+  await open(page);
+  await copyRow(page, ["d8", "d8"]);
+  await page.reload();
+  await page.waitForFunction(() => customElements.get("math-field") !== undefined && window.n62 !== undefined);
+  await page.evaluate(() => window.n62.entry.ready);
+  expect(await pasteBack(page)).toBe("88");
+  const next = await page.context().newPage();
+  await open(next);
+  expect(await pasteBack(next)).toBe("88");
+});
+
 test.describe("two workers at once", () => {
   test.describe.configure({ mode: "parallel" });
   const MARK = (n: string): string => resolve("test-results", `clipboard-own-${n}.txt`);

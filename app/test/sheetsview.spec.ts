@@ -41,7 +41,7 @@ const OPENERS: Record<string, (page: Page) => Promise<void>> = {
 
 /** The sheet's box lies inside the history area and clear of the keypad (criterion 1a). */
 async function insideScreen(page: Page): Promise<void> {
-  await expect(panel(page)).toBeVisible({ timeout: 15_000 }); // (late on a host with every worker busy)
+  await expect(panel(page)).toBeVisible();
   const [p, screen, keys] = [await box(page, '[role="menu"]'), await box(page, ".screen"), await box(page, '[data-testid="keys"]')];
   expect(p.y).toBeGreaterThanOrEqual(screen.y - 1);
   expect(p.y + p.height).toBeLessThanOrEqual(screen.y + screen.height + 1);

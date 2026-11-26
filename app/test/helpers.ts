@@ -177,8 +177,12 @@ export async function bksp(page: Page): Promise<string> {
   return entryValue(page);
 }
 
-export async function open(page: Page, query = "engine=fake"): Promise<void> {
-  if (!realClipboard) await ownClipboard(page.context());
+/** Options of `open`. `systemClipboard`: leave navigator.clipboard as Chromium has it (no store of the context's own,
+ *  A281f1): core-lib.ts's `start`, so the core list runs on the real clipboard as the device does. */
+export type OpenOptions = { systemClipboard?: boolean };
+
+export async function open(page: Page, query = "engine=fake", opts: OpenOptions = {}): Promise<void> {
+  if (!realClipboard && opts.systemClipboard !== true) await ownClipboard(page.context());
   // R15c4: a fresh profile shows the first-start tips over the app; every other test runs without them (`tips=on` keeps them)
   await page.goto(`/?${query}${query.includes("tips=") ? "" : "&tips=off"}`);
   await page.waitForFunction(() => customElements.get("math-field") !== undefined && window.n62 !== undefined);
@@ -337,6 +341,7 @@ async function ownClipboard(context: BrowserContext): Promise<void> {
  *  and carries a reason comment on its line, and that no listed file has dropped the call. */
 export const CLIPBOARD_LOCK_FILES: Record<string, string> = {
   "clipboard-lock.spec.ts": "the lock itself, and a real Copy and Paste through the system clipboard",
+  "core.spec.ts": "the core list's clipboard cases, on the real clipboard as on the device (P23; A281f1)",
   "hwpaste.spec.ts": "Ctrl+V: the browser's own paste reads the system clipboard",
   "sheetchannels.spec.ts": "Ctrl+V and Ctrl+X reach the system clipboard",
 };
@@ -344,7 +349,8 @@ export const CLIPBOARD_LOCK_FILES: Record<string, string> = {
 // R74f1: the system clipboard is one for every Playwright worker, so a test that writes or reads it holds this lock
 // (an exclusive lock file under test-results, holding its owner's pid and a nonce) for its whole run. A lock whose
 // owner process is dead (a killed worker) is taken over; a live owner is never overridden, however long it holds.
-// A281: only the files of CLIPBOARD_LOCK_FILES hold it now; every other test has its own clipboard (ownClipboard).
+// A281: only the files of CLIPBOARD_LOCK_FILES hold it now; every other test has its own clipboard (ownClipboard), but the
+// core list's (core-lib.ts `start`: the real one, A281f1).
 const LOCK = resolve("test-results", "clipboard.lock");
 
 /** F202: a waiter first takes a numbered ticket in this directory (a file named by its number, holding its pid and a

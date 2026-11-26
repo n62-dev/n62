@@ -5,11 +5,9 @@
 // and the view's second line. The real engine. Expected values: derived from the rule (1234567890.12345 ± 0.0001: σ's
 // last digit at 10⁻⁵; (4.7 ± 0.1)·10³ = 4700 ± 100: σ's last digit at 10¹, the value's prefix k).
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { flick, lastResult, open, tap, useClipboardLock } from "./helpers.ts";
+import { flick, lastResult, open, tap } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
-test.describe.configure({ mode: "serial" });
-useClipboardLock(); // R74f1: first hook, so the lock is held before the page opens
 
 const ts = " "; // PFX's thin space before the prefix
 const done = (page: Page) => page.locator('[data-status="done"]');

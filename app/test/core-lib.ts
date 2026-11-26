@@ -195,9 +195,10 @@ async function unitViewUp(page: Page): Promise<void> {
   await page.waitForFunction(() => window.n62.unitView !== undefined && document.activeElement === window.n62.unitView.element && document.querySelector('[data-pad="unit"]') !== null);
 }
 
-/** A fresh page at the app, engine ready. */
+/** A fresh page at the app, engine ready, on Chromium's own clipboard (no stub here: the device run's WebView clipboard is
+ *  the real risk, A281). */
 export async function start(page: Page): Promise<void> {
-  await open(page, "");
+  await open(page, "", { systemClipboard: true });
   await engineReady(page);
 }
 
