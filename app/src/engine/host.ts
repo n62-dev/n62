@@ -1127,10 +1127,7 @@ export class EngineHost implements FactsHost {
     // G57: a decision the precisions do not agree on, or a tie Giac cannot prove, is refused as in Home (nothing is stored).
     let refusedCut = false;
     if (!once && !inexactTest && !hasFloat(text) && restsOnDecision(decisionExpr, "typed", text, notBuiltin(this.giac), complexArg)) {
-      // G806: with Giac's messages (roundedPivot). G404: a text with no free name climbs as Home's does (G358): one that is
-      // MPFR's infinity at P is decided from the first level where it is finite (2*ln(tanh(100)-1), the sign taken where
-      // tanh(100)-1 is 0, gave -398.613705639+6.28318530718*i for ln((tanh(100)-1)^2))
-      const d = decideTwice(this.watched, decisionExpr, text, digitsSet, digitsSet, mayBeNumbers(text));
+      const d = decideTwice(this.watched, decisionExpr, text, digitsSet, digitsSet, mayBeNumbers(text)); // G806: Giac's messages (roundedPivot); G404: it climbs as Home's
       if ("undecided" in d) undecided = true;
       if ("undecided" in d && d.refused) refusedCut = true;
       if (!("undecided" in d) && d.from !== undefined) {
@@ -1167,8 +1164,7 @@ export class EngineHost implements FactsHost {
     if (unaskedPoly(this.giac, "pcasans", asg0 ? asg0.rhs : exactInput, text, userFn)) return fail(enEngine["error.listPlusNumber"], "listPlusNumber");
     // G148: approx or evalf of a finite value past MPFR's range (±infinity, or a float 0) is refused as in Home.
     const range0 = guarded || !single ? approxRange(this.giac, asg0 ? asg0.rhs : exactInput, text, valuePrecision(digitsSet), () => false, userFn) : null;
-    // G404: a bare value finite only higher up the climb, or past its reach, is no overflow; CAS's float path has no climb
-    // (Home's has: it evaluates the bare input), so no value is found here
+    // G404: one finite higher up the climb, or past its reach, is no overflow; CAS's float path has no climb: no value found
     const range = range0 !== null && typeof range0 === "object" ? "noValue" : range0;
     if (range) return fail(enEngine[`error.${range}`], range);
     // G168 (F93): Giac's undef, or the call back with no free name (no number comes of it), is refused as in Home; an
