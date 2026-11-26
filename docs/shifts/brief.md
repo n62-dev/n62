@@ -62,14 +62,9 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Opus | `p1/ron-keepline` | – |
-| 888j | R869 Help on Find's row | ron, Opus | `p1/ron-helpfind` | – |
-| 888k | R870 Help in the unit view | ron, Opus | `p1/ron-unithelp` | R869, R838, R862 |
-| 888l | R871 Shift + Fmt opens its settings | ron, Opus | `p1/ron-fmtsettings` | G785 |
-| 888m | R881 the "rainbow" easter egg | ron, Opus | `p1/ron-rainbow` | A266 |
-| 888n | R883 a typed ± mutes digits past σ | ron, Opus | `p1/ron-pmmute` | – |
 | 888n1 | R885 one σ drawing rule | ron, Opus | `p1/ron-sigmarule` | R883 |
 | 888n2 | [R886](packages/R886.md) a unit row keeps σ's ⚠ | ron, Opus | `p1/ron-sigmawarn` | R885 |
-| 888o | [R884](packages/R884.md) Settings › Uncertainty: "Rounded to σ" | ron, Opus | `p1/ron-uncround` | R883 |
+| 888o | [R884](packages/R884.md) Settings › Uncertainty: "Rounded to σ" | ron, Opus | `p1/ron-uncround` | R885 |
 | 890 | [R742](packages/R742.md) zebra history rows; the picked row's edge | ron, Opus | `p1/ron-zebra` | R832, R743 |
 | 891 | [R728](packages/R728.md) the keys say what they do | ron, Opus | `p1/ron-keyssay` | R723, R726 |
 | 892 | [R729](packages/R729.md) key legends: armed ring, locked fill (K4) | ron, Opus | `p1/ron-keylegends` | R723, R726, R728 |
