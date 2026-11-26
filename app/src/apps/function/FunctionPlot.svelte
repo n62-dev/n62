@@ -37,7 +37,14 @@
     const w = box?.clientWidth || 1;
     const h = box?.clientHeight || 1;
     const half = ((DEFAULT_X[1] - DEFAULT_X[0]) / 2) * (h / w);
-    return { xmin: DEFAULT_X[0], xmax: DEFAULT_X[1], ymin: -half, ymax: half };
+    return { xmin: DEFAULT_X[0], xmax: DEFAULT_X[1], ymin: -half, ymax: half, h };
+  }
+  /** R928: a window saved at another board height (folded, then Symb, Num or a reload) at the box's height now: ymax stays,
+   *  ymin = ymax − span·hNow/hSaved. */
+  function fit(w: PlotWindow): PlotWindow {
+    const h = box?.clientHeight || 0;
+    if (!h || !w.h || !Number.isFinite(w.h) || w.h <= 0 || w.h === h) return w;
+    return { ...w, ymin: w.ymax - ((w.ymax - w.ymin) * h) / w.h, h };
   }
   const bbox = (w: PlotWindow): [number, number, number, number] => [w.xmin, w.ymax, w.xmax, w.ymin];
 
@@ -46,7 +53,8 @@
     if (!board) return;
     const [x1, y1, x2, y2] = board.getBoundingBox() as [number, number, number, number];
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => app.setWindow({ xmin: x1, xmax: x2, ymin: y2, ymax: y1 }), 150);
+    const h = board.canvasHeight;
+    saveTimer = setTimeout(() => app.setWindow({ xmin: x1, xmax: x2, ymin: y2, ymax: y1, h }), 150);
     if (!moving) {
       moving = true;
       setAdaptive(false);
@@ -59,8 +67,26 @@
     }, 120);
   }
 
+  /** R928: the board's box changed size (⌄ folds the keys in Plot, a readout line comes or goes): the window keeps its units per
+   *  pixel. x and ymax stay and the y span follows the height (ymin = ymax − span·hNew/hOld); saved. JSXGraph's own resize,
+   *  off here, keeps the box and stretches y. */
+  function resized(): void {
+    if (!board || !box) return;
+    const w = box.clientWidth;
+    const h = box.clientHeight;
+    const hOld = board.canvasHeight;
+    if (!w || !h || (w === board.canvasWidth && h === hOld)) return;
+    const [x1, y1, x2, y2] = board.getBoundingBox() as [number, number, number, number];
+    board.resizeContainer(w, h, true, true);
+    const ymin = hOld > 0 ? y1 - ((y1 - y2) * h) / hOld : y2;
+    board.setBoundingBox([x1, y1, x2, ymin], false);
+    clearTimeout(saveTimer);
+    app.setWindow({ xmin: x1, xmax: x2, ymin, ymax: y1, h });
+  }
+
   onMount(() => {
     let disposed = false;
+    const sized = new ResizeObserver(resized);
     const t0 = performance.now();
     // R361: the stored names the slots read, asked of the engine once per open; their curves are drawn when it answers
     void app.readStored().then(() => {
@@ -70,8 +96,9 @@
       if (disposed || !box) return;
       const t1 = performance.now();
       JXG = (m as unknown as { default: JXGModule }).default;
+      const win = app.win ? fit(app.win) : defaultWindow();
       const b = JXG.JSXGraph.initBoard(box, {
-        boundingbox: bbox(app.win ?? defaultWindow()),
+        boundingbox: bbox(win),
         axis: true,
         grid: false,
         renderer: "canvas",
@@ -79,6 +106,7 @@
         showNavigation: false,
         showInfobox: false,
         keepAspectRatio: false,
+        resize: { enabled: false, throttle: 0 }, // (resized, R928)
         pan: { enabled: true, needTwoFingers: false },
         zoom: { enabled: true, wheel: true, needShift: false, pinchHorizontal: true, pinchVertical: true, pinchSensitivity: 7, factorX: 1.15, factorY: 1.15 },
         defaultAxes: {
@@ -118,8 +146,9 @@
       );
       b.unsuspendUpdate();
       b.on("boundingbox", windowChanged);
-      if (!app.win) app.setWindow({ ...defaultWindow() });
+      if (win !== app.win) app.setWindow({ ...win });
       ready = true;
+      sized.observe(box);
       plotHook.board = b;
       plotHook.curves = curves.length;
       // Measurement builds: time from opening Plot to the first drawn board (JSXGraph loads on first open).
@@ -129,6 +158,7 @@
     });
     return () => {
       disposed = true;
+      sized.disconnect();
       clearTimeout(saveTimer);
       clearTimeout(restTimer);
       curves = [];
