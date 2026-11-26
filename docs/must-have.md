@@ -79,7 +79,7 @@ The phasor fix landed on 11-12 (R180, d89df4cc; F192 closed): `10∡30+5` from t
 - `[have]` A mark when first order is unreliable: G41 covers every ± entry path (`1/(0.1±0.06)` ⚠ singular point, `(1±0.5)²` ⚠ first order). The list's `[miss]` was wrong. No package; the only gap, Home's constants-only σ line near a pole, is marginal, and B15a is dropped.
 
 **Finding things and help**
-- `[part]` Help explains the highlight: the function at the line's cursor (R197; 73 tier-0 functions with an example) and Find's highlighted row, with a card for units, prefixes and constants from the index (R869); the unit view next (R870). G231, R196, R197, R869.
+- `[part]` Help explains the highlight: the function at the line's cursor (R197; 73 tier-0 functions with an example) and Find's highlighted row, with a card for units, prefixes and constants from the index (R869), and the unit view's active slot (R870). G231, R196, R197, R869, R870.
 - `[have]` Find shows where a function sits: the preview ends with its key (`asin` … · Shift sin; G230, R195 merged 3adeda3c).
 
 **Everywhere**
