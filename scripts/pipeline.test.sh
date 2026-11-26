@@ -1502,7 +1502,7 @@ repo="$(cd "$here/.." && pwd)"
 outside_reads() {  # <e2e|build>: the repo paths read from a file at depth d under the repo, as "../" x d then the path
   local root="$repo" f rel d ups; local -a files
   if [[ "$1" == e2e ]]; then mapfile -t files < <(find "$root/app/test" -name '*.ts' -not -path '*/gallery/*')
-  else mapfile -t files < <(find "$root/app/src" "$root/app" -maxdepth 1 -name 'vite*.ts' -o -path "$root/app/src/*" -name '*.ts' -not -name '*.test.ts' -o -path "$root/app/src/*" -name '*.svelte' | sort -u); fi
+  else mapfile -t files < <({ find "$root/app/src" -type f \( -name '*.ts' -o -name '*.svelte' \) -not -name '*.test.ts'; find "$root/app" -maxdepth 1 -name 'vite*.ts'; } | sort -u); fi  # the whole of app/src, subfolders too
   for f in "${files[@]}"; do
     rel="${f#"$root"/}"; d="$(tr -cd '/' <<<"$rel" | wc -c)"; ups="$(printf '../%.0s' $(seq 1 "$d"))"
     grep -hoE "[\"'\`]${ups//./\\.}(spec|tests|tools|docs|find|engine|THIRD_PARTY|LICENSES)[^\"'\`?\$]*" "$f" 2>/dev/null | sed -E "s|^.${ups//./\\.}||" | grep -vE '_out|_gen' || true
