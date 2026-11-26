@@ -1799,6 +1799,12 @@ Digits:=30:; pc("g804-sub-matrix-pi-over-1e11-30",'(30000000-(evalf([[30000000]]
 // patch 0070-vector-entry-mpfr-precision.patch
 // g804-mult-vector-approx-e-30 (derived: the exact value)
 Digits:=30:; pc("g804-mult-vector-approx-e-30",'((2*[approx(1/10),exp(1)])[1]-5)*10^14',(2*exp(1)-5)*10^14,1/10^8);
+// patch 0071-float-pivot-rounding-decision.patch
+// g806-det-expm-float-40 (derived: det e^A = e^trace A, never an exact 0)
+Digits:=40:; pasr:=when(type(det(exp(approx([[9.81,2,10!],[pi,7,pi],[0.3,pi,2.5]]))))==DOM_FLOAT,1,0):; pc("g806-det-expm-float-40",'pasr',1,1/10^30);
+// patch 0071-float-pivot-rounding-decision.patch
+// g806-det-expm-fact-float-40 (derived: det e^A = e^trace A, never an exact 0)
+Digits:=40:; pasr:=when(type(det(exp(approx([[1,2,3628800],[3,4,2],[1,1,1]]))))==DOM_FLOAT,1,0):; pc("g806-det-expm-fact-float-40",'pasr',1,1/10^30);
 // patch 0067-convert-subtype-integer.patch
 // g803-convert-129-2-half-refused (derived: no integer subtype; Parisse, 2026-11-24: "it should probably error")
 Digits:=40:; pasr:=0:; try { convert(129,2,1/2); } catch (err) { pasr:=1; }:; pc("g803-convert-129-2-half-refused",'pasr',1,1/10^30);

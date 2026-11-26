@@ -85,6 +85,8 @@ describe("the matrix generator (G797)", () => {
     expect(cs.find((c) => /^\\sin\\left\(\\begin/.test(c.latex)) ?? cs.find((c) => c.angle)).toBeDefined();
     expect(latexToGiac(MATRIX_PINNED[0]!.latex)).toBe("approx([[1,2],[3,4]]/10^13)*[[1],[1]]");
     expect(latexToGiac(MATRIX_PINNED.at(-1)!.latex)).toBe("sin(pasdeg*(10^14*[[pi,2],[5,0.1]]+approx([[2,1.05],[4,2.1]])))"); // G804
+    const g806 = MATRIX_PINNED.filter((c) => c.mp.includes("EXPM(APPROX(MAT([[mpf('9.81')")).map((c) => latexToGiac(c.latex));
+    expect(g806).toEqual(["det(exp(approx([[9.81,2,factorial(10)],[pi,7,pi],[0.3,pi,2.5]])))", "rank(exp(approx([[9.81,2,factorial(10)],[pi,7,pi],[0.3,pi,2.5]])))"]); // G806
   });
 
   it("keeps each matrix node's matrix-valued children for the shrink", () => {
@@ -306,8 +308,9 @@ describe("the judge, entry by entry (G797; made-up oracles for its rules)", () =
 // RAD and DEG); a failure would be a known row naming its package. G802: the last two (e^ of the scaled 3×3 and the scaled 2×2
 // alone) are right since patch 0069; on phase-1 a1843b9b the 2×2 killed the engine (a crash row) and the 3×3 passed (Home reads 0.1 exactly).
 // G804: the sin of 10^14·π beside a float is right since patch 0070 (on phase-1 ec6ab5b1 it showed ≈ 0.503227563163 for -0.0273161725944).
+// G806: det and rank of e^M are ⚠ without a count since patch 0071 (on phase-1 d8b33c05 = 0 and = 1, against e^19.31 and 3).
 describe.skipIf(!giacAvailable())("the pinned hunt inputs through Home (G797, real Giac)", () => {
-  it("passes G790's product, G622's inverse and rank, G792's sin, G802's matrices and G804's sin; no failure is left", async () => {
+  it("passes G790's product, G622's inverse and rank, G792's sin, G802's matrices, G804's sin and G806's det and rank; no failure is left", async () => {
     const runs: Run[] = runsOf(20261021, 0, false, { matrices: 1 }).filter((r) => MATRIX_PINNED.some((c) => c.latex === r.latex));
     expect(runs.length).toBe(MATRIX_PINNED.length + 2); // the two sins also in DEG
     const oracles = oracleFor(runs, pythonFor(repo, mainCheckout), oraclePy);

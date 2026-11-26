@@ -509,8 +509,7 @@ export function homeEval(
   // G97: whether the run printed Giac's warning for a power of a list that is not a square matrix (read at once: the
   // Digits reset after it is an eval of its own).
   let ambiguous: boolean | undefined;
-  // G806: whether the run's rank or det decided a pivot within the rounding (patch 0071's warning), read at once too
-  let rounded = false;
+  let rounded = false; // G806: the run's rank or det decided a pivot within the rounding (patch 0071's warning), read at once too
   // G103: through bridge-3: the value's kind, num/den and elements come with the print (a print cut at 2 kB is read
   // whole for the text; the value keeps num/den, the elements and at[]).
   let value: GiacValue = { kind: "error", text: "GIAC_ERROR: not run" };
@@ -542,9 +541,7 @@ export function homeEval(
   // float result, whose value check runs it at two precisions anyway. An exact == or ≠ test is a decision too.
   // G48: an input that runs once and rests on a decision is ⚠ (it cannot be decided again).
   let undecided = once && !inexactTest && onceUndecided(giac, form, exactBody, exactOut);
-  // G806: a float the rounding decided a pivot of (det(exp(approx(M))), a 0 for e^19.31) has no digit to confirm: ⚠
-  // without a count, as a decision that did not hold
-  if (rounded && hasFloat(exactOut)) undecided = true;
+  if (rounded && hasFloat(exactOut)) undecided = true; // G806: det(exp(approx(M))) is 0 for e^19.31: no digit to confirm
   // G57: a decision the precisions do not agree on, or a tie Giac cannot prove, is refused (any value would be a guess).
   let refusedCut: boolean | "branch" = false;
   let decidedBelow = false; // G358: decided with the value not asked at P (`at`), so not from its climb: ⚠ when it climbs

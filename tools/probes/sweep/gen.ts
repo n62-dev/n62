@@ -265,6 +265,10 @@ export const MATRIX_PINNED: (Case & { digits: 12 | 30 })[] = [
   // divided by a number overflowed the wasm stack; patch 0069)
   { latex: "\\exponentialE^{\\operatorname{approx}\\left(\\frac{\\begin{pmatrix}0.1&\\exponentialE&\\pi\\\\5&2&7\\\\\\exponentialE&7&9.81\\end{pmatrix}}{10^{4}}\\right)}", mp: "EXPM(APPROX(MDIV(MAT([[mpf('0.1'),E,PI],[mpf('5'),mpf('2'),mpf('7')],[E,mpf('7'),mpf('9.81')]]),POW(mpf('10'),mpf('4')))))", angle: false, digits: 30 },
   { latex: "\\frac{\\begin{pmatrix}0.1&\\exponentialE\\\\5&2\\end{pmatrix}}{10^{4}}", mp: "MDIV(MAT([[mpf('0.1'),E],[mpf('5'),mpf('2')]]),POW(mpf('10'),mpf('4')))", angle: false, digits: 12 },
+  // G806 (F486, G805's report): det and rank of e^M (entries near 1E466; det e^M = e^trace M) showed = 0 and = 1, a pivot the rounding
+  // decided at every precision we run; now ⚠ without a count (patch 0071). Before G804's sin, which stays last (sweepmatrix.test.ts)
+  { latex: "\\operatorname{det}\\left(\\exponentialE^{\\operatorname{approx}\\left(\\begin{pmatrix}9.81&2&10!\\\\\\pi&7&\\pi\\\\0.3&\\pi&2.5\\end{pmatrix}\\right)}\\right)", mp: "DET(EXPM(APPROX(MAT([[mpf('9.81'),mpf('2'),FACT(10)],[PI,mpf('7'),PI],[mpf('0.3'),PI,mpf('2.5')]]))))", angle: false, digits: 12 },
+  { latex: "\\operatorname{rank}\\left(\\exponentialE^{\\operatorname{approx}\\left(\\begin{pmatrix}9.81&2&10!\\\\\\pi&7&\\pi\\\\0.3&\\pi&2.5\\end{pmatrix}\\right)}\\right)", mp: "RANK(EXPM(APPROX(MAT([[mpf('9.81'),mpf('2'),FACT(10)],[PI,mpf('7'),PI],[mpf('0.3'),PI,mpf('2.5')]]))))", angle: false, digits: 12 },
   // G804 (F486, A273's nightly): 10^14·π beside a float in a matrix sum was a double (vector arithmetic's context0; patch 0070), so
   // sin of it showed ≈ [[0.503227563163,…]] for [[-0.0273161725944,…]]
   { latex: "\\sin\\left(10^{14}\\times \\begin{pmatrix}\\pi&2\\\\5&0.1\\end{pmatrix}+\\operatorname{approx}\\left(\\begin{pmatrix}2&1.05\\\\4&2.1\\end{pmatrix}\\right)\\right)", mp: "SINM(MADD(SMUL(POW(mpf('10'),mpf('14')),MAT([[PI,mpf('2')],[mpf('5'),mpf('0.1')]])),APPROX(MAT([[mpf('2'),mpf('1.05')],[mpf('4'),mpf('2.1')]]))))", angle: true, digits: 12 },

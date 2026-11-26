@@ -82,8 +82,7 @@ interface AfterInput {
 
 /** G97: what Giac's pow prints for a base that is a list but not a square matrix (gen.cc:6881). */
 const AMBIGUOUS_POWER = /\^ is ambiguous on non square matrices/;
-/** G806: patch 0071's warning, printed by rank and det when a pivot of their float row reduction was decided within the
- *  rounding of its entries. */
+/** G806: patch 0071's warning (rank or det decided a pivot of a float matrix within the rounding of its entries). */
 const ROUNDED_PIVOT = /pivot of this float matrix was decided within the rounding/;
 
 const NO_READS: InputReads = { names: [], targets: [], fn: false };
@@ -297,8 +296,7 @@ export class EngineHost implements FactsHost {
     // R64, G46: Giac in radians, and pasdeg (our parser's degree factor) set before any input: the units, raw eval and
     // replay paths have no mode setup of their own
     giac.eval(angleCommand("rad"));
-    let ambiguous = false;
-    let rounded = false;
+    let [ambiguous, rounded] = [false, false]; // G806: rounded, patch 0071's warning
     let msg = "";
     // Giac's messages of one call (an eval, or G103's bridge-3 value)
     const heard = <T>(call: () => T): T => {

@@ -1111,6 +1111,17 @@ export function build(cases) {
     patched.push("// patch 0070-vector-entry-mpfr-precision.patch", `// ${id} (derived: the exact value)`, `Digits:=30:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
   }
+  // Patch 0071 (G806, F486), written lines: rref_reduce's det of a matrix with a zero column was the exact integer 0 for a float matrix
+  // too, so det(e^M), whose zero column is the rounding's (e^M's small directions need 1400 digits), read as exact; now a float 0 at the
+  // matrix's precision. A line passes when the det is a float (pasr 1); stock gives DOM_INT. Expected (derived): det e^A = e^trace A, never
+  // an exact 0. The warning patch 0071 prints is read by the host (golden g806-*), not here.
+  for (const [id, m] of [
+    ["g806-det-expm-float-40", "[[9.81,2,10!],[pi,7,pi],[0.3,pi,2.5]]"],
+    ["g806-det-expm-fact-float-40", "[[1,2,3628800],[3,4,2],[1,1,1]]"],
+  ]) {
+    patched.push("// patch 0071-float-pivot-rounding-decision.patch", `// ${id} (derived: det e^A = e^trace A, never an exact 0)`, `Digits:=40:; pasr:=when(type(det(exp(approx(${m}))))==DOM_FLOAT,1,0):; pc("${id}",'pasr',1,1/10^30);`);
+    nPatched++;
+  }
   // Patch 0067 (G803, F240), written lines: prog.cc _convert took the list's subtype from a last argument that is no _INT_ (its
   // pointer's or its double's bits: convert(129,2,1/2) printed [129,1/2], pnt[129,1/2] or gr2d(logo(…)) by the session); now
   // refused, as B. Parisse said it should (2026-11-24). A line passes when the input is an error (pasr 1); stock answers a list.
