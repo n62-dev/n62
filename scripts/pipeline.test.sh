@@ -1708,6 +1708,9 @@ const m = process.env.FR_DOCS || '';
 if (m === 'always' || (m === 'two' && k <= 2)) { console.log('budget: docs/backlog.md is 20.1 kB, over 20 kB'); process.exit(1); }
 STUB
 printf '| Patch | Why |\n|---|---|\n' > "$fr/engine/giac/patches/README.md"; : > "$fr/docs/shifts/brief.md"; echo t > "$fr/app/keep"; echo node_modules/ > "$fr/.gitignore"
+# A279: the trust files: tests/golden/home.yaml holds one row a line; tests/golden/README.md says how many (npm run trust:check compares, trust:refresh writes it)
+mkdir -p "$fr/tests/golden" "$fr/app/scripts"; printf 'cases:\n- { id: a }\n' > "$fr/tests/golden/home.yaml"; echo 'cases: 2' > "$fr/tests/golden/README.md"
+for st in sweep seqsweep casback viewsweep findcensus; do echo 'console.log("fine");' > "$fr/app/scripts/$st.ts"; done
 cat > "$fr/bin/npm" <<STUB
 #!/bin/sh
 case "\$*" in
@@ -1716,6 +1719,9 @@ case "\$*" in
      [ "\$FR_TC" != two ] || [ \$k -gt 2 ] || { echo "error TS2322: the stand-in type error"; exit 1; }
      [ "\$FR_TC" != late ] || [ \$k -lt 2 ] || [ \$k -gt 3 ] || { echo "error TS2322: the stand-in type error"; exit 1; };;  # late: runs 2 and 3 fail (1 is the pre-flight, 2 the queue's)
   *"run -s build"*) [ "\$FR_SIZE" != fail ] || { echo "FAIL start chunk 99.00 kB gzip, over its pin 61.00 kB"; exit 1; };;
+  *trust:check*) echo "\$*" >> "$fr/trust-runs"; have=\$(wc -l < ../tests/golden/home.yaml); say=\$(sed 's/cases: //' ../tests/golden/README.md)
+     [ "\$have" = "\$say" ] || { echo "trust: tests/golden/README.md: home.yaml says \"\$say\", the files say \"\$have\"" >&2; echo "trust:check: 1 stale (npm run trust:refresh)"; exit 1; };;
+  *trust:refresh*) echo "cases: \$(wc -l < ../tests/golden/home.yaml)" > ../tests/golden/README.md;;
 esac
 exit 0
 STUB
@@ -1725,15 +1731,18 @@ c() { git add -A; git -c user.name=t -c user.email=t@t commit -q "\$@"; }
 case "\$*" in
   *"--agent sofia"*) if [ "\$FR_AUDIT" = fix ]; then printf 'FIX\napp/w.txt:1 the stand-in audit finding\n'; else echo APPROVED; fi;;
   *"a merge of phase-1 is in progress"*) echo resolved > app/w.txt; c --no-edit; echo resolved;;
-  *"fix round"*) echo "\$*" | grep -o 'fix round [0-9]*[^:]*:' >> "$fr/prompts"; echo f >> "$fr/fixes"; date +%s%N > fix.txt; c -m fix; echo fixed;;
-  *) date +%s%N > app/w.txt; c -m "report: w" -m "Done: w.
+  *"fix round"*) echo "\$*" | grep -o 'fix round [0-9]*[^:]*:' >> "$fr/prompts"; echo f >> "$fr/fixes"; date +%s%N > fix.txt
+     [ "\$FR_FIX" != refresh ] || (cd app && npm run -s trust:refresh)
+     c -m fix; echo fixed;;
+  *) date +%s%N > app/w.txt; [ -z "\$FR_GOLDEN" ] || echo "- { id: \$(date +%s%N) }" >> tests/golden/home.yaml
+     c -m "report: w" -m "Done: w.
 Tests: none."
      if [ -n "\$FR_CONFLICT" ]; then echo theirs > "$fr/.claude/worktrees/phase-1/app/w.txt"; git -C "$fr/.claude/worktrees/phase-1" add -A; git -C "$fr/.claude/worktrees/phase-1" -c user.name=t -c user.email=t@t commit -q -m "other lane: w"; fi  # A124f1: phase-1 moves while the worker works
      echo done;;
 esac
 STUB
 chmod +x "$fr/bin/"* "$fr/tools/devlock.sh"; git -C "$fr" add -A; gc "$fr" init; git -C "$fr" branch phase-1
-frrun() { rm -f "$fr/cnt-docs" "$fr/cnt-tc" "$fr/fixes" "$fr/prompts";
+frrun() { rm -f "$fr/cnt-docs" "$fr/cnt-tc" "$fr/fixes" "$fr/prompts" "$fr/trust-runs";
   (cd "$fr" && unset N62_COORD PW_PORT N62_LOCK_PID && PATH="$fr/bin:$PATH" GIAC_OUT="$fr/engine" "$@"); }
 nfix() { wc -l < "$fr/fixes" 2>/dev/null || echo 0; }
 # (a) docs fails twice, then typecheck fails twice, then all passes: the two docs rounds are free, the two typecheck rounds count, it merges
@@ -1773,6 +1782,43 @@ git -C "$fr" worktree remove --force "$tmp/fr7-b"; echo theirs2 > "$fp1/app/w.tx
 out="$(FR_TC=late frrun "$script" annabell "fr task" --id FR7 --branch p1/fr7 --no-worker 2>&1)"
 grep -q 'FR7: conflicts with phase-1 resolved by annabell' "$fr/.coord/log.md" || fail "A124f1 (f): the stand-in conflict did not happen: $out"
 grep -q '^RESULT #[0-9]* FR7: NOT MERGED' <<<"$out" && [[ "$(nfix)" -eq 1 ]] || fail "A124f1 (f): a review-only first-entry conflict is not a counted round (fix rounds $(nfix)): $out"
+
+# A279: trust:check in the pre-flight when a file under tests/golden/ (or another file trust reads) changed. FR_GOLDEN=1: the worker adds a golden
+# row; the stand-in trust:check compares the row count with the README's; FR_FIX=refresh: the fix round runs npm run trust:refresh from app/.
+# (a) a golden row without the refresh: a trust failure in the pre-flight, naming the stale count and the refresh; no queue entry
+out="$(FR_GOLDEN=1 frrun "$script" annabell "fr task" --id FR8 --branch p1/fr8 2>&1)"
+grep -q 'FR8: pre-flight failed (round 0): ## trust failed (full log: [^)]*): trust: tests/golden/README.md: home.yaml says "2", the files say "3"' "$fr/.coord/log.md" || fail "A279 (a): the pre-flight does not fail on a stale trust count: $(grep FR8 "$fr/.coord/log.md")"
+grep -qs 'npm run trust:refresh' "$fr"/.tasks/*-fr8/fix-1.in && grep -qs 'from app/' "$fr"/.tasks/*-fr8/fix-1.in || fail "A279 (a): the fix round's input does not say to run npm run trust:refresh from app/"
+grep -q 'FR8: in the queue' "$fr/.coord/log.md" && fail "A279 (a): the stale branch entered the queue"
+[[ "$(head -n1 "$fr/trust-runs" 2>/dev/null)" == *trust:check* ]] || fail "A279 (a): trust:check was not run: $(cat "$fr/trust-runs" 2>/dev/null)"
+# a round that failed only on trust is free, as docs is: two free rounds, then two counted ones, then the end (the stand-in worker never refreshes)
+[[ "$(nfix)" -eq 4 ]] && grep -q 'FR8: round 1 free (docs or size only; 1 of 2)' "$fr/.coord/log.md" || fail "A279 (a): a trust-only failure is not a free round (fix rounds $(nfix)): $(grep FR8 "$fr/.coord/log.md" | grep -i 'free\|NOT MERGED')"
+# (b) the same branch after the refresh (the fix round runs it): the pre-flight passes in round 1 and the run merges; the failed round was free
+out="$(FR_GOLDEN=1 FR_FIX=refresh frrun "$script" annabell "fr task" --id FR9 --branch p1/fr9 2>&1)"
+grep -q '^RESULT #[0-9]* FR9: MERGED' <<<"$out" || fail "A279 (b): a branch refreshed in its fix round does not merge: $out"
+[[ "$(nfix)" -eq 1 ]] && grep -q 'FR9: round 1 free' "$fr/.coord/log.md" || fail "A279 (b): the trust failure is not one free round (fix rounds $(nfix))"
+grep -qE 'pre-flight trust: ok' "$fr"/.tasks/*-fr9/run.log || fail "A279 (b): the pre-flight does not log trust ok after the refresh"
+# (c) a branch that changes nothing under tests/golden/ (nor another file trust reads): trust:check is never run
+out="$(frrun "$script" annabell "fr task" --id FR10 --branch p1/fr10 2>&1)"
+grep -q '^RESULT #[0-9]* FR10: MERGED' <<<"$out" || fail "A279 (c): a plain branch does not merge: $out"
+[[ ! -e "$fr/trust-runs" ]] || fail "A279 (c): trust:check ran for a branch that changed no file trust reads: $(cat "$fr/trust-runs")"
+# (d) the plan: trust follows docs and comes before typecheck, only when a trust file changed; docs_size_only counts trust as docs
+checks=auto; spec_file="$tmp/spec-plain"
+for f in tests/golden/home.yaml tests/golden/oracle-counts.json README.md engine/giac/patches/0001-a.patch engine/giac/patches/README.md tools/trust/facts.mts; do
+  changed() { echo "$f"; }; [[ "$(want_checks | cut -d, -f1-3)" == docs,trust,typecheck ]] || fail "A279 (d): $f does not plan trust after docs: $(want_checks)"
+done
+for f in docs/x.md app/src/ui/a.ts scripts/gc.sh docs/README.md tests/core/core.yaml; do
+  changed() { echo "$f"; }; [[ ",$(want_checks)," != *,trust,* ]] || fail "A279 (d): $f plans trust: $(want_checks)"
+done
+printf '## trust failed (full log: /x)\ntrust: a\n' > "$tmp/tf1"; printf '## trust failed (full log: /x)\n## docs failed (full log: /y)\n' > "$tmp/tf2"; printf '## trust failed (full log: /x)\n## vitest failed (full log: /y)\n' > "$tmp/tf3"
+docs_size_only "$tmp/tf1" && docs_size_only "$tmp/tf2" || fail "A279 (d): docs_size_only does not treat trust like docs"
+docs_size_only "$tmp/tf3" && fail "A279 (d): docs_size_only calls trust and vitest a free round"
+round_free "$tmp/tf1" 0 0 && ! round_free "$tmp/tf1" 1 0 && ! round_free "$tmp/tf1" 0 2 || fail "A279 (d): round_free does not free a trust-only round (not after a FIX, not past two)"
+# the dry run says when trust runs; the worker prompt names the refresh
+out="$("$script" ron "$ron_pkg" --dry-run 2>&1)"
+grep '^pre-flight' <<<"$out" | grep -q 'trust' && grep '^pre-flight' <<<"$out" | grep -q 'tests/golden/' || fail "A279: the dry run's pre-flight line does not say when trust runs"
+grep '^checks order' <<<"$out" | grep -q 'trust follows docs' || fail "A279: the dry run's order line does not say trust follows docs: $(grep '^checks order' <<<"$out")"
+grep -qF 'npm run trust:refresh' "$here/pipeline.sh" && grep -qF 'trust:refresh` from app/' "$here/pipeline.sh" || fail "A279: the worker prompt does not name npm run trust:refresh from app/"
 
 # A84: the audit runs beside the long checks. A sandbox with a stand-in sofia and stand-in checks: golden and e2e wait (5 s at most) for
 # the audit to start; sofia waits for e2e to run; the behaviour tool notes when it ran. (a) the audit runs beside golden and e2e on the
