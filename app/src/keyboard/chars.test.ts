@@ -52,7 +52,7 @@ describe("the Chars sheet's cells (R725)", () => {
           pairs.push(`${c.id}=${prefix}.${o.id}`);
           expect(name("chars", c.id), `chars.${c.id} vs ${prefix}.${o.id}`).toBe(name(prefix, o.id));
         }
-    expect(pairs).toHaveLength(26); // 19 Greek letters, ° ′ ″ ∞ Å in α∞, ≠ ≤ ≥ in Shift + 6
+    expect(pairs).toHaveLength(24); // 16 Greek letters, ° ′ ″ ∞ Å in α∞, ≠ ≤ ≥ in Shift + 6
     for (const [prefix, p] of [["chars", chars], ...others] as const)
       for (const c of p.items) expect(name(prefix, c.id), `${prefix}.${c.id}`).toMatch(/^[A-ZÅ]/);
     const greek = chars.items.filter((c) => c.row < 3).map((c) => name("chars", c.id));
