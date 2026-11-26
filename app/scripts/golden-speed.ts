@@ -87,6 +87,16 @@ export const SPEED_KNOWN: Record<string, string> = {
   // 162-169 ms, its largest call 82 ms (131,000 checks, the same on phase-1's engine). The golden row keeps its answer up to a
   // clock ×10 (acos) and ×12 (sum) and stops from ×12 and ×14 on, so ×8 differs on a host 1.25-1.5× slower than quiet, under
   // the load of other runs' checks (run 1494, which also stopped G340's and G331's rows)
+  // G804's mark-only rows on sin(10^50) (patch 0070): when the clock stops a step they show another wrong value under the same
+  // warning sign (round(sin(10^50),5): -0.05282 normally, 0.57166 stopped; DEG -0.99929 and -0.99857; the CAS pair's second entry
+  // 1.48328390864 and 1.99715204918). Both values are wrong under the warning sign (right: -0.78967, -0.98481 and 1.96985, derived
+  // in the rows' notes); seen under host load (pass 244, load about 17), where the gate's stage steps found all six
+  "precision/g804-keep-round-sin-1e50-12": "HOME_CLOCK_S",
+  "precision/g804-keep-round-sin-1e50-30": "HOME_CLOCK_S",
+  "precision/g804-keep-deg-round-sin-1e50-12": "HOME_CLOCK_S",
+  "precision/g804-keep-deg-round-sin-1e50-30": "HOME_CLOCK_S",
+  "precision/g804-cas-keep-deg-int-int-abs-sin-1e50-12": "HOME_CLOCK_S",
+  "precision/g804-cas-keep-deg-int-int-abs-sin-1e50-30": "HOME_CLOCK_S",
   "home/g325f1-acos-sqrt-neg2-1e-400-minus-2": "HOME_DEADLINE_MS",
   "home/g618-sum-k(4k+1)": "HOME_DEADLINE_MS",
 };
