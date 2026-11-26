@@ -45,7 +45,7 @@ const FAMILIES: readonly { prefix: string; suffixes: readonly string[] | "any"; 
   { prefix: "entry.", suffixes: ["textbook", "line"], file: "views/modeSheet.ts" },
   { prefix: "settings.fmt.", suffixes: ["std", "sci", "eng", "pfx", "fix"], file: "views/modeSheet.ts" },
   { prefix: "settings.decimalMark.", suffixes: ["point", "comma"], file: "views/modeSheet.ts" },
-  { prefix: "unc.setting.", suffixes: ["sigma", "muted"], file: "views/modeSheet.ts" },
+  { prefix: "unc.setting.", suffixes: ["sigma", "muted", "round"], file: "views/modeSheet.ts" },
   { prefix: "marks.setting.", suffixes: ["muted", "colour", "reason", "muted.spoken", "colour.spoken", "reason.spoken"], file: "views/modeSheet.ts" },
   { prefix: "groups.setting.", suffixes: ["thin", "apos", "comma", "thin.spoken", "apos.spoken", "comma.spoken"], file: "views/modeSheet.ts" }, // R125
   { prefix: "appearance.brightness.", suffixes: ["system", "light", "dark"], file: "views/modeSheet.ts" },

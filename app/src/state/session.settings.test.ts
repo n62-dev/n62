@@ -67,6 +67,10 @@ describe("migrateSettings", () => {
     for (const g of ["thin", "apos", "comma"] as const) expect(migrateSettings({ schema: SETTINGS_SCHEMA, groupSep: g }).settings.groupSep).toBe(g);
     for (const bad of ["'", ",", "space", "", 1, null]) expect(migrateSettings({ schema: SETTINGS_SCHEMA, groupSep: bad }).settings.groupSep).toBe("thin");
   });
+  it("R884: Uncertainty keeps Rounded to σ and Muted digits across a reload; anything else is the default", () => {
+    for (const u of ["sigma", "muted", "round"] as const) expect(migrateSettings({ schema: SETTINGS_SCHEMA, uncertainty: u }).settings.uncertainty).toBe(u);
+    for (const bad of ["concise", "", 1, null]) expect(migrateSettings({ schema: SETTINGS_SCHEMA, uncertainty: bad }).settings.uncertainty).toBe("sigma");
+  });
   it("R125: the display context carries the separator; a stored comma under the decimal comma draws as the thin space", () => {
     const session = new Session(new FakeCalc(), fakeKv());
     const drawn = (): string | undefined => renderNumeric({ value: { re: decimalFromRational(123456789n, 100n), im: decimalFromRational(0n, 1n) } }, "std", session.displayContext(), true)?.latex;

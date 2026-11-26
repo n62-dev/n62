@@ -162,7 +162,7 @@ export const SETTING_RULES: Readonly<Record<string, (x: unknown) => boolean>> = 
   decimalMark: (x) => x === "point" || x === "comma",
   digits: (x) => whole(x, 1, MAX_DIGITS),
   fixDecimals: (x) => whole(x, 0, 12),
-  uncertainty: (x) => x === "sigma" || x === "muted", // R40
+  uncertainty: (x) => x === "sigma" || x === "muted" || x === "round", // R40, R884
   marks: (x) => x === "muted" || x === "colour" || x === "reason", // R124
   groupSep: (x) => x === "thin" || x === "apos" || x === "comma", // R125
   barSlot: isBarSlot, // R782

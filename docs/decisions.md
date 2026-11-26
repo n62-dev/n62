@@ -182,6 +182,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **A constant's own unit (G801; pass 244):** NIST's CODATA unit column as Find ids (`find/units.yaml` ownUnit), except h and N_A·h in J·s (owner), c_1L in W·m² (no sr in the dimension key), G_F in J⁻² (GeV⁻² is not coherent), k_e in N·m²/C²; a product of constants' units only when it has fewer symbols than the base form (R·T/p in m³/mol). Would change if: an engineer reads one otherwise.
 
 - **σ's digits, one rule (R883, R885; pass 248):** every σ (a constant's, a typed ±, a name or chip) mutes the value's digits from σ's first digit's place on (`2.5 ± 0.1` mutes its 5); σ is drawn at 2 significant digits, PFX too (`4.70 k ± 0.10 k`), the value at least to σ's last digit and in σ's form; the unit view's second line writes σ at 2 digits (the full σ: the σ sheet, Copy). Rule: docs/04 2.6 (R885). Would change if: the owner wants σ at one digit.
+- **A value with σ (R884):** muted digits by default; Rounded to σ is a setting (owner, 2026-11-23).
 - **A ratio chip (G369, G782; pass 229):** its pure number wherever it goes, the unit view's slot and Store ▶ too. Built, archived.
 - **The check of 2026-10-19:** a zero term keeps its dimension for the unit check (G35). Would change if: the per-term check costs more than the 5 ms p95 bar.
 
