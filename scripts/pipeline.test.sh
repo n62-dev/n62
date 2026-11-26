@@ -410,6 +410,24 @@ for imp in 'import { y } from "./y.ts";' 'import { z } from "./sub/z.ts";' 'impo
   out="$(closure_in "$imp")"; rc=$?
   [[ $rc -eq 0 ]] || fail "A277: the closure tool refuses '$imp' (rc $rc): $out"
 done
+# A277f1: what golden starts as a child process (engine.ts: tools/giac-regress/run.mjs, tests/engine/*) and the data those read plan golden;
+# G323 #1044 changed only tools/giac-regress/n62-check.cas and merged without golden
+for f in tools/giac-regress/n62-check.cas tools/giac-regress/run.mjs tools/giac-regress/export.mjs tools/giac-regress/lines.mjs; do
+  printf '%s\n' "$f" | golden_selected || fail "A277f1: a diff touching only $f (golden runs it as a child process) does not plan the golden check"
+done
+kids="$(node "$here/../tools/golden-closure.mjs" --children)" || fail "A277f1: golden-closure.mjs --children failed"
+for f in tools/giac-regress/run.mjs tools/giac-regress/ tests/engine/regress-fresh.mjs tests/engine/patch-canary.ts tools/probes/giac-check.mjs spec/keyboard.yaml; do
+  grep -qxF "$f" <<<"$kids" || fail "A277f1: golden-closure.mjs --children misses $f"
+done
+miss="$(while IFS= read -r f; do git -C "$here/.." check-ignore -q "$f" && continue; printf '%s\n' "$f" | GOLDEN_CLOSURE_LIST="$clo" golden_selected || printf '%s ' "$f"; done <<<"$kids")"
+[[ -z "$miss" ]] || fail "A277f1: what the golden gate starts or reads by a path does not plan golden (GOLDEN_RE): $miss"
+# the scan on a made-up tree: a spawned script, its import, its folder read by a computed name, a folder of computed scripts
+cs="$tmp/children"; mkdir -p "$cs/app" "$cs/tools/x" "$cs/tests/y"
+printf 'import { spawnSync } from "node:child_process";\nspawnSync(process.execPath, [`${root}tools/x/run.mjs`]);\nfor (const f of L) spawnSync(process.execPath, [`${root}tests/y/${f}`]);\n' > "$cs/app/a.ts"
+printf 'import { readFileSync } from "node:fs";\nimport { g } from "./lib.mjs";\nreadFileSync(new URL(f, import.meta.url));\n' > "$cs/tools/x/run.mjs"
+echo 'export const g = 1;' > "$cs/tools/x/lib.mjs"; echo 'import "../../tools/x/data.mjs";' > "$cs/tests/y/t.mjs"; echo '' > "$cs/tools/x/data.mjs"
+out="$(GOLDEN_CLOSURE_ROOT="$cs" node "$here/../tools/golden-closure.mjs" --children app/a.ts 2>&1)"
+[[ "$out" == $'tests/y/\ntests/y/t.mjs\ntools/x/\ntools/x/data.mjs\ntools/x/lib.mjs\ntools/x/run.mjs' ]] || fail "A277f1: golden-closure.mjs --children on a made-up tree: $out"
 # A25 item 5: a stage line NEW / NOW PASSING / CHANGED / GONE fails the engine stages even at exit 0
 printf 'x\n  sweep NOW PASSING a1: remove it\nSWEEP PASSED: 1\n' > "$tmp/st1.log"; printf '  seq known y\nSEQ PASSED: 1\n' > "$tmp/st2.log"
 stage_findings "$tmp/st1.log" >/dev/null || fail "A25: a NOW PASSING stage line is not a finding"

@@ -620,7 +620,9 @@ head_is() {  # <dir> <sha>
 # of all of them (tools/golden-closure.mjs: golden.ts, the five stages and behaviour-diff.ts) and fails when one is missing here.
 # A277: app/src/input/ and app/src/units/ are not listed whole: a file there plans golden only when it is in that closure (golden_selected
 # runs the tool once per plan) or is a data file (.yaml, .json: GOLDEN_DATA_RE); a tool that fails plans golden for both folders.
-GOLDEN_RE='^(engine/|app/src/engine/|app/src/(apps/function/compile|clipboard/(exact|paste|plaintext|strings|text|whyLine)|entry/(macros|rpn|rpnCompose)|goldenRun|i18n/(en|enEngine|enParser|enUnits|index|sumWords)|render/home|state/(displayMode|resultItem|results|sigmaDigits))\.ts|tests/golden/|find/|tools/find-index/|tools/probes/(giac-check\.mjs|giaccheck/|sweep/|casback/|findcensus/)|tests/engine/|app/scripts/(unit-case\.ts|golden\.ts|golden/.*\.ts|golden-[a-z-]+\.ts|invariants\.ts|calls-budget\.ts|behaviour-diff\.ts|sweep(-[a-z]+)?\.ts|seqsweep\.ts|casback\.ts|viewsweep(-[a-z]+)?\.ts|findcensus\.ts))'
+# A277f1: what the gate starts as a child process or reads by a path (tools/giac-regress/, run by engine.ts; spec/keyboard.yaml and
+# spec/unit-pad.yaml, read by the rpn and units stages; behaviour-diff's Worker) is listed too: golden-closure.mjs --children finds them.
+GOLDEN_RE='^(engine/|app/src/engine/|app/src/(apps/function/compile|clipboard/(exact|paste|plaintext|strings|text|whyLine)|entry/(macros|rpn|rpnCompose)|goldenRun|i18n/(en|enEngine|enParser|enUnits|index|sumWords)|render/home|state/(displayMode|resultItem|results|sigmaDigits))\.ts|tests/golden/|find/|tools/find-index/|tools/giac-regress/|spec/(keyboard|unit-pad)\.yaml|tools/probes/(giac-check\.mjs|giaccheck/|sweep/|casback/|findcensus/)|tests/engine/|app/scripts/(unit-case\.ts|golden\.ts|golden/.*\.ts|golden-[a-z-]+\.ts|invariants\.ts|calls-budget\.ts|behaviour-diff(-worker)?\.ts|sweep(-[a-z]+)?\.ts|seqsweep\.ts|casback\.ts|viewsweep(-[a-z]+)?\.ts|findcensus\.ts))'
 GOLDEN_DIRS_RE='^app/src/(input|units)/'
 GOLDEN_DATA_RE='\.(yaml|json)$'
 golden_lib_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
