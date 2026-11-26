@@ -10,6 +10,9 @@ import { tipsText as tr } from "../i18n/enTips.ts";
 import { openLayer } from "../input/backLayer.ts";
 import { markTipsSeen } from "../state/tips.ts";
 
+/** R870: the tips' words for the unit view's Help on an empty slot (units/slotHelp.ts), from this chunk: the table stays in one chunk. */
+export { tipsText } from "../i18n/enTips.ts";
+
 const PAD = 4;
 const EDGE = 1; // a ring stays this far inside the screen
 const SVG = "http://www.w3.org/2000/svg";

@@ -121,7 +121,7 @@ export function exactFactor(text: string): Exact | undefined {
 }
 
 /** Whether `pair` is `prefix` times `unit`: the same dimension, and the factors equal as exact fractions. */
-function isPair(pair: SlotName, prefix: SlotName | undefined, unit: SlotName | undefined): boolean {
+export function isPair(pair: SlotName, prefix: SlotName | undefined, unit: SlotName | undefined): boolean {
   if (!prefix || !unit || pair.dim === undefined || pair.dim !== unit.dim) return false;
   const [p, a, b] = [pair.si, prefix.si, unit.si].map((x) => (x === undefined ? undefined : exactFactor(x)));
   if (!p || !a || !b) return false;

@@ -13,6 +13,8 @@ const HELP = ["shift", "help"];
 const sheet = (page: Page) => page.getByTestId("menu");
 const title = (page: Page) => sheet(page).getByTestId("sheet-title");
 const row = (page: Page, id: string) => sheet(page).locator(`[role="menuitem"][data-id="${id}"]`);
+/** A row's label (the row's text starts with its pick number). */
+const label = (page: Page, id: string) => row(page, id).locator(".label");
 const up = (page: Page): Promise<unknown> =>
   page.waitForFunction(() => window.n62.unitView !== undefined && document.activeElement === window.n62.unitView.element && document.querySelector('[data-pad="unit"]') !== null);
 /** The view's slot as text: `k:m / h`, `` (empty). */
@@ -48,10 +50,10 @@ async function kmPerH(page: Page): Promise<void> {
 /** The km/h sheet's rows. */
 async function kmhSheet(page: Page): Promise<void> {
   await expect(title(page)).toHaveText("Help: km/h");
-  await expect(row(page, "f0")).toContainText(/^km · \S+: 1 km = 1000 m/);
+  await expect(label(page, "f0")).toHaveText(/^km · \S+: 1 km = 1000 m/);
   await expect(row(page, "f0").getByTestId("row-hint")).toHaveText("exact");
-  await expect(row(page, "f1")).toContainText(/^h · \S+: 1 h = 3600 s/);
-  await expect(row(page, "total")).toContainText("1 km/h = 5/18 m/s");
+  await expect(label(page, "f1")).toHaveText(/^h · \S+: 1 h = 3600 s/);
+  await expect(label(page, "total")).toHaveText("1 km/h = 5/18 m/s");
   await expect(row(page, "total").getByTestId("row-hint")).toHaveText("≈ 0.277777777778 m/s");
 }
 
@@ -104,7 +106,7 @@ for (const [width, height] of [[412, 915], [360, 740]] as const) {
       expect(await armed(page, "u1")).toBe("k");
       await tap(page, HELP);
       await expect(title(page)).toHaveText("Help: k");
-      await expect(row(page, "armed")).toContainText(/^k · kilo: × 1000 = 10³/);
+      await expect(label(page, "armed")).toHaveText(/^k · kilo: × 1000 = 10³/);
       await tap(page, ["esc"]);
       await backOnView(page);
       expect(await armed(page, "u1")).toBe("k");

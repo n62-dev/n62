@@ -303,6 +303,8 @@ export interface SheetOptions {
   /** R145: where the ⚙ in the title row goes, read when it is tapped: Settings as a level of this sheet, or (before its
    *  code is in) a function that opens the Settings root. Absent: no ⚙. */
   settings?: () => SubMenu | (() => void);
+  /** R870: the Help action closes the sheet, as Esc does (the unit view's Help sheet, units/slotHelp.ts: a second Help). */
+  helpCloses?: boolean;
 }
 
 /** What a pick did: opened a submenu or did nothing (the sheet stays), or chose an item to run (the sheet closes). */
@@ -330,6 +332,8 @@ export class Sheet {
   /** The icon before the title, if any. */
   readonly icon: IconId | undefined;
   private readonly settings: SheetOptions["settings"];
+  /** R870: the Help action closes the sheet (SheetOptions.helpCloses). */
+  readonly helpCloses: boolean;
   /** R281: the id of the item armed by a first pick (MenuItem.confirm), else null: a second pick of it runs it. */
   armed = $state<string | null>(null);
 
@@ -337,6 +341,7 @@ export class Sheet {
     this.id = id;
     this.icon = opts?.icon;
     this.settings = opts?.settings;
+    this.helpCloses = opts?.helpCloses === true;
     const root = new Level(title, items, id, opts);
     this.levels = [root];
     this.rootLetters = root.filterable || id === CHARS_SHEET;

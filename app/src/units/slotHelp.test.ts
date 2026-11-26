@@ -22,7 +22,7 @@ const raw = (existsSync(indexFile) ? JSON.parse(readFileSync(indexFile, "utf8"))
 const hasIndex = raw.some((it) => it.kind === "unit");
 const required = process.env["FIND_INDEX"] === "required";
 
-const src = hasIndex ? { byId: makeIndex(raw).byId, cat: slotCatalogue(raw), table: factorTable(raw) } : undefined;
+const src = hasIndex ? { byId: makeIndex(raw).byId, cat: slotCatalogue(raw), table: factorTable(raw), tip: tipsText("tips.units") } : undefined;
 const item = (id: string): IndexItem => {
   const it = raw.find((x) => x.id === id);
   if (!it) throw new Error(`${id} is not in the index`);
