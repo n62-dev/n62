@@ -8,7 +8,7 @@ import { parse } from "yaml";
 import { entryValue, flick, open, setFontScale, tap, touch } from "../test/helpers.ts";
 import { foldShots } from "./fold.ts";
 import { popShots } from "./keypop.ts";
-import { eiShots, entryShots, groupShots, ringShots, runShots, lookShots, markShots, menuMarkShots, wrapShots, creditsShots, logoShots } from "./looks.ts";
+import { eiShots, entryShots, groupShots, ringShots, runShots, lookShots, markShots, menuMarkShots, wrapShots, creditsShots, logoShots, zebraShots } from "./looks.ts";
 
 const OUT = new URL("../test/gallery/", import.meta.url).pathname, THEMES = ["light", "dark"] as const;
 
@@ -462,7 +462,7 @@ const shots: Shot[] = [
   ...padShots(),
   ...unitFindShots(),
   ...unitResultShots(),
-  ...lookShots(someHistory), ...menuMarkShots(), ...wrapShots(), ...creditsShots(someHistory), // R158, R149
+  ...lookShots(someHistory), ...zebraShots(someHistory), ...menuMarkShots(), ...wrapShots(), ...creditsShots(someHistory), // R158, R149
   ...entryShots(), ...ringShots(), ...runShots(), ...logoShots(), // R157
   {
     id: "home-tmpl",
