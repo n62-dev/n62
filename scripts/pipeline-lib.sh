@@ -67,11 +67,11 @@ merge_failure_reason() {
 }
 
 # ---- A124: free fix rounds ----
-# docs_size_only <failure file>: succeeds when the file's "## <check> failed" headings are all docs, docsstep (A275) or size, and there is one (a lint,
-# typecheck, vitest, e2e, golden, red-first or shell failure in it makes the round an ordinary one).
+# docs_size_only <failure file>: succeeds when the file's "## <check> failed" headings are all docs, docsstep (A275), trust (A279) or size, and there is
+# one (a lint, typecheck, vitest, e2e, golden, red-first or shell failure in it makes the round an ordinary one).
 docs_size_only() {
   local h; h="$(grep -E '^## [a-z0-9]+ failed' "$1" 2>/dev/null | awk '{ print $2 }' | sort -u || true)"
-  [[ -n "$h" ]] && ! grep -qvxE 'docs|docsstep|size' <<<"$h"
+  [[ -n "$h" ]] && ! grep -qvxE 'docs|docsstep|trust|size' <<<"$h"
 }
 # round_free <failure file> <audit asked for fixes: 0|1> <free rounds used>: succeeds when this fix round is free: the only failures are
 # docs or size, the audit asked for nothing, and fewer than two free rounds were used (a run has at most two; then it counts as any).
@@ -631,6 +631,12 @@ BUILD_RE='^(app/|spec/|tests/(golden|tasks)/|tools/(trust|third-party)/|THIRD_PA
 # e2e_selected, build_selected: succeed when a changed file (one per line, on stdin) plans the e2e or the size check.
 e2e_selected() { grep -qE "$E2E_RE"; }
 build_selected() { grep -qE "$BUILD_RE"; }
+# A279: what `npm run trust:check` reads (tools/trust/facts.mts, cli.mts): the golden files and oracle-counts.json (tests/golden/, the
+# trust table of tests/golden/README.md among them), README.md's trust block, the Giac patch list and the files and the tool itself
+# (tools/trust/). A changed file of these plans the trust check, after docs and before typecheck; a golden row without
+# `npm run trust:refresh` from app/ cost G804 a whole round on stale counts.
+TRUST_RE='^(tests/golden/|README\.md$|engine/giac/patches/|tools/trust/)'
+trust_selected() { grep -qE "$TRUST_RE"; }
 
 # behaviour_selected: succeeds when a changed file (one per line, on stdin) is engine, input or units code (A18).
 behaviour_selected() { grep -qE '^(engine/|app/src/engine/|app/src/input/|app/src/units/)'; }
