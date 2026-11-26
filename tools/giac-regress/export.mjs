@@ -652,6 +652,9 @@ export const PATCHED_IDS = new Map([
   ...["rank-approx-123", "linsolve-approx-tiny-0-20", "rank-approx-123-20", "rank-approx-near-singular-1e-20", "det-approx-tiny", "inv-approx-tiny-10-20", "det-approx-tiny-20", "det-approx-diag-tiny", "det-approx-block-tiny", "det-approx-diag-1e-13-40"].map((k) => [`g622-${k}`, "0068-float-rref-cancelled-pivot.patch"]),
   // G806: its 30-digit control runs g622-rank-approx-123's line (Digits 40), which stock gets wrong (F436: 0, right 2)
   ["g806-keep-rank-approx-123-30", "0068-float-rref-cancelled-pivot.patch"],
+  // G405: solve kept one of two close real roots that realroot isolated (patch 0050; stock and Parisse's source give 2 or a
+  // wrong count); the g405-keep-* rows pass on stock and stay in the check file
+  ...["solve-cubic-x3-3x+2-1e-30-third-30", "size-solve-cubic-x3-3x+2-1e-30-12", "size-solve-quintic-x5-5x+4-1e-30-30", "size-solve-cubic-x3-5x2+7x-3+1e-60-30"].map((k) => [`g405-${k}`, "0050-proot-huge-coefficients.patch"]),
   // G793, G793f1: usual.cc _lcm kept the sign of the product of integers and of fractions of integers (lcm(-4,6) = -12, lcm(1/2,-1/3) = -1); the
   // g793*-keep-* rows pass on stock and stay in the check file (the list results of the *-pairs-* rows and the *-cas-* rows are not exported)
   ...["lcm-neg4-6", "lcm-4-neg6", "lcm-list-neg4-6-10", "lcm-neg3-neg5-neg7", "lcm-neg2^70-3", "lcm-neg4-alone"].map((k) => [`g793-${k}`, "0065-lcm-integers-positive.patch"]),
@@ -920,6 +923,13 @@ export function build(cases) {
     // G364 (night review 2026-11-14, vg-2): the 10^-80 form gave three roots at Digits 30 and 40 before G359 took it to realroot
     ["g364-size-solve-x3-3x+2+1e-80-12", 12, "size(solve(x^3-3*x+2+10^-80=0,x))", "1", "1/10^30"],
     ["g364-size-solve-x3-3x+2+1e-80-30", 30, "size(solve(x^3-3*x+2+10^-80=0,x))", "1", "1/10^30"],
+    // G405 (night review 2026-11-16, vg-2, be-3): the minus sign, three real roots, two 1 -+ 5.7735E-16 apart, were one root
+    // (protect_sort and comprim: == of two reals is an absolute 1e-12); the quintic takes Giac's own realroot path, the same merge
+    ["g405-size-solve-x3-3x+2-1e-30-12", 12, "size(solve(x^3-3*x+2-10^-30=0,x))", "3", "1/10^30"],
+    ["g405-size-solve-x3-3x+2-1e-30-40", 40, "size(solve(x^3-3*x+2-10^-30=0,x))", "3", "1/10^30"],
+    ["g405-solve-x3-3x+2-1e-30-third-40", 40, "solve(x^3-3*x+2-10^-30=0,x)[2]", "10000000000000005773502691896257089535932249464153/10^49", "1/10^35"],
+    ["g405-size-solve-x5-5x+4-1e-30-12", 12, "size(solve(x^5-5*x+4-10^-30=0,x))", "3", "1/10^30"],
+    ["g405-size-solve-x3-5x2+7x-3+1e-60-40", 40, "size(solve(x^3-5*x^2+7*x-3+10^-60=0,x))", "3", "1/10^30"],
   ]) {
     patched.push(`// patch ${G359_PATCH}`, `// ${id} (${value.includes("/") ? "oracle: mpmath polyroots" : "derived: nops(realroot(p)), or the degree for three distinct roots"})`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;

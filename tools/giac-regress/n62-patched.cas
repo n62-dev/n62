@@ -1217,6 +1217,18 @@ Digits:=40:; pc("g188-int-cosh-pow-tanh",'(int((cosh(x))^tanh(x),x,0,1))',(11041
 // patch 0037-int-propfrac-empty-vars.patch
 // g188-int-sqrt-tanh-sin (precision.yaml, oracle)
 Digits:=40:; pc("g188-int-sqrt-tanh-sin",'(int(sqrt(tanh(x)*sin(x)),x,0,1))',(446504265471/10^12),5/10^13);
+// patch 0050-proot-huge-coefficients.patch
+// g405-solve-cubic-x3-3x+2-1e-30-third-30 (precision.yaml, oracle)
+Digits:=40:; pc("g405-solve-cubic-x3-3x+2-1e-30-third-30",'(solve(x^3-3*x+2-10^-30=0,x)[2])',(100000000000000057735026918963/10^29),5/10^30);
+// patch 0050-proot-huge-coefficients.patch
+// g405-size-solve-cubic-x3-3x+2-1e-30-12 (precision.yaml, derived)
+Digits:=40:; pc("g405-size-solve-cubic-x3-3x+2-1e-30-12",'(size(solve(x^3-3*x+2-10^-30=0,x)))',3,5/10^12);
+// patch 0050-proot-huge-coefficients.patch
+// g405-size-solve-quintic-x5-5x+4-1e-30-30 (precision.yaml, derived)
+Digits:=40:; pc("g405-size-solve-quintic-x5-5x+4-1e-30-30",'(size(solve(x^5-5*x+4-10^-30=0,x)))',3,5/10^30);
+// patch 0050-proot-huge-coefficients.patch
+// g405-size-solve-cubic-x3-5x2+7x-3+1e-60-30 (precision.yaml, derived)
+Digits:=40:; pc("g405-size-solve-cubic-x3-5x2+7x-3+1e-60-30",'(size(solve(x^3-5*x^2+7*x-3+10^-60=0,x)))',3,5/10^30);
 // patch 0045-algnum-convert-nested-rootof.patch
 // g340-normal-sqrt-cbrt2-30 (precision.yaml, oracle)
 Digits:=40:; pc("g340-normal-sqrt-cbrt2-30",'(normal(sqrt(1+sqrt(1+2^(1/3)))))',(158218310545701130901361089872/10^29),5/10^30);
@@ -1511,6 +1523,21 @@ Digits:=12:; pc("g364-size-solve-x3-3x+2+1e-80-12",'size(solve(x^3-3*x+2+10^-80=
 // patch 0050-proot-huge-coefficients.patch
 // g364-size-solve-x3-3x+2+1e-80-30 (derived: nops(realroot(p)), or the degree for three distinct roots)
 Digits:=30:; pc("g364-size-solve-x3-3x+2+1e-80-30",'size(solve(x^3-3*x+2+10^-80=0,x))',1,1/10^30);
+// patch 0050-proot-huge-coefficients.patch
+// g405-size-solve-x3-3x+2-1e-30-12 (derived: nops(realroot(p)), or the degree for three distinct roots)
+Digits:=12:; pc("g405-size-solve-x3-3x+2-1e-30-12",'size(solve(x^3-3*x+2-10^-30=0,x))',3,1/10^30);
+// patch 0050-proot-huge-coefficients.patch
+// g405-size-solve-x3-3x+2-1e-30-40 (derived: nops(realroot(p)), or the degree for three distinct roots)
+Digits:=40:; pc("g405-size-solve-x3-3x+2-1e-30-40",'size(solve(x^3-3*x+2-10^-30=0,x))',3,1/10^30);
+// patch 0050-proot-huge-coefficients.patch
+// g405-solve-x3-3x+2-1e-30-third-40 (oracle: mpmath polyroots)
+Digits:=40:; pc("g405-solve-x3-3x+2-1e-30-third-40",'solve(x^3-3*x+2-10^-30=0,x)[2]',10000000000000005773502691896257089535932249464153/10^49,1/10^35);
+// patch 0050-proot-huge-coefficients.patch
+// g405-size-solve-x5-5x+4-1e-30-12 (derived: nops(realroot(p)), or the degree for three distinct roots)
+Digits:=12:; pc("g405-size-solve-x5-5x+4-1e-30-12",'size(solve(x^5-5*x+4-10^-30=0,x))',3,1/10^30);
+// patch 0050-proot-huge-coefficients.patch
+// g405-size-solve-x3-5x2+7x-3+1e-60-40 (derived: nops(realroot(p)), or the degree for three distinct roots)
+Digits:=40:; pc("g405-size-solve-x3-5x2+7x-3+1e-60-40",'size(solve(x^3-5*x^2+7*x-3+10^-60=0,x))',3,1/10^30);
 // patch 0050-proot-huge-coefficients.patch
 // g359-rootof-1e400-error-or-right-15 (oracle: mpmath findroot, -10^-400; an error passes)
 Digits:=15:; pasr:=0:; try { pasr:=when(abs(10^400*evalf(rootof([1,0],[1,0,10^400,1]))+1)<1/10^10,1,0); } catch (err) { pasr:=1; }:; pc("g359-rootof-1e400-error-or-right-15",'pasr',1,1/10^30);

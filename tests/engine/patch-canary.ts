@@ -197,6 +197,9 @@ const CANARIES: [string, string, RegExp, string][] = [
   // and convert -log(0) to int (int(+inf)): mpfr_init2 got INT_MAX bits and aborted (proot([1,0,10^400,1]) trapped the engine)
   ["0050-proot-huge-coefficients.patch", "giac-2.1.0/src/vecteur.cc", /double eps1=1\/\(evalf_double\(maxv,1,contextptr\)\._DOUBLE_val\);\s*if \(debug_infolevel\)\s*CERR << "proot coefficients ratio /, "gen bestg=accurate_evalf(gen(best),90);"],
   ["0050-proot-huge-coefficients.patch", "giac-2.1.0/src/vecteur.cc", /double eps1=1\/\(evalf_double\(maxvt,1,contextptr\)\._DOUBLE_val\);\s*if \(debug_infolevel\)\s*CERR << "proot after shift: coefficients ratio /, "gen shift(-v[1]/v[0]/int(v.size()+1));"],
+  // G405, patch 0050: protect_sort drops a root == to the one before, and == of two reals is an absolute 1e-12, so two roots
+  // realroot isolated apart (1 -+ 5.7735E-16 of x^3-3*x+2-10^-30) were one
+  ["0050-proot-huge-coefficients.patch", "giac-2.1.0/src/solve.cc", /if \(res\.empty\(\) \|\| \*it!=res\.back\(\)\)/, "vecteur protect_sort(const vecteur & res,GIAC_CONTEXT){"],
   // G360, patch 0051: in_limit has no rule for iPart (no series rule, not in sign_floor_ceil_round_tab), so it substitutes the point
   ["0051-limit-ipart-as-trunc.patch", "giac-2.1.0/src/series.cc", /direction=-1;\s*vecteur vsign\(loptab\(e,sign_floor_ceil_round_tab\)\);/, "static gen in_limit(const gen & e0,const identificateur & x,const gen & lim_point,int direction,GIAC_CONTEXT){"],
   // G378, patch 0052: sym2rxrootnum takes arg(num) from evalf(num), so on the cut (a negative real num) the sign of a rounding
