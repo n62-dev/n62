@@ -579,13 +579,17 @@ export function decideTwice(giac: Giac, expr: string, text: string, digits: numb
   const finite = climb ? finiteLevel(giac, `(${text})`, text, P0, () => false) : null;
   const P = Math.max(typed.at, printed.unchecked ? P0 : printed.at, typeof finite === "number" ? finite : 0);
   const failed: Undecided = P > P0 ? { undecided: true, refused: true } : { undecided: true };
+  // G806: whether a run's float row reduction (rank, det) decided a pivot within the rounding of its entries (patch
+  // 0071's warning), read after the run's last call
+  let rounded = false;
+  const heard = <T>(t: T): T => ((rounded = giac.roundedPivot?.() ?? false), t);
   // G103: the P + 20 text is only compared, so it goes through bridge-3 (nothing stored, nothing to purge; no `=` read
   // as a store, as giac_eval's equaltosto would). A print bridge-3 cut at 2 kB is read whole.
   const compared = (d: number): string | null =>
     withDigits(giac, d, restore, () => {
-      const v = giac.value(`(${expr})`, []);
+      const v = heard(giac.value(`(${expr})`, []));
       if (isError(v.text)) return null;
-      return v.cut ? giac.eval(`(${expr})`) : v.text;
+      return v.cut ? heard(giac.eval(`(${expr})`)) : v.text;
     });
   // The P + 40 text may be kept: in pasdec2, which the caller reads and purges when `from` names it.
   let pasdec2 = false;
@@ -594,7 +598,7 @@ export function decideTwice(giac: Giac, expr: string, text: string, digits: numb
   const kept = (e: string): string | null =>
     withDigits(giac, P + 40, restore, () => {
       pasdec2 = true;
-      const v = giac.value(`pasdec2:=(${e})`, [], true); // G187: with its tree (homeEval.ts powerPastRange)
+      const v = heard(giac.value(`pasdec2:=(${e})`, [], true)); // G187: with its tree (homeEval.ts powerPastRange)
       keptValue = v;
       if (isError(v.text)) return null;
       return v.cut ? giac.eval("pasdec2") : v.text;
@@ -604,11 +608,14 @@ export function decideTwice(giac: Giac, expr: string, text: string, digits: numb
     return d;
   };
   const t2 = compared(P + 20);
+  // G806 (docs/04 2.4 rule 2): texts that agree on a pivot the rounding decided at the higher run are no decision: the
+  // rank of e^M (entries near 1E466, small directions that need 1400 digits) was 1 at every precision we run (right 3).
+  // ⚠ without a count, never refused: the text is Giac's answer at the precision, not a guess between two.
   let out: Decision;
-  if (t2 === text) out = { text };
+  if (t2 === text) out = rounded ? { undecided: true } : { text };
   else {
     const t3 = t2 === null ? null : kept(expr);
-    out = t3 !== null && t3 === t2 ? { text: t3, from: "pasdec2", value: keptValue! } : t3 !== null ? { undecided: true, refused: true } : failed;
+    out = t3 !== null && t3 === t2 ? (rounded ? { undecided: true } : { text: t3, from: "pasdec2", value: keptValue! }) : t3 !== null ? { undecided: true, refused: true } : failed;
   }
   if ("undecided" in out) return decided(out);
   const cut = onCut(giac, expr, digits, restore, P);
