@@ -9,6 +9,8 @@
 // A live pinned line is never edited or deleted. A reserved line may turn into a live one (the fill), and a line may be
 // appended after a list's last fixed row. Everything else is a move: a line under `moves:` with the owner's decision.
 import { execFileSync } from "node:child_process";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { parse } from "yaml";
 import type { ActionBody, Key, Keyboard, Layer, Palette } from "./keyboard.ts";
 
@@ -184,6 +186,14 @@ function isTitle(line: string, decision: string): boolean {
 function isHeading(line: string, decision: string): boolean {
   const m = /^#+ (.*)$/.exec(line);
   return m !== null && ((m[1] as string) === decision || (m[1] as string).startsWith(`${decision} (`));
+}
+
+/** The text a move's decision is looked up in: docs/decisions.md and every docs/archive/decisions-*.md under `root` (the repo).
+ *  An entry the Opus pass archives still binds, found there by its name (decisions.md, its line 4); pass 249 archived
+ *  "Settings over Mode", which the lock's mode and settings moves name. */
+export function decisionsText(root: string): string {
+  const archive = readdirSync(join(root, "docs/archive")).filter((f) => /^decisions-[\d-]+\.md$/.test(f)).sort();
+  return [join(root, "docs/decisions.md"), ...archive.map((f) => join(root, "docs/archive", f))].map((p) => readFileSync(p, "utf8")).join("\n");
 }
 
 /** The lock's lines with its moves applied, in order. Problems: a move that does not fit the line it moves, or whose

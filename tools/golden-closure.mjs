@@ -9,14 +9,15 @@
 // (`@/x`, `~/x`, `#x`, `$x`, `/x`) or a bare path (`src/x`, `app/src/x`, `input/x`) makes it exit 1 with the file and the import named.
 // The default entries are every script the golden gate and its engine stages run (the golden gate, the five stages, the behaviour diff),
 // and the probe libraries they import are walked with them; entries given on the command line replace them.
-//   node tools/golden-closure.mjs [<entry>...]     (GOLDEN_CLOSURE_ROOT: the tree to walk, for the tests)
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+//   node tools/golden-closure.mjs [--children] [<entry>...]     (GOLDEN_CLOSURE_ROOT: the tree to walk, for the tests)
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, normalize, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = process.env.GOLDEN_CLOSURE_ROOT ?? resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENTRIES = ["golden", "casback", "sweep", "seqsweep", "viewsweep", "findcensus", "behaviour-diff"].map((n) => `app/scripts/${n}.ts`);
-const entries = process.argv.length > 2 ? process.argv.slice(2) : ENTRIES;
+const args = process.argv.slice(2).filter((a) => a !== "--children");
+const entries = args.length > 0 ? args : ENTRIES;
 const FROM = /^\s*(?:import|export)\s+([^;"']*?)\s*from\s*["']([^"']+)["']/gm;
 const BARE = /^\s*import\s*["']([^"']+)["']/gm;
 const DYNAMIC = /import\(\s*["']([^"']+)["']\s*\)/g;
@@ -53,23 +54,78 @@ for (const entry of entries) {
     process.exit(1);
   }
 }
-const seen = new Set();
-const stack = [...entries];
-while (stack.length > 0) {
-  const f = stack.pop();
-  if (seen.has(f) || !existsSync(join(root, f))) continue;
-  seen.add(f);
-  const text = code(f, readFileSync(join(root, f), "utf8"));
-  const specs = [...text.matchAll(FROM)].filter((m) => isValue(m[1])).map((m) => m[2]);
-  specs.push(...[...text.matchAll(BARE)].map((m) => m[1]), ...[...text.matchAll(DYNAMIC)].map((m) => m[1]));
-  for (const s of specs) {
-    if (intoSrc(s)) {
-      console.error(`golden-closure: ${f} imports "${s}", an alias or bare path into app/src: the walk follows relative paths only`);
-      process.exit(1);
+/** The value-import closure of the given files (repo-relative). */
+function walk(starts) {
+  const seen = new Set();
+  const stack = [...starts];
+  while (stack.length > 0) {
+    const f = stack.pop();
+    if (seen.has(f) || !existsSync(join(root, f))) continue;
+    seen.add(f);
+    const text = code(f, readFileSync(join(root, f), "utf8"));
+    const specs = [...text.matchAll(FROM)].filter((m) => isValue(m[1])).map((m) => m[2]);
+    specs.push(...[...text.matchAll(BARE)].map((m) => m[1]), ...[...text.matchAll(DYNAMIC)].map((m) => m[1]));
+    for (const s of specs) {
+      if (intoSrc(s)) {
+        console.error(`golden-closure: ${f} imports "${s}", an alias or bare path into app/src: the walk follows relative paths only`);
+        process.exit(1);
+      }
+      if (!s.startsWith(".")) continue;
+      const r = resolveSpec(f, s);
+      if (r && !/\.(yaml|json|css)$/.test(r)) stack.push(relative(".", r));
     }
-    if (!s.startsWith(".")) continue;
-    const r = resolveSpec(f, s);
-    if (r && !/\.(yaml|json|css)$/.test(r)) stack.push(relative(".", r));
+  }
+  return seen;
+}
+
+// A277f1: --children: what the closure starts or reads by a path, not an import (a spawnSync, a fork or a Worker of a script, the data
+// it reads), which the import walk never sees: `new URL("<path>", import.meta.url | here)` (relative to the file), `${root}<path>` or
+// `${repo}<path>` in a template and resolve|join(root|repo, "<path>") (relative to the repo); a computed name (`new URL(f, import.meta.url)`,
+// `${root}tests/engine/${f}`) gives its folder with a trailing /. A named script (.ts, .mjs, .js) is walked in turn, its imports
+// with it; each such path and folder is printed once, and scripts/pipeline.test.sh checks golden_selected plans golden for every one.
+// package.json is left out (createRequire's anchor for node_modules, not data); so is the repo root itself.
+const NAMED = [
+  [/new URL\(\s*["'`]([^"'`$]+)["'`]\s*,\s*(?:import\.meta\.url|here)\s*\)/g, "file"],
+  [/new URL\(\s*(?:[A-Za-z_$][\w$]*|`[^`]*\$\{[^`]*`)\s*,\s*(?:import\.meta\.url|here)\s*\)/g, "dir"],
+  [/`\$\{(?:root|repo)\}([^`$]*)(\$\{)?/g, "root"],
+  [/\b(?:resolve|join)\(\s*(?:root|repo)\s*,\s*["']([^"']+)["']/g, "root"],
+];
+function namedBy(f) {
+  const text = readFileSync(join(root, f), "utf8");
+  const out = [];
+  for (const [re, kind] of NAMED) {
+    for (const m of text.matchAll(re)) {
+      let p;
+      if (kind === "dir") p = `${dirname(f)}/`;
+      else if (kind === "file") p = normalize(join(dirname(f), m[1]));
+      else p = m[2] ? m[1].replace(/[^/]*$/, "") : normalize(m[1]);
+      if (p.startsWith("..") || p === "." || p === "./" || p === "" || /(^|\/)package\.json$/.test(p)) continue;
+      out.push(p.endsWith("/") || !existsSync(join(root, p)) || !statSync(join(root, p)).isDirectory() ? p : `${p}/`);
+    }
+  }
+  return out;
+}
+
+const seen = walk(entries);
+if (!process.argv.includes("--children")) {
+  console.log([...seen].sort().join("\n"));
+  process.exit(0);
+}
+const named = new Set();
+const todo = [...seen];
+while (todo.length > 0) {
+  for (const p of namedBy(todo.pop())) {
+    if (named.has(p)) continue;
+    named.add(p);
+    // a folder named by a computed name: every script in it may be the one started (golden's FLAGS_TESTS in tests/engine/)
+    const scripts = p.endsWith("/") && existsSync(join(root, p)) ? readdirSync(join(root, p)).filter((n) => /\.(ts|mjs|js)$/.test(n)).map((n) => p + n) : [p];
+    if (!/\.(ts|mjs|js)$/.test(scripts[0] ?? "") || !existsSync(join(root, scripts[0]))) continue;
+    for (const g of walk(scripts)) {
+      if (seen.has(g)) continue;
+      seen.add(g);
+      named.add(g);
+      todo.push(g);
+    }
   }
 }
-console.log([...seen].sort().join("\n"));
+console.log([...named].sort().join("\n"));
