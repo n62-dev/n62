@@ -134,6 +134,18 @@ describe("giac-regress exporter", () => {
     expect(r.patched).toContain(`// patch 0047-tsimplify-ln-undef-arg.patch\n// ${ids[0]} (precision.yaml, oracle)`);
   });
 
+  it("G405: the four g405 rows that fail on stock rest on patch 0050 and stay out of the check file; the keep rows stay in", () => {
+    const ids = ["solve-cubic-x3-3x+2-1e-30-third-30", "size-solve-cubic-x3-3x+2-1e-30-12", "size-solve-quintic-x5-5x+4-1e-30-30", "size-solve-cubic-x3-5x2+7x-3+1e-60-30"].map((k) => `g405-${k}`);
+    for (const id of ids) expect(PATCHED_IDS.get(id)).toBe("0050-proot-huge-coefficients.patch");
+    expect(PATCHED_IDS.has("g405-keep-size-list-123")).toBe(false);
+    const c = { id: ids[1]!, input: "size(solve(x^3-3*x+2-10^-30=0,x))", expect: "3", mark: "⚠", source: "derived" };
+    const keep = { id: "g405-keep-size-list-123", input: "size([1,2,3])", expect: "3", mark: "=", source: "derived" };
+    const r = build([["precision.yaml", c], ["precision.yaml", keep]]) as { check: string; patched: string };
+    expect(r.check).not.toContain(ids[1]);
+    expect(r.check).toContain('pc("g405-keep-size-list-123",');
+    expect(r.patched).toContain(`// patch 0050-proot-huge-coefficients.patch\n// ${ids[1]} (precision.yaml, derived)`);
+  });
+
   it("explicitPrecision: only a second argument of approx or evalf", () => {
     expect(explicitPrecision("approx(x)")).toBe(false);
     expect(explicitPrecision("evalf([1,2])")).toBe(false);
