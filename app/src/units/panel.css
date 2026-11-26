@@ -22,6 +22,9 @@
 .unitview .result .unit { color: var(--text); font-style: normal; }
 .unitview .result .dim { margin-left: auto; font-size: 13px; color: var(--muted); white-space: nowrap; }
 .unitview .sub { font-size: 13px; color: var(--muted); margin-inline-start: 1.9em; overflow-wrap: anywhere; }
+/* R883: the value above σ in the text colour, its digits past σ (`.unc`, R40's rule) and the σ part in --muted */
+.unitview .sub .val { color: var(--text); }
+.unitview .sub .unc { color: var(--muted); }
 .unitview .why { font-size: 13px; color: var(--warn); margin-inline-start: 1.9em; }
 .unitview .why::before { content: "⚠ "; }
 .unitview .note { font-size: 13px; margin-inline-start: 1.9em; border-inline-start: 3px solid var(--muted); padding-inline-start: 6px; }

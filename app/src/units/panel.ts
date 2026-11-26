@@ -67,22 +67,25 @@ function resultRows(s: UnitShown, v: UnitView, fit: (row: HTMLElement) => void, 
   r.dataset["unit"] = s.unit;
   const mark = el("span", "mark", "unit-mark", s.markText);
   mark.dataset["mark"] = s.mark;
-  const value = el("span", "value");
-  if (s.sigma) {
-    value.append(s.sigma.head);
-    if (s.warn) value.append(el("span", "warn", "unit-warn", "⚠"));
-    value.append(s.sigma.tail);
-  } else {
-    value.append(s.text);
-    if (s.warn) value.append(el("span", "warn", "unit-warn", "⚠"));
-  }
+  // σ's ⚠ after the value, before ± σ; with no σ after the value
+  const value = el("span", "value", "", s.sigma?.head ?? s.text);
+  if (s.warn) value.append(el("span", "warn", "unit-warn", "⚠"));
+  if (s.sigma) value.append(s.sigma.tail);
   r.append(mark, value);
   if (s.unit) r.append(el("span", "unit", "unit-unit", s.unit));
   if (s.dim) r.append(el("span", "dim", "unit-dim", s.dim));
   // R353: Store ▶ beside the result (the key's job: the result's chip into "Store in")
   if (store) r.append(tapped(el("button", "store", "unit-store", unitText("units.store.button")), store));
   const out = [r];
-  if (s.sub) out.push(el("div", "sub", "unit-sub", s.sub));
+  if (s.sub) {
+    // R883: the value in the text colour (`.val`), its digits past σ in R40's muted span inside it, as Home's row draws
+    // them; the rest of the line (· σ …) muted
+    const t = s.sub, [a, b, c, d] = s.subCut ?? [0, 0, 0, 0];
+    const sub = el("div", "sub", "unit-sub"), val = el("span", "val", "", t.slice(a, b));
+    if (c > b) val.append(el("span", "unc", "", t.slice(b, c)), t.slice(c, d));
+    sub.append(t.slice(0, a), val, t.slice(d));
+    out.push(sub);
+  }
   if (s.why) out.push(el("div", "why", "unit-why", s.why));
   if (s.note) out.push(el("div", "note", "unit-note", s.note));
   if (s.names) out.push(el("div", "note", "unit-names", s.names));

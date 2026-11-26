@@ -105,6 +105,26 @@ describe("shownOf with the decimal comma and digit groups (R120)", () => {
     const r = result(shownOf(qty(num("1"), { dimension: "", unit: "", dimensionText: "1", unc }), { ...STD, grouped: true, decimalComma: true }));
     expect(r).toMatchObject({ text: "1,0000 ± 0,0071", sub: `1 · σ 0,007${T}071${T}067${T}811${T}87` });
   });
+
+  // R883: the sub line's value mutes its digits from σ's first digit's place on, as R40 cuts a constant's (uncMute.ts)
+  it("the sub line's value is cut where its digits past σ go muted: groups, the decimal comma, the comma groups", () => {
+    const sigma = (v: string, s: string) => qty(num(v, { exact: false }), { unc: { value: num(s, { exact: false }), text: "", shown: "" } } as Partial<Quantity>);
+    /** The sub line with its muted part in brackets. */
+    const cut = (r: UnitShown) => {
+      const [, b, c] = r.subCut!;
+      return c > b ? `${r.sub!.slice(0, b)}[${r.sub!.slice(b, c)}]${r.sub!.slice(c)}` : undefined;
+    };
+    expect(cut(result(shownOf(sigma("9.81065219207", "0.0526983346596"), { ...STD, grouped: true })))).toBe(`9.8[10${T}652${T}192${T}07] · σ 0.052${T}698${T}334${T}659${T}6`);
+    expect(cut(result(shownOf(sigma("39.488", "1.244"), { ...STD, grouped: true, decimalComma: true })))).toBe("3[9,488] · σ 1,244");
+    expect(cut(result(shownOf(sigma("12345.6", "100"), { ...STD, grouped: true, groupSep: "comma" })))).toBe("12,[345.6] · σ 100");
+    expect(cut(result(shownOf(sigma("-9.81", "0.02"), STD)))).toBe("-9.8[1] · σ 0.02");
+    expect(cut(result(shownOf(sigma("98100", "200"), { format: "SCI", digits: 3 })))).toBe("9.8[1]E4 · σ 2.00E2"); // the exponent stays plain
+    // every digit above σ's place, a σ of zero, no σ: nothing muted
+    expect(result(shownOf(sigma("2.5", "0.01"), STD))).toMatchObject({ sub: "2.5 · σ 0.01", subCut: [0, 3, 3, 3] });
+    expect(result(shownOf(sigma("98100", "200"), { format: "SCI", digits: 3 })).subCut).toEqual([0, 3, 4, 6]); // 9.81E4, the exponent in
+    expect(cut(result(shownOf(sigma("2.5", "0"), STD)))).toBeUndefined();
+    expect(result(shownOf(qty(num("2.5")), STD)).subCut).toBeUndefined();
+  });
 });
 
 describe("the unit a chip reads as after a tap (R62)", () => {
