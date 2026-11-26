@@ -378,6 +378,11 @@ for d in input units; do
     printf '%s\n' "$f" | golden_selected || fail "A277: a closure file ($f) does not plan the golden check"
   done
 done
+# the stages' own imports are in the closure, not golden.ts's alone: emit-js.ts is reached only through apps/function/compile.ts (casback, viewsweep)
+for f in app/src/input/emit-js.ts app/src/apps/function/compile.ts tools/probes/findcensus/run.ts app/scripts/sweep-known.ts app/scripts/viewsweep-parts.ts; do
+  grep -qxF "$f" <<<"$clo" || fail "A277: the closure walk misses $f (a stage's import)"
+  printf '%s\n' "$f" | golden_selected || fail "A277: a diff touching only $f (a stage's import) does not plan the golden check"
+done
 printf '%s\n' app/src/units/open.ts app/src/units/build.ts | golden_selected || fail "A277: a diff with one closure file and one outside does not plan the golden check"
 for f in engine/giac/x.patch tests/golden/x.yaml find/x.yaml tools/find-index/x.mjs app/src/units/x.yaml app/src/units/x.json app/src/input/x.yaml app/src/input/x.json; do
   printf '%s\n' "$f" | golden_selected || fail "A277: a diff touching only $f does not plan the golden check"
