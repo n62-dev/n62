@@ -61,6 +61,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
+| 888a0 | [A280f1](packages/A280f1.md) e2e is planned for Find data (sofia, 2026-11-26; owner: Fable, asap, beside A277f1 on lane B) | annabell, Fable | `p1/annabell-e2eplan2` | – |
 | 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Opus | `p1/ron-keepline` | – |
 | 888n1 | R885 one σ drawing rule | ron, Opus | `p1/ron-sigmarule` | R883 |
 | 888n2 | R886 a unit row keeps σ's ⚠ | ron, Opus | `p1/ron-sigmawarn` | R885 |
@@ -116,9 +117,8 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 |---|---|---|---|---|
 | B5i | A277 golden planned by its import closure | annabell, Sonnet | `p1/annabell-goldenclosure` | A276 |
 | B5j | A278 measure e2e: built app against dev server | annabell, Sonnet | `p1/annabell-e2emeasure` | A277 |
-| B5j1 | [A280f1](packages/A280f1.md) e2e is planned for Find data (sofia, 2026-11-26) | annabell, Sonnet | `p1/annabell-e2eplan2` | – |
-| B5j2 | [A277f1](packages/A277f1.md) golden is planned for what it spawns (sofia, 2026-11-26) | annabell, Sonnet | `p1/annabell-goldenspawn` | A280f1 |
-| B5k | [A281](packages/A281.md) e2e: a clipboard per test, the shared lock only where the real clipboard is the subject (A278; owner, 2026-11-26) | annabell, Sonnet | `p1/annabell-pageclip` | A277f1 |
+| B5j2 | [A277f1](packages/A277f1.md) golden is planned for what it spawns (sofia, 2026-11-26) | annabell, Fable | `p1/annabell-goldenspawn` | – |
+| B5k | [A281f1](packages/A281f1.md) A281's clipboard per test made to pass: reload-proof store, core on the real clipboard, timing tests shielded (owner, 2026-11-26: Fable, asap) | annabell, Fable | `p1/annabell-pageclip` | – |
 | B6h | G806 det and rank of a float matrix: no `=` on a pivot the rounding decided (pass 244) | gorge, Opus | `p1/gorge-floatpivot` | – |
 | B6i | [G800](packages/G800.md) a unit sweep | gorge, Opus | `p1/gorge-unitsweep` | R885 |
 | B7 | G405 solve keeps close real roots | gorge, Opus | `p1/gorge-closeroots` | – |
@@ -141,7 +141,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 **Not queue rows** (henri never starts them; a session moves a row in when its condition is met). `../n62-next` ran G389 to R351 and R367 to G407; it merges back after the tag. [A271](packages/A271.md) (pass 240; branch `p1/annabell-backtwice` kept, code done): its device check on the night's device or by day, the Tab One or the Fairphone, whichever is plugged in first; the rerun drops its "Needs the user" line and its report gives the docs/05 text. Waiting for the owner: A266f1 (a device; backlog "Needs the user" 10), R225 (the iPhone check), R223 (the measurements), A61 (the Fairphone), A82 (the release candidate on the Fairphone); after the tag S90 and S95 (after A230), then A231, then A240 (after R700, R701, R709). By day A91, then G406 (no lane running); R292 on the release candidate. With no lane running (a stop the owner calls): S33. After the tag (0.2; owner, 2026-11-16), formula then units, in this order: G389, G391, R347, then the name rule (owner, 2026-11-16; R354's file): R354, R355, G393, G394, G395, R356, R357, R358; then R346, G388, R348, R351. After the tag: R882 (hints; then R706 onto it); R923 (after R808, R896). When Parisse publishes a numbered giac_2.1.0-<n> (a session checks his Debian folder): G788, the re-pin. After the tag: R254 then R343 (RPN's keys and stack view; owner, 2026-11-16), A76, A133 to A135, A141 to A143, A154 to A156. After the tag, the night review of 2026-11-16's R367 to R373 and G407 (n62-next; each file's After).
 
 ### The commands henri replies with (one per decision; `scripts/night.sh` runs it)
-- `scripts/pipeline.sh <agent> "<ID>" --model <sonnet|opus> --audit-model auto`: the next queue step not done (the queue's skip rule above); `--audit-model opus` where its row says "audit Opus".
+- `scripts/pipeline.sh <agent> "<ID>" --model <sonnet|opus|fable> --audit-model auto` (the row's model; a Fable row adds `--audit-model opus`): the next queue step not done (the queue's skip rule above); `--audit-model opus` where its row says "audit Opus".
 - `scripts/pipeline.sh <agent> "<ID>" --no-worker --audit-model auto`: a review-only merge of a finished branch.
 - `scripts/pipeline.sh <agent> "<FIX prompt, verbatim>" --id <IDf1> --branch <branch> --model <m> --audit-model auto`: a FIX line of the last Opus pass, one per call, in order. No backtick and no `$` anywhere in the line.
 - `scripts/pipeline.sh pass <n> "<IDs with merge commits or unmerged branches>" "<open questions or none>"`.
