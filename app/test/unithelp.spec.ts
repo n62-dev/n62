@@ -79,14 +79,24 @@ for (const [width, height] of [[412, 915], [360, 740]] as const) {
       await expect.poll(() => slotOf(page, "u1")).toBe("k:m / h s");
     });
 
-    test("a second Help closes the sheet onto the view", async ({ page }) => {
+    test("a second Help, ×, and Back (R700) each close the sheet onto the view", async ({ page }) => {
       await view72(page);
       await kmPerH(page);
       await tap(page, HELP);
       await kmhSheet(page);
       await tap(page, HELP);
       await backOnView(page);
+      expect(await page.evaluate(() => window.n62.session.shift)).toBe(false); // (Shift + ⚙ used its one-shot Shift up)
+      await tap(page, HELP);
+      await kmhSheet(page);
+      await sheet(page).getByRole("button", { name: "Close" }).tap();
+      await backOnView(page);
+      await tap(page, HELP);
+      await kmhSheet(page);
+      await page.goBack(); // (Android back: the WebView's goBack())
+      await backOnView(page);
       expect(await slotOf(page, "u1")).toBe("k:m / h");
+      expect(await activeId(page)).toBe("u1");
     });
 
     test("an empty slot: Help shows the units tip", async ({ page }) => {
