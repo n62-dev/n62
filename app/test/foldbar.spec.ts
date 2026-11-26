@@ -341,3 +341,80 @@ for (const [width, height] of [[360, 740], [412, 915]] as const)
     await expect(group).toBeHidden();
     await expect(fbar(page).getByTestId("chip-angle")).toBeHidden();
   });
+
+/** One finger at (x, y): down, `ms` still, then up (no move). */
+async function fingerAt(p: Page, x: number, y: number, ms = 0): Promise<void> {
+  const cdp = await p.context().newCDPSession(p);
+  const at = [{ x: Math.round(x), y: Math.round(y), id: 1 }];
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: at });
+  if (ms) await p.waitForTimeout(ms);
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await cdp.detach();
+}
+/** The drawn middle of the atom before offset `o` and a point 2 px inside its right edge (after a render). */
+const atomAt = (p: Page, o: number): Promise<{ x: number; y: number }> =>
+  p.evaluate(async (k) => {
+    const mf = window.n62.entry.field;
+    if (!mf) throw new Error("no field");
+    mf.minFontScale = mf.minFontScale;
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const b = mf.getElementInfo(k)?.bounds;
+    if (!b) throw new Error(`no bounds at ${k}`);
+    return { x: b.right - 2, y: (b.top + b.bottom) / 2 };
+  }, o);
+const caret = (p: Page) => p.evaluate(() => window.n62.entry.field?.position ?? -1);
+const lineValue = (p: Page) => p.evaluate(() => window.n62.entry.field?.value ?? "");
+/** `1+2` on the line, the caret at its end, folded; then past the swipe's double-tap time. */
+async function foldWith12(p: Page): Promise<void> {
+  await p.evaluate(() => {
+    const mf = window.n62.entry.field;
+    if (!mf) throw new Error("no field");
+    mf.value = "1+2";
+    mf.focus();
+    mf.executeCommand("moveToMathfieldEnd");
+  });
+  await fold(p);
+  await p.waitForTimeout(400);
+  expect(await caret(p)).toBe(3);
+}
+
+for (const [width, height] of [[360, 740], [412, 915]] as const) {
+  test(`R868: folded, a touch tap on the line brings the keys back, the caret where it landed, the line as it was, at ${width} × ${height}`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await fold(page);
+    await page.waitForTimeout(400);
+    const l = await box(page, LINE);
+    await fingerAt(page, l.x + l.width / 2, l.y + l.height / 2);
+    await isFolded(page, false); // an empty line: the keys come back
+    await foldWith12(page);
+    const one = await atomAt(page, 1);
+    await fingerAt(page, one.x, one.y);
+    await isFolded(page, false);
+    await expect.poll(() => caret(page)).toBe(1); // after the 1, where the finger landed
+    expect(await lineValue(page)).toBe("1+2");
+    await page.waitForTimeout(400);
+    await isFolded(page, false); // no stray swipe or click folded it again
+    // control: with the keys up a tap only moves the caret
+    const two = await atomAt(page, 3);
+    await fingerAt(page, two.x, two.y);
+    await expect.poll(() => caret(page)).toBe(3);
+    await isFolded(page, false);
+  });
+}
+
+test("R868: folded, a mouse click on the line keeps the fold and moves the caret; a touch hold selects and keeps it too", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await foldWith12(page);
+  const one = await atomAt(page, 1);
+  await page.mouse.click(one.x, one.y);
+  await expect.poll(() => caret(page)).toBe(1);
+  await page.waitForTimeout(300);
+  await isFolded(page, true);
+  await page.evaluate(() => window.n62.entry.field?.executeCommand("moveToMathfieldEnd"));
+  await page.waitForTimeout(400);
+  await fingerAt(page, one.x, one.y, 700); // a hold: past SWIPE_MS, the line's (lineTouch.ts selects the term)
+  await expect.poll(() => page.evaluate(() => window.n62.entry.field?.selectionIsCollapsed)).toBe(false);
+  await page.waitForTimeout(300);
+  await isFolded(page, true);
+  expect(await lineValue(page)).toBe("1+2");
+});
