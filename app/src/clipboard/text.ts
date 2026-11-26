@@ -3,22 +3,28 @@
 // the LaTeX, a whole session and a Num table. Plain functions, no Svelte and no clipboard: the actions
 // (actions.svelte.ts) pick the text and the port (port.ts) delivers it.
 import {
+  confirmedOptions,
   DECIMAL_KEEP,
   decimalFromString,
+  digitsShown,
   isZero,
+  itemsText,
   roundSignificant,
+  ZERO_VALUE,
   type ComplexValue,
   type DecimalValue,
   type Mark,
   type MarkInfo,
+  type PrecisionFacts,
   type PrecisionWarn,
 } from "../engine/format.ts";
 import { decimalFromRational } from "../engine/rational.ts";
+import { defaultHomeSettings } from "../engine/homeDefaults.ts";
 import { mapNames } from "../engine/giacPrintStart.ts";
 import { isStandIn, typedName } from "../engine/standIns.ts";
 import type { ChipTable } from "../input/chips.ts";
 import { withUnit } from "../state/results.ts";
-import { commaResult, markFor, modeOf, renderNumeric, type DisplayContext, type FmtMode, type FormStep, type Rational, type ResultFacts } from "../state/displayMode.ts";
+import { commaResult, drawnFormat, markFor, modeOf, renderNumeric, type DisplayContext, type DrawnSettings, type FmtMode, type FormStep, type Rational, type ResultFacts } from "../state/displayMode.ts";
 
 /** The part of a history item that Copy reads (HistoryItem in state/session.svelte.ts has all of it). */
 export interface CopySource {
@@ -51,9 +57,15 @@ export interface CopySource {
   units?: { input?: unknown; text?: unknown; unit?: unknown; unc?: { text?: unknown }; latex?: unknown };
 }
 
-/** Text options: `decimalComma` writes `,` for the decimal point (the Settings option, docs/04 section 6.2). */
+/** Text options: `decimalComma` writes `,` for the decimal point (the Settings option, docs/04 section 6.2); `display` the
+ *  settings the rows are drawn with (G796f1: a row nobody checked copies the digits it draws in its mode, modeOf of its
+ *  `fmt` and `form`; absent: STD with the default digits, 12); `kept` (the
+ *  session format, state/sessionLine.ts) a warned row's value too with every digit within its count, as the chips matched
+ *  against it hold it (Copy as Python's links, G213; the line carries the warning and the count itself). */
 export interface TextOptions {
   decimalComma?: boolean;
+  display?: DrawnSettings;
+  kept?: boolean;
 }
 
 /** Plain notation from 1E-4 up to (not including) 1E21, else `d.ddd…E±k` (docs/04 section 2.6). */
@@ -78,20 +90,50 @@ export function realText(v: DecimalValue, n: number, o: TextOptions = {}): strin
   return r.neg ? `-${body}` : body;
 }
 
-/** `a+b*i` (a plain `i` for 1, `-i` for -1), each part as realText. */
-export function complexText(v: ComplexValue, n: number, o: TextOptions = {}): string {
+/** `a+b*i` (a plain `i` for 1, `-i` for -1), each part as realText (the imaginary one to `nIm` digits). */
+export function complexText(v: ComplexValue, n: number, o: TextOptions = {}, nIm = n): string {
   const re = realText(v.re, n, o);
   if (isZero(v.im)) return re;
-  const im = realText({ ...v.im, neg: false }, n, o);
+  const im = realText({ ...v.im, neg: false }, nIm, o);
   const ims = im === "1" ? "i" : `${im}*i`;
   const sign = v.im.neg ? "-" : "+";
   return isZero(v.re) ? `${v.im.neg ? "-" : ""}${ims}` : `${re}${sign}${ims}`;
 }
 
-/** How many significant digits of a result may be copied: all that were kept (40), or the confirmed ones. */
-function copyDigits(i: CopySource): number {
-  const r = i.facts?.reliableDigits;
+/** G796: a row nobody checked (a bare ⚠) is copied to its shown digits, except in the session format (`kept`). */
+const cutToShown = (i: CopySource, o: TextOptions): boolean => i.facts?.warn !== undefined && !o.kept;
+
+const STD_DEFAULT: DrawnSettings = { format: "std", digits: defaultHomeSettings.digits };
+
+/** How many significant digits of a value may be copied: all that were kept (40), or the confirmed ones (`r`). */
+function copyDigits(r: number | null | undefined): number {
   return r === null || r === undefined ? DECIMAL_KEEP : Math.max(1, Math.min(r, DECIMAL_KEEP));
+}
+
+/** G796f1: the significant digits each part of `v` is drawn with, as markFor counts them: the row's mode (modeOf) on its
+ *  base notation, the input's digits or the setting, FIX's decimals, only confirmed digits (confirmedOptions). */
+function drawnDigits(i: CopySource, o: TextOptions, v: ComplexValue, r: number | null | undefined): { re: number; im: number } {
+  const d = o.display ?? STD_DEFAULT;
+  const f = confirmedOptions(v, r ?? null, drawnFormat(i, modeOf(i, d), d));
+  return { re: digitsShown(v.re, f), im: digitsShown(v.im, f) };
+}
+
+/** A value with its confirmed digits up to 40 (`r`); G796: on a row nobody checked (a bare ⚠, `facts.warn`) no more than
+ *  each part draws (drawnDigits), whatever its agreement count (fsolve's is 13). Written as complexText. */
+function valueText(i: CopySource, o: TextOptions, v: ComplexValue, r = i.facts?.reliableDigits): string {
+  const n = copyDigits(r);
+  if (!cutToShown(i, o)) return complexText(v, n, o);
+  const s = drawnDigits(i, o, v, r);
+  return complexText(v, Math.min(n, s.re), o, Math.min(n, s.im));
+}
+
+/** G796: a warned list or matrix as its full text with each element as valueText; undefined: not one, or an element
+ *  without a value (then the engine's text, as before). `.` here: engineText applies the decimal comma to the whole. */
+function warnedItems(i: CopySource, o: TextOptions): string | undefined {
+  const f = i.facts;
+  if (!f?.items || !cutToShown(i, o)) return undefined;
+  const point = { ...o, decimalComma: false };
+  return itemsText(f, (it: PrecisionFacts) => (it.value ? valueText(i, point, it.value, it.reliableDigits) : null)) ?? undefined;
 }
 
 /**
@@ -151,14 +193,15 @@ function valueFull(i: CopySource, o: TextOptions, seen?: NameSeen): string | und
   if (f !== undefined && /^-?\d+$/.test(f)) return f; // an exact integer, however long
   // A real the engine wrote as digits (CAS floats too): its confirmed digits, in the notation of docs/04 2.6.
   const dec = f !== undefined && !i.fullExact ? decimalFromString(f.replace("E", "e")) : null;
-  if (dec) return realText(dec, copyDigits(i), o);
+  // G796: a warned row is cut from its kept value, never from `full` already rounded to its count (13 → 12 would round twice)
+  if (dec) return valueText(i, o, cutToShown(i, o) && i.value && isZero(i.value.im) ? i.value : { re: dec, im: ZERO_VALUE });
   // An exact fraction: its 40 digits rounded from the 41st (the value kept only 40, cut).
   if (i.rational && i.value && isZero(i.value.im)) {
     const q = decimalFromRational(BigInt(i.rational.n), BigInt(i.rational.d), DECIMAL_KEEP + 1);
     return realText(q, DECIMAL_KEEP, o);
   }
-  if (i.value) return complexText(i.value, copyDigits(i), o);
-  return engineText(f ?? i.text, o, seen); // (R57) a list or an expression the engine wrote
+  if (i.value) return valueText(i, o, i.value);
+  return engineText(warnedItems(i, o) ?? f ?? i.text, o, seen); // (R57) a list or an expression the engine wrote
 }
 
 import { copyExact } from "./exact.ts";

@@ -341,8 +341,9 @@ export interface MarkInfo {
   warn?: PrecisionWarn;
 }
 
-/** Significant digits that `o` shows for v (FIX: the digits up to the last decimal place, at least 1). */
-function digitsShown(v: DecimalValue, o: FormatOptions): number {
+/** Significant digits that `o` shows for v (FIX: the digits up to the last decimal place, at least 1). Copy reads it too
+ *  (clipboard/text.ts, G796f1: a warned row copies what it draws). */
+export function digitsShown(v: DecimalValue, o: FormatOptions): number {
   if (o.format !== "FIX") return o.digits;
   if (fixFallsBack(v, o)) return o.sciDigits ?? (o.fixed ?? 4) + 1;
   return Math.max(1, v.exp + 1 + (o.fixed ?? 4));
@@ -440,23 +441,27 @@ export function markOf(f: PrecisionFacts, o: FormatOptions): MarkInfo | null {
 /** The value formatted in `o`, showing confirmed digits only (canonical text: lists `[a,b]`, Giac's list type `{a,b}`
  *  (G109); with `shape`, a matrix `[[a,b],[c,d]]`). */
 export function formatConfirmed(f: PrecisionFacts & { shape?: [number, number] }, o: FormatOptions): string | null {
-  if (f.items) {
-    const texts: string[] = [];
-    for (const it of f.items) {
-      const t = formatConfirmed(it, o);
-      if (t === null) return null;
-      texts.push(t);
-    }
-    if (f.shape && f.shape[0] * f.shape[1] === texts.length && f.shape[1] > 0) {
-      const [rows, cols] = f.shape;
-      const rs: string[] = [];
-      for (let r = 0; r < rows; r++) rs.push(`[${texts.slice(r * cols, (r + 1) * cols).join(",")}]`);
-      return `[${rs.join(",")}]`;
-    }
-    return f.braces ? `{${texts.join(",")}}` : `[${texts.join(",")}]`;
-  }
+  if (f.items) return itemsText(f, (it) => formatConfirmed(it, o));
   if (!f.value) return null;
   return formatComplex(f.value, confirmedOptions(f.value, f.reliableDigits, o)).text;
+}
+
+/** A list or matrix as text, each element by `each` (null: an element it cannot write, then the whole is null): `[a,b]`,
+ *  `{a,b}` for Giac's list type, `[[a,b],[c,d]]` with `shape`. formatConfirmed's, and Copy's (clipboard/text.ts). */
+export function itemsText<T extends PrecisionFacts>(f: { items?: T[]; shape?: [number, number]; braces?: true }, each: (it: T) => string | null): string | null {
+  const texts: string[] = [];
+  for (const it of f.items ?? []) {
+    const t = each(it);
+    if (t === null) return null;
+    texts.push(t);
+  }
+  if (f.shape && f.shape[0] * f.shape[1] === texts.length && f.shape[1] > 0) {
+    const [rows, cols] = f.shape;
+    const rs: string[] = [];
+    for (let r = 0; r < rows; r++) rs.push(`[${texts.slice(r * cols, (r + 1) * cols).join(",")}]`);
+    return `[${rs.join(",")}]`;
+  }
+  return f.braces ? `{${texts.join(",")}}` : `[${texts.join(",")}]`;
 }
 
 // --- The agreement check (docs/04 section 2.4 rule 2) ---------------------------------------------------------------

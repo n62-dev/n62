@@ -18,7 +18,7 @@ describe("numberSource: Copy's mark of a Solve root and a Function cell (G86)", 
     const root = { display: "1.41421356237", value: re("1.414213562373095048801688724209698078570"), full: "1.414213562373095048801688724209698078570", facts: { exact: false, reliableDigits: 40, warn: "unaudited" as const } };
     const src = numberSource(root.display, root);
     expect(copyMark(src, CTX)).toEqual({ mark: "⚠", warn: "unaudited" });
-    expect(copyFull(src)).toBe("1.41421356237309504880168872420969807857");
+    expect(copyFull(src)).toBe("1.41421356237"); // G796: nobody checked it, so Copy writes the 12 shown digits, not 40
   });
   it("a Function cell with exact facts and a short decimal value copies with =", () => {
     const cell: Cell = { ok: true, display: "0.25", value: re("0.25"), full: "1/4", facts: { exact: true, reliableDigits: null } };
