@@ -1,12 +1,28 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R53, R724: results mode for the gallery. Folded by the entry line's swipe (R283: no handle) to the 44 px folded bar, with
 // and without a row picked by a tap (its buttons in the folded bar), at the two phone sizes; light and dark come with every shot.
+// R928: Function's Plot folded by ⌄, the in-app folded bar (⌃ · Home | CAS · Symb Plot Num · RAD · ☰) under the graph.
 import type { Page } from "@playwright/test";
-import { touch } from "../test/helpers.ts";
+import { tap, touch } from "../test/helpers.ts";
 
-/** `history`: the gallery's few calculations (gallery.spec.ts someHistory). */
-export const foldShots = (history: (p: Page) => Promise<void>): { id: string; group: string; title: string; viewport: { width: number; height: number }; setup: (p: Page) => Promise<void> }[] =>
+/** `history`: the gallery's few calculations (gallery.spec.ts someHistory); `functions`: its two functions (defineTwo). */
+export const foldShots = (history: (p: Page) => Promise<void>, functions: (p: Page) => Promise<void>): { id: string; group: string; title: string; viewport: { width: number; height: number }; setup: (p: Page) => Promise<void> }[] =>
   ([[360, 740], [412, 839]] as const).flatMap(([width, height]) => [
+    {
+      id: `fold-plot-${width}`,
+      group: "Results mode (R53)",
+      title: `Plot folded by ⌄ (R928): the graph keeps its units per pixel, the folded bar ⌃ · Home | CAS · Symb Plot Num · RAD · ☰, at ${width} × ${height}`,
+      viewport: { width, height },
+      setup: async (p: Page) => {
+        await functions(p);
+        await tap(p, ["@plot"]);
+        await p.waitForFunction(() => window.n62.plot.board !== undefined);
+        await p.locator('[data-testid="keys"][data-fold-ready="true"]').waitFor();
+        await p.getByTestId("fold-chevron").tap();
+        await p.locator('[data-testid="keys"][data-folded="true"]').waitFor();
+        await p.waitForTimeout(400);
+      },
+    },
     {
       id: `fold-bar-${width}`,
       group: "Results mode (R53)",
