@@ -129,6 +129,8 @@ Cost: one `evalf` more (about 1 ms, desktop) per irrational or float result.
 | Units result (m5) | `20 m/s`, `39.488 ± 1.2 m²`: the value full, then the row's own ` ± σ unit` as drawn (As shown and Share too; R269); Paste reads it back (R325) | yes | `(1397/3125) m/s` | yes |
 | Session (Menu, Share) | text: one line per entry, `input = result` with the mark, full values | — | — | — |
 
+**A value with σ** (R885, `render/sigmaForm.ts`): σ at 2 significant digits, the value drawn at least to σ's last digit (never cut above it; the digits setting may draw more, muted past σ, R883), never below the value's confirmed digits (a finer σ leaves the value at those, σ in its own form) and in σ's form (σ in the value's exponent or prefix: `4.70 k ± 0.10 k`); the unit row, Copy as shown and the unit view (its headline cut at σ's last digit, its second line's σ in E form above the units place: `σ 9.0E9`) draw through it.
+
 **Names as typed** (G784): the stand-ins e_, i_, beta_ … are copied as their letters (`2*i`, `β*2`) in every copy, Share and the CSV; Copy as Python keeps Giac's names.
 
 **Hold on a history row** (R276, docs/05 3.5): on its input, the entry's plain text as Share session writes it (`sqrt(2)+3`); on its result, Copy's text.
@@ -428,7 +430,7 @@ The types live in the code; this is the map. Views see `Calc` (`app/src/calc/por
 | MathLive chunk (after the keypad) | ≤ 830 kB raw | 807.74 kB | size test |
 | Find UI chunk | ≤ 30 kB raw | 8.04 kB raw: the chunk that holds `src/find/finder.ts` (dynamic entry or shared chunk); a build without it fails | size test |
 | Find index asset | ≤ 400 kB raw, ≤ 100 kB gzip | 325.7 / 67.1 kB | size test |
-| Unit view chunks | ≤ 42.6 kB raw (entries); pin 81.79 kB with shared | 42.54; 81.73 kB | size test |
+| Unit view chunks | ≤ 42.7 kB raw (entries); pin 82.35 kB with shared (`UNIT_VIEW_PIN_RAW`) | 42.67; 82.29 kB | size test |
 | Precache total | ≤ 18 MB | 12.4 MB | size test |
 | Keyboard usable / engine ready (Tab One) | < 1 s / < 1.5 s, with the `defs` replay | Home 790 / 1330 ms, CAS last 795 / 1507 ms (A73f2); with 200 definitions 1489 ms | device runs |
 | Enter → result p95 (Tab One) | < 150 ms at 12 digits; at 30 digits ≤ 1.3 × the 12-digit p95 | RAD 147.9 ms at 12, 152.6 at 30 | device runs |
