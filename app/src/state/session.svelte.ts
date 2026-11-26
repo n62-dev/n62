@@ -211,13 +211,17 @@ export function migrateSettings(saved: unknown, firstLook: Look = defaultSetting
   const s = structuredClone(defaultSettings);
   s.look = { ...firstLook };
   const x = (saved && typeof saved === "object" ? saved : {}) as Partial<Record<keyof Settings | "schema", unknown>>;
-  if (x["angle"] === "rad" || x["angle"] === "deg") s.angle = x["angle"];
-  if (x["format"] === "std" || x["format"] === "sci" || x["format"] === "eng" || x["format"] === "pfx") s.format = x["format"];
-  if (x["entry"] === "textbook" || x["entry"] === "line" || x["entry"] === "rpn") s.entry = x["entry"];
-  if (x["decimalMark"] === "point" || x["decimalMark"] === "comma") s.decimalMark = x["decimalMark"];
-  if (x["uncertainty"] === "muted" || x["uncertainty"] === "round") s.uncertainty = x["uncertainty"]; // R40, R884: else sigma
-  if (x["marks"] === "muted" || x["marks"] === "colour") s.marks = x["marks"]; // R124: anything else is the default
-  if (x["groupSep"] === "apos" || x["groupSep"] === "comma") s.groupSep = x["groupSep"]; // R125: anything else, the thin space
+  /** The stored `k` when it is one of `ok`; anything else keeps the default (R884: one rule for these fields). */
+  const one = <K extends keyof Settings>(k: K, ...ok: Settings[K][]): void => {
+    if (ok.includes(x[k] as Settings[K])) s[k] = x[k] as Settings[K];
+  };
+  one("angle", "rad", "deg");
+  one("format", "std", "sci", "eng", "pfx");
+  one("entry", "textbook", "line", "rpn");
+  one("decimalMark", "point", "comma");
+  one("uncertainty", "muted", "round"); // R40, R884: else sigma
+  one("marks", "muted", "colour"); // R124: else ⚠ + reason
+  one("groupSep", "apos", "comma"); // R125: else the thin space
   if (typeof x["digits"] === "number" && Number.isFinite(x["digits"])) s.digits = clampDigits(x["digits"]);
   if (Array.isArray(x["fmtCycle"])) s.fmtCycle = normalizeCycle(x["fmtCycle"].filter(isFmtMode));
   if (typeof x["fixDecimals"] === "number" && Number.isFinite(x["fixDecimals"])) s.fixDecimals = clamp(x["fixDecimals"], 0, 12);

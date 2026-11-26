@@ -85,16 +85,17 @@ export function shownOf(q: Quantity | UnitError, u: UnitFormat, alts: readonly A
   const limit = q.unc?.chip;
   const sigmaWarn = m?.mark === "⚠" && !!limit && (!!limit.warn || (q.unc?.limit ?? -1) === facts.reliableDigits);
   const mark: Mark = m?.mark === "⚠" ? "⚠" : q.unc ? "≈" : (m?.mark ?? "≈");
-  const formatted = (v: Quantity["value"]) => (v.value ? formatComplex(v.value, confirmedOptions(v.value, v.facts.reliableDigits, o)) : undefined);
-  const number = (v: Quantity["value"]): string => formatted(v)?.text ?? v.display;
-  const re = formatted(q.value)?.re;
-  const value = number(q.value);
+  const hv = q.value.value;
+  // the value at the digits setting, formatted once (R884's cut: no second formatComplex for its real part)
+  const fv = hv && formatComplex(hv, confirmedOptions(hv, q.value.facts.reliableDigits, o));
+  const re = fv?.re;
+  const value = fv?.text ?? q.value.display;
   const why = q.unc?.why;
   const dimension = q.dimension ?? "";
   // R885: the headline draws value ± σ by the row's rule (render/sigmaForm.ts sigmaDrawn, as Home's row: sigmaRow) in
   // the view's format, the value cut at σ's last digit (the row's digits past it are muted, and the line under this one
   // has them); Uncertainty.shown where that rule draws nothing (a σ of 0, a complex value)
-  const hv = q.value.value, hs = q.unc?.value.value, qu = q.unc;
+  const hs = q.unc?.value.value, qu = q.unc;
   const hd = hv && hs && isZero(hv.im) && isZero(hs.im) && sigmaDrawn(hv.re, hs.re, confirmedOptions(hv, facts.reliableDigits, o), facts.reliableDigits, true);
   // [head, tail]; Uncertainty.text is never empty ("0" for a σ of 0)
   const ht = hd ? [`${toText(hd.value)} ± `, toText(hd.sigma)] : qu?.shown.endsWith(qu.text) ? [qu.shown.slice(0, -qu.text.length), qu.text] : null;
@@ -114,7 +115,7 @@ export function shownOf(q: Quantity | UnitError, u: UnitFormat, alts: readonly A
     ...(q.names?.length ? { names: unitNamesText(q.names) } : {}),
     ...(dim ? { dim } : {}),
     // R884: Rounded to σ draws the headline's value here, nothing muted
-    ...(q.unc ? subLine(drawn(round && hd ? toText(hd.value) : value), drawn(sigmaText(q.unc.value, o)), round ? undefined : sigmaCut(q.unc.value.value?.re, q.value.value), re && [(re.neg ? "-" : "") + drawn(re.mantissa), powerOf(re)], decimalComma ? "," : ".") : {}),
+    ...(q.unc ? subLine(drawn(round && hd ? toText(hd.value) : value), drawn(sigmaText(q.unc.value, o)), sigmaCut(q.unc.value.value?.re, hv), !round && re && [(re.neg ? "-" : "") + drawn(re.mantissa), powerOf(re)], decimalComma ? "," : ".") : {}),
     dimension,
     alts: dimension === "" ? [] : alts,
   };
@@ -130,10 +131,10 @@ function sigmaText(s: Quantity["value"], o: FormatOptions): string {
 
 /** R883: the line under the value line (`sub`), and with σ's cut (render/uncMute.ts sigmaCut) where its value's digits
  *  go muted (`subCut`), as Home's row and a constant's (R40) draw them. `value` is drawn (groups, decimal comma);
- *  `m` its real part's mantissa drawn the same way, with its sign, and the mantissa's power of ten. */
-function subLine(value: string, sigma: string, cut: number | undefined, m: [string, number | undefined] | undefined, mark: string): Pick<UnitShown, "sub" | "subCut"> {
+ *  `m` its real part's mantissa drawn the same way, with its sign, and the mantissa's power of ten (false: none muted, R884). */
+function subLine(value: string, sigma: string, cut: number | undefined, m: [string, number | undefined] | false | undefined, mark: string): Pick<UnitShown, "sub" | "subCut"> {
   const sub = unitText("units.result.sub", { value, sigma });
-  const [lead, exp] = m ?? [""];
+  const [lead, exp] = m || [""];
   const at = cut === undefined || exp === undefined || !value.startsWith(lead) ? -1 : tailAt(lead, exp, cut, mark);
   const k = sub.indexOf(value);
   const e = k + value.length;

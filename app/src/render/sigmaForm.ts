@@ -123,16 +123,15 @@ export function sigmaAlone(sv: DecimalValue, o: FormatOptions): FormattedNumber 
 
 /** A Home row with σ as renderPoint passes it (state/displayMode.ts NumericResult): a unit row's σ is in `units.unc`, its
  *  full σ in `facts.uncSigma` (R883). */
-type SigmaRowIn = { value?: ComplexValue; facts?: { uncDigits?: number; uncSigma?: string; reliableDigits?: number | null }; units?: { unc?: unknown } };
+type SigmaRowIn = { value?: ComplexValue; facts?: { uncSigma?: string; reliableDigits?: number | null }; units?: { unc?: unknown } };
 
 /** R885: a unit row's real value drawn with `o` (renderPoint's options, after confirmedOptions) and σ in its form, σ's
  *  LaTeX with the groups `group` (GROUP_LATEX; undefined: none); undefined for a row without σ, a σ of 0 and a complex
  *  value (drawn by the digits setting). `round` (R884, Settings › Numbers › Uncertainty "Rounded to σ"): the value cut
  *  at σ's last digit as the unit view's headline cuts it, a constant's row too (its σ in `facts`, R40). DisplayContext.sigma,
  *  in the tidy chunk. */
-export function sigmaRow(r: SigmaRowIn, o: FormatOptions, group: string | undefined, round = false): { c: FormattedComplex; sigma: { text: string; latex: string } } | undefined {
-  const has = r.units?.unc || (round && r.facts?.uncDigits !== undefined);
-  const sv = has && r.facts?.uncSigma !== undefined && r.value && isZero(r.value.im) ? decimalFromString(r.facts.uncSigma) : null;
+export function sigmaRow(r: SigmaRowIn, o: FormatOptions, group: string | undefined, round?: boolean): { c: FormattedComplex; sigma: { text: string; latex: string } } | undefined {
+  const sv = (r.units?.unc || round) && r.facts?.uncSigma !== undefined && r.value && isZero(r.value.im) ? decimalFromString(r.facts.uncSigma) : null;
   const d = sv && r.value ? sigmaDrawn(r.value.re, sv, o, r.facts?.reliableDigits, round) : null;
   if (!d) return undefined;
   const sigma: FormattedComplex = { re: d.sigma, im: null, text: toText(d.sigma) };
