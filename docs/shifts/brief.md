@@ -64,8 +64,8 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Opus | `p1/ron-keepline` | – |
 | 888j | R869 Help on Find's row | ron, Opus | `p1/ron-helpfind` | – |
 | 888k | R870 Help in the unit view | ron, Opus | `p1/ron-unithelp` | R869, R838, R862 |
-| 888l | [R871](packages/R871.md) Shift + Fmt opens its settings | ron, Opus | `p1/ron-fmtsettings` | G785 |
-| 888m | [R881](packages/R881.md) the "rainbow" easter egg | ron, Opus | `p1/ron-rainbow` | A266 |
+| 888l | R871 Shift + Fmt opens its settings | ron, Opus | `p1/ron-fmtsettings` | G785 |
+| 888m | R881 the "rainbow" easter egg | ron, Opus | `p1/ron-rainbow` | A266 |
 | 888n | [R883](packages/R883.md) a typed ± mutes digits past σ | ron, Opus | `p1/ron-pmmute` | – |
 | 888n1 | [R885](packages/R885.md) one σ drawing rule | ron, Opus | `p1/ron-sigmarule` | R883 |
 | 888n2 | [R886](packages/R886.md) a unit row keeps σ's ⚠ | ron, Opus | `p1/ron-sigmawarn` | R885 |
@@ -121,6 +121,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 |---|---|---|---|---|
 | B5i | A277 golden planned by its import closure | annabell, Sonnet | `p1/annabell-goldenclosure` | A276 |
 | B5j | A278 measure e2e: built app against dev server | annabell, Sonnet | `p1/annabell-e2emeasure` | A277 |
+| B5k | [A281](packages/A281.md) e2e: a clipboard per test, the shared lock only where the real clipboard is the subject (A278; owner, 2026-11-26) | annabell, Sonnet | `p1/annabell-pageclip` | – |
 | B6h | G806 det and rank of a float matrix: no `=` on a pivot the rounding decided (pass 244) | gorge, Opus | `p1/gorge-floatpivot` | – |
 | B6i | [G800](packages/G800.md) a unit sweep | gorge, Opus | `p1/gorge-unitsweep` | R885 |
 | B7 | G405 solve keeps close real roots | gorge, Opus | `p1/gorge-closeroots` | – |

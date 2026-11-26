@@ -234,7 +234,7 @@ describe("Settings, a level of the sheet (R49)", () => {
     expect(byId(s, "fmtCycle")?.value).toBe("STD SCI ENG");
     s.pickNumber(2);
     expect(s.path).toBe("Settings › Numbers › Fmt key cycle");
-    expect(s.level.items.map((x) => x.id)).toEqual(["std", "sci", "eng", "pfx", "fix"]);
+    expect(s.level.items.map((x) => x.id)).toEqual(["std", "sci", "eng", "pfx", "fix", "fmtSay"]); // R871: Say the format, last
     expect(s.level.items.filter((x) => x.hint).map((x) => x.id)).toEqual(["std"]);
     expect(s.back()).toBe(true);
     s.level.highlight = at(s, "decimals");

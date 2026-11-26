@@ -41,7 +41,7 @@ test("5, Shift, 0 types 5 %, which is 1/20 (Home shows 0.05, as the palette's % 
   await expect(lastResult(page)).toHaveAttribute("data-text", "0.05");
 });
 
-test("legends ∥ and %; the taps unchanged; Alpha + 0 dead; a b/c, 7 and Fmt reserved on Shift (1 is σ, R327; Vars is Chars, R725)", async ({ page }) => {
+test("legends ∥ and %; the taps unchanged; Alpha + 0 dead; a b/c and 7 reserved on Shift (1 is σ, R327; Vars is Chars, R725; Fmt its cycle's page, R871)", async ({ page }) => {
   expect(await shiftLegend(page, "paren")).toBe("∥");
   expect(await shiftLegend(page, "d0")).toBe("%");
   expect(await shiftLegend(page, "vars")).toBe("Chars"); // R725
@@ -49,7 +49,7 @@ test("legends ∥ and %; the taps unchanged; Alpha + 0 dead; a b/c, 7 and Fmt re
   expect(await entryValue(page)).toBe("\\left(1\\right)0");
   await tap(page, ["shift"]);
   for (const id of ["paren", "d0"]) await expect(key(page, id), id).not.toHaveAttribute("data-dead", "true");
-  for (const id of ["frac", "d7", "fmt"]) {
+  for (const id of ["frac", "d7"]) {
     await expect(key(page, id), id).toHaveAttribute("data-dead", "true");
     expect(await shiftLegend(page, id), id).toBe("");
   }

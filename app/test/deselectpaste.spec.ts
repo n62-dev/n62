@@ -85,7 +85,7 @@ test("Deselect's Shift legend reads Paste and fits its face, no ▾ (it opens no
   await expect(page.locator('[data-key="deselect"]')).not.toHaveAttribute("data-dead", "true");
 });
 
-test("controls: Vars' tap opens Find on your names; Shift + Deselect pastes; Shift + a b/c, 7 and Fmt are reserved (dimmed), Vars is Chars (R725)", async ({ page }) => {
+test("controls: Vars' tap opens Find on your names; Shift + Deselect pastes; Shift + a b/c and 7 are reserved (dimmed), Vars is Chars (R725), Fmt its cycle's page (R871)", async ({ page }) => {
   await tap(page, ["vars"]);
   await expect(page.getByTestId("find")).toBeVisible();
   await tap(page, ["esc"]);
@@ -94,6 +94,6 @@ test("controls: Vars' tap opens Find on your names; Shift + Deselect pastes; Shi
   await tap(page, PASTE);
   await expect.poll(() => entryValue(page)).toBe("6");
   await tap(page, ["shift"]);
-  for (const id of ["frac", "d7", "fmt"]) await expect(page.locator(`[data-key="${id}"]`), id).toHaveAttribute("data-dead", "true");
-  await expect(page.locator('[data-key="vars"]')).not.toHaveAttribute("data-dead", "true");
+  for (const id of ["frac", "d7"]) await expect(page.locator(`[data-key="${id}"]`), id).toHaveAttribute("data-dead", "true");
+  for (const id of ["vars", "fmt"]) await expect(page.locator(`[data-key="${id}"]`), id).not.toHaveAttribute("data-dead", "true");
 });

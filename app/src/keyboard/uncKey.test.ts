@@ -49,10 +49,10 @@ describe("R327: Shift + 1 is the uncertainty sheet", () => {
     expect(compareLayout(layers, only(lock.pins), "")).toEqual([]);
   });
 
-  it("controls: the tap types 1, Alpha + 1 types Y; a b/c, 7 and Fmt stay reserved on Shift", () => {
+  it("controls: the tap types 1, Alpha + 1 types Y; a b/c and 7 stay reserved on Shift (Fmt's is R871's)", () => {
     expect(actionFor(k("d1"), false, false)).toEqual({ kind: "type", text: "1" });
     expect(actionFor(k("d1"), false, true)).toEqual({ kind: "type", text: "Y" });
-    for (const id of ["frac", "d7", "fmt"]) {
+    for (const id of ["frac", "d7"]) {
       expect(k(id).actions.shift, id).toBeUndefined();
       expect(k(id).label.shift, id).toBeUndefined();
     }

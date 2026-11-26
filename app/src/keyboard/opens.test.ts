@@ -52,10 +52,10 @@ describe("opensSheet (R143)", () => {
     for (const s of used) expect(OPENS_SHEET.includes(s as never) || OPENS_NOTHING.has(s as never), s).toBe(true);
   });
 
-  it("the shipped layers that open a sheet are the ones the owner named (R143; Help and Settings on r0c4, R723; Shift + 4, R187; the uncertainty sheet on Shift + 1, R327; Store ▶ on Shift + ᴇ, R912; Copy and Paste on Shift + Select and Shift + Deselect open none)", () => {
+  it("the shipped layers that open a sheet are the ones the owner named (R143; Help and Settings on r0c4, R723; Shift + 4, R187; the uncertainty sheet on Shift + 1, R327; Store ▶ on Shift + ᴇ, R912; the Fmt key cycle's page on Shift + Fmt, R871; Copy and Paste on Shift + Select and Shift + Deselect open none)", () => {
     const seen: string[] = [];
     for (const k of keyboard.keys)
       for (const layer of ["primary", "shift", "alpha"] as const) if (opensSheet(k.actions[layer])) seen.push(`${k.id}/${layer}`);
-    expect(seen.sort()).toEqual(["d1/shift", "d4/shift", "d6/shift", "d9/shift", "emark/shift", "help/primary", "help/shift", "math/primary", "math/shift", "sub/shift", "tmpl/primary", "vars/primary", "vars/shift"]);
+    expect(seen.sort()).toEqual(["d1/shift", "d4/shift", "d6/shift", "d9/shift", "emark/shift", "fmt/shift", "help/primary", "help/shift", "math/primary", "math/shift", "sub/shift", "tmpl/primary", "vars/primary", "vars/shift"]);
   });
 });

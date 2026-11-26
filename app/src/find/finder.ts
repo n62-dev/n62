@@ -3,12 +3,16 @@
 // browser is idle after the engine is ready, or on the first Math press. The index is a Vite asset outside every
 // chunk (find-index.<hash>.json), fetched here and prepared once. No usage ranking and nothing stored (P11).
 import indexUrl from "./_gen/find-index.json?url";
+import type { AppShell } from "../apps/shell.svelte.ts";
 import type { MenuItem } from "../apps/types.ts";
+import type { ClipActions } from "../clipboard/actions.svelte.ts";
 import type { EntryController } from "../entry/controller.ts";
 import { findText as t } from "../i18n/enFind.ts";
 import { constKey, type Chip } from "../input/chips.ts";
 import type { Layer } from "../keyboard/keyboard.ts";
-import { lazy, type RouteCtx } from "../keyboard/route.ts";
+import { enterLine, lazy, type RouteCtx } from "../keyboard/route.ts";
+import type { HistoryItem } from "../state/session.svelte.ts";
+import { showStore, storedText } from "../views/storeSheet.svelte.ts";
 import type { UserBinding, UserKeys } from "../keyboard/userKeys.svelte.ts";
 import { CATEGORIES, categoryItems } from "./categories.ts";
 import { FIRST_KEYS, prepare, search, warmSearch, type PreparedIndex } from "./rank.ts";
@@ -217,8 +221,17 @@ export function showMatrix(c: MatrixCtx, index: FindIndex): void {
 }
 
 export { showNames, withOwnUnits } from "./names.svelte.ts";
-// R281: the store sheet comes with Vars' code (one chunk: the names' values and marks are shared, no chunk of their own)
-export { showStore, storedText } from "../views/storeSheet.svelte.ts";
+/** Store ▶ in Home or CAS (R281, App.svelte openStore; R881 moved this wiring out of the start chunk): "Store in" over the line
+ *  (views/storeSheet.svelte.ts, with Vars' code in this chunk: the names' values and marks are shared),
+ *  `row`: the result on the line (none: the line, R301). A pick types the name after ▶ and presses Enter, the one store path
+ *  (R298: before the field, Enter waits for it); New name… brings the folded keys up (R740), counted by `counted` (R53). */
+export function openStore(c: RouteCtx, row: HistoryItem | undefined, folded: () => boolean, counted: () => void): void {
+  const store = (latex: string): void => {
+    c.entry.insert(latex);
+    enterLine(c);
+  };
+  showStore({ shell: c.shell, session: c.session, store, folded, newName: () => (counted(), c.unfold()) }, storedText(c.session, row, c.entry.value));
+}
 /** R197: the Help key's sheet (it reads the index), a chunk of its own: R196's functionAt brings the parser's tables, which
  *  Find and the unit view need not preload. */
 export const showHelpAt = (...a: Parameters<typeof import("../views/helpSheet.ts").showHelpAt>): Promise<boolean> =>
@@ -233,5 +246,7 @@ export async function showHelpFor(sheet: import("../views/sheet.svelte.ts").Shee
   m.showHelpFor(sheet, it, row, entry);
   return true;
 }
-/** R149: the credits sheet's code, loaded here so the start chunk has no import of its own for it. */
-export const loadCredits = (): Promise<typeof import("../views/creditsSheet.ts")> => import("../views/creditsSheet.ts");
+/** R149, R881: an easter egg's code (entry/credits.ts eggOf), loaded here so the start chunk has no import of its own for it:
+ *  the credits sheet, or the rainbow's switch (its notice through the clipboard code's, `withClip`). */
+export const loadEgg = (egg: "credits" | "rainbow"): Promise<(shell: AppShell, withClip: (run: (c: ClipActions) => void) => void) => void> =>
+  egg === "credits" ? import("../views/creditsSheet.ts").then((m) => m.showCredits) : import("../views/rainbow.ts").then((m) => m.toggle);

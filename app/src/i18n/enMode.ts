@@ -2,6 +2,8 @@
 // The Mode sheet's and Settings' row names and values (views/modeSheet.ts; moved out of en.ts by R53, to make room in the
 // start chunk). A table of its own, loaded with the Mode sheet's chunk (R91's pin, docs/04 8.3). English only so far.
 export const enMode = {
+  "angle.rad": "Radians",
+  "angle.deg": "Degrees",
   "mode.angle": "Angle",
   "mode.format": "Number format",
   "mode.digits": "Significant digits",
