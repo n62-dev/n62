@@ -528,15 +528,19 @@
   }
   /* R143 (owner, 2026-11-06): a legend whose layer opens a menu or grid instead of typing ends in ▾, the sign the status
      line's place name uses for "opens a list". In the legend's own colour (so Plain keys and every family keep it), the
-     same everywhere. It hangs after the text out of the flow (absolute, at its static position, in the key's side padding),
-     so the text keeps its place: fit.ts counts it, and a face is shifted left by half of it to stay centred as one unit. */
+     same everywhere. It hangs after the text out of the flow (R913: a zero-wide inline block on the text's baseline, line-height 0
+     so the line keeps its height; absolute, a face's hung ≈ 4 px high), its glyph in the key's side padding, so the text keeps
+     its place: fit.ts counts it, and a face is shifted left by half of it to stay centred as one unit. */
   .main[data-opens="true"] {
     translate: var(--mark-shift) 0;
   }
   [data-opens="true"]:not(:empty)::after {
     content: "▾";
-    position: absolute;
+    display: inline-block;
+    width: 0;
+    line-height: 0;
     margin-left: var(--mark-gap);
+    margin-right: calc(-1 * var(--mark-gap));
     font-size: var(--mark-size);
   }
   /* The press (R12c): the key's own text colour laid over it at once, no fade, a layer of its own so it shows over every
