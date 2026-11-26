@@ -137,7 +137,7 @@ export function sigmaRow(r: SigmaRowIn, o: FormatOptions, group: string | undefi
 }
 
 /** state/results.ts withUnit with `r.sigma` (sigmaRow's σ, drawn in the value's form) in place of the row's stored ` ± σ`
- *  (UnitRow.unc.text, read back unchecked), the decimal comma's rewrite `comma` applied to it as to the rest; withUnit
+ *  (UnitRow.unc.text, read back unchecked; its ⚠ kept, R886), the decimal comma's rewrite `comma` applied to it as to the rest; withUnit
  *  itself for a row drawn without it, or one whose stored text does not start with that σ. Session.display's writer once
  *  the tidy chunk is in: the row's drawing, its data-text and Copy as shown. */
 export function withSigma(
@@ -146,7 +146,9 @@ export function withSigma(
   comma?: (s: string, latex: boolean) => string,
 ): { text: string; latex: string } {
   const st = (u.unc as { text?: unknown } | undefined)?.text;
-  const tx = ` ± ${String(st)}`, lx = `\\pm${String(st)}`;
+  // R886: a σ with ⚠ (units/row.ts unitRow) keeps it before the σ drawn here
+  const w = typeof u.text === "string" && u.text.startsWith(" ± ⚠") ? "⚠" : "";
+  const tx = ` ± ${w}${String(st)}`, lx = `\\pm${w}${String(st)}`;
   if (!r.sigma || typeof st !== "string" || typeof u.text !== "string" || typeof u.latex !== "string" || !u.text.startsWith(tx) || !u.latex.startsWith(lx)) return withUnit(r, u, comma);
-  return withUnit(r, { text: ` ± ${r.sigma.text}${u.text.slice(tx.length)}`, latex: `\\pm${r.sigma.latex}${u.latex.slice(lx.length)}` }, comma);
+  return withUnit(r, { text: ` ± ${w}${r.sigma.text}${u.text.slice(tx.length)}`, latex: `\\pm${w}${r.sigma.latex}${u.latex.slice(lx.length)}` }, comma);
 }
