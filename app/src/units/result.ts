@@ -113,8 +113,8 @@ export function shownOf(q: Quantity | UnitError, u: UnitFormat, alts: readonly A
     ...(q.note ? { note: unitNoteText(q.note) } : {}),
     ...(q.names?.length ? { names: unitNamesText(q.names) } : {}),
     ...(dim ? { dim } : {}),
-    ...(q.unc && round && hd ? subLine(drawn(toText(hd.value)), drawn(sigmaText(q.unc.value, o)), undefined, undefined, ".") : {}),
-    ...(q.unc && !(round && hd) ? subLine(drawn(value), drawn(sigmaText(q.unc.value, o)), sigmaCut(q.unc.value.value?.re, q.value.value), re && [(re.neg ? "-" : "") + drawn(re.mantissa), powerOf(re)], decimalComma ? "," : ".") : {}),
+    // R884: Rounded to σ draws the headline's value here, nothing muted
+    ...(q.unc ? subLine(drawn(round && hd ? toText(hd.value) : value), drawn(sigmaText(q.unc.value, o)), round ? undefined : sigmaCut(q.unc.value.value?.re, q.value.value), re && [(re.neg ? "-" : "") + drawn(re.mantissa), powerOf(re)], decimalComma ? "," : ".") : {}),
     dimension,
     alts: dimension === "" ? [] : alts,
   };

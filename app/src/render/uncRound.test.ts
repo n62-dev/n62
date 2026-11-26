@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R884: Settings › Numbers › Uncertainty "Rounded to σ, σ on tap" draws a value with σ rounded to σ's last digit, σ at 2
 // significant digits, by the unit view headline's own rounding (render/sigmaForm.ts sigmaDrawn, atSigma). A Home row as
-// the session draws it (state/displayMode.ts renderNumeric with the tidy chunk's sigmaRow and muter, DisplayContext.round):
+// the screen's row draws it (state/displayMode.ts renderNumeric, grouped, with the tidy chunk's sigmaRow and muter, DisplayContext.round):
 // a constant's row (σ in its facts) shows the value alone, a unit row (σ in units.unc) the value and σ. Expected values:
 // derived from that rule (σ to 2 significant digits, the value to σ's last place, zeros kept; SCI keeps σ in the value's
 // exponent, as the headline does: 6.67430E-11 ± 0.00015E-11).
@@ -44,9 +44,10 @@ describe("Rounded to σ (R884): value and σ", () => {
     const unitRow = renderNumeric(row(v, s, true), undefined, ctx(true, f), true);
     expect(unitRow?.text).toBe(value);
     expect(unitRow?.sigma?.text).toBe(sigma);
-    // a constant's row (no unit): the value alone, rounded the same way; Copy as shown takes the same text
+    // a constant's row (no unit): the value alone, rounded the same way (Copy as shown takes the row's text)
     expect(renderNumeric(row(v, s), undefined, ctx(true, f), true)?.text).toBe(value);
-    expect(renderNumeric(row(v, s), undefined, ctx(true, f), false)?.text).toBe(value);
+    // ungrouped (a chip's face, Share session): every digit, as with the default
+    expect(renderNumeric(row(v, s), undefined, ctx(true, f))?.text).toBe(renderNumeric(row(v, s), undefined, ctx(false, f))?.text);
   });
 
   it("no muted digits: the value ends at σ's last digit", () => {

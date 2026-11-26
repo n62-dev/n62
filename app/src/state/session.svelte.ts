@@ -554,12 +554,12 @@ export class Session {
   }
 
   /** What the history shows for a finished item: Home numbers follow the current digits and format, or the mode
-   *  the Format key chose for that item; a CAS result changes only when the Format key has chosen a mode. `asShown`
-   *  (R884): the screen's row and Copy as shown, which draw a value with σ rounded to it under "Rounded to σ". */
-  display(item: HistoryItem, grouped = false, asShown = grouped): Drawn {
+   *  the Format key chose for that item; a CAS result changes only when the Format key has chosen a mode. `grouped`: the
+   *  screen's row, and Copy as shown's text (R884: under "Rounded to σ" a value with σ drawn rounded to it). */
+  display(item: HistoryItem, grouped = false): Drawn {
     const shown = item.view === "home" || item.fmt !== undefined || item.form !== undefined || item.facts !== undefined;
     if (item.status === "done" && shown) {
-      const r = (formsCode?.drawnIn ?? renderNumeric)(item, modeOf(item, this.settings), this.displayContext(asShown), grouped); // R192: a base form, lazy
+      const r = (formsCode?.drawnIn ?? renderNumeric)(item, modeOf(item, this.settings), this.displayContext(), grouped); // R192: a base form, lazy
       // R63: a unit row draws ± σ and its unit, set apart, after the number; its text has them too (Copy as shown)
       // R885: with the σ rule's code in, its σ drawn in the value's form takes the stored one's place (sigmaForm.ts withSigma)
       if (r) return item.units ? (sigmaCode?.withSigma ?? withUnit)(r, item.units, this.decimalComma ? commaResult : undefined) : r;
@@ -590,9 +590,9 @@ export class Session {
 
   /** `mute` (R40), `groupSep` (R125): the muted digits' code once in, the separator; only the screen's row uses them.
    *  `sigma` (R885): a unit row's σ drawing rule, once in (the row and Copy as shown). */
-  displayContext(asShown = false): DisplayContext {
+  displayContext(): DisplayContext {
     const s = this.settings;
-    return { format: s.format, digits: s.digits, fixDecimals: s.fixDecimals, angle: s.angle, ...(this.decimalComma ? { decimalComma: true } : {}), groupSep: s.groupSep, mute: sigmaCode?.muter, sigma: sigmaCode?.sigmaRow, round: asShown && s.uncertainty === "round" };
+    return { format: s.format, digits: s.digits, fixDecimals: s.fixDecimals, angle: s.angle, ...(this.decimalComma ? { decimalComma: true } : {}), groupSep: s.groupSep, mute: sigmaCode?.muter, sigma: sigmaCode?.sigmaRow, round: s.uncertainty === "round" };
   }
 
   /** The row the Format key (cycleFormat) or the a b/c key on an empty line (cycleForm, R10; cycleForms.ts) takes: the picked
