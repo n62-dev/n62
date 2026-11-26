@@ -1493,7 +1493,7 @@ for f in THIRD_PARTY.md LICENSES/GPL-3.0-or-later.txt tools/third-party/parse.mt
 done
 # controls: docs plan none of them; the engine plans golden as it did; a change under app/ plans size and e2e as now
 [[ "$(want_for docs/05-ui-plan.md)" == docs,typecheck,vitest ]] || fail "A280: a diff of only docs/05-ui-plan.md plans more than docs, typecheck, vitest: $(want_for docs/05-ui-plan.md)"
-[[ "$(want_for engine/giac/patches/0001-a.patch)" == docs,typecheck,size,vitest,golden ]] || fail "A280: a diff of only engine/giac/patches/ is not docs, typecheck, size, vitest, golden: $(want_for engine/giac/patches/0001-a.patch)"
+[[ "$(want_for engine/giac/patches/0001-a.patch)" == docs,trust,typecheck,size,vitest,golden ]] || fail "A280 (A279: the patch count is in trust's README block): a diff of only engine/giac/patches/ is not docs, trust, typecheck, size, vitest, golden: $(want_for engine/giac/patches/0001-a.patch)"
 [[ "$(want_for app/src/ui/x.ts)" == docs,typecheck,size,vitest,e2e ]] || fail "A280: a change under app/ does not plan size and e2e: $(want_for app/src/ui/x.ts)"
 [[ "$(want_for docs/backlog.md)" == docs,typecheck,vitest ]] || fail "A280: a diff of only docs/backlog.md plans more than docs, typecheck, vitest: $(want_for docs/backlog.md)"
 # the list is read from the files: every path outside app/ that an e2e spec (app/test) or the app's build (app/src, app/vite*.ts) reads is selected
@@ -1620,7 +1620,7 @@ round_free "$tmp/ds.fail" 1 0 && fail "A275: a Docs step round with an audit FIX
 round_free "$tmp/ds.fail" 0 2 && fail "A275: a third free round is free"
 printf '## docsstep failed (x)\n## typecheck failed (x)\n' > "$tmp/ds2.fail"; round_free "$tmp/ds2.fail" 0 0 && fail "A275: docsstep with typecheck is free"
 printf '## lint failed (x)\n' > "$tmp/ds3.fail"; round_free "$tmp/ds3.fail" 0 0 && fail "A275: the report/patch lint became free"
-grep -qF 'docsstep) docs_step_lint "$wt" "$bundle"' "$here/pipeline.sh" && grep -qF 'for name in lint docsstep docs typecheck size' "$here/pipeline.sh" || fail "A275: pipeline.sh does not run docs_step_lint in the pre-flight"
+grep -qF 'docsstep) docs_step_lint "$wt" "$bundle"' "$here/pipeline.sh" && grep -qF 'for name in lint docsstep docs trust typecheck size' "$here/pipeline.sh" || fail "A275: pipeline.sh does not run docs_step_lint in the pre-flight"
 grep -qF 'the Docs step' "$here/pipeline.sh" || fail "A275: the dry run's pre-flight line does not name the Docs step"
 # (c) the log line names the excerpt's first failing line (120 characters); the excerpt finds docs-check's and the lint's lines
 eval "$(sed -n '/^excerpt() {/,/^}/p' "$here/pipeline.sh")"
@@ -1804,11 +1804,11 @@ grep -q '^RESULT #[0-9]* FR10: MERGED' <<<"$out" || fail "A279 (c): a plain bran
 [[ ! -e "$fr/trust-runs" ]] || fail "A279 (c): trust:check ran for a branch that changed no file trust reads: $(cat "$fr/trust-runs")"
 # (d) the plan: trust follows docs and comes before typecheck, only when a trust file changed; docs_size_only counts trust as docs
 checks=auto; spec_file="$tmp/spec-plain"
-for f in tests/golden/home.yaml tests/golden/oracle-counts.json README.md engine/giac/patches/0001-a.patch engine/giac/patches/README.md tools/trust/facts.mts; do
-  changed() { echo "$f"; }; [[ "$(want_checks | cut -d, -f1-3)" == docs,trust,typecheck ]] || fail "A279 (d): $f does not plan trust after docs: $(want_checks)"
+for tf in tests/golden/home.yaml tests/golden/oracle-counts.json README.md engine/giac/patches/0001-a.patch engine/giac/patches/README.md tools/trust/facts.mts; do
+  changed() { echo "$tf"; }; [[ "$(want_checks | cut -d, -f1-3)" == docs,trust,typecheck ]] || fail "A279 (d): $tf does not plan trust after docs: $(want_checks)"
 done
-for f in docs/x.md app/src/ui/a.ts scripts/gc.sh docs/README.md tests/core/core.yaml; do
-  changed() { echo "$f"; }; [[ ",$(want_checks)," != *,trust,* ]] || fail "A279 (d): $f plans trust: $(want_checks)"
+for tf in docs/x.md app/src/ui/a.ts scripts/gc.sh docs/README.md tests/core/core.yaml; do
+  changed() { echo "$tf"; }; [[ ",$(want_checks)," != *,trust,* ]] || fail "A279 (d): $tf plans trust: $(want_checks)"
 done
 printf '## trust failed (full log: /x)\ntrust: a\n' > "$tmp/tf1"; printf '## trust failed (full log: /x)\n## docs failed (full log: /y)\n' > "$tmp/tf2"; printf '## trust failed (full log: /x)\n## vitest failed (full log: /y)\n' > "$tmp/tf3"
 docs_size_only "$tmp/tf1" && docs_size_only "$tmp/tf2" || fail "A279 (d): docs_size_only does not treat trust like docs"
@@ -1818,7 +1818,7 @@ round_free "$tmp/tf1" 0 0 && ! round_free "$tmp/tf1" 1 0 && ! round_free "$tmp/t
 out="$("$script" ron "$ron_pkg" --dry-run 2>&1)"
 grep '^pre-flight' <<<"$out" | grep -q 'trust' && grep '^pre-flight' <<<"$out" | grep -q 'tests/golden/' || fail "A279: the dry run's pre-flight line does not say when trust runs"
 grep '^checks order' <<<"$out" | grep -q 'trust follows docs' || fail "A279: the dry run's order line does not say trust follows docs: $(grep '^checks order' <<<"$out")"
-grep -qF 'npm run trust:refresh' "$here/pipeline.sh" && grep -qF 'trust:refresh` from app/' "$here/pipeline.sh" || fail "A279: the worker prompt does not name npm run trust:refresh from app/"
+grep '^worker_prompt=' "$here/pipeline.sh" | grep -qF 'npm run trust:refresh' && grep '^worker_prompt=' "$here/pipeline.sh" | grep -qF 'from app/ and commit what it rewrites' || fail "A279: the worker prompt does not name npm run trust:refresh from app/"
 
 # A84: the audit runs beside the long checks. A sandbox with a stand-in sofia and stand-in checks: golden and e2e wait (5 s at most) for
 # the audit to start; sofia waits for e2e to run; the behaviour tool notes when it ran. (a) the audit runs beside golden and e2e on the
