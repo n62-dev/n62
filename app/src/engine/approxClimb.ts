@@ -10,7 +10,7 @@ import { decideTwice, nonRealArg, restsOnDecision } from "./decisions.ts";
 import { climbedFacts } from "./doubleElements.ts";
 import { confirmedFloat, resultFromFacts, type HomeResult } from "./homeEval.ts";
 import { defaultHomeSettings } from "./homeDefaults.ts";
-import { isAudited, notBuiltin, shapeOfValue, valuePrecision, whyOf, withDigits, type Giac } from "./numeric.ts";
+import { exactFacts, isAudited, notBuiltin, shapeOfValue, valuePrecision, whyOf, withDigits, type Giac } from "./numeric.ts";
 
 /**
  * The numeric result of the bare value `bare` (decimals exact) at `digits`, the setting's Digits `setDigits` put back:
@@ -19,7 +19,9 @@ import { isAudited, notBuiltin, shapeOfValue, valuePrecision, whyOf, withDigits,
  * confirmed digits as a float (an assignment stores that). A decision that did not hold is ⚠ "decided", and so is one
  * made on an input whose value Home would not have asked at P (G358: unaudited functions); "undecided" when Home refuses
  * it so. `pastReach` with Giac's text when the climb cannot reach it (1/(1-tanh(5000)), novalue.ts finiteLevel): `slot`
- * keeps the bare value, shown ⚠ with the cap's words. Null when the value is no scalar or the climb gives no facts.
+ * keeps the bare value, shown ⚠ with the cap's words. The facts from P when the value is finite there (the asked digits
+ * may set a P above the one approxRange asked at), else from the climb. Null when the value is no scalar or neither
+ * gives facts.
  */
 export function approxClimbed(giac: Giac, slot: string, bare: string, digits: number, setDigits: number, ms: number): HomeResult | { pastReach: string } | "undecided" | null {
   const P = valuePrecision(digits);
@@ -36,7 +38,11 @@ export function approxClimbed(giac: Giac, slot: string, bare: string, digits: nu
   }
   const value = giac.value(slot, []);
   if (shapeOfValue(value)?.kind !== "scalar") return null;
-  const facts = climbedFacts(giac, slot, text, value, digits, defaultHomeSettings.maxExactDigits, () => false);
+  // finite at P already (evalf(ln(1-tanh(50)),38): -infinity at Digits 38, a number at its P = 48): the check from P, as
+  // homeEval.ts reads exactFacts first and climbs only when they find none
+  const facts =
+    exactFacts(giac, slot, { kind: "scalar" }, digits, defaultHomeSettings.maxExactDigits, text, value) ??
+    climbedFacts(giac, slot, text, value, digits, defaultHomeSettings.maxExactDigits, () => false);
   if (facts === "pastReach") return { pastReach: text };
   if (!Array.isArray(facts)) return null;
   const r = resultFromFacts(facts, { kind: "scalar" }, digits, "numeric", true, ms);
