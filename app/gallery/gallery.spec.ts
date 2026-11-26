@@ -201,6 +201,7 @@ function unitResultShots(): Shot[] {
       await p.waitForFunction(() => window.n62.unitView !== undefined && document.querySelector('[data-pad="unit"]') !== null);
       await plan(p, "d4 d6 check"); await p.getByTestId("unit-reading").filter({ hasText: "Check against" }).waitFor();
     } },
+    { id: "constlabel", title: "R929: 2G, the unit view open: G's own unit m³/(kg·s²) muted after its chip, read-only (no slot), its width at the screen's", setup: async (p) => { await p.evaluate(() => window.n62.entry.set("2\\const{G}{G}")); await flick(p, "tmpl", "up"); await p.waitForFunction(() => /m³/.test(window.n62.unitView?.field.shadowRoot?.querySelector('[style*="--muted"]')?.textContent ?? "")); } },
     { id: "refusal", title: "A refusal: the message in the value's place, no row, no chip, the slots as typed", setup: (p) => units(p, ["d1", "add", "d1"], "d9 enter d3 ↑enter") },
   ];
   return sizes.flatMap((z) => cases.map((c) => ({ id: `unitresult-${c.id}-${z.tag}`, group: z.group, title: c.title, viewport: z.viewport, setup: c.setup })));

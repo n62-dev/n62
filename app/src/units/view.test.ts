@@ -7,6 +7,8 @@ import type { IndexItem } from "../find/types.ts";
 import { slotCatalogue, type PadAction } from "./slot.ts";
 import type { Quantity, UnitError, UnitRequest } from "./types.ts";
 import { UnitView, type ViewHost } from "./view.ts";
+import { filledLatex } from "../input/unitFormula.ts";
+import { unitLatex } from "../input/chipUnit.ts";
 
 const unit = (id: string, title: string, si: string, dim: string): IndexItem =>
   ({ id: `unit:${id}`, kind: "unit", names: [id], title, tier: 0, insert: `\\unit{${id}}{\\mathrm{${id}}}`, si, dim });
@@ -572,5 +574,48 @@ describe("R853: step(by), the ← and → buttons", () => {
     view.step(-1);
     expect(view.row).toBe(-1);
     expect(view.activeId).toBe("u1");
+  });
+});
+
+describe("R929: a constant's own unit after its chip, in the field only", () => {
+  const own = (id: string): string | undefined => ({ planck: "J·s", k_B: "J/K" })[id];
+  /** The view on `line` with the label (the host names the constants' units) and without, and the field's values. */
+  function both(line: string): { on: UnitView; off: UnitView; values: string[] } {
+    const values: string[] = [];
+    const on = new UnitView(CAT, line, {}, { ...host().host, constUnit: own, reset: (latex) => void values.push(latex) });
+    const off = new UnitView(CAT, line, {}, host().host);
+    return { on, off, values };
+  }
+
+  it("the field shows h with J·s after it, 2h as 2[ ] h J·s, k_B with J/K, α with none; the line and the formula hold no label", () => {
+    expect(both("\\const{planck}{h}").on.fieldLatex).toBe(`\\const{planck}{h}${unitLatex("J·s")}\\to\\placeholder[end]{}`);
+    const two = both("2\\const{planck}{h}").on;
+    expect(two.fieldLatex).toBe(`2\\placeholder[u1]{}\\const{planck}{h}${unitLatex("J·s")}`);
+    expect(two.ids).toEqual(["u1"]);
+    expect(two.line).toBe("2\\const{planck}{h}");
+    expect(two.formula.latex).not.toContain("htmlStyle");
+    expect(both("3\\const{k_B}{k_{\\mathrm{B}}}").on.fieldLatex).toContain(unitLatex("J/K"));
+    expect(both("2\\const{alpha}{\\alpha}").on.fieldLatex).toBe("2\\placeholder[u1]{}\\const{alpha}{\\alpha}");
+  });
+
+  it("filledLatex and the request are the same with and without the label", () => {
+    for (const line of ["\\const{planck}{h}", "2\\const{planck}{h}", "2\\const{planck}{h}\\times3\\const{k_B}{k_{\\mathrm{B}}}"]) {
+      const { on, off } = both(line);
+      on.start();
+      off.start();
+      on.apply(U("m"));
+      off.apply(U("m"));
+      expect(on.fieldLatex, line).not.toBe(off.formula.latex);
+      expect(filledLatex(on.formula, () => true), line).toBe(filledLatex(off.formula, () => true));
+      expect(on.request(), line).toEqual(off.request());
+      expect(JSON.stringify(on.request()), line).not.toMatch(/htmlStyle|J·s|J\/K/);
+    }
+  });
+
+  it("→ Check sets the field again with the label (the end slot after it)", () => {
+    const { on, values } = both("2\\const{planck}{h}");
+    on.start();
+    on.setChecking(true);
+    expect(values.at(-1)).toBe(`2\\placeholder[u1]{}\\const{planck}{h}${unitLatex("J·s")}\\to\\placeholder[end]{}`);
   });
 });

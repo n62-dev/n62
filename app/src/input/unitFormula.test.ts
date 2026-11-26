@@ -3,7 +3,8 @@
 import { describe, expect, it } from "vitest";
 import { latexToGiacInfo } from "./latex-to-giac.ts";
 import { ANS_KEY, type Chip } from "./chips.ts";
-import { filledLatex, slotFormula } from "./unitFormula.ts";
+import { unitLatex } from "./chipUnit.ts";
+import { constLabels, filledLatex, slotFormula } from "./unitFormula.ts";
 
 const giac = (latex: string): string => latexToGiacInfo(slotFormula(latex).latex, { units: true }).giac;
 
@@ -180,5 +181,27 @@ describe("filledLatex (G216): the empty prompts dropped, the one rule of the vie
     expect(filledLatex(f, (id) => id !== "u1")).toBe("5\\times2\\placeholder[u2]{}\\to\\placeholder[end]{}");
     expect(filledLatex(f, () => true)).toBe(f.latex);
     expect(filledLatex(f, () => false)).toBe("5\\times2");
+  });
+});
+
+describe("constLabels (R929): a constant's own unit after its chip, muted and read-only, in the field's LaTeX only", () => {
+  const own = (id: string): string | undefined => ({ planck: "J·s", k_B: "J/K", G: "m³/(kg·s²)" })[id];
+  it("puts the unit after each constant chip (a symbol with braces too); a pure number (α) gets none", () => {
+    expect(constLabels("\\const{planck}{h}", own)).toBe(`\\const{planck}{h}${unitLatex("J·s")}`);
+    expect(constLabels("2\\placeholder[u1]{}\\const{planck}{h}\\to\\placeholder[end]{}", own)).toBe(`2\\placeholder[u1]{}\\const{planck}{h}${unitLatex("J·s")}\\to\\placeholder[end]{}`);
+    expect(constLabels("\\const{k_B}{k_{\\mathrm{B}}}\\times\\const{G}{G}", own)).toBe(`\\const{k_B}{k_{\\mathrm{B}}}${unitLatex("J/K")}\\times\\const{G}{G}${unitLatex("m³/(kg·s²)")}`);
+    expect(constLabels("\\const{alpha}{\\alpha}", own)).toBe("\\const{alpha}{\\alpha}");
+    expect(constLabels("\\frac{\\const {planck} {h}}{2}", own)).toBe(`\\frac{\\const {planck} {h}${unitLatex("J·s")}}{2}`);
+  });
+  it("puts the unit after a power on the constant, never under it (E = mc² must not read c m/s²)", () => {
+    const own2 = (id: string): string | undefined => ({ c: "m/s", planck: "J·s" })[id];
+    expect(constLabels("m\\const{c}{c}^{2}", own2)).toBe(`m\\const{c}{c}^{2}${unitLatex("m/s")}`);
+    expect(constLabels("\\const{planck}{h}^2", own2)).toBe(`\\const{planck}{h}^2${unitLatex("J·s")}`);
+    expect(constLabels("\\const{planck}{h} ^ {2}+1", own2)).toBe(`\\const{planck}{h} ^ {2}${unitLatex("J·s")}+1`);
+    expect(constLabels("\\const{c}{c}_{0}^{2}", own2)).toBe(`\\const{c}{c}_{0}^{2}${unitLatex("m/s")}`);
+  });
+  it("leaves a line without a constant as it is, and the slots' formula untouched (no label in slotFormula)", () => {
+    expect(constLabels("5\\placeholder[u1]{}\\res{3}{7}", own)).toBe("5\\placeholder[u1]{}\\res{3}{7}");
+    expect(slotFormula("2\\const{planck}{h}").latex).not.toContain("htmlStyle");
   });
 });
