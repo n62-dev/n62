@@ -339,9 +339,10 @@
   });
   /** The counter of P16's removal test (state/uses.svelte.ts, its own chunk, fetched on the first fold). */
   const countUse = (name: string): void => void session.uses().then((c) => c.count(name));
-  /** Fold the keypad: by the line's swipe, (R131) the desktop key or (R724, R786) ⌄ on the bar, counted apart (`fold.swipe`, `fold.hw`, `fold.tap`). */
+  /** Fold the keypad: by the line's swipe, (R131) the desktop key or (R724, R786) ⌄ on the bar, counted apart (`fold.swipe`, `fold.hw`, `fold.tap`).
+   *  Each caller folds only where canFold holds (the swipe's `swipes`, the desktop key's test, ⌄ drawn only then; R928's cut). */
   function fold(as: "fold.swipe" | "fold.hw" | "fold.tap" = "fold.swipe"): void {
-    if (folded || !canFold) return;
+    if (folded) return;
     folded = true;
     countUse(as);
   }
