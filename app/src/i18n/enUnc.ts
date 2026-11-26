@@ -8,6 +8,7 @@ export const enUnc = {
   "unc.setting": "Uncertainty",
   "unc.setting.sigma": "Muted digits, σ on tap",
   "unc.setting.muted": "Muted digits",
+  "unc.setting.round": "Rounded to σ, σ on tap",
   "unc.sigma": "σ = {s} · U = 2σ = {u} (k = 2)",
   // R327: the uncertainty sheet's head (Shift + 1; docs/archive/mockups/uncertainty-sheet.html section 4's words)
   "unc.sheet": "Uncertainty",

@@ -36,8 +36,8 @@ describe("Rounded to σ (R884): value and σ", () => {
   it.each([
     ["9.81065219207", "0.0526983", "std", "9.811", "0.053"],
     ["2.5", "0.1", "std", "2.50", "0.10"], // the trailing zero kept, as the headline keeps it
-    ["6.67430E-11", "1.5E-15", "std", "6.67430E-11", "0.00015E-11"], // STD switches to E form; σ in its exponent
-    ["6.67430E-11", "1.5E-15", "sci", "6.67430E-11", "0.00015E-11"],
+    ["6.67430e-11", "1.5e-15", "std", "6.67430E-11", "0.00015E-11"], // STD switches to E form; σ in its exponent
+    ["6.67430e-11", "1.5e-15", "sci", "6.67430E-11", "0.00015E-11"],
     ["0.3", "1.2", "std", "0.3", "1.2"], // a σ larger than the value
     ["1234.5678", "25", "std", "1235", "25"],
   ] as const)("(%s, %s) in %s → %s ± %s", (v, s, f, value, sigma) => {

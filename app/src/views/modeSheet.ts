@@ -40,7 +40,7 @@ const ANGLES: readonly AngleUnit[] = ["rad", "deg"];
 const FORMATS: readonly NumberFormat[] = ["std", "sci", "eng", "pfx"];
 const ENTRIES: readonly EntryMode[] = ["textbook", "line"];
 const MARKS: readonly DecimalMark[] = ["point", "comma"];
-const UNCERTAINTY_VIEWS: readonly UncertaintyView[] = ["sigma", "muted"];
+const UNCERTAINTY_VIEWS: readonly UncertaintyView[] = ["sigma", "muted", "round"];
 const MARK_STYLES: readonly MarkStyle[] = ["muted", "colour", "reason"];
 const GROUP_SEPS: readonly GroupSep[] = ["thin", "apos", "comma"];
 /** The values the digits and decimals rows offer when picked (◀ ▶ reach every other one). */

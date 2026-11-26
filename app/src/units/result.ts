@@ -63,12 +63,15 @@ export interface UnitFormat extends FormatOptions {
   grouped?: boolean;
   /** R125: the groups' separator (absent: the thin space; a comma under the decimal comma draws as the thin space). */
   groupSep?: GroupSep;
+  /** R884: Settings › Numbers › Uncertainty "Rounded to σ": the line under the value line draws the value to σ's last
+   *  digit as the headline does, no digit muted. */
+  round?: boolean;
 }
 
 /** A result as the view shows it. `alts` is the row (alternatives.ts), none for a refusal or a pure number. */
 export function shownOf(q: Quantity | UnitError, u: UnitFormat, alts: readonly Alternative[] = []): Shown {
   if (isUnitError(q)) return { kind: "message", text: unitErrorMessage(q) };
-  const { decimalComma, grouped, groupSep, ...o } = u;
+  const { decimalComma, grouped, groupSep, round, ...o } = u;
   const sep = groupSepFor(groupSep, decimalComma);
   /** R120: a number as the screen draws it (Home's unit row: commaResult, groupDigits) and as Copy writes it. */
   const comma = (s: string): string => (decimalComma ? commaResult(s, false) : s);
@@ -110,7 +113,8 @@ export function shownOf(q: Quantity | UnitError, u: UnitFormat, alts: readonly A
     ...(q.note ? { note: unitNoteText(q.note) } : {}),
     ...(q.names?.length ? { names: unitNamesText(q.names) } : {}),
     ...(dim ? { dim } : {}),
-    ...(q.unc ? subLine(drawn(value), drawn(sigmaText(q.unc.value, o)), sigmaCut(q.unc.value.value?.re, q.value.value), re && [(re.neg ? "-" : "") + drawn(re.mantissa), powerOf(re)], decimalComma ? "," : ".") : {}),
+    ...(q.unc && round && hd ? subLine(drawn(toText(hd.value)), drawn(sigmaText(q.unc.value, o)), undefined, undefined, ".") : {}),
+    ...(q.unc && !(round && hd) ? subLine(drawn(value), drawn(sigmaText(q.unc.value, o)), sigmaCut(q.unc.value.value?.re, q.value.value), re && [(re.neg ? "-" : "") + drawn(re.mantissa), powerOf(re)], decimalComma ? "," : ".") : {}),
     dimension,
     alts: dimension === "" ? [] : alts,
   };

@@ -138,7 +138,10 @@ export interface DisplayContext {
   mute?: (r: NumericResult) => Mute | undefined;
   /** R885: the σ drawing rule's code (render/sigmaForm.ts sigmaRow), once loaded: a unit row's value drawn with `o`, and
    *  σ in its form; absent, or undefined for a row without σ: drawn by the digits setting (its stored ` ± σ` after it). */
-  sigma?: (r: NumericResult, o: FormatOptions, group: string | undefined) => { c: FormattedComplex; sigma: { text: string; latex: string } } | undefined;
+  sigma?: (r: NumericResult, o: FormatOptions, group: string | undefined, round?: boolean) => { c: FormattedComplex; sigma: { text: string; latex: string } } | undefined;
+  /** R884: Settings › Numbers › Uncertainty "Rounded to σ": a value with σ drawn to σ's last digit, no digit muted (the
+   *  screen's row and Copy as shown only, Session.display). */
+  round?: boolean;
 }
 
 /** The mode an item is drawn in: the a b/c form when one is chosen, else the Format key's notation (`dec`: the notation,
@@ -253,10 +256,11 @@ function renderPoint(r: NumericResult, mode: FmtMode | undefined, ctx: DisplayCo
   }
   const o = confirmedOptions(r.value, r.facts?.reliableDigits ?? null, opts(base));
   // R885: a unit row's ± σ draws the value and σ by one rule (render/sigmaForm.ts): never cut above σ, the same form
-  const ps = ctx.sigma?.(r, o, group);
+  const ps = ctx.sigma?.(r, o, group, ctx.round);
   const c = ps?.c ?? formatComplex(r.value, o);
-  // R40: only the screen's row mutes the digits past a constant's σ (`grouped`): the text, chips and Copy keep them all
-  const mute = grouped ? ctx.mute?.(r) : undefined;
+  // R40: only the screen's row mutes the digits past a constant's σ (`grouped`): the text, chips and Copy keep them all;
+  // R884: none past σ's last digit to mute when rounded to it
+  const mute = grouped && !ctx.round ? ctx.mute?.(r) : undefined;
   const latex = complexToLatex(c, group, mute);
   // muted digits (R40) draw markup of their own: that row keeps the one line
   const wrap = latex === complexToLatex(c, group) ? wrapPieces(c, latex, group) : undefined;

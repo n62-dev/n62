@@ -196,7 +196,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem, unit?: FindItem)
           const more = dim === undefined ? { constant, tools: tools() } : {};
           m.showUnitFind({ shell: c.shell, index, cat, apply: dim === undefined ? (a) => view.apply(a) : (a) => view.pickMore(a), refresh: () => (unitPad.model = new UnitPad(unitCells.userSet())), ...more }, into, dim);
         }),
-      format: () => ({ format: engineFormat(session.settings.format), digits: session.settings.digits, decimalComma: session.decimalComma, grouped: true, groupSep: session.settings.groupSep }),
+      format: () => ({ format: engineFormat(session.settings.format), digits: session.settings.digits, decimalComma: session.decimalComma, grouped: true, groupSep: session.settings.groupSep, round: session.settings.uncertainty === "round" }),
       alternatives: async (q, req) => {
         const target = q.dimension ? (await readTargets(idbKv))[q.dimension] : undefined;
         return alternatives(q, { table, pad: padUnitList(), user: userUnitCells(unitCells.userSet()), req, ...(target ? { target } : {}) });

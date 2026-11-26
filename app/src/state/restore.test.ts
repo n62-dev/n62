@@ -84,6 +84,15 @@ describe("checkBackup (r11 section 3.4)", () => {
     expect(migrateSettings(older.parts["settings"]).settings.look.findFull).toBe(false); // a missing field: off
     expect(refused(withLook({ ...defaultLook(), findFull: "yes" })).part).toBe("settings");
   });
+  it("R884: a settings part with Uncertainty Rounded to σ restores it; an older one without the field reads as the default", () => {
+    const { uncertainty: _u, ...older } = migrateSettings({}).settings;
+    const round = checkBackup(bytes(withPart("settings", at({ schema: SETTINGS_SCHEMA, ...migrateSettings({}).settings, uncertainty: "round" })))) as CheckedBackup;
+    expect(round.ok).toBe(true);
+    expect(migrateSettings(round.parts["settings"]).settings.uncertainty).toBe("round");
+    const old = checkBackup(bytes(withPart("settings", at({ schema: SETTINGS_SCHEMA, ...older })))) as CheckedBackup;
+    expect(old.ok).toBe(true);
+    expect(migrateSettings(old.parts["settings"]).settings.uncertainty).toBe("sigma");
+  });
   it("accepts a record stored before versions (stamp 0) and a byte order mark", () => {
     const r = checkBackup(bytes("﻿" + JSON.stringify(withPart("view", at("home", 0)))));
     expect(r.ok && r.parts["view"]).toBe("home");
@@ -194,7 +203,7 @@ describe("the repeated rules agree with the start's readers", () => {
     decimalMark: ["point", "comma", "dot"],
     digits: [1, 12, 30, 31, 0, -1, 12.5, "12", 1e3],
     fixDecimals: [0, 4, 12, 13, -1, 2.5, "4"],
-    uncertainty: ["sigma", "muted", "concise", 1, null], // R40
+    uncertainty: ["sigma", "muted", "round", "concise", 1, null], // R40, R884
     marks: ["muted", "colour", "reason", "color", "", 1, null], // R124
     groupSep: ["thin", "apos", "comma", "'", ",", "", 1, null], // R125
     barSlot: ["cas", "function", "solve", "nosuchapp", "home", "", 1, null], // R782

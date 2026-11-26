@@ -60,8 +60,8 @@ export const HAPTIC_MS_RANGE = { min: 5, max: 100 } as const;
 /** The decimal mark (R57, docs/05 3.4): the point, or the comma (typed `{,}`, drawn `,`; `;` separates arguments). */
 export type DecimalMark = "point" | "comma";
 /** R40, Settings › Numbers › Uncertainty: the digits past a constant's σ are muted, and a tap on the row shows σ (`sigma`,
- *  the default) or nothing (`muted`). A third value, the concise form `3.986004(89)ᴇ14`, is a later package's. */
-export type UncertaintyView = "sigma" | "muted";
+ *  the default) or nothing (`muted`); R884: `round`, the value drawn to σ's last digit, σ on tap. */
+export type UncertaintyView = "sigma" | "muted" | "round";
 /** R124, Settings › Numbers › Marks: marks in --muted, a ⚠ in colour, or that with its reason line (the default). */
 export type MarkStyle = "muted" | "colour" | "reason";
 export interface Settings extends CalcSettings {
@@ -215,7 +215,7 @@ export function migrateSettings(saved: unknown, firstLook: Look = defaultSetting
   if (x["format"] === "std" || x["format"] === "sci" || x["format"] === "eng" || x["format"] === "pfx") s.format = x["format"];
   if (x["entry"] === "textbook" || x["entry"] === "line" || x["entry"] === "rpn") s.entry = x["entry"];
   if (x["decimalMark"] === "point" || x["decimalMark"] === "comma") s.decimalMark = x["decimalMark"];
-  if (x["uncertainty"] === "muted") s.uncertainty = "muted"; // R40: anything else is the default, sigma
+  if (x["uncertainty"] === "muted" || x["uncertainty"] === "round") s.uncertainty = x["uncertainty"]; // R40, R884: else sigma
   if (x["marks"] === "muted" || x["marks"] === "colour") s.marks = x["marks"]; // R124: anything else is the default
   if (x["groupSep"] === "apos" || x["groupSep"] === "comma") s.groupSep = x["groupSep"]; // R125: anything else, the thin space
   if (typeof x["digits"] === "number" && Number.isFinite(x["digits"])) s.digits = clampDigits(x["digits"]);
@@ -554,11 +554,12 @@ export class Session {
   }
 
   /** What the history shows for a finished item: Home numbers follow the current digits and format, or the mode
-   *  the Format key chose for that item; a CAS result changes only when the Format key has chosen a mode. */
-  display(item: HistoryItem, grouped = false): Drawn {
+   *  the Format key chose for that item; a CAS result changes only when the Format key has chosen a mode. `asShown`
+   *  (R884): the screen's row and Copy as shown, which draw a value with σ rounded to it under "Rounded to σ". */
+  display(item: HistoryItem, grouped = false, asShown = grouped): Drawn {
     const shown = item.view === "home" || item.fmt !== undefined || item.form !== undefined || item.facts !== undefined;
     if (item.status === "done" && shown) {
-      const r = (formsCode?.drawnIn ?? renderNumeric)(item, modeOf(item, this.settings), this.displayContext(), grouped); // R192: a base form, lazy
+      const r = (formsCode?.drawnIn ?? renderNumeric)(item, modeOf(item, this.settings), this.displayContext(asShown), grouped); // R192: a base form, lazy
       // R63: a unit row draws ± σ and its unit, set apart, after the number; its text has them too (Copy as shown)
       // R885: with the σ rule's code in, its σ drawn in the value's form takes the stored one's place (sigmaForm.ts withSigma)
       if (r) return item.units ? (sigmaCode?.withSigma ?? withUnit)(r, item.units, this.decimalComma ? commaResult : undefined) : r;
@@ -589,9 +590,9 @@ export class Session {
 
   /** `mute` (R40), `groupSep` (R125): the muted digits' code once in, the separator; only the screen's row uses them.
    *  `sigma` (R885): a unit row's σ drawing rule, once in (the row and Copy as shown). */
-  displayContext(): DisplayContext {
+  displayContext(asShown = false): DisplayContext {
     const s = this.settings;
-    return { format: s.format, digits: s.digits, fixDecimals: s.fixDecimals, angle: s.angle, ...(this.decimalComma ? { decimalComma: true } : {}), groupSep: s.groupSep, mute: sigmaCode?.muter, sigma: sigmaCode?.sigmaRow };
+    return { format: s.format, digits: s.digits, fixDecimals: s.fixDecimals, angle: s.angle, ...(this.decimalComma ? { decimalComma: true } : {}), groupSep: s.groupSep, mute: sigmaCode?.muter, sigma: sigmaCode?.sigmaRow, round: asShown && s.uncertainty === "round" };
   }
 
   /** The row the Format key (cycleFormat) or the a b/c key on an empty line (cycleForm, R10; cycleForms.ts) takes: the picked

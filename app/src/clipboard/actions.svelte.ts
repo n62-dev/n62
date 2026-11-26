@@ -255,7 +255,7 @@ export class ClipActions {
       const i = this.target(item);
       if (this.noNumber(i)) return this.refuseNoDigit();
       const seen: NameSeen = { name: false }; // G784f1
-      const text = i ? (await impl()).copyShownText(this.session.display(i).text, seen) : undefined; // G784: the letters, not i_
+      const text = i ? (await impl()).copyShownText(this.session.display(i, false, true).text, seen) : undefined; // G784: the letters, not i_; R884: as drawn
       return this.put(text, named && text ? this.named(text, text, true) : undefined, named, seen.name);
     });
   }

@@ -129,6 +129,18 @@ describe("shownOf with the decimal comma and digit groups (R120)", () => {
     expect(cut(result(shownOf(sigma("2.5", "0"), STD)))).toBeUndefined();
     expect(result(shownOf(qty(num("2.5")), STD)).subCut).toBeUndefined();
   });
+
+  // R884: Settings › Numbers › Uncertainty "Rounded to σ": the sub line's value is the headline's, cut at σ's last digit
+  it("Rounded to σ: the sub line's value at σ's last digit, nothing muted; σ as before", () => {
+    const sigma = (v: string, s: string) => qty(num(v, { exact: false }), { unc: { value: num(s, { exact: false }), text: "", shown: "" } } as Partial<Quantity>);
+    const r = result(shownOf(sigma("9.81065219207", "0.0526983346596"), { ...STD, grouped: true, round: true }));
+    expect(r).toMatchObject({ text: "9.811 ± 0.053", sub: "9.811 · σ 0.053" });
+    expect(r.subCut![1]).toBe(r.subCut![2]);
+    expect(result(shownOf(sigma("39.488", "1.244"), { ...STD, decimalComma: true, round: true })).sub).toBe("39,5 · σ 1,2");
+    expect(result(shownOf(sigma("12345.6", "100"), { ...STD, round: true })).sub).toBe("12350 · σ 1.0E2");
+    // a σ of zero: as the digits setting draws it
+    expect(result(shownOf(sigma("2.5", "0"), { ...STD, round: true })).sub).toBe("2.5 · σ 0");
+  });
 });
 
 describe("the unit a chip reads as after a tap (R62)", () => {
