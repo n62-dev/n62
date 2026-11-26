@@ -41,6 +41,7 @@ import { STATS_DEFINITIONS } from "./stats.ts";
 import { WORD_DEFINITIONS } from "./wordOps.ts";
 import { defaultHomeSettings } from "./homeDefaults.ts";
 import { EQ_DIFF, EQ_INEXACT_FLAG, EQ_VERDICT } from "./ourNames.ts";
+import { countFacts } from "./counts.ts";
 
 export type { Giac };
 
@@ -830,6 +831,8 @@ export function homeEval(
   if (differ) facts = facts.map((f) => (f.exact ? f : { ...f, reliableDigits: null, warn: "unchecked" as const }));
   // G71 (N7): Giac's two-argument round and trunc work in a double: an integer or decimal they print is not exact.
   if (!differ && doubleFormsIn(exactBody, "typed").length) facts = facts.map((f) => ({ ...f, warn: "unaudited" as const }));
+  // G405: size, dim or nops of a list Giac computed with floats takes the list's mark (counts.ts)
+  if (!once && !differ) facts = countFacts(giac, exactBody, P, s.digits, facts);
   const b = build(facts, shape, s.digits, "exact", differ);
   store();
   // G103: an integer past Giac's print limit prints as Integer_too_large_for_display: no exact text, its digits are full.
