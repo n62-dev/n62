@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { FAMILIES } from "./theme-families.ts";
 import { apart, CVD, oklabOf, type Mat } from "./cvd.ts";
-import { LAYER_APART, WARN_APART, block, checks, combos, cr, dimmedOk, expected, familyPath, lum, outOfDate, selector, styleFile, theme } from "./theme-gen.ts";
+import { LAYER_APART, WARN_APART, ZEBRA, block, checks, combos, cr, dimmedOk, expected, familyPath, lum, outOfDate, selector, styleFile, theme } from "./theme-gen.ts";
 
 describe("generated theme files", () => {
   it("are up to date (run npm run themes)", () => {
@@ -398,5 +398,30 @@ describe("R933: the non-digit keys stand off the keypad as the digit keys do", (
     expect(theme({ family: "solarized", brightness: "dark", high: false, plain: false }).t["key-num"]).toBe("#3d556f");
     expect(theme({ family: "solarized", brightness: "light", high: false, plain: false }).t["key-num"]).toBe("#fffff4");
     expect(theme({ family: "bw", brightness: "light", high: false, plain: false }).t["key-num"]).toBe("#ffffff");
+  });
+});
+
+describe("R742: --row-alt, the zebra rows' ground", () => {
+  it("the six normal looks (colour keys) land on sandra's values (probe-zebra2.mjs)", () => {
+    const WANT = {
+      "n62 dark": "#112e2d", "n62 light": "#c1dddc", "bw dark": "#0d0d0d", "bw light": "#ebeded", "solarized dark": "#33455a", "solarized light": "#f4f6cf",
+    } as const;
+    for (const [id, want] of Object.entries(WANT)) {
+      const [family, brightness] = id.split(" ") as [string, "dark" | "light"];
+      expect(theme({ family, brightness, high: false, plain: false }).t["row-alt"], id).toBe(want);
+    }
+  });
+  for (const c of combos())
+    it(`${selector(c)}: the first 0.5 % step from --bg toward --text at ${ZEBRA}:1`, () => {
+      const { t } = theme(c);
+      const [alt, bg] = [t["row-alt"] ?? "", t["bg"] ?? ""];
+      expect(cr(alt, bg)).toBeGreaterThanOrEqual(ZEBRA);
+      expect(lum(alt) > lum(bg), "toward --text").toBe(lum(t["text"] ?? "") > lum(bg));
+    });
+  it("N62 Light's --focus moves to stand 3:1 on --row-alt and --pick; both start blocks carry --row-alt", () => {
+    expect(theme({ family: "n62", brightness: "light", high: false, plain: false }).t["focus"]).toBe("#357e7d");
+    const css = readFileSync(new URL("../src/style.css", import.meta.url), "utf8");
+    expect(css).toContain("--row-alt: #112e2d;");
+    expect(css).toContain("--row-alt: #c1dddc;");
   });
 });

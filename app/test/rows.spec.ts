@@ -231,3 +231,102 @@ test("CAS has the same buttons and its own rows", async ({ page }) => {
   await tap(page, ["@menu"]);
   await expect(page.getByTestId("menu").getByRole("menuitem")).toHaveCount(4); // the four (R830)
 });
+
+// R742: zebra rows. Every second row counted from the oldest is --row-alt; the rows run to the history's edges; the picked row is
+// --pick with a 2 px --focus edge inside it and a start bar, its glyphs clear of the edge; the pitch and the rows seen are phase-1's.
+const css = (page: Page, role: string): Promise<string> =>
+  page.evaluate((r) => {
+    const probe = document.createElement("div");
+    probe.style.background = `var(--${r})`;
+    document.body.append(probe);
+    const v = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return v;
+  }, role);
+/** The colour a row shows: its own background, else the first opaque one of its ancestors. */
+const ground = (page: Page): Promise<string[]> =>
+  page.locator("article.item").evaluateAll((els) =>
+    els.map((e) => {
+      for (let n: Element | null = e; n; n = n.parentElement) {
+        const b = getComputedStyle(n).backgroundColor;
+        if (b !== "rgba(0, 0, 0, 0)" && b !== "transparent") return b;
+      }
+      return "none";
+    }),
+  );
+
+test("zebra: rows 1 and 3 of four are --row-alt, 0 and 2 --bg; one more row recolours none (R742)", async ({ page }) => {
+  await three(page);
+  await tap(page, ["d2", "div", "d5", "enter"]);
+  await done(page, 4);
+  const [alt, bg] = [await css(page, "row-alt"), await css(page, "bg")];
+  expect(alt).not.toBe(bg);
+  const alts = () => page.locator("article.item").evaluateAll((els) => els.map((e) => e.getAttribute("data-alt")));
+  expect(await alts()).toEqual([null, "true", null, "true"]);
+  expect(await ground(page)).toEqual([bg, alt, bg, alt]);
+  await tap(page, ["d3", "div", "d5", "enter"]);
+  await done(page, 5);
+  expect(await alts()).toEqual([null, "true", null, "true", null]);
+  expect(await ground(page)).toEqual([bg, alt, bg, alt, bg]);
+});
+
+test("zebra: each row spans the history; no divider; the picked row's 2 px --focus edge and start bar, glyphs 4 px inside (R742)", async ({ page }) => {
+  await three(page);
+  const spans = await page.evaluate(() => {
+    const h = document.querySelector("section.history") as HTMLElement;
+    const hb = h.getBoundingClientRect();
+    return [...document.querySelectorAll("article.item")].map((e) => {
+      const b = e.getBoundingClientRect();
+      return [b.left - hb.left, b.width - h.clientWidth, getComputedStyle(e, "::before").content];
+    });
+  });
+  for (const [dx, dw, before] of spans) {
+    expect(Math.abs(dx as number)).toBeLessThanOrEqual(1);
+    expect(Math.abs(dw as number)).toBeLessThanOrEqual(1);
+    expect(before).toBe("none");
+  }
+  await tap(page, ["up", "up"]); // the middle row, a zebra row: the whole-row pick
+  const row = page.locator('article.item[data-selected="true"]');
+  await expect(row).toHaveAttribute("data-part", "row");
+  const focus = await css(page, "focus");
+  const look = await row.evaluate((e) => {
+    const s = getComputedStyle(e);
+    return [s.outlineWidth, s.outlineStyle, s.outlineColor, s.outlineOffset, s.boxShadow, s.backgroundColor];
+  });
+  expect(look.slice(0, 4)).toEqual(["2px", "solid", focus, "-2px"]);
+  expect(look[4]).toBe(`${focus} 6px 0px 0px 0px inset`);
+  expect(look[5]).toBe(await css(page, "pick"));
+  const r = await row.boundingBox();
+  if (!r) throw new Error("no picked row");
+  for (const part of [row.locator("button.in"), row.locator(".result")]) {
+    const g = await part.boundingBox();
+    if (!g) throw new Error("no glyph box");
+    expect(g.x - r.x, "left").toBeGreaterThanOrEqual(4);
+    expect(g.y - r.y, "top").toBeGreaterThanOrEqual(4);
+    expect(r.x + r.width - (g.x + g.width), "right").toBeGreaterThanOrEqual(4);
+    expect(r.y + r.height - (g.y + g.height), "bottom").toBeGreaterThanOrEqual(4);
+  }
+  await tap(page, ["esc"]);
+  const alt = page.locator('article.item[data-alt="true"]');
+  await alt.locator(".result").tap(); // a lit result keeps R832's look, its row the zebra ground
+  await expect(alt).toHaveAttribute("data-part", "result");
+  expect(await alt.evaluate((e) => [getComputedStyle(e).backgroundColor, getComputedStyle(e).outlineStyle])).toEqual([await css(page, "row-alt"), "none"]);
+});
+
+// The pitch, the last input's place and the rows seen whole, measured on phase-1 ae9f7974 (12 rows of 1÷n, Pixel 7 emulation).
+for (const [w, h, last, seen] of [[412, 839, 201.6, 3], [360, 740, 102.6, 2]] as const)
+  test(`zebra at ${w} × ${h}: the rows' pitch, the last input's place and the rows seen are phase-1's (R742)`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
+    for (const d of ["d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d1", "d2", "d3"]) await tap(page, ["d1", "div", d, "enter"]);
+    await done(page, 12);
+    await expect.poll(() => page.locator("section.history").evaluate((e) => e.scrollHeight - e.clientHeight - e.scrollTop)).toBeLessThanOrEqual(1);
+    const m = await page.evaluate(() => {
+      const hb = (document.querySelector("section.history") as HTMLElement).getBoundingClientRect();
+      const rows = [...document.querySelectorAll("article.item")].map((e) => e.getBoundingClientRect());
+      const ins = [...document.querySelectorAll("article.item .in")].map((e) => e.getBoundingClientRect().top);
+      return { pitch: ins.slice(1).map((v, i) => v - (ins[i] as number)), last: ins.at(-1) as number, seen: rows.filter((r) => r.top >= hb.top - 0.5 && r.bottom <= hb.bottom + 0.5).length };
+    });
+    for (const p of m.pitch) expect(Math.abs(p - 86.88)).toBeLessThanOrEqual(1);
+    expect(Math.abs(m.last - last)).toBeLessThanOrEqual(1);
+    expect(m.seen).toBe(seen);
+  });
