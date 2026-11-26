@@ -125,7 +125,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| B5i | [A277](packages/A277.md) golden planned by its import closure | annabell, Sonnet | `p1/annabell-goldenclosure` | A276 |
+| B5i | A277 golden planned by its import closure | annabell, Sonnet | `p1/annabell-goldenclosure` | A276 |
 | B5j | [A278](packages/A278.md) measure e2e: built app against dev server | annabell, Sonnet | `p1/annabell-e2emeasure` | A277 |
 | B6h | [G806](packages/G806.md) det and rank of a float matrix: no `=` on a pivot the rounding decided (pass 244) | gorge, Opus | `p1/gorge-floatpivot` | – |
 | B6i | [G800](packages/G800.md) a unit sweep | gorge, Opus | `p1/gorge-unitsweep` | R885 |
