@@ -311,7 +311,7 @@ const shots: Shot[] = [
   { id: "layer-alpha-cas", group: "Keypad layers", title: "Alpha layer in CAS (lower case)", setup: (p) => tap(p, ["@cas", "alpha"]) },
   { id: "layer-shift-alpha", group: "Keypad layers", title: "Shift then Alpha (lower case)", setup: (p) => tap(p, ["shift", "alpha"]) },
   ...popShots(), // R162
-  ...foldShots(someHistory), // R53
+  ...foldShots(someHistory, defineTwo), // R53, R928
   // R743: the last row 30 % out to the left, the finger still down: the red strip says Delete (dimmed, not yet armed)
   { id: "row-swipe-30", group: "History rows (R743)", title: "A row 30 % out to the left: the red strip says Delete, dimmed until it is past 40 %", setup: async (p) => {
     await someHistory(p);

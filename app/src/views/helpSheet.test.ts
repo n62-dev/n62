@@ -31,8 +31,10 @@ describe("helpRows (R197)", () => {
     expect(sym[1]?.hint).toBe("2*x");
   });
 
-  it("no example (tier 1): the syntax alone; no syntax: the name with (…)", () => {
-    expect(helpRows(fn({ tier: 1, syntax: "foo(x)", desc: "Giac's line." }), () => {}).map((r) => r.id)).toEqual(["syntax"]);
+  it("no example (tier 1): the syntax and \"not checked\" (R869); no syntax: the name with (…)", () => {
+    const rows = helpRows(fn({ tier: 1, syntax: "foo(x)", desc: "Giac's line." }), () => {});
+    expect(rows.map((r) => r.id)).toEqual(["syntax", "tier"]);
+    expect(rows[1]).toMatchObject({ label: "not checked", keep: true });
     expect(helpRows(fn({ names: ["cbrt"], kind: "tmpl" }), () => {})[0]?.label).toBe("cbrt(…)");
   });
 });

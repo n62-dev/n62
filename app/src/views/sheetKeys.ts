@@ -3,6 +3,7 @@
 // is read by what it is, never by the layer, so no key goes through the sheet into the entry line (rule 4).
 import { actionFor, type Key, type Layer } from "../keyboard/keyboard.ts";
 import { deadPress, holdKeys, isSelect, layerOf, modsFor, special, type Mods, type RouteCtx } from "../keyboard/route.ts";
+import type { MenuItem } from "../apps/types.ts";
 import type { Sheet } from "./sheet.svelte.ts";
 
 export type SheetKey =
@@ -26,6 +27,9 @@ export type SheetKey =
   | { kind: "pass" }
   /** R900, the Paste key in a list whose filter takes a pasted name (SheetCtx.paste): the clipboard's name is typed into it. */
   | { kind: "paste" }
+  /** R869: Help in Find (the Help action of the layer pressed): the highlighted row's help as a level over it; a row that is no index
+   *  item, or none, is the dead press. */
+  | { kind: "help" }
   /** Does nothing in a sheet. */
   | { kind: "none" }
   /** R281, the store sheet: the key types no name; the sheet closes and the key does its job on the line (Shift + 9's
@@ -162,6 +166,20 @@ const isPaste = (key: Key, mods: Mods, layer: Layer | undefined): boolean => {
   return a?.kind === "special" && a.name === "paste";
 };
 
+/** R869: the Help action, by a tap with its modifiers or a flick's layer (Shift + the ⚙ key since R863; a free key holding it does
+ *  nothing in a sheet). */
+const isHelp = (key: Key, mods: Mods, layer: Layer | undefined): boolean => {
+  const a = key.user ? undefined : layer === undefined ? actionFor(key, mods.shift, mods.alpha) : key.actions[layer];
+  return a?.kind === "special" && a.name === "help";
+};
+
+/** R869: the open level's highlighted row when it is an item of the Find index (a function, template, unit, prefix or constant; not a
+ *  unit of your own, `unit:@…`), else undefined: a stored name in Vars or Memory, a category, a product of units, a card's own row. */
+export function helpRow(sheet: Sheet): MenuItem | undefined {
+  const row = sheet.id === "find" ? sheet.level.current : undefined;
+  return row && !row.disabled && /^(fn|tmpl|unit|pfx|const):(?!@)/.test(row.id) ? row : undefined;
+}
+
 /** R900: the longest name the Paste key types into a filter. */
 const NAME_MAX = 32;
 /** R900: the name in a pasted text: its first line, trimmed, when it is a name (a letter, then letters, digits and `_`, at most
@@ -179,7 +197,8 @@ export function sheetJob(key: Key, s: SheetCtx, mods: Mods, layer: Layer | undef
   if (p?.kind === "special" && (p.name === "shift" || p.name === "alpha")) return { kind: "pass" };
   if (s.paste && isPaste(key, mods, layer)) return { kind: "paste" };
   if (s.kind === "store") return storeKey(key, mods.shift, mods.alpha, s.cas, s.empty);
-  // R887: the ⚙ key's tap opens Settings on the sheet; Shift + it is Help, which stays dead in a sheet (R863)
+  if (s.kind === "find" && isHelp(key, mods, layer)) return { kind: "help" }; // R869: Help on Find's highlighted row
+  // R887: the ⚙ key's tap opens Settings on the sheet; Shift + it is Help, which stays dead in any other sheet (R863)
   if (p?.kind === "special" && p.name === "settings" && !key.user && (mods.shift || layer === "shift")) return { kind: "none" };
   if (s.kind === "find") return findKey(key, layer, mods.shift, s.empty, s.numbered, mods.alpha);
   return layer === "alpha" || layer === "shift" ? sheetFlick(key, layer === "alpha", s.filter) : sheetKey(key, s.filter, s.numbered);
@@ -191,6 +210,7 @@ export function sheetJob(key: Key, s: SheetCtx, mods: Mods, layer: Layer | undef
 export function sheetFace(key: Key, s: SheetCtx, mods: Mods, layer?: Layer): { text?: string; dead: boolean } {
   const job = sheetJob(key, s.of ? { ...s, paste: pastes(s.of) } : s, mods, layer);
   if (job.kind === "letter") return { text: job.ch, dead: false };
+  if (job.kind === "help") return { dead: s.of !== undefined && helpRow(s.of) === undefined }; // R869: no row to explain
   return { dead: job.kind === "none" };
 }
 
@@ -297,6 +317,20 @@ export function sheetAct(c: RouteCtx, key: Key, layer: Layer | undefined, mods?:
         })),
       );
       return true;
+    case "help": {
+      // R869: the highlighted row's help as a level over Find (the index and the help chunk load first; the keys pressed meanwhile
+      // wait, holdKeys); no index item there, or the sheet changed meanwhile, is the dead press and Find stays
+      const row = helpRow(sheet);
+      if (!row) {
+        c.dead();
+        return true;
+      }
+      const still = (): boolean => shell.sheet === sheet && sheet.level === level && level.current === row;
+      void holdKeys(c, import("../find/finder.ts").then(async (f) => {
+        if (!(await f.showHelpFor(sheet, row, c.entry, still))) c.dead();
+      }));
+      return true;
+    }
     case "none":
       c.dead(); // R770: a key the sheet does not use is dead (docs/05 3.7); the sheet stays
       return true;
