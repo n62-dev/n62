@@ -27,6 +27,7 @@
       role="tab"
       use:pressFlag
       data-testid="tab-{tab.view}"
+      data-item={tab.view}
       aria-selected={shell.view === tab.view}
       aria-label={tab.name}
       title={tab.name}
@@ -66,6 +67,15 @@
     box-shadow: inset 0 0 0 var(--stroke-thin) color-mix(in srgb, var(--line) 55%, transparent);
     border-radius: calc(var(--radius-s) + var(--stroke-thin));
     pointer-events: none;
+  }
+  /* R928: in the folded bar (keyboard/Fold.svelte, Plot only), after the track (its order) at the open bar's distance (its gaps
+     and the divider, hidden there), so each view stands where it does open; the track is drawn the open bar's height */
+  :global(.bar.folded) .seg {
+    order: 1;
+    margin-left: var(--sp-1);
+  }
+  :global(.bar.folded) .seg::before {
+    inset: calc((100% - var(--bar-h)) / 2 + var(--sp-05)) 0;
   }
   .tab {
     position: relative;

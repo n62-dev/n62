@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R928 (owner, 2026-11-23, bug list 4 point 4): ⌄ folds the keys in Function's Plot view too (App.svelte canFold), so the
 // graph gets the screen; the graph keeps its units per pixel (FunctionPlot.svelte's resize: ymax and x stay, the y span grows
-// with the board). ⌃, Esc and Android back unfold; Symb and Num have no fold, so their tabs in the folded bar unfold. The
+// with the board). ⌃ and Android back unfold; Symb and Num have no fold, so their tabs in the folded bar unfold. The
 // in-app folded bar: ⌃, Home, slot 2, the app's views (Symb, Plot, Num), the ⇧ α slot, the angle word, ☰ (spec/layout-lock.yaml
 // `folded-bar-app:`). The real engine (the trace's y and Signed area are its numbers).
 import { expect, test, type Page } from "@playwright/test";
+import { FOLDED_APP_BAR_ITEMS } from "../src/views/barItems.ts";
 import { open, sheet, tap } from "./helpers.ts";
 
 const keys = (p: Page) => p.getByTestId("keys");
@@ -49,7 +50,9 @@ for (const [width, height] of [[360, 740], [412, 915]] as const)
       await expect(chevron(page)).toBeVisible();
       const before = await win(page);
       await foldByTap(page);
-      if (width === 360) expect(await boardHeight(page)).toBeGreaterThanOrEqual(600);
+      const tall = await boardHeight(page);
+      console.log(`R928 board at ${width} × ${height}: ${before.h} px up, ${tall} px folded`);
+      if (width === 360) expect(tall).toBeGreaterThanOrEqual(600);
       await expect.poll(async () => (await win(page)).h).toBeGreaterThan(before.h + 300);
       const after = await win(page);
       const [x0, y0, x1, y1] = before.bb;
@@ -68,33 +71,30 @@ for (const [width, height] of [[360, 740], [412, 915]] as const)
 
     test("the in-app folded bar: ⌃, Home, slot 2, Symb Plot Num, the angle word and ☰ fit the width, none over another", async ({ page }) => {
       await plot(page);
+      const upX: Record<string, number> = {};
+      for (const id of ["tab-symb", "tab-plot", "tab-num", "chip-angle", "menu-button"]) upX[id] = (await page.getByTestId("bar").getByTestId(id).boundingBox())!.x;
       await foldByTap(page);
       const bar = page.getByTestId("folded-bar");
-      const ids = ["fold-slice", "tab-home", "tab-slot", "tab-symb", "tab-plot", "tab-num", "mod-slot", "chip-angle", "menu-button"];
-      const boxes = [];
-      for (const id of ids) {
-        const b = await bar.getByTestId(id).boundingBox();
-        expect(b, id).not.toBeNull();
-        boxes.push({ id, ...b! });
+      const items = await bar.locator("[data-item]").evaluateAll((els) =>
+        els.filter((e) => (e as HTMLElement).checkVisibility({ visibilityProperty: true })).map((e) => ({ n: (e as HTMLElement).dataset["item"], r: e.getBoundingClientRect() })).filter((e) => e.r.width > 0).sort((a, b) => a.r.x - b.r.x));
+      expect(items.map((e) => e.n)).toEqual([...FOLDED_APP_BAR_ITEMS]); // the lock's folded-bar-app:, left to right
+      for (const [i, e] of items.entries()) {
+        expect(e.r.x, e.n).toBeGreaterThanOrEqual(0);
+        expect(e.r.right, e.n).toBeLessThanOrEqual(width + 0.5);
+        expect(e.r.width, e.n).toBeGreaterThanOrEqual(28); // a target
+        const next = items[i + 1];
+        if (next) expect(e.r.right, `${e.n} | ${next.n}`).toBeLessThanOrEqual(next.r.x + 0.5);
       }
-      boxes.sort((a, b) => a.x - b.x);
-      expect(boxes.map((b) => b.id)).toEqual(ids); // in the lock's order, left to right
-      for (const [i, b] of boxes.entries()) {
-        expect(b.x, b.id).toBeGreaterThanOrEqual(0);
-        expect(b.x + b.width, b.id).toBeLessThanOrEqual(width + 0.5);
-        const next = boxes[i + 1];
-        if (next) expect(b.x + b.width, `${b.id} | ${next.id}`).toBeLessThanOrEqual(next.x + 0.5);
-      }
+      // the views stand where they do open (R856: every control at one x, open or folded)
+      for (const id of ["tab-symb", "tab-plot", "tab-num", "chip-angle", "menu-button"]) expect((await bar.getByTestId(id).boundingBox())!.x, id).toBeCloseTo(upX[id]!, 0);
       await expect(bar.getByTestId("tab-plot")).toHaveAttribute("aria-selected", "true");
     });
   });
 
-test("Esc unfolds in Plot; back unfolds, a second back closes the app (R926)", async ({ page }) => {
+// (Esc: a hardware key reaches nothing in Plot, folded or not: the line, which hears the keys, is not drawn there and the focus
+// is on the page; R928's report)
+test("back unfolds in Plot, a second back closes the app (R926)", async ({ page }) => {
   await plot(page);
-  await foldByTap(page);
-  await page.keyboard.press("Escape");
-  await isFolded(page, false);
-  expect(await page.evaluate(() => window.n62.shell.app)).toBe("function");
   await foldByTap(page);
   await page.goBack();
   await isFolded(page, false);

@@ -31,7 +31,7 @@ import type { FindItem } from "../find/types.ts";
 import { Session, type HistoryItem } from "../state/session.svelte.ts";
 import { fakeKv } from "../state/fakeKv.ts";
 import { baseItems } from "../views/baseSheet.ts";
-import { BAR_ITEMS, FOLDED_BAR_ITEMS } from "../views/barItems.ts";
+import { BAR_ITEMS, FOLDED_APP_BAR_ITEMS, FOLDED_BAR_ITEMS } from "../views/barItems.ts";
 import { matrixRows, MATRIX_ROWS } from "../views/matrixSheet.ts";
 import { modeItems, settingsSections } from "../views/modeSheet.ts";
 import { loadKeyboard, keyboard } from "./keyboard.ts";
@@ -124,6 +124,7 @@ async function built(kb = keyboard, find: ReadonlyMap<string, FindItem> = findIt
     "units-view": ids(unitViewMenu(makeIndex([]), unitTools({ kind: "none" }, { end() {}, alt() {}, alts() {}, home() {}, store() {}, storeRefused: () => undefined }), () => {})),
     bar: listSlots(BAR_ITEMS),
     "folded-bar": listSlots(FOLDED_BAR_ITEMS),
+    "folded-bar-app": listSlots(FOLDED_APP_BAR_ITEMS),
     modifiers: modifierPins(() => new Session(new FakeCalc(), fakeKv())),
   };
 }

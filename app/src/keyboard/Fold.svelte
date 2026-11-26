@@ -19,7 +19,7 @@
     /** The entry line's box, where the swipe starts. */
     line: HTMLElement | undefined;
     entry: EntryController;
-    /** The line's swipes are taken now (Home and CAS, not wide, no sheet over the keys while unfolded). */
+    /** The line's swipes are taken now (Home and CAS, R928: Plot has no line; not wide, no sheet over the keys while unfolded). */
     swipes: () => boolean;
     onfold: (as?: "fold.tap") => void;
     onunfold: () => void;

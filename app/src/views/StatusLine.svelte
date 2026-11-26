@@ -21,7 +21,7 @@
     onpress: (key: Key, layer: Layer) => void;
     /** A tap on `STD 12 ▾`: the Mode sheet, on that row. */
     onmode: (at: string) => void;
-    /** R786: ⌄ at the bar's left end folds the keypad (Home and CAS, not wide, the fold's code in). Not given: the 28 px cell stays empty, so nothing to its right moves. */
+    /** R786: ⌄ at the bar's left end folds the keypad (Home, CAS and Plot, R928; not wide, the fold's code in). Not given: the 28 px cell stays empty, so nothing to its right moves. */
     onfold?: () => void;
     /** R783: a hardware keyboard is in use (input/hwSeen.svelte.ts): the ⇧ α badge shows with the keys up too. */
     hw?: boolean;

@@ -115,6 +115,7 @@ export const LIST_BUILDERS: Readonly<Record<string, readonly string[]>> = {
   "units-view": ["units/menu.ts", "units/find.ts"], // R862: the unit view's ☰ (menu.ts builds it, find.ts opens it)
   bar: ["views/barItems.ts"],
   "folded-bar": ["views/barItems.ts"],
+  "folded-bar-app": ["views/barItems.ts"], // R928
 };
 
 /** The other files that open a sheet (`showMenu`) or an app's ☰ (`menu(view`), each with why its rows have no fixed digit. */

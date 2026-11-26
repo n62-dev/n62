@@ -59,8 +59,26 @@
     }, 120);
   }
 
+  /** R928: the board's box changed size (⌄ folds the keys in Plot, a readout line comes or goes): the window keeps its units per
+   *  pixel. x and ymax stay and the y span follows the height (ymin = ymax − span·hNew/hOld); saved. JSXGraph's own resize,
+   *  off here, keeps the box and stretches y. */
+  function resized(): void {
+    if (!board || !box) return;
+    const w = box.clientWidth;
+    const h = box.clientHeight;
+    const hOld = board.canvasHeight;
+    if (!w || !h || (w === board.canvasWidth && h === hOld)) return;
+    const [x1, y1, x2, y2] = board.getBoundingBox() as [number, number, number, number];
+    board.resizeContainer(w, h, true, true);
+    const ymin = hOld > 0 ? y1 - ((y1 - y2) * h) / hOld : y2;
+    board.setBoundingBox([x1, y1, x2, ymin], false);
+    clearTimeout(saveTimer);
+    app.setWindow({ xmin: x1, xmax: x2, ymin, ymax: y1 });
+  }
+
   onMount(() => {
     let disposed = false;
+    const sized = new ResizeObserver(resized);
     const t0 = performance.now();
     // R361: the stored names the slots read, asked of the engine once per open; their curves are drawn when it answers
     void app.readStored().then(() => {
@@ -79,6 +97,7 @@
         showNavigation: false,
         showInfobox: false,
         keepAspectRatio: false,
+        resize: { enabled: false, throttle: 0 }, // (resized, R928)
         pan: { enabled: true, needTwoFingers: false },
         zoom: { enabled: true, wheel: true, needShift: false, pinchHorizontal: true, pinchVertical: true, pinchSensitivity: 7, factorX: 1.15, factorY: 1.15 },
         defaultAxes: {
@@ -120,6 +139,7 @@
       b.on("boundingbox", windowChanged);
       if (!app.win) app.setWindow({ ...defaultWindow() });
       ready = true;
+      sized.observe(box);
       plotHook.board = b;
       plotHook.curves = curves.length;
       // Measurement builds: time from opening Plot to the first drawn board (JSXGraph loads on first open).
@@ -129,6 +149,7 @@
     });
     return () => {
       disposed = true;
+      sized.disconnect();
       clearTimeout(saveTimer);
       clearTimeout(restTimer);
       curves = [];
