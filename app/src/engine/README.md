@@ -42,6 +42,7 @@ One line per module: what it owns, who calls it. Groups as in docs/04 section 6.
 | `numeric.ts` | honest precision (docs/04 2.4): values, shapes, the agreement check at two precisions, the re-evaluation of floats, the double fallback; called by `homeEval.ts` and most guards |
 | `lname.ts` | G771: `namesOf`, Giac's lname of an expression (the names in it) from the bridge's elements; called by `converge.ts`, `novalue.ts` |
 | `decisions.ts` | G38: the decisions Giac makes inside an exact evaluation, and their second run at P+20 and P+40; called by `homeEval.ts`, `host.ts` |
+| `counts.ts` | G405: `size`, `dim`, `nops` of a list Giac computed with floats take the list's mark (⚠ when a function in it is not audited, else ≈), never =; called by `homeEval.ts` |
 | `decisionAlias.ts` | G360: Giac's other spellings of the decision functions (`ceiling`, `IP`, `FP`, …) → the canonical name (`DECISION_ALIAS`, census in `tools/probes/g360/`), the angle commands' through `angles.ts`; called by `decisions.ts`, `numeric.ts`, `converge.ts` |
 | `facts.ts` | the mark facts that stored names lend (M4-7); called by `host.ts` |
 | `stateRead.ts` | G65: which names an input stored and read, from Giac's own state; called by `host.ts`, `facts.ts` |
