@@ -223,6 +223,7 @@
       use:rowSwipe={{ enabled: onswipe !== undefined && item.status !== "pending", onswipe: () => onswipe?.(item) ?? false }}
       onclick={(e) => tapRowBody(e, item, at)}
       oncontextmenu={(e) => e.preventDefault()}
+      data-alt={at % 2 === 1 ? "true" : undefined}
       data-selected={at === selected ? "true" : undefined}
       data-part={at === selected ? part : undefined}>
       <button type="button" class="in" title={t("history.recall")} use:edgeFade use:rowHold={holdInput(item)} onpointerdown={(e) => e.preventDefault()}>
@@ -291,23 +292,21 @@
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    padding: var(--sp-2) var(--sp-3);
+    /* R742: the rows carry the space between them as their own padding (--row-pad above and below, so the pitch is the
+       10 px gap's of before); the history's 8 px above and below gives back the first and last row's, so no row moves */
+    --row-pad: 5px;
+    padding: calc(var(--sp-2) - var(--row-pad)) var(--sp-3);
     display: flex;
     flex-direction: column;
-    /* docs/05 3.5 (R12b): a thin divider in the middle of the space between entries; the rows keep their heights. The
-       8 px more space docs/05 3.5 asks for is S25 part 3's (on a phone it moves the first of three rows under the
-       status line) */
-    --between: var(--sp-25);
-    gap: var(--between);
   }
   .earlier {
     min-height: var(--stroke-thin);
   }
   /* R860: an empty view: the mark's room, then the hint, centred in the space (above an Undo note: it stays the last row).
-     The room is the space left, up to the mark and its gap to the hint (--sp-4 in all, the history's gap included), so
+     The room is the space left, up to the mark and its gap to the hint (--sp-4), so
      the mark is never cropped; the hint never shrinks. Under 40 px the mark is left out */
   .empty {
-    flex: 0 1 calc(var(--mark-h) + var(--sp-4) - var(--between));
+    flex: 0 1 calc(var(--mark-h) + var(--sp-4));
     min-height: 0;
     margin-top: auto;
     container-type: size;
@@ -359,27 +358,24 @@
   .item {
     position: relative;
   }
-  .item + .item::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: calc(var(--between) / -2);
-    border-top: var(--stroke-thin) solid var(--line);
-    pointer-events: none;
+  /* docs/05 3.5 (R742): the rows run to the history's edges and every second one, counted from the oldest, is --row-alt (a new
+     row recolours none; a delete recolours the rows after it), so the eye follows an input to its result across a wide row */
+  .item {
+    margin-inline: calc(-1 * var(--sp-3));
+    padding: var(--row-pad) var(--sp-3);
   }
-  .item[data-selected="true"] {
-    border-radius: var(--radius);
+  .item[data-alt="true"] {
+    background: var(--row-alt);
+  }
+  /* the picked row (R832's whole-row pick): --pick with a --focus edge inside it and a bar at its start, no radius (a full band) */
+  .item[data-selected="true"]:not([data-part="input"], [data-part="result"]) {
     background: var(--pick);
     outline: var(--stroke) solid var(--focus);
+    outline-offset: calc(-1 * var(--stroke));
+    box-shadow: inset var(--sp-15) 0 0 var(--focus);
   }
   /* R832: a tap on the input or the result lights that half alone: the whole row's ground and outline move to its box (inside it, so the
-     data-cut fade, which masks to the box, never cuts the line) */
-  .item[data-selected="true"][data-part="input"],
-  .item[data-selected="true"][data-part="result"] {
-    background: none;
-    outline: none;
-  }
+     data-cut fade, which masks to the box, never cuts the line); the row keeps its zebra ground */
   .item[data-part="input"] .in,
   .item[data-part="result"] .result {
     border-radius: var(--radius);

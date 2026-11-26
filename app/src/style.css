@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 /* Colour roles per family and brightness (R50b). The values are tools/probes/themes-audit.mjs `--css`; the contrast
    test (src/style.test.ts) reads every [data-family][data-brightness] block. index.html sets both attributes before
-   the first paint. --approx ≈, --warn ⚠, --pick the picked row and the entry line's bracket box (R116), --sel the
+   the first paint. --approx ≈, --warn ⚠, --pick the picked row and the entry line's bracket box (R116), --row-alt
+   every second history row (R742: ZEBRA 1.08:1 from --bg, the ink at its floor on it), --sel the
    entry line's selection and --on-sel its text (R274: 3:1 against --panel and --pick, text 4.5:1), --focus focus
    ring, --alpha also the entry line's caret, --key-on and --on-key-on a key that is on, --on-error the
    label on an --error ground. */
@@ -176,6 +177,7 @@
   --key-pfx: #1e4948;
   --sel: #299c9a;
   --on-sel: #000000;
+  --row-alt: #112e2d;
   --on-error: #092726;
   --on-shift: #000000;
   --on-alpha: #000000;
@@ -208,7 +210,7 @@
   --approx: #005b5a;
   --warn: #725400;
   --pick: #a9d9d8;
-  --focus: #368281;
+  --focus: #357e7d;
   --ring: #368281;
   --key-on: #005b5a;
   --on-key-on: #ffffff;
@@ -220,6 +222,7 @@
   --key-pfx: #b9d9d8;
   --sel: #387e7d;
   --on-sel: #ffffff;
+  --row-alt: #c1dddc;
   --on-error: #ffffff;
   --on-shift: #ffffff;
   --on-alpha: #ffffff;
