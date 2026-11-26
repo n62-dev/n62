@@ -685,6 +685,7 @@ export const CANCELS_IDS = new Set([
   "g126-asin-sin-1e100-30",
   "prec-zero-cancel", "g358-ln-1-tanh50-30", "g358-keep-tanh100-minus-1", "g363-pow-euler-gamma-800", // G358: 1-tanh(50), 1-tanh(100) are 0 at Digits 40 (Home climbs to the level where they are finite); G363: 1+euler_gamma^800 (1E-191 added) is 1 there (Home starts past 191 digits)
   "g126-asinh-neg-1e-20-30",
+  ...["approx-ln-1-tanh50", "ln-1-tanh800", "inv-1-tanh800", "inv-1-tanh1000", "keep-inv-1-tanh300"].map((k) => `g404-${k}`), // G404: as G358's, 0 at Digits 40 (Home climbs, to 980 digits)
   ...["acos-sqrt-neg2-1e-330-minus-2", "acos-sqrt-neg2-1e-400-minus-2", "asin-sqrt-neg2-1e-330-minus-2", "asin-minus-sqrt-neg2-1e-330-minus-2", "asin-sqrt-neg2-1e-330-plus-2"].map((k) => `g325f1-${k}`), ...["evalf-asin", "evalf-acos", "evalf-acosh", "approx-acos"].map((k) => `g325f2-${k}-sqrt-neg2-1e-${k === "approx-acos" ? "400" : "330"}-minus-2`), // G325f1, G325f2 (evalf of the call): nested roots past MAX_EVAL_DIGITS (Home: from the argument's float)
   ...["ASIN-sqrt-neg2-1e-330-minus-2", "ACOS-sqrt-neg2-1e-330-minus-2", "evalf-ACOSH-sqrt-neg2-1e-330-minus-2", "evalf-arccosh-sqrt-neg2-1e-330-minus-2"].map((k) => `g360-${k}`), // G360: as G325f1's, spelt ASIN, ACOS, ACOSH, arccosh
 ]);

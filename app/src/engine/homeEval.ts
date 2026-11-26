@@ -348,6 +348,14 @@ export function onceUndecided(giac: Giac, form: InputForm, body: string, out: st
   return restsOnDecision(body, "typed", out, decidingStored(giac));
 }
 
+/** G404 fix round 2: a numeric result's confirmed digits up to `P` (`text`, as its copy) and that number as Giac reads it
+ *  back (`float`, floatsAsEvalf): what an approx keeps whose bare value only the climb reaches (approx(ln(1-tanh(50))),
+ *  whose float at P is -infinity). Null for a result with no value (a list, Giac's text). */
+export function confirmedFloat(r: HomeResult, P: number): { text: string; float: string } | null {
+  const text = r.value ? formatConfirmed({ ...r.facts, value: r.value }, { format: "STD", digits: P }) : null;
+  return text === null ? null : { text, float: floatsAsEvalf(text) };
+}
+
 /** Longest exact text kept as `full` (docs/04 section 2.8: ≤ 2 kB). */
 export const FULL_EXACT_MAX = 2048;
 
@@ -698,10 +706,10 @@ export function homeEval(
   }
 
   const shape = shapeOfValue(value);
-  const symbolic = (forced?: "unaudited"): HomeResult => {
+  const symbolic = (forced?: "unaudited" | "pastCap"): HomeResult => {
     // G78: Giac's text with no free name where a number was asked for (asin(acos(π²)), sinh(6020³)), or undef through ∞.
     // G168: a polish that could not replace Giac's undef is a lost answer too, ⚠ or not (only an infinity stays Giac's word).
-    const lost = once || (forced && (undefStands || exactOut.trim() !== "undef")) || inexactTest ? null : lostNumber(giac, ans, exactBody, exactOut, late, exactMs, userFn, undefStands);
+    const lost = once || forced === "pastCap" || (forced && (undefStands || exactOut.trim() !== "undef")) || inexactTest ? null : lostNumber(giac, ans, exactBody, exactOut, late, exactMs, userFn, undefStands);
     if (lost) return refuse(lost, "exact");
     // Not a number (symbolic, a set, a nested list…): show Giac's text. This build does not apply the
     // "regroup" autosimplify at the top level (x*x stays x*x), so collect equal factors here.
@@ -731,8 +739,8 @@ export function homeEval(
     const latex = isError(tex) || rows ? {} : { latex: unquote(tex) };
     // A float in a non-number (x-0.54764225985): nobody checked its digits, so ⚠ without a count (G27, docs/04 2.4).
     const unchecked = hasFloat(text) || forced !== undefined;
-    const warn = decided?.warn ?? forced ?? (unchecked ? "unchecked" : undefined);
-    const why = symbolicWhy(warn, testSides(exactBody));
+    const warn = decided?.warn ?? (forced === "pastCap" ? "unchecked" : forced) ?? (unchecked ? "unchecked" : undefined);
+    const why = forced === "pastCap" ? { pastCap: true as const } : symbolicWhy(warn, testSides(exactBody));
     return done({ ok: true, display, ...(listed ? { braces: true as const } : {}), exact: text, ...(deg !== null || listed || shownText !== plainShown ? { full: text } : {}), ...latex, path: "exact", approximate: inexactTest || unchecked, facts: { exact: false, reliableDigits: null, ...(warn ? { warn } : {}), ...(why ? { why } : {}) } });
   };
   // G44f1: Giac's inverse distribution function gives ±infinity for some p inside (0, 1) (fisher_icdf(3,4,1-10^-20)):
@@ -750,6 +758,16 @@ export function homeEval(
 
   // G148: approx or evalf of a finite value past MPFR's range (Giac's ±infinity, or a float 0) is refused as the bare value.
   const range = once || late() ? null : approxRange(giac, exactBody, exactOut, P, late, userFn);
+  // G404: the bare value of an approx, finite higher up the climb or past its reach (approx(ln(1-tanh(50)))), as typed
+  if (range && typeof range === "object") {
+    const asked = askedDigits(input);
+    const r = homeEval(giac, asg ? `${asg.name}:=${range.bare}` : range.bare, asked === null ? s : { ...s, digits: asked }, now, asg ? { ...form, assignment: { name: asg.name, rhs: range.bare } } : form, fnBody, undefStands, logged);
+    // fix round 2: Ans and the name keep the number approx asks for, its confirmed digits (confirmedFloat), not the bare text
+    const kept = r.ok ? confirmedFloat(r, valuePrecision(asked ?? s.digits)) : null;
+    if (kept) giac.eval(`${ans}:=${kept.float}${asg ? `;${asg.name}:=${ans}` : ""}`);
+    const { exact: _x, rational: _q, ...rest } = r;
+    return { ...(kept ? { ...rest, full: kept.text } : r), approximate: true, ...(asked !== null && r.ok ? { digits: asked } : {}) };
+  }
   if (range) return refuse(range, "exact");
   // A list holding an open == or ≠ test (R18f3): its numeric value would be Giac's structural verdict, 0 or 1.
   if (!shape || /==|<>/.test(exactOut)) return symbolic();
@@ -792,6 +810,7 @@ export function homeEval(
   // G358 (G123): MPFR's infinity at P is an overflow only when it is infinite at every level of the check's climb
   const climbed = facts || once || shape.kind !== "scalar" || late() ? null : climbedFacts(giac, ans, exactOut, value, s.digits, s.maxExactDigits, late, underflowAt);
   if (climbed === "timeout" || climbed === "overflow") return climbed === "overflow" ? refuse(climbed, "exact") : { ...failed(enEngine["error.timeout"], "exact"), error: "timeout" };
+  if (climbed === "pastReach") return symbolic("pastCap"); // G404: 1/(1-tanh(5000)): ⚠ with the cap's words (F155), no overflow
   if (Array.isArray(climbed) && decidedBelow) undecided = true;
   facts ??= climbed;
   if (!facts) {
