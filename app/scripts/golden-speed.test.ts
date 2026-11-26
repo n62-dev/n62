@@ -40,5 +40,9 @@ describe("golden speed (G82, G137)", () => {
     expect(SPEED_KNOWN["precision/g331-evalf-simplify-sqrt-ln-nested-root-30"]).toBe("HOME_CLOCK_S");
     expect(SPEED_KNOWN["precision/g186-cos-tanh-acosh-1e-1000-12"]).toBe("HOME_CLOCK_S"); // G782 fix round 1: the RAD twin, under load
     expect(SPEED_KNOWN["precision/g331-simplify-f214-12"]).toBe("HOME_CLOCK_S"); // G782f1 fix round 3: ×8 is 1.25× from its clock
+    for (const id of ["keep-round-sin-1e50-12", "keep-round-sin-1e50-30", "keep-deg-round-sin-1e50-12", "keep-deg-round-sin-1e50-30",
+      "cas-keep-deg-int-int-abs-sin-1e50-12", "cas-keep-deg-int-int-abs-sin-1e50-30"]) {
+      expect(SPEED_KNOWN[`precision/g804-${id}`]).toBe("HOME_CLOCK_S"); // G804f1: both values are wrong under the ⚠, under load
+    }
   });
 });
