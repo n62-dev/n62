@@ -37,7 +37,26 @@ describe("the Chars sheet's cells (R725)", () => {
   it("has a name for TalkBack on every cell (chars.<id>), and a title", () => {
     for (const c of chars.items) expect(enPalettes, c.id).toHaveProperty(`chars.${c.id}`);
     expect(enPalettes["chars.title"]).toBe("Characters");
-    expect(enPalettes["chars.permille"]).toMatch(/per mille/);
+    expect(enPalettes["chars.permille"]).toMatch(/Per mille/);
+  });
+
+  // R914: the sheet's hint reads the highlighted cell's name; a sign that Chars and α∞ (Shift + 9) or Shift + 6 both hold
+  // is named once, capitalised as every other sheet's names.
+  it("names a sign the same in every palette that holds it, with a capital (R914)", () => {
+    const name = (prefix: string, id: string): string => (enPalettes as Record<string, string>)[`${prefix}.${id}`] ?? "";
+    const others = [["sym", keyboard.symbols], ["rel", keyboard.relations]] as const;
+    const pairs: string[] = [];
+    for (const c of chars.items)
+      for (const [prefix, p] of others)
+        for (const o of p.items.filter((o) => o.action.latex === c.action.latex)) {
+          pairs.push(`${c.id}=${prefix}.${o.id}`);
+          expect(name("chars", c.id), `chars.${c.id} vs ${prefix}.${o.id}`).toBe(name(prefix, o.id));
+        }
+    expect(pairs).toHaveLength(26); // 19 Greek letters, ° ′ ″ ∞ Å in α∞, ≠ ≤ ≥ in Shift + 6
+    for (const [prefix, p] of [["chars", chars], ...others] as const)
+      for (const c of p.items) expect(name(prefix, c.id), `${prefix}.${c.id}`).toMatch(/^[A-ZÅ]/);
+    const greek = chars.items.filter((c) => c.row < 3).map((c) => name("chars", c.id));
+    expect(new Set(greek).size).toBe(greek.length); // δ and Δ stay apart: "Delta", "Capital delta"
   });
 
   it("× ± ∠ √ insert what their keys insert; ° ′ ″ ∞ ≠ ≤ ≥ what Shift + 9 and Shift + 6 insert", () => {
