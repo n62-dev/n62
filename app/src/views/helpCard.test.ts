@@ -11,7 +11,7 @@ import type { MenuItem } from "../apps/types.ts";
 import { unitNote } from "../find/finder.ts";
 import type { FindItem, IndexItem } from "../find/types.ts";
 import { siUnit } from "../units/dims.ts";
-import { approx, cardRows, exactDecimal } from "./helpCard.ts";
+import { approx, cardRows, exactDecimal, exactText, unitExprText } from "./helpCard.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const indexFile = join(here, "../find/_gen/find-index.json");
@@ -123,6 +123,49 @@ describe.skipIf(!hasIndex)("R869: the help card from the Find index", () => {
     expect(rowOf("const:planck", "names")?.label).toMatch(/^h · /);
   });
 
+  // the audit of run 1638: an exact constant the index holds as qalc's fraction text (ℏ, σ) showed it raw (`*pi^5`, 41 zeros)
+  const SUP = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+  const sup = (k: number): string => [...String(k)].map((c) => SUP[Number(c)]).join("");
+  /** A run of trailing zeros split off: [the digits before it, how many]. */
+  const zeros = (s: string): [string, number] => {
+    const m = /^(\d*?)(0*)$/.exec(s) as RegExpExecArray;
+    return [m[1] as string, (m[2] as string).length];
+  };
+  const unitOf = (it: FindItem): string => ` ${unitExprText(it.ownUnit ?? it.unit ?? "")}`;
+
+  it("const:planck2pi (ℏ): π as π, the denominator's zeros as a power of ten, exact, then ≈ with 12 digits", () => {
+    const h = item("const:planck2pi");
+    expect(h.unc).toBeUndefined();
+    const m = /^(\d+)\/\((\d+)\*pi\)$/.exec(h.value ?? "") as RegExpExecArray;
+    expect(m).not.toBeNull();
+    const [num, den] = [m[1] as string, m[2] as string];
+    expect(gcd(big(num), big(den))).toBe(1n);
+    const [d, k] = zeros(den);
+    const u = unitOf(h);
+    expect(rowOf("const:planck2pi", "names")?.label).toMatch(/^ℏ · /);
+    expect(rowOf("const:planck2pi", "value")?.label).toBe(`${num}/(${d}·10${sup(k)}·π)${u}`);
+    expect(rowOf("const:planck2pi", "value")?.label).not.toMatch(/\*|pi|\^/);
+    expect(rowOf("const:planck2pi", "value")?.hint).toBe("exact (SI definition)");
+    expect(rowOf("const:planck2pi", "approx")?.label).toBe(`≈ ${(Number(num) / (Number(den) * Math.PI)).toPrecision(12).replace("e", "E")}${u}`);
+    expect(card("const:planck2pi").every((r) => r.keep === true)).toBe(true);
+  });
+
+  it("const:sigma (σ): π⁵ as π⁵, the numerator's zeros as a power of ten, exact, then ≈ with 12 digits", () => {
+    const s = item("const:sigma");
+    expect(s.unc).toBeUndefined();
+    const m = /^(\d+)\*pi\^5\/(\d+)$/.exec(s.value ?? "") as RegExpExecArray;
+    expect(m).not.toBeNull();
+    const [num, den] = [m[1] as string, m[2] as string];
+    const g = gcd(big(num), big(den));
+    const [n, k] = zeros((big(num) / g).toString());
+    const u = unitOf(s);
+    expect(rowOf("const:sigma", "value")?.label).toBe(`${n}·10${sup(k)}·π⁵/${big(den) / g}${u}`);
+    expect(rowOf("const:sigma", "value")?.hint).toBe("exact (SI definition)");
+    expect(rowOf("const:sigma", "approx")?.label).toBe(`≈ ${((Number(num) * Math.PI ** 5) / Number(den)).toPrecision(12).replace("e", "E")}${u}`);
+    // an exact constant whose decimal ends keeps it, with no ≈ row
+    expect(rowOf("const:c", "approx")).toBeUndefined();
+  });
+
   it("a unit without si says unitNote's words; a tier-1 unit says not checked", () => {
     for (const id of ["unit:dB", "unit:Ha"]) {
       const it0 = item(id);
@@ -143,6 +186,15 @@ describe("R869: the card's numbers", () => {
     expect(exactDecimal(1n, 3n)).toBeUndefined();
     expect(exactDecimal(1n, 10n ** 30n)).toBe(`0.${"0".repeat(29)}1`);
     expect(exactDecimal(1n, 10n ** 31n)).toBeUndefined();
+  });
+  it("exactText: reduced, long zero runs as powers of ten, π as π", () => {
+    expect(exactText({ n: 3n, d: 4n * 10n ** 41n, pi: -1 })).toBe("3/(4·10⁴¹·π)");
+    expect(exactText({ n: 6n, d: 8n, pi: 0 })).toBe("3/4");
+    expect(exactText({ n: 1000n, d: 7n, pi: 0 })).toBe("1000/7");
+    expect(exactText({ n: 10n ** 6n, d: 7n, pi: 2 })).toBe("10⁶·π²/7");
+    expect(exactText({ n: 3n * 10n ** 6n, d: 7n * 10n ** 4n, pi: 0 })).toBe("300/7");
+    expect(exactText({ n: 3n * 10n ** 9n, d: 7n * 10n ** 4n, pi: 0 })).toBe("3·10⁵/7");
+    expect(exactText({ n: 7n, d: 10n ** 8n, pi: 1 })).toBe("7·π/10⁸");
   });
   it("approx: 12 significant digits, half up, E past the plain range", () => {
     expect(approx(1n, 3n)).toBe("0.333333333333");
