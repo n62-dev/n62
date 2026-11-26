@@ -584,10 +584,11 @@ export class Session {
     return (formsCode?.baseMark ?? markFor)(item, modeOf(item, this.settings), this.displayContext()); // R192: a base form's, lazy
   }
 
-  /** `mute` (R40), `groupSep` (R125): the muted digits' code once in, the separator; only the screen's row uses them. */
+  /** `mute` (R40), `groupSep` (R125): the muted digits' code once in, the separator; only the screen's row uses them.
+   *  `sigma` (R885): a unit row's σ drawing rule, once in (the row and Copy as shown). */
   displayContext(): DisplayContext {
     const s = this.settings;
-    return { format: s.format, digits: s.digits, fixDecimals: s.fixDecimals, angle: s.angle, ...(this.decimalComma ? { decimalComma: true } : {}), groupSep: s.groupSep, mute: sigmaCode?.muter };
+    return { format: s.format, digits: s.digits, fixDecimals: s.fixDecimals, angle: s.angle, ...(this.decimalComma ? { decimalComma: true } : {}), groupSep: s.groupSep, mute: sigmaCode?.muter, sigma: sigmaCode?.sigmaDrawn };
   }
 
   /** The row the Format key (cycleFormat) or the a b/c key on an empty line (cycleForm, R10; cycleForms.ts) takes: the picked

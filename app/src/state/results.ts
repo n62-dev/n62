@@ -115,12 +115,17 @@ export function chipOf(item: ChipSource): Chip | undefined {
 
 /** R63f1: Home's number of a unit row with its ± σ and unit after it (units/row.ts UnitRow: `latex` drawn, `text` for
  *  Copy as shown and the row's data-text). Both are read back unchecked, so one that is not a string adds nothing.
- *  `comma`: the decimal comma's rewrite (displayMode.ts commaResult), in comma mode. */
+ *  `comma`: the decimal comma's rewrite (displayMode.ts commaResult), in comma mode. R885: `r.sigma`, σ drawn in the
+ *  value's form (render/sigmaForm.ts, comma already applied), takes the place of the stored ` ± σ` (UnitRow.unc.text). */
 export function withUnit(
-  r: { text: string; latex: string },
-  u: { text?: unknown; latex?: unknown },
+  r: { text: string; latex: string; sigma?: { text: string; latex: string } },
+  u: { text?: unknown; latex?: unknown; unc?: unknown },
   comma?: (s: string, latex: boolean) => string,
 ): { text: string; latex: string } {
   const add = (s: unknown, latex: boolean): string => (typeof s !== "string" ? "" : comma ? comma(s, latex) : s);
+  const st = (u.unc as { text?: unknown } | undefined)?.text;
+  const tx = ` ± ${String(st)}`, lx = `\\pm${String(st)}`;
+  if (r.sigma && typeof st === "string" && typeof u.text === "string" && typeof u.latex === "string" && u.text.startsWith(tx) && u.latex.startsWith(lx))
+    return { text: `${r.text} ± ${r.sigma.text}${add(u.text.slice(tx.length), false)}`, latex: `${r.latex}\\pm${r.sigma.latex}${add(u.latex.slice(lx.length), true)}` };
   return { text: r.text + add(u.text, false), latex: r.latex + add(u.latex, true) };
 }

@@ -4,11 +4,12 @@
 // mark as Home draws it, the value at the digits setting, the unit, the dimension), σ with its ⚠ and why-line, a note and
 // the alternatives row.
 // Plain TS; units/panel.ts draws it. Loaded with the unit view.
-import { confirmedOptions, formatComplex, markOf, type FormatOptions, type Mark } from "../engine/format.ts";
+import { confirmedOptions, formatComplex, isZero, markOf, toText, type FormatOptions, type Mark } from "../engine/format.ts";
 import { precisionFacts } from "../engine/precisionFacts.ts";
 import { unitText } from "../i18n/enUnits.ts";
 import { groupText } from "../render/groupText.ts";
 import { groupSepFor, type GroupSep } from "../render/home.ts";
+import { sigmaAlone } from "../render/sigmaForm.ts";
 import { powerOf, sigmaCut, tailAt } from "../render/uncMute.ts";
 import { commaResult, markText, withSigmaText } from "../state/displayMode.ts";
 import type { Alternative } from "./alternatives.ts";
@@ -44,7 +45,7 @@ export interface UnitShown {
   names?: string;
   /** "L·T⁻¹"; absent for a pure number. */
   dim?: string;
-  /** With σ, muted under the value line: the value and σ at the digits setting. */
+  /** With σ, muted under the value line: the value at the digits setting and σ at 2 significant digits (R885). */
   sub?: string;
   /** R883: where in `sub` its value stands and its digits past σ go muted (R40's rule, render/uncMute.ts):
    *  [value from, muted from, muted to, value to]; the muted part is empty when no digit is. */
@@ -102,10 +103,18 @@ export function shownOf(q: Quantity | UnitError, u: UnitFormat, alts: readonly A
     ...(q.note ? { note: unitNoteText(q.note) } : {}),
     ...(q.names?.length ? { names: unitNamesText(q.names) } : {}),
     ...(dim ? { dim } : {}),
-    ...(q.unc ? subLine(drawn(value), drawn(number(q.unc.value)), sigmaCut(q.unc.value.value?.re, q.value.value), re && [(re.neg ? "-" : "") + drawn(re.mantissa), powerOf(re)], decimalComma ? "," : ".") : {}),
+    ...(q.unc ? subLine(drawn(value), drawn(sigmaText(q.unc.value, o)), sigmaCut(q.unc.value.value?.re, q.value.value), re && [(re.neg ? "-" : "") + drawn(re.mantissa), powerOf(re)], decimalComma ? "," : ".") : {}),
     dimension,
     alts: dimension === "" ? [] : alts,
   };
+}
+
+/** R885: σ on the line under the value line, at 2 significant digits in the format's form for σ (render/sigmaForm.ts
+ *  sigmaAlone: SCI 5.0E-2, not the digits setting's 5.00000000000E-2); a σ of 0 or no decimal as the digits setting
+ *  draws it. */
+function sigmaText(s: Quantity["value"], o: FormatOptions): string {
+  const f = s.value && isZero(s.value.im) ? sigmaAlone(s.value.re, o) : null;
+  return f ? toText(f) : s.value ? formatComplex(s.value, confirmedOptions(s.value, s.facts.reliableDigits, o)).text : s.display;
 }
 
 /** R883: the line under the value line (`sub`), and with σ's cut (render/uncMute.ts sigmaCut) where its value's digits

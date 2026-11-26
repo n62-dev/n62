@@ -8,6 +8,7 @@
 import type { ValueFacts } from "../engine/types.ts";
 import {
   confirmedOptions,
+  decimalFromString,
   formatComplex,
   formatConfirmed,
   formatFraction,
@@ -18,8 +19,10 @@ import {
   type DecimalValue,
   type FormattedComplex,
   type FormatOptions,
+  type FormattedNumber,
   type MarkInfo,
   type PrecisionFacts,
+  toText,
 } from "../engine/format.ts";
 import type { NumberFormat } from "../calc/port.ts";
 import { shownDigits } from "./sigmaDigits.ts";
@@ -136,6 +139,9 @@ export interface DisplayContext {
   groupSep?: GroupSep;
   /** R40: the muted digits' code (render/uncMute.ts muter), once loaded; absent: every digit drawn plain. */
   mute?: (r: NumericResult) => Mute | undefined;
+  /** R885: the σ drawing rule's code (render/sigmaForm.ts sigmaDrawn), once loaded; absent: a unit row draws its number
+   *  by the digits setting and its stored ` ± σ` after it (as before R885). */
+  sigma?: (v: DecimalValue, s: DecimalValue, o: FormatOptions) => { value: FormattedNumber; sigma: FormattedNumber } | null;
 }
 
 /** The mode an item is drawn in: the a b/c form when one is chosen, else the Format key's notation (`dec`: the notation,
@@ -201,7 +207,8 @@ export function renderNumeric(
 ): Drawn | undefined {
   const out = renderPoint(r, mode, ctx, grouped);
   if (!out || !ctx.decimalComma) return out;
-  return { ...out, text: commaResult(out.text, false), latex: commaResult(out.latex, true), ...(out.wrap ? { wrap: out.wrap.map((p) => commaResult(p, true)) } : {}) };
+  const sigma = out.sigma ? { sigma: { text: commaResult(out.sigma.text, false), latex: commaResult(out.sigma.latex, true) } } : {};
+  return { ...out, text: commaResult(out.text, false), latex: commaResult(out.latex, true), ...(out.wrap ? { wrap: out.wrap.map((p) => commaResult(p, true)) } : {}), ...sigma };
 }
 
 /** A result as drawn: `wrap` (R158) is set for a plain number (a real with a grouped mantissa of two or more groups): the
@@ -212,6 +219,9 @@ export interface Drawn {
   latex: string;
   wrap?: string[];
   gap?: true;
+  /** R885: a unit row's σ drawn in the value's form (render/sigmaForm.ts); state/results.ts withUnit puts it in place of
+   *  the row's stored σ text. */
+  sigma?: { text: string; latex: string };
 }
 
 /** R158: the pieces of a plain number's one-line `latex` (the sign, the exponent and the separators are its own: one
@@ -245,13 +255,18 @@ function renderPoint(r: NumericResult, mode: FmtMode | undefined, ctx: DisplayCo
     const p = formatPolar(pol.value, confirmedOptions(pol.value, pol.reliableDigits, opts(ctx.format)));
     return { text: p.text, latex: polarToLatex(p, group) };
   }
-  const c = formatComplex(r.value, confirmedOptions(r.value, r.facts?.reliableDigits ?? null, opts(base)));
+  const o = confirmedOptions(r.value, r.facts?.reliableDigits ?? null, opts(base));
+  // R885: a unit row's ± σ draws the value and σ by one rule (render/sigmaForm.ts): never cut above σ, the same form
+  const sv = r.units?.unc && r.facts?.uncSigma !== undefined && isZero(r.value.im) ? decimalFromString(r.facts.uncSigma) : null;
+  const ps = sv ? ctx.sigma?.(r.value.re, sv, o) : undefined;
+  const c: FormattedComplex = ps ? { re: ps.value, im: null, text: toText(ps.value) } : formatComplex(r.value, o);
   // R40: only the screen's row mutes the digits past a constant's σ (`grouped`): the text, chips and Copy keep them all
   const mute = grouped ? ctx.mute?.(r) : undefined;
   const latex = complexToLatex(c, group, mute);
   // muted digits (R40) draw markup of their own: that row keeps the one line
   const wrap = latex === complexToLatex(c, group) ? wrapPieces(c, latex, group) : undefined;
-  return { text: c.text, latex, ...(wrap ? { wrap } : {}), ...(wrap && group === GROUP_LATEX.thin ? { gap: true as const } : {}) };
+  const sigma = ps ? { sigma: { text: toText(ps.sigma), latex: complexToLatex({ re: ps.sigma, im: null, text: "" }, group) } } : {};
+  return { text: c.text, latex, ...(wrap ? { wrap } : {}), ...(wrap && group === GROUP_LATEX.thin ? { gap: true as const } : {}), ...sigma };
 }
 
 /**
