@@ -130,9 +130,11 @@ export class UnitPad {
     if (!c || sheet) return undefined; // (a sheet over the keys: the keypad's own)
     const label: Partial<Record<PadLayer, string>> = {};
     const actions: Partial<Record<PadLayer, Action>> = {};
+    const pfx: { shift?: true; alpha?: true } = {};
     for (const layer of Object.keys(LEG) as PadLayer[]) {
       const leg = c[LEG[layer]];
       if (leg) label[layer] = leg.text;
+      if (leg && c.kind === "prefix" && layer !== "primary") pfx[layer] = true; // R908: its legend carries the slot line
       // (the drawing reads only whether a layer has an action and, for the mark ▾, whether it opens a sheet: the keep cell Find,
       // the one leg that emits it, R861; the press goes to `route`. An empty user cell's Find, R24d, is no leg: its "+" has no mark)
       actions[layer] = leg ? (leg.emit.do === "find" ? FIND : DRAWN) : NONE;
@@ -147,7 +149,7 @@ export class UnitPad {
     if (empty) label.primary = "+";
     const { user, ...rest } = k; // (a user cell is drawn as the pad's, not by the user's own slots)
     void user;
-    return { ...rest, label, actions, pad: empty ? "empty" : c.kind };
+    return { ...rest, label, actions, pad: empty ? "empty" : c.kind, ...(pfx.shift || pfx.alpha ? { pfx } : {}) };
   }
 
   /** A key press while the pad is up (keyboard/route.ts): a cell emits its action in the layer it was pressed in and
