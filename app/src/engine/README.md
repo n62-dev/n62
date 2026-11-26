@@ -58,6 +58,7 @@ One line per module: what it owns, who calls it. Groups as in docs/04 section 6.
 | `constDouble.ts` | G363: the double value and the log10 magnitude (past the double's range) of a constant expression as `giacPrint.ts` `arithmeticOf` reads it (numbers, `pi`, `euler_gamma`, elementary functions; any other name gives NaN), the magnitude bound of a power of a constant base; called by `literalPrec.ts` |
 | `rootofNoise.ts` | G60's rounding-noise rule for a part of a non-real value; G324: a part 0 in the double and not at P is read at P + 20 and shown as 0 when it is noise; called by `numeric.ts` |
 | `doubleElements.ts` | G172: the double fallback of a result with no MPFR value, element by element in a list or matrix; called by `homeEval.ts` |
+| `approxClimb.ts` | G404: CAS's approx or evalf of a value finite only higher up the climb (`approxClimbed`: decided again, facts from `doubleElements.ts` climbedFacts, the number kept); called by `host.ts` |
 | `complex.ts` | G50, G60: the complex workaround (our atan); called by `numeric.ts`, `homeEval.ts`, `stateRead.ts` |
 | `powers.ts` | G59f1: powers that Giac's exact evaluation may move to another branch; called by `homeEval.ts` |
 | `asked.ts` | G91: the precision an `evalf(e,n)`/`approx(e,n)` asks for, made a literal; called by `host.ts` |

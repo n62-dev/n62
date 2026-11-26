@@ -348,6 +348,14 @@ export function onceUndecided(giac: Giac, form: InputForm, body: string, out: st
   return restsOnDecision(body, "typed", out, decidingStored(giac));
 }
 
+/** G404 fix round 2: a numeric result's confirmed digits up to `P` (`text`, as its copy) and that number as Giac reads it
+ *  back (`float`, floatsAsEvalf): what an approx keeps whose bare value only the climb reaches (approx(ln(1-tanh(50))),
+ *  whose float at P is -infinity). Null for a result with no value (a list, Giac's text). */
+export function confirmedFloat(r: HomeResult, P: number): { text: string; float: string } | null {
+  const text = r.value ? formatConfirmed({ ...r.facts, value: r.value }, { format: "STD", digits: P }) : null;
+  return text === null ? null : { text, float: floatsAsEvalf(text) };
+}
+
 /** Longest exact text kept as `full` (docs/04 section 2.8: ≤ 2 kB). */
 export const FULL_EXACT_MAX = 2048;
 
@@ -754,7 +762,11 @@ export function homeEval(
   if (range && typeof range === "object") {
     const asked = askedDigits(input);
     const r = homeEval(giac, asg ? `${asg.name}:=${range.bare}` : range.bare, asked === null ? s : { ...s, digits: asked }, now, asg ? { ...form, assignment: { name: asg.name, rhs: range.bare } } : form, fnBody, undefStands, logged);
-    return { ...r, approximate: true, ...(asked !== null && r.ok ? { digits: asked } : {}) };
+    // fix round 2: Ans and the name keep the number approx asks for, its confirmed digits (confirmedFloat), not the bare text
+    const kept = r.ok ? confirmedFloat(r, valuePrecision(asked ?? s.digits)) : null;
+    if (kept) giac.eval(`${ans}:=${kept.float}${asg ? `;${asg.name}:=${ans}` : ""}`);
+    const { exact: _x, rational: _q, ...rest } = r;
+    return { ...(kept ? { ...rest, full: kept.text } : r), approximate: true, ...(asked !== null && r.ok ? { digits: asked } : {}) };
   }
   if (range) return refuse(range, "exact");
   // A list holding an open == or ≠ test (R18f3): its numeric value would be Giac's structural verdict, 0 or 1.
