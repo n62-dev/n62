@@ -126,7 +126,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | B5e | [A275f1](packages/A275f1.md) the worker may write its Docs step's files, runs size before its report (pipeline review; owner, 2026-11-25) | annabell, Sonnet | `p1/annabell-docsprompt` | – |
-| B5f | [A280](packages/A280.md) e2e runs when a file e2e reads outside app/ changes | annabell, Sonnet | `p1/annabell-e2eplan` | – |
+| B5f | A280 e2e runs when a file e2e reads outside app/ changes | annabell, Sonnet | `p1/annabell-e2eplan` | – |
 | B5g | [A276](packages/A276.md) an audit FIX stops the round's long checks | annabell, Sonnet | `p1/annabell-fixstops` | – |
 | B5h | [A279](packages/A279.md) trust:check in the pre-flight | annabell, Sonnet | `p1/annabell-trustpreflight` | A280 |
 | B5i | [A277](packages/A277.md) golden planned by its import closure | annabell, Sonnet | `p1/annabell-goldenclosure` | A276 |

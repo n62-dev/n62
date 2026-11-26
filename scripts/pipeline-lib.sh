@@ -613,6 +613,17 @@ GOLDEN_RE='^(engine/|app/src/engine/|app/src/input/|app/src/units/|app/src/(clip
 # golden_selected: succeeds when a changed file (one per line, on stdin) plans the golden check.
 golden_selected() { grep -qE "$GOLDEN_RE"; }
 
+# A280: the paths outside the engine and golden list whose change plans e2e or size, though no file under app/ changed. E2E_RE: app/, the
+# layout files and the lists the e2e specs read (spec/, tests/core/, tests/tasks/, tests/fixtures/, the probes they run, tools/trust/, which the app
+# imports at run time); BUILD_RE: what the app's build reads (size): app/, spec/, tests/golden/, tests/tasks/, tools/trust/, tools/third-party/,
+# THIRD_PARTY.md, LICENSES/ and the Giac patch list (the About page). scripts/pipeline.test.sh greps the specs and the app for every such path and
+# fails when one is missing here; docs/backlog.md is the one read left out (core.spec checks the `known:` ids against it, every package ticks it).
+E2E_RE='^(app/|spec/|tests/(core|tasks|fixtures)/|tools/(trust/|probes/(library/|find-cost\.mjs$|unit-presses\.mjs$)))'
+BUILD_RE='^(app/|spec/|tests/(golden|tasks)/|tools/(trust|third-party)/|THIRD_PARTY\.md$|LICENSES/|engine/giac/patches/)'
+# e2e_selected, build_selected: succeed when a changed file (one per line, on stdin) plans the e2e or the size check.
+e2e_selected() { grep -qE "$E2E_RE"; }
+build_selected() { grep -qE "$BUILD_RE"; }
+
 # behaviour_selected: succeeds when a changed file (one per line, on stdin) is engine, input or units code (A18).
 behaviour_selected() { grep -qE '^(engine/|app/src/engine/|app/src/input/|app/src/units/)'; }
 # behaviour_section <integ> <wt> <outfile> [<phase-1 engine dir> <branch engine dir>]: A18, the "## Behaviour changes" section of the
