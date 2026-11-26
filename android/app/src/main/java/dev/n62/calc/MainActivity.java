@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 package dev.n62.calc;
 
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.os.Process;
 import android.os.SystemClock;
@@ -21,6 +22,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(N62HapticsPlugin.class); // local plugin; must come before super.onCreate
         registerPlugin(N62FilesPlugin.class);
         registerPlugin(N62BarsPlugin.class);
+        lockPhonePortrait();
         if (!BuildConfig.MEASURE) {
             super.onCreate(savedInstanceState);
             installBack();
@@ -39,6 +41,16 @@ public class MainActivity extends BridgeActivity {
             final WebView wv = getBridge().getWebView();
             final String url = getBridge().getAppUrl() + (path.startsWith("/") ? path : "/" + path);
             wv.post(() -> wv.loadUrl(url));
+        }
+    }
+
+    /**
+     * A270: phone landscape has no design yet and the layout overflows sideways, so a phone (smallest width below 600 dp)
+     * stays in portrait. A tablet (the wide layout, docs/05 3.9) keeps both orientations. Runs before super.onCreate.
+     */
+    private void lockPhonePortrait() {
+        if (getResources().getConfiguration().smallestScreenWidthDp < 600) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
     }
 
