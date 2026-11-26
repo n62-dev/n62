@@ -11,7 +11,6 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **G622f2, a singular float inv:** Recommended: refuse, as exact inv does. `inv(approx(10^-9*[[2.5,2E8,e],[2.5,π,2E-3],[5,2E8+π,e+2E-3]]))` is 1E14–1E22 noise, row 3 ≈.
 - **The release bar's week (A273, G799; pass 241):** Recommended: a night counts when every `NIGHTLY` finding falls under a package or bug line the pass names (no new cause), as the clock seed never repeats a known row. Night 1 (11-25): all 118 named (G802, G804, G805, G622f2, F145, F480, F487).
 - **R779, the drag after the arrow keys, on the Fairphone:** not reproduced in Chromium touch emulation (linetouch.spec.ts R779 cases); lineTouch.ts now ends a stale touch. Does the drag work on the Fairphone 6? If not, record `adb` pointer events for the sequence.
-- **A280, e2e for a read file:** docs/backlog.md (core.spec's `known:` ids) and find/ (Find index) do not plan e2e. Recommended: leave both.
 
 ## Decided proposals
 
@@ -211,4 +210,5 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **G618 (run 1361):** Σ to ∞ is checked against its terms only for a term rational in k, or (−1)^k times one, poles left of start + 100. Archived. Would change if: the owner wants every term estimated.
 - **R361f1:** the names a Plot slot reads are Giac's tree of its text (a bound k or t is none); a call of a function with no definition (`f(x)`) notes "F1 uses f: not drawn, it holds no value"; a stored user function stays silent. Would change if: user functions are drawn (after the tag).
 - **G576:** a power past Home's power limit is ≈ even when the input makes it exact (`10^(10^6)` ≈ 1E1000000): the float path proves no exactness and ≈ is never false (principle 3); no package. Would change if: the exact path can state such a power.
+- **A280 (pass 246):** docs/backlog.md and find/ plan no e2e (no core case has a `known:` id). Would change if: one gets one.
 - **G524:** after a rejected pole the search goes on, so a real root found may not be the nearest; "no root found" only when no bracket holds one. Archived. Would change if: the owner wants the nearest root.
