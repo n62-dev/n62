@@ -6,6 +6,8 @@
 // the line in place of the call Help named, its name, bracket and arguments (R324: entry/callRange.ts finds its atoms;
 // the line's Undo brings the call back); where its atoms are not found for sure, at the cursor. No function at the
 // cursor, or one Find does not hold: the caller opens Find. A chunk of its own, loaded from Find's (find/finder.ts showHelpAt), so the start chunk has none of it.
+// R869: Help on Find's highlighted row (showHelpFor): the same rows for a function or template, a card from the index for a unit,
+// prefix or constant (views/helpCard.ts), as a level over Find, so ‹, Esc and ◀ go back to it with its query and highlight.
 import type { AppShell } from "../apps/shell.svelte.ts";
 import type { MenuItem } from "../apps/types.ts";
 import type { EntryController } from "../entry/controller.ts";
@@ -13,6 +15,8 @@ import { cursorLatex } from "../entry/cursorAt.ts";
 import { callAt, type FnWords } from "../entry/cursorFn.ts";
 import type { FindItem } from "../find/types.ts";
 import { helpText as t } from "../i18n/enHelp.ts";
+import { cardRows } from "./helpCard.ts";
+import type { Sheet } from "./sheet.svelte.ts";
 
 /** The sheet's title: "Help: Sine". */
 export const helpTitle = (it: FindItem): string => t("title", { name: it.title });
@@ -31,12 +35,12 @@ export interface CallAt {
 
 /** The rows of the help sheet: the syntax (with the description under it), and with an example its row and Insert. The
  *  first two only inform (a pick keeps the sheet); Insert runs `insert` with the example's LaTeX and `at`, the call it
- *  replaces (R324; none: at the cursor). */
+ *  replaces (R324; none: at the cursor). A tier-1 function has no example: its syntax and "not checked" (R869). */
 export function helpRows(it: FindItem, insert: (latex: string, at: CallAt | undefined) => void, at?: CallAt): MenuItem[] {
   const name = it.names[0] ?? it.id.slice(it.id.indexOf(":") + 1);
   const syntax: MenuItem = { id: "syntax", label: it.syntax ?? `${name}(…)`, keep: true, ...(it.desc ? { hint: it.desc } : {}) };
   const example = it.example;
-  if (example === undefined) return [syntax];
+  if (example === undefined) return it.tier === 1 ? [syntax, { id: "tier", label: t("card.notChecked"), keep: true }] : [syntax];
   const result = resultText(it);
   return [
     syntax,
@@ -83,4 +87,13 @@ export async function showHelpAt(shell: AppShell, entry: EntryController, byId: 
   if (!found) return false;
   shell.showMenu(helpTitle(found.it), helpRows(found.it, (latex, at) => put(entry, latex, at), found.at), { remember: false });
   return true;
+}
+
+/** R869: Help on Find's highlighted row `row` (the index's item `it`): its help as a level over the open one. A function or template:
+ *  helpRows, whose Insert puts the example at the line's cursor and closes the sheet; a unit, prefix or constant: its card
+ *  (helpCard.ts), then Insert, which runs what Enter on the row runs (the line, a unit slot, a free key's slot). */
+export function showHelpFor(sheet: Sheet, it: FindItem, row: MenuItem, entry: EntryController): void {
+  const card = cardRows(it);
+  const items = card ? [...card, { id: "insert", label: t("card.insert"), ...(row.run ? { run: row.run } : { disabled: true }) }] : helpRows(it, (latex) => put(entry, latex, undefined));
+  sheet.openLevel("help", { title: helpTitle(it), items, remember: false });
 }
