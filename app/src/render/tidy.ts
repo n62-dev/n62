@@ -8,9 +8,9 @@ export { muter } from "./uncMute.ts";
 export { sigmaOf } from "../state/sigmaLine.ts";
 // R885: a unit row's value and σ drawn by one rule (Session.displayContext)
 export { sigmaRow, withSigma } from "./sigmaForm.ts";
-// R124: a ⚠ row's reason line (R36's words) rides here too: the chunk is in before the first result, so the line is
+// R124: a ⚠ row's reason line (R36's words; R886: and a unit row σ's ⚠ reason) rides here too: the chunk is in before the first result, so the line is
 // drawn with its row; until then its place is kept (Session.reason)
-export { whyLine } from "../clipboard/whyLine.ts";
+export { reasonLine as reason } from "../clipboard/whyLine.ts";
 
 /** Index of the delimiter closing the group opened at `open` (a "{" or "\left(" or "("), or -1. */
 function matchBrace(s: string, open: number): number {

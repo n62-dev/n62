@@ -54,7 +54,7 @@ export interface CopySource {
   chips?: ChipTable;
   /** R63f2: a unit-view row (units/row.ts UnitRow, read back unchecked): `input` the request as drawn (unit after each
    *  number, → the end unit), `text` the ` ± σ unit` after the value. Both strings, else the row is exported as Home's. */
-  units?: { input?: unknown; text?: unknown; unit?: unknown; unc?: { text?: unknown }; latex?: unknown };
+  units?: { input?: unknown; text?: unknown; unit?: unknown; unc?: { text?: unknown }; latex?: unknown; why?: unknown };
 }
 
 /** Text options: `decimalComma` writes `,` for the decimal point (the Settings option, docs/04 section 6.2); `display` the
@@ -314,7 +314,9 @@ export function sessionLatex(items: readonly CopySource[], o: TextOptions, ctx: 
     const { mark, info } = rowMark(i, ctx, drawnShown(i));
     const rel = mark === "=" ? "=" : mark === "≈" ? "\\approx" : "\\mathrel{\\triangle}";
     let result = drawnLatex(i, o, ctx);
-    if (unitRow && typeof i.units?.latex === "string") result += `\\,${comma ? commaResult(i.units.latex, true) : i.units.latex}`;
+    // R886: σ's ⚠ as the file's ⚠ relation (\triangle), not a glyph LaTeX has no font for
+    const ul = typeof i.units?.latex === "string" ? i.units.latex.replace(/⚠/g, "\\triangle ") : undefined;
+    if (unitRow && ul !== undefined) result += `\\,${comma ? commaResult(ul, true) : ul}`;
     const why = mark === "⚠" && info ? whyLine(i, info, ctx.digits) : null;
     const reason = why ? `\\quad\\text{(${latexText(why.replace(/^⚠\s*/, "").replace(/ · /g, "; "))})}` : "";
     return `\\begin{align*}${exportLatex(`${input} &${rel} ${result}`)}${reason}\\end{align*}`;

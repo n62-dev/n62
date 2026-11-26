@@ -5,7 +5,7 @@
 // σ = 1.5ᴇ-15 · 5.972ᴇ24 = 8.958ᴇ9).
 import { describe, expect, it } from "vitest";
 import { decimalFromString, toText, type FormatOptions } from "../engine/format.ts";
-import { sigmaAlone, sigmaDrawn } from "./sigmaForm.ts";
+import { sigmaAlone, sigmaDrawn, withSigma } from "./sigmaForm.ts";
 
 const dec = (s: string) => {
   const d = decimalFromString(s);
@@ -121,5 +121,17 @@ describe("sigmaAlone: the unit view's second line (R885, h3 #12)", () => {
   ] as [string, FormatOptions["format"], string][])("σ %s in %s → %s", (s, format, want) => {
     const f = sigmaAlone(dec(s), { format, digits: 12 });
     expect(f && toText(f)).toBe(want);
+  });
+});
+
+describe("withSigma: σ's ⚠ stays before the σ it draws (R886, h3 #6)", () => {
+  // σ drawn in the value's form (SCI) in place of the stored 0.64
+  const r = { text: "0.0E0", latex: "0.0E0", sigma: { text: "6.4E-1", latex: "6.4E-1" } };
+  it("a σ with ⚠ keeps it, the unit after it", () => {
+    const u = { text: " ± ⚠0.64 m", latex: "\\pm⚠0.64\\,m", unc: { text: "0.64" } };
+    expect(withSigma(r, u)).toEqual({ text: "0.0E0 ± ⚠6.4E-1 m", latex: "0.0E0\\pm⚠6.4E-1\\,m" });
+  });
+  it("control: a σ without one draws none", () => {
+    expect(withSigma(r, { text: " ± 0.64", latex: "\\pm0.64", unc: { text: "0.64" } })).toEqual({ text: "0.0E0 ± 6.4E-1", latex: "0.0E0\\pm6.4E-1" });
   });
 });
