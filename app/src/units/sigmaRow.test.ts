@@ -78,6 +78,12 @@ describe.skipIf(!giacAvailable())("a unit row's value ± σ (R885, real Giac)", 
     expect(pend.latex).toContain("\\class{unc}{");
   });
 
+  it("control (R885 FIX 1): 10²⁰·π ± 3 worked out to its 22 confirmed digits is drawn to σ's place", async () => {
+    const r = await drawn("pasupm(10^20*pi,3)*pasu1", "std", 12);
+    expect(r.text).toBe("314159265358979323846.3 ± 3.0 m");
+    expect(r.shown).toBe("314159265358979323846.3 ± 3.0 m");
+  });
+
   it("controls: Copy keeps every digit; a row without σ is drawn by the digits setting", async () => {
     const r = await drawn("pasupm(2.5,0.1)*pasu1", "std", 1);
     expect(copyFull(r.it)).toBe("2.5 ± 0.10 m");

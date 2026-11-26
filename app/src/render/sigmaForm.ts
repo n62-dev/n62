@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R885: a value with σ is drawn by one rule (docs/04 2.6): σ at 2 significant digits; the value drawn at least to σ's
 // last digit, never cut above it (the digits setting may draw more: R883 mutes the digits past σ, render/uncMute.ts),
+// never below the value's confirmed digits (ValueFacts.reliableDigits: a finer σ leaves the value at those, σ alone),
 // with no zeros padded past σ's place that the value does not have (SCI's 9.81000000000E0 ± 0.050 reads 9.810E0); value
 // and σ in the same form: σ in the value's prefix or exponent (4.70 k ± 0.10 k, 9.810E-6 ± 0.050E-6; an exponent of 0
 // is not written). FIX keeps its decimals while they reach σ's place. Home's unit row and Copy as shown (renderPoint
@@ -70,16 +71,22 @@ function written(neg: boolean, d: string, e: number, last: number, f: { p: numbe
 
 /**
  * The value `v` and σ `sv` drawn by the rule above with the format `o` (the row's notation and digits, as
- * confirmedOptions gave them). Null for a σ of 0: the caller draws as before.
+ * confirmedOptions gave them), `reliable` the value's confirmed significant digits (ValueFacts.reliableDigits; null or
+ * absent: every digit `v` has). Never drawn below the value's confirmed last place: a σ finer than it leaves the value at
+ * its confirmed digits (no zeros padded in for digits not known) and σ at 2 digits in its own form (sigmaAlone). Null
+ * for a σ of 0: the caller draws as before.
  */
-export function sigmaDrawn(v: DecimalValue, sv: DecimalValue, o: FormatOptions): SigmaDrawn | null {
+export function sigmaDrawn(v: DecimalValue, sv: DecimalValue, o: FormatOptions, reliable?: number | null): SigmaDrawn | null {
   if (isZero(sv)) return null;
   const s2 = roundSignificant({ ...sv, neg: false }, 2);
   const k = s2.exp - 1; // σ's last digit's place
   // FIX: its decimals, or its SCI fallback's digits, when format.ts draws that
   const fixSci = o.format === "FIX" && formatReal(v, o).exponent !== null;
   const n = o.format === "FIX" ? (o.sciDigits ?? (o.fixed ?? 4) + 1) : o.digits;
-  const last = isZero(v) ? Math.min(0, k) : o.format === "FIX" && !fixSci ? Math.min(-(o.fixed ?? 4), k) : Math.min(lastAt(v, n), k);
+  const wanted = o.format === "FIX" && !fixSci ? Math.min(-(o.fixed ?? 4), k) : Math.min(lastAt(v, n), k);
+  // the value's confirmed last place bounds it (at least one digit, as confirmedOptions draws)
+  const floor = reliable === null || reliable === undefined ? -Infinity : lastAt(v, Math.max(1, reliable));
+  const last = isZero(v) ? Math.min(0, k) : Math.max(wanted, floor);
   const r = roundAt(v, last);
   const zero = /^0+$/.test(r.digits);
   const e = zero ? Math.max(0, last) : r.exp;
@@ -88,9 +95,10 @@ export function sigmaDrawn(v: DecimalValue, sv: DecimalValue, o: FormatOptions):
   // STD and FIX drawn plain have no exponent; the other forms write theirs, E0 too (sci, eng in format.ts)
   const plainValue = f.prefix === undefined && f.p === 0 && (o.format === "STD" || (o.format === "FIX" && !fixSci));
   const value = written(v.neg && !zero, d, e, last, f, plainValue);
-  // σ in the value's prefix or exponent; an exponent of 0 is not written on σ (9.810E0 ± 0.050)
-  const sigma = written(false, s2.digits, s2.exp, k, f, f.p === 0);
-  return { value, sigma };
+  // σ in the value's prefix or exponent; an exponent of 0 is not written on σ (9.810E0 ± 0.050). A σ finer than the
+  // value's confirmed digits: in its own form (3.14159265359E20 ± 3.0, not 0.000000000000000000030E20)
+  const sigma = last > k ? sigmaAlone(sv, o) : written(false, s2.digits, s2.exp, k, f, f.p === 0);
+  return sigma && { value, sigma };
 }
 
 /** σ alone, as the second line of the unit view writes it: 2 significant digits in the format's own form for σ
@@ -103,14 +111,14 @@ export function sigmaAlone(sv: DecimalValue, o: FormatOptions): FormattedNumber 
 
 /** A Home row with σ as renderPoint passes it (state/displayMode.ts NumericResult): a unit row's σ is in `units.unc`, its
  *  full σ in `facts.uncSigma` (R883). */
-type SigmaRowIn = { value?: ComplexValue; facts?: { uncSigma?: string }; units?: { unc?: unknown } };
+type SigmaRowIn = { value?: ComplexValue; facts?: { uncSigma?: string; reliableDigits?: number | null }; units?: { unc?: unknown } };
 
 /** R885: a unit row's real value drawn with `o` (renderPoint's options, after confirmedOptions) and σ in its form, σ's
  *  LaTeX with the groups `group` (GROUP_LATEX; undefined: none); undefined for a row without σ, a σ of 0 and a complex
  *  value (drawn by the digits setting). DisplayContext.sigma, in the tidy chunk. */
 export function sigmaRow(r: SigmaRowIn, o: FormatOptions, group: string | undefined): { c: FormattedComplex; sigma: { text: string; latex: string } } | undefined {
   const sv = r.units?.unc && r.facts?.uncSigma !== undefined && r.value && isZero(r.value.im) ? decimalFromString(r.facts.uncSigma) : null;
-  const d = sv && r.value ? sigmaDrawn(r.value.re, sv, o) : null;
+  const d = sv && r.value ? sigmaDrawn(r.value.re, sv, o, r.facts?.reliableDigits) : null;
   if (!d) return undefined;
   const sigma: FormattedComplex = { re: d.sigma, im: null, text: toText(d.sigma) };
   return { c: { re: d.value, im: null, text: toText(d.value) }, sigma: { text: sigma.text, latex: complexToLatex(sigma, group) } };

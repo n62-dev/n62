@@ -66,6 +66,18 @@ describe("sigmaDrawn: value and σ in the same form (R885, h3 #5, #12, bug list 
     expect(row(v, s, o)).toBe(want);
   });
 
+  it("never below the value's confirmed digits: 10²⁰·π (12 reliable digits) ± 3 pads no zeros above σ's place (R885 FIX 1)", () => {
+    const r = sigmaDrawn(dec("3.14159265359e20"), dec("3"), STD(), 12);
+    expect(r && `${toText(r.value)} ± ${toText(r.sigma)}`).toBe("3.14159265359E20 ± 3.0");
+    // the same value without its confirmed digits drew 21 zeros of digits it does not have
+    expect(row("3.14159265359e20", "3", STD())).toBe("314159265359000000000.0 ± 3.0");
+    // a bound above the digits setting's place: drawn to the confirmed digits; within it: as before
+    const c = sigmaDrawn(dec("9.81065219207"), dec("0.0526983"), STD(3), 3);
+    expect(c && `${toText(c.value)} ± ${toText(c.sigma)}`).toBe("9.81 ± 0.053");
+    const w = sigmaDrawn(dec("1234567890.12345"), dec("0.0001"), STD(), 15);
+    expect(w && `${toText(w.value)} ± ${toText(w.sigma)}`).toBe("1234567890.12345 ± 0.00010");
+  });
+
   it("a σ of 0 is left to the caller", () => {
     expect(sigmaDrawn(dec("9.81"), dec("0"), STD())).toBeNull();
     expect(sigmaAlone(dec("0"), STD())).toBeNull();

@@ -96,6 +96,24 @@ test.describe("a value with σ is drawn by one rule (R885)", () => {
     await expect(lastResult(page)).toHaveAttribute("data-text", "9.810 ± 0.050 m");
   });
 
+  test("never below the value's confirmed digits: 10²⁰·π at 12 digits ± 3 pads no zeros above σ's place (R885 FIX 1)", async ({ page }) => {
+    // ± goes only after a number (parse.pmNeedsNumber), and the unit view works 10²⁰·π out to 22 digits: the row it files
+    // is drawn to σ's place with digits it has
+    await inUnits(page, "314159265358979323846.264\\pm3");
+    await leave(page, 1);
+    await expect(lastResult(page)).toHaveAttribute("data-text", "314159265358979323846.3 ± 3.0 m");
+    // the same row holding Giac's 12-digit value (12 reliable digits): drawn to those digits, never padded with zeros
+    // for digits it does not have (it read 314159265359000000000.0 ± 3.0 m)
+    await page.evaluate(() => {
+      const it = window.n62.session.home.at(-1) as unknown as { value: { re: object }; facts: { reliableDigits: number | null } };
+      it.value.re = { neg: false, digits: "314159265359", exp: 20, sticky: false };
+      it.facts.reliableDigits = 12;
+    });
+    await expect(lastResult(page)).toHaveAttribute("data-text", "3.14159265359E20 ± 3.0 m");
+    await copyShown(page);
+    await expect.poll(() => clipboard(page)).toBe("3.14159265359E20 ± 3.0 m");
+  });
+
   test("controls: a row without σ is drawn by the digits setting; Copy keeps every digit", async ({ page }) => {
     await page.evaluate(() => (window.n62.session.settings.format = "sci"));
     await inUnits(page, "9.81");

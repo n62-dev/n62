@@ -129,7 +129,7 @@ Cost: one `evalf` more (about 1 ms, desktop) per irrational or float result.
 | Units result (m5) | `20 m/s`, `39.488 ± 1.2 m²`: the value full, then the row's own ` ± σ unit` as drawn (As shown and Share too; R269); Paste reads it back (R325) | yes | `(1397/3125) m/s` | yes |
 | Session (Menu, Share) | text: one line per entry, `input = result` with the mark, full values | — | — | — |
 
-**A value with σ** (R885, `render/sigmaForm.ts`): σ at 2 significant digits, the value drawn at least to σ's last digit (never cut above it; the digits setting may draw more, muted past σ, R883) and in σ's form (σ in the value's exponent or prefix: `4.70 k ± 0.10 k`); the unit row, Copy as shown and the unit view's second line draw through it.
+**A value with σ** (R885, `render/sigmaForm.ts`): σ at 2 significant digits, the value drawn at least to σ's last digit (never cut above it; the digits setting may draw more, muted past σ, R883), never below the value's confirmed digits (a finer σ leaves the value at those, σ in its own form) and in σ's form (σ in the value's exponent or prefix: `4.70 k ± 0.10 k`); the unit row, Copy as shown and the unit view's second line draw through it.
 
 **Names as typed** (G784): the stand-ins e_, i_, beta_ … are copied as their letters (`2*i`, `β*2`) in every copy, Share and the CSV; Copy as Python keeps Giac's names.
 
