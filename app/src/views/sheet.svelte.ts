@@ -556,6 +556,12 @@ export class Sheet {
     return { kind: "run", item };
   }
 
+  /** R869: a level of `sub` over the open one, as from its row `id` (Help on Find's highlighted row): ‹, ◀ and Esc go back to the
+   *  open level as it was, its query and highlight kept. */
+  openLevel(id: string, sub: SubMenu): void {
+    this.push(this.level, id, sub);
+  }
+
   /** A submenu on top of `level`, from the item `id`. */
   private push(level: Level, id: string, sub: SubMenu): void {
     this.disarm(); // R857: an armed id stays with its level

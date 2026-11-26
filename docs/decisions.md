@@ -34,6 +34,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **Small packages (2026-10-14, the owner's rule).** One concern each, about a day or less, with its own reading list; placed by importance, then dependencies.
 
 ### Feel, keys and screen (milestone 4a)
+- **Help explains the highlight (owner, 2026-11-22):** cursor, Find's row, then the unit view; cards from the index only (R869, R870).
 - **Enter's rule (owner, 2026-11-22, R872):** docs/05 3.10; values: theme-gen.test.ts. Would change if: his phone.
 - **Round pad and key line floors (owner, 2026-11-22, R873):** docs/05 3.10; values: theme-gen.test.ts. Would change if: his phone.
 - **Super mode dropped (owner, 2026-11-22):** no super mode; Select then ⌫ deletes a block; the unit view's slot buttons (R853), Your keys one window (R849, R848), N62 Light's Enter (R843). Built; full text: [archive/decisions-2026-11.md](archive/decisions-2026-11.md).

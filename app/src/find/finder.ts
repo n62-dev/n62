@@ -223,5 +223,15 @@ export { showStore, storedText } from "../views/storeSheet.svelte.ts";
  *  Find and the unit view need not preload. */
 export const showHelpAt = (...a: Parameters<typeof import("../views/helpSheet.ts").showHelpAt>): Promise<boolean> =>
   import("../views/helpSheet.ts").then((m) => m.showHelpAt(...a));
+/** R869: Help on Find's highlighted row (views/helpSheet.ts showHelpFor), from the sheet's keys (views/sheetKeys.ts): its help as a
+ *  level over Find, once the index and the help chunk are in and `still()` holds (the sheet and its highlight as they were). False:
+ *  nothing opened (the row is no index item, or `still()` failed). */
+export async function showHelpFor(sheet: import("../views/sheet.svelte.ts").Sheet, row: MenuItem, entry: EntryController, still: () => boolean): Promise<boolean> {
+  const [index, m] = await Promise.all([loadIndex(), import("../views/helpSheet.ts")]);
+  const it = index.byId.get(row.id);
+  if (!it || !still()) return false;
+  m.showHelpFor(sheet, it, row, entry);
+  return true;
+}
 /** R149: the credits sheet's code, loaded here so the start chunk has no import of its own for it. */
 export const loadCredits = (): Promise<typeof import("../views/creditsSheet.ts")> => import("../views/creditsSheet.ts");
