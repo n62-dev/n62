@@ -410,6 +410,24 @@ for imp in 'import { y } from "./y.ts";' 'import { z } from "./sub/z.ts";' 'impo
   out="$(closure_in "$imp")"; rc=$?
   [[ $rc -eq 0 ]] || fail "A277: the closure tool refuses '$imp' (rc $rc): $out"
 done
+# A277f1: what golden starts as a child process (engine.ts: tools/giac-regress/run.mjs, tests/engine/*) and the data those read plan golden;
+# G323 #1044 changed only tools/giac-regress/n62-check.cas and merged without golden
+for f in tools/giac-regress/n62-check.cas tools/giac-regress/run.mjs tools/giac-regress/export.mjs tools/giac-regress/lines.mjs; do
+  printf '%s\n' "$f" | golden_selected || fail "A277f1: a diff touching only $f (golden runs it as a child process) does not plan the golden check"
+done
+kids="$(node "$here/../tools/golden-closure.mjs" --children)" || fail "A277f1: golden-closure.mjs --children failed"
+for f in tools/giac-regress/run.mjs tools/giac-regress/ tests/engine/regress-fresh.mjs tests/engine/patch-canary.ts tools/probes/giac-check.mjs spec/keyboard.yaml; do
+  grep -qxF "$f" <<<"$kids" || fail "A277f1: golden-closure.mjs --children misses $f"
+done
+miss="$(while IFS= read -r f; do git -C "$here/.." check-ignore -q "$f" && continue; printf '%s\n' "$f" | GOLDEN_CLOSURE_LIST="$clo" golden_selected || printf '%s ' "$f"; done <<<"$kids")"
+[[ -z "$miss" ]] || fail "A277f1: what the golden gate starts or reads by a path does not plan golden (GOLDEN_RE): $miss"
+# the scan on a made-up tree: a spawned script, its import, its folder read by a computed name, a folder of computed scripts
+cs="$tmp/children"; mkdir -p "$cs/app" "$cs/tools/x" "$cs/tests/y"
+printf 'import { spawnSync } from "node:child_process";\nspawnSync(process.execPath, [`${root}tools/x/run.mjs`]);\nfor (const f of L) spawnSync(process.execPath, [`${root}tests/y/${f}`]);\n' > "$cs/app/a.ts"
+printf 'import { readFileSync } from "node:fs";\nimport { g } from "./lib.mjs";\nreadFileSync(new URL(f, import.meta.url));\n' > "$cs/tools/x/run.mjs"
+echo 'export const g = 1;' > "$cs/tools/x/lib.mjs"; echo 'import "../../tools/x/data.mjs";' > "$cs/tests/y/t.mjs"; echo '' > "$cs/tools/x/data.mjs"
+out="$(GOLDEN_CLOSURE_ROOT="$cs" node "$here/../tools/golden-closure.mjs" --children app/a.ts 2>&1)"
+[[ "$out" == $'tests/y/\ntests/y/t.mjs\ntools/x/\ntools/x/data.mjs\ntools/x/lib.mjs\ntools/x/run.mjs' ]] || fail "A277f1: golden-closure.mjs --children on a made-up tree: $out"
 # A25 item 5: a stage line NEW / NOW PASSING / CHANGED / GONE fails the engine stages even at exit 0
 printf 'x\n  sweep NOW PASSING a1: remove it\nSWEEP PASSED: 1\n' > "$tmp/st1.log"; printf '  seq known y\nSEQ PASSED: 1\n' > "$tmp/st2.log"
 stage_findings "$tmp/st1.log" >/dev/null || fail "A25: a NOW PASSING stage line is not a finding"
@@ -1549,16 +1567,56 @@ outside_reads() {  # <e2e|build>: the repo paths read from a file at depth d und
   for f in "${files[@]}"; do
     rel="${f#"$root"/}"; d="$(tr -cd '/' <<<"$rel" | wc -c)"; ups="$(printf '../%.0s' $(seq 1 "$d"))"
     grep -hoE "[\"'\`]${ups//./\\.}(spec|tests|tools|docs|find|engine|THIRD_PARTY|LICENSES)[^\"'\`?\$]*" "$f" 2>/dev/null | sed -E "s|^.${ups//./\\.}||" | grep -vE '_out|_gen' || true
+    grep -hoE "[\"'\`][^\"'\`?\$ ]*_gen/[^\"'\`?\$ ]*" "$f" 2>/dev/null | while IFS= read -r p; do  # A280f1: a generated file, inside app/ too, as gen:<its repo path>
+      p="${p:1}"; [[ "$p" == app/* ]] || p="$(realpath -m --relative-to="$root" "$(dirname "$f")/$p")"; echo "gen:$p"
+    done
   done | sort -u
 }
 for kind in e2e build; do
   reads="$(outside_reads "$kind")"; [[ $(wc -l <<<"$reads") -gt 5 ]] || fail "A280: the $kind scan found fewer than 6 paths outside app/: $reads"
   while IFS= read -r p; do
-    [[ -n "$p" && "$p" != docs/backlog.md ]] || continue
+    [[ -n "$p" && "$p" != docs/backlog.md && "$p" != gen:* ]] || continue  # (a gen: line: gen_misses, below)
     if [[ "$kind" == e2e ]]; then printf '%s\n' "$p" | e2e_selected || fail "A280: an e2e spec reads $p, which E2E_RE does not select"
     else printf '%s\n' "$p" | build_selected || fail "A280: the app's build reads $p, which BUILD_RE does not select"; fi
   done <<<"$reads"
 done
+# A280f1: a generated file (a path with _gen/: gitignored, so in no diff) changes with its sources, which the scan dropped: the app imports the Find
+# index (app/src/find/finder.ts) and the build holds it (size-check.ts "Find index asset"), yet a diff of find/ or tools/find-index/ planned
+# neither e2e nor size (golden only). Each source alone plans both now.
+for f in find/units.yaml find/factors.yaml find/functions.yaml tools/find-index/generate.mjs tools/find-index/units-items.mjs; do
+  [[ "$(want_for "$f")" == docs,typecheck,size,vitest,golden,e2e ]] || fail "A280f1: a diff of only $f is not docs, typecheck, size, vitest, golden, e2e: $(want_for "$f")"
+done
+# gen_sources <repo path of a generated file>: the tracked paths it is generated from, one a line: its generator's folder (this table is the one
+# place a generated file is mapped) and every repo path the generator's files read (loadYaml("..."), join(REPO, "...")), without the untracked
+# caches (_downloads, _out, _gen). A generated file without a row fails.
+gen_sources() {
+  local tool
+  case "$1" in
+    app/src/find/_gen/find-index.json) tool=tools/find-index;;  # app/package.json "index": tools/find-index/generate.mjs
+    *) return 1;;
+  esac
+  echo "$tool/"; grep -rhoE '(loadYaml\(|REPO, )"[^"]+"' "$repo/$tool" | sed -E 's/^[^"]*"//; s/"$//' | grep -vE '_downloads|_out|_gen' | sort -u
+}
+gen_misses() {  # <e2e|build>: a line for each source of a generated file the kind's files read that E2E_RE (build: or BUILD_RE) does not select
+  local p g s srcs
+  while IFS= read -r p; do
+    g="${p#gen:}"; srcs="$(gen_sources "$g")" && [[ $(wc -l <<<"$srcs") -gt 5 ]] || { echo "$g has no row in gen_sources, or fewer than 6 sources: $srcs"; continue; }
+    while IFS= read -r s; do
+      [[ "$s" != tests/golden ]] || continue  # generate.mjs reads it only to refuse a `golden:` id no file has: no byte of the index comes from it (every branch's vitest check runs npm run index)
+      printf '%s\n' "$s" | e2e_selected || echo "$g is generated from $s, which E2E_RE does not select"
+      [[ "$1" != build ]] || printf '%s\n' "$s" | build_selected || echo "the app's build holds $g, generated from $s, which BUILD_RE does not select"
+    done <<<"$srcs"
+  done < <(outside_reads "$1" | grep '^gen:')
+}
+grep -qxF 'gen:app/src/find/_gen/find-index.json' <<<"$(outside_reads build)" || fail "A280f1: the build scan does not see finder.ts's import of the Find index"
+gen_sources app/src/x/_gen/y.json >/dev/null && fail "A280f1: gen_sources maps a generated file it has no row for"
+for kind in e2e build; do out="$(gen_misses "$kind")"; [[ -z "$out" ]] || fail "A280f1 ($kind scan): $out"; done
+# the scan has teeth: with A280's two lists it names find/ and the generator's folder, for e2e and for size
+out="$(E2E_RE='^(app/|spec/|tests/(core|tasks|fixtures)/|tools/(trust/|probes/(library/|find-cost\.mjs$|unit-presses\.mjs$)))'; BUILD_RE='^(app/|spec/|tests/(golden|tasks)/|tools/(trust|third-party)/|THIRD_PARTY\.md$|LICENSES/|engine/giac/patches/)'; gen_misses build)"
+for want in 'find/units.yaml, which E2E_RE' 'find/factors.yaml, which E2E_RE' 'tools/find-index/, which E2E_RE' 'find/units.yaml, which BUILD_RE' 'tools/find-index/, which BUILD_RE'; do
+  grep -qF "generated from $want does not select" <<<"$out" || fail "A280f1: with A280's lists the scan does not say '$want': $out"
+done
+grep -qE 'spec/keyboard.yaml|app/src/i18n' <<<"$out" && fail "A280f1: with A280's lists the scan names a source they select: $out"
 grep -qE 'oracle-counts|THIRD_PARTY\.md|LICENSES' "$repo/app/vite-plugin-about.ts" || fail "A280: the About plugin no longer reads the files BUILD_RE names; revisit BUILD_RE"
 grep -q 'e2e_selected' "$here/pipeline.sh" && grep -q 'build_selected' "$here/pipeline.sh" || fail "A280: pipeline.sh does not use e2e_selected and build_selected"
 # (b) the lint rules: a new patch without its README row, a branch without a report commit (brief section 2)

@@ -560,7 +560,8 @@ export class Session {
     if (item.status === "done" && shown) {
       const r = (formsCode?.drawnIn ?? renderNumeric)(item, modeOf(item, this.settings), this.displayContext(), grouped); // R192: a base form, lazy
       // R63: a unit row draws ± σ and its unit, set apart, after the number; its text has them too (Copy as shown)
-      if (r) return item.units ? withUnit(r, item.units, this.decimalComma ? commaResult : undefined) : r;
+      // R885: with the σ rule's code in, its σ drawn in the value's form takes the stored one's place (sigmaForm.ts withSigma)
+      if (r) return item.units ? (sigmaCode?.withSigma ?? withUnit)(r, item.units, this.decimalComma ? commaResult : undefined) : r;
     }
     // (R57) what the engine wrote, with the decimal comma, is drawn as the numbers above
     if (item.status === "done" && this.decimalComma) return { text: commaResult(item.text, false), latex: commaResult(item.resultLatex, true) };
@@ -576,7 +577,9 @@ export class Session {
    *  its code (the tidy chunk, as R40's σ line) is in: the row keeps the line's place, so nothing moves when the text comes. */
   reason(item: HistoryItem): string | null {
     const m = this.settings.marks === "reason" ? this.mark(item) : null;
-    return m?.mark === "⚠" ? (sigmaCode?.whyLine(item, m, this.settings.digits) ?? "") : null;
+    // R886: a unit row whose σ has ⚠ has the line too, on a row of any mark (whyLine.ts reasonLine); until the code is in
+    // only a ⚠ row keeps its place
+    return m ? (sigmaCode ? sigmaCode.reason(item, m, this.settings.digits) : m.mark === "⚠" ? "" : null) : null;
   }
   /** The mark before a finished result (docs/04 2.4), for the form it is drawn in; null: a non-number, or none known. */
   mark(item: HistoryItem): MarkInfo | null {
@@ -584,10 +587,11 @@ export class Session {
     return (formsCode?.baseMark ?? markFor)(item, modeOf(item, this.settings), this.displayContext()); // R192: a base form's, lazy
   }
 
-  /** `mute` (R40), `groupSep` (R125): the muted digits' code once in, the separator; only the screen's row uses them. */
+  /** `mute` (R40), `groupSep` (R125): the muted digits' code once in, the separator; only the screen's row uses them.
+   *  `sigma` (R885): a unit row's σ drawing rule, once in (the row and Copy as shown). */
   displayContext(): DisplayContext {
     const s = this.settings;
-    return { format: s.format, digits: s.digits, fixDecimals: s.fixDecimals, angle: s.angle, ...(this.decimalComma ? { decimalComma: true } : {}), groupSep: s.groupSep, mute: sigmaCode?.muter };
+    return { format: s.format, digits: s.digits, fixDecimals: s.fixDecimals, angle: s.angle, ...(this.decimalComma ? { decimalComma: true } : {}), groupSep: s.groupSep, mute: sigmaCode?.muter, sigma: sigmaCode?.sigmaRow };
   }
 
   /** The row the Format key (cycleFormat) or the a b/c key on an empty line (cycleForm, R10; cycleForms.ts) takes: the picked

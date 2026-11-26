@@ -250,7 +250,7 @@ test.describe("the unit result view (R62)", () => {
     await expect(result(page).locator(".value")).toHaveText(/ ± ⚠0\.0\d+$/);
     await expect(page.getByTestId("unit-warn")).toHaveText("⚠");
     await expect(page.getByTestId("unit-why")).toHaveText("first order does not hold here");
-    await expect(page.getByTestId("unit-sub")).toContainText("σ 0.007\u2009071\u2009067\u200981"); // grouped (R120)
+    await expect(page.getByTestId("unit-sub")).toHaveText(/· σ 0\.0071$/); // R885: σ at 2 significant digits
     await expect(page.getByTestId("unit-dim")).toHaveCount(0);
     await expect(page.getByTestId("unit-alts")).toHaveCount(0);
   });
@@ -263,13 +263,13 @@ test.describe("the unit result view (R62)", () => {
     await expect(mark(page)).toHaveText("≈");
     await expect(result(page).locator(".value")).toHaveText("39.5 ± 1.2");
     await expect(page.getByTestId("unit-unit")).toHaveText("m²");
-    await expect(page.getByTestId("unit-sub")).toContainText("39.488 · σ 1.244");
+    await expect(page.getByTestId("unit-sub")).toContainText("39.488 · σ 1.2"); // R885: σ at 2 significant digits
     await expect(page.getByTestId("unit-warn")).toHaveCount(0);
     expect(await texts(page)).toContain("ft²");
   });
 
   // R271: sem of 10.1, 10.3, 9.9, 10.0, 10.2 is 0.07071067811865475244… (source: oracle, mpmath); its chip after ± is σ
-  test("mean and sem of a list, then 10.1 ± the sem chip in m: ≈ 10.100 ± 0.071 m with σ to the chip's 12 digits", async ({ page }) => {
+  test("mean and sem of a list, then 10.1 ± the sem chip in m: ≈ 10.100 ± 0.071 m with σ at 2 digits under it (R885)", async ({ page }) => {
     const list = "\\left(\\left\\{10.1,10.3,9.9,10.0,10.2\\right\\}\\right)";
     for (const [i, f] of ["mean", "sem"].entries()) {
       await page.evaluate((t) => window.n62.session.submit(t), `\\operatorname{${f}}${list}`);
@@ -287,7 +287,7 @@ test.describe("the unit result view (R62)", () => {
     await expect(result(page).locator(".value")).toHaveText("10.100 ± 0.071");
     await expect(page.getByTestId("unit-unit")).toHaveText("m");
     await expect(page.getByTestId("unit-warn")).toHaveCount(0);
-    await expect.poll(async () => (await page.getByTestId("unit-sub").textContent())?.replaceAll("\u2009", "")).toBe("10.1 · σ 0.0707106781187");
+    await expect.poll(async () => (await page.getByTestId("unit-sub").textContent())?.replaceAll("\u2009", "")).toBe("10.1 · σ 0.071");
   });
 
   test("3000 rpm × 0.1 m → m/s shows the rpm note under = 5 m/s, and the value stays", async ({ page }) => {
@@ -383,7 +383,7 @@ test.describe("t10 with the decimal comma (R120)", () => {
     await page.evaluate(() => window.n62.session.setDecimalMark("comma"));
   });
 
-  test("12,34 ± 0,05 m × 3,2 ± 0,1 m shows ≈ 39,5 ± 1,2 m² and 39,488 · σ 1,244…; the Home row and Copy as shown keep 39,488 ± 1,2 m²", async ({ page }) => {
+  test("12,34 ± 0,05 m × 3,2 ± 0,1 m shows ≈ 39,5 ± 1,2 m² and 39,488 · σ 1,2; the Home row and Copy as shown keep 39,488 ± 1,2 m²", async ({ page }) => {
     await tap(page, ["d1", "d2", "dot", "d3", "d4", "shift", "comma", "d0", "dot", "d0", "d5"]);
     await tap(page, ["mul", "d3", "dot", "d2", "shift", "comma", "d0", "dot", "d1"]);
     await unitsKey(page);
@@ -391,7 +391,7 @@ test.describe("t10 with the decimal comma (R120)", () => {
     await expect(mark(page)).toHaveText("≈");
     await expect(result(page).locator(".value")).toHaveText("39,5 ± 1,2");
     await expect(page.getByTestId("unit-unit")).toHaveText("m²");
-    await expect(page.getByTestId("unit-sub")).toContainText("39,488 · σ 1,244");
+    await expect(page.getByTestId("unit-sub")).toContainText("39,488 · σ 1,2");
     await expect(page.getByTestId("unit-sub")).not.toContainText(".");
     await expect(result(page)).toHaveAttribute("data-text", "39,488");
     await tap(page, ["esc"]);

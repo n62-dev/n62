@@ -59,7 +59,7 @@ describe("shownOf (R62)", () => {
   it("σ: the value line is unc.shown, never =, the ⚠ sits before σ and the value and σ come under it", () => {
     const unc = { value: num("0.00707106781187", { exact: false }), text: "0.0071", shown: "1.0000 ± 0.0071", why: "order2" as const };
     const r = result(shownOf(qty(num("1"), { dimension: "", unit: "", dimensionText: "1", unc }), STD));
-    expect(r).toMatchObject({ mark: "≈", text: "1.0000 ± 0.0071", warn: true, why: "first order does not hold here", sub: "1 · σ 0.00707106781187" });
+    expect(r).toMatchObject({ mark: "≈", text: "1.0000 ± 0.0071", warn: true, why: "first order does not hold here", sub: "1 · σ 0.0071" }); // R885: σ at 2 significant digits on every line
     expect(r.sigma).toEqual({ head: "1.0000 ± ", tail: "0.0071" });
   });
 
@@ -81,14 +81,14 @@ describe("shownOf with the decimal comma and digit groups (R120)", () => {
     return qty(num("39.488", { exact: false }), { dimension: "m2", unit: "m²", dimensionText: "L²", unc });
   };
 
-  it("with the comma, the value line, σ and the sub line read 39,5 ± 1,2 and 39,488 · σ 1,244", () => {
+  it("with the comma, the value line, σ and the sub line read 39,5 ± 1,2 and 39,488 · σ 1,2", () => {
     const r = result(shownOf(t10(), { ...STD, decimalComma: true, grouped: true }));
-    expect(r).toMatchObject({ text: "39,5 ± 1,2", sigma: { head: "39,5 ± ", tail: "1,2" }, sub: "39,488 · σ 1,244", display: "39,488" });
+    expect(r).toMatchObject({ text: "39,5 ± 1,2", sigma: { head: "39,5 ± ", tail: "1,2" }, sub: "39,488 · σ 1,2", display: "39,488" });
   });
 
   it("without the comma nothing changes (the point, no groups on a short value)", () => {
     const r = result(shownOf(t10(), { ...STD, grouped: true }));
-    expect(r).toMatchObject({ text: "39.5 ± 1.2", sigma: { head: "39.5 ± ", tail: "1.2" }, sub: "39.488 · σ 1.244", display: "39.488" });
+    expect(r).toMatchObject({ text: "39.5 ± 1.2", sigma: { head: "39.5 ± ", tail: "1.2" }, sub: "39.488 · σ 1.2", display: "39.488" });
   });
 
   it("a long value gets R55's groups on screen only; display (Copy's text) has none", () => {
@@ -103,7 +103,11 @@ describe("shownOf with the decimal comma and digit groups (R120)", () => {
   it("σ's digits are grouped in the value line and the sub line, each number on its own", () => {
     const unc = { value: num("0.00707106781187", { exact: false }), text: "0.0071", shown: "1.0000 ± 0.0071" };
     const r = result(shownOf(qty(num("1"), { dimension: "", unit: "", dimensionText: "1", unc }), { ...STD, grouped: true, decimalComma: true }));
-    expect(r).toMatchObject({ text: "1,0000 ± 0,0071", sub: `1 · σ 0,007${T}071${T}067${T}811${T}87` });
+    expect(r).toMatchObject({ text: "1,0000 ± 0,0071", sub: "1 · σ 0,0071" });
+    // R885: σ has its 2 significant digits on the sub line, grouped when they stand far past the point
+    const far = { value: num("0.000707106781187", { exact: false }), text: "0.00071", shown: "1.00000 ± 0.00071" };
+    const f = result(shownOf(qty(num("1"), { dimension: "", unit: "", dimensionText: "1", unc: far }), { ...STD, grouped: true, decimalComma: true }));
+    expect(f.sub).toBe(`1 · σ 0,000${T}71`);
   });
 
   // R883: the sub line's value mutes its digits from σ's first digit's place on, as R40 cuts a constant's (uncMute.ts)
@@ -114,13 +118,13 @@ describe("shownOf with the decimal comma and digit groups (R120)", () => {
       const [, b, c] = r.subCut!;
       return c > b ? `${r.sub!.slice(0, b)}[${r.sub!.slice(b, c)}]${r.sub!.slice(c)}` : undefined;
     };
-    expect(cut(result(shownOf(sigma("9.81065219207", "0.0526983346596"), { ...STD, grouped: true })))).toBe(`9.8[10${T}652${T}192${T}07] · σ 0.052${T}698${T}334${T}659${T}6`);
-    expect(cut(result(shownOf(sigma("39.488", "1.244"), { ...STD, grouped: true, decimalComma: true })))).toBe("3[9,488] · σ 1,244");
-    expect(cut(result(shownOf(sigma("12345.6", "100"), { ...STD, grouped: true, groupSep: "comma" })))).toBe("12,[345.6] · σ 100");
-    expect(cut(result(shownOf(sigma("-9.81", "0.02"), STD)))).toBe("-9.8[1] · σ 0.02");
-    expect(cut(result(shownOf(sigma("98100", "200"), { format: "SCI", digits: 3 })))).toBe("9.8[1]E4 · σ 2.00E2"); // the exponent stays plain
+    expect(cut(result(shownOf(sigma("9.81065219207", "0.0526983346596"), { ...STD, grouped: true })))).toBe(`9.8[10${T}652${T}192${T}07] · σ 0.053`); // R885: σ at 2 significant digits
+    expect(cut(result(shownOf(sigma("39.488", "1.244"), { ...STD, grouped: true, decimalComma: true })))).toBe("3[9,488] · σ 1,2");
+    expect(cut(result(shownOf(sigma("12345.6", "100"), { ...STD, grouped: true, groupSep: "comma" })))).toBe("12,[345.6] · σ 1.0E2"); // R885: 100 would read as 3 digits
+    expect(cut(result(shownOf(sigma("-9.81", "0.02"), STD)))).toBe("-9.8[1] · σ 0.020");
+    expect(cut(result(shownOf(sigma("98100", "200"), { format: "SCI", digits: 3 })))).toBe("9.8[1]E4 · σ 2.0E2"); // the exponent stays plain
     // every digit above σ's place, a σ of zero, no σ: nothing muted
-    expect(result(shownOf(sigma("2.5", "0.01"), STD))).toMatchObject({ sub: "2.5 · σ 0.01", subCut: [0, 3, 3, 3] });
+    expect(result(shownOf(sigma("2.5", "0.01"), STD))).toMatchObject({ sub: "2.5 · σ 0.010", subCut: [0, 3, 3, 3] });
     expect(result(shownOf(sigma("98100", "200"), { format: "SCI", digits: 3 })).subCut).toEqual([0, 3, 4, 6]); // 9.81E4, the exponent in
     expect(cut(result(shownOf(sigma("2.5", "0"), STD)))).toBeUndefined();
     expect(result(shownOf(qty(num("2.5")), STD)).subCut).toBeUndefined();

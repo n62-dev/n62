@@ -74,3 +74,11 @@ export function whyLine(item: CopySource, mark: MarkInfo | null, digits: number)
   if (!parts.length) parts.push(tc(mark.warn ? "why.notChecked" : "why.notConfirmed"));
   return `⚠ ${parts.join(" · ")}`;
 }
+
+/** R124's reason line under a row whose mark is `mark` (Session.reason): a ⚠ row's whyLine, and R886: a unit row whose σ
+ *  has ⚠ adds the view's reason (units/row.ts UnitRow.why), on a row of any mark; null: no line. */
+export function reasonLine(item: CopySource, mark: MarkInfo, digits: number): string | null {
+  const w = mark.mark === "⚠" ? whyLine(item, mark, digits) : null;
+  const sw = item.units?.why;
+  return typeof sw === "string" && sw ? (w ? `${w} · ${sw}` : `⚠ ${sw}`) : w;
+}
