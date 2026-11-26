@@ -86,7 +86,7 @@
     if (folded) dragged = false;
   });
 
-  // The swipe on the entry line: down folds, up unfolds, both on the lift; any other pointer is MathLive's
+  // The swipe on the entry line: down folds, up unfolds, both on the lift; folded, a finger's tap unfolds (R868); any other pointer is the line's
   $effect(() => {
     if (!line) return;
     return foldSwipe(line, {
@@ -97,6 +97,7 @@
         if (f && s) f.selection = s as typeof f.selection;
       },
       fire: (dir) => (dir === "down" ? onfold() : onunfold()),
+      tapUnfolds: () => folded,
     });
   });
 </script>
