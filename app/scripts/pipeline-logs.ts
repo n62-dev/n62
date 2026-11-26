@@ -108,14 +108,15 @@ const PRECISION_LOAD_ITEMS = /^g58-factorial-\S+: took \d+ ms > budgetMs \d+(?:;
  *  playwright.config.ts runs them in a project of their own, after the main one, with one worker (E2E_TIMING_GREP), so the
  *  parallel files never run beside them. `title` matches the test's title as the log gives it (describes joined by " › ").
  *  Solve's persistence, copy.spec's clipboard poll and Working…'s 150 ms (A25); and what #1645 lost to load once the
- *  clipboard lock was gone (A281): R255's kept line (the 1 s cap on its read, entry/controller.ts; backlog "Flaky (R255f2)"),
+ *  clipboard lock was gone (A281): the kept line of R34's kills (the 1 s cap on its read, entry/controller.ts; backlog "Flaky (R255f2)"),
  *  MathLive's late focus of a unit slot, a 30 ms job against the dash's 150 ms, the engine running a library's tests within
  *  an expect's 5 s, the first sheet's lazy chunk, the Menu's rows' code held back. */
 export const E2E_TIMING: readonly { file: string; title: RegExp }[] = [
   { file: "working.spec.ts", title: /Esc stops a job before Working… shows|a job shows Working… and Cancel only after 150 ms/ },
   { file: "solve.spec.ts", title: /equations and values are stored|kept across a reload/ },
   { file: "copy.spec.ts", title: /copy → paste gives the value back/ },
-  { file: "persist.spec.ts", title: /R255: a kept 5, then \+ 3 Enter before the field/ },
+  // the kept line read under EntryController.load's 1 s cap (A281f1: F30 lost its line once at 16 workers; not the cap's own test)
+  { file: "persist.spec.ts", title: /survives a kill \(F30\)|Home and CAS share one line|keys typed while the kept line loads|a hide while the field still loads after a kill|R255: a kept 5|R255f1: 5 then the units key/ },
   { file: "unittap.spec.ts", title: /a tap on the reading, then the hardware key m, still types into the slot/ },
   { file: "entrydash.spec.ts", title: /a job under 50 ms never shows the dash/ },
   { file: "library.spec.ts", title: /from the clipboard: beams\.txt imports/ },

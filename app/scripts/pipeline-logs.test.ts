@@ -145,6 +145,8 @@ describe("golden and e2e logs", () => {
   it("e2e (A281f1): #1645's load reds are timing, in the quiet project's log lines too", () => {
     const l = (f: string, t: string, p = "chromium-phone-quiet") => `  1) [${p}] › test/${f}:85:5 › ${t} ────────────\n`;
     expect(onlyTiming("e2e", l("persist.spec.ts", "R255: a kept 5, then + 3 Enter before the field: 8, no Ans"))).toBe(true);
+    expect(onlyTiming("e2e", l("persist.spec.ts", "a half-typed line with a fraction and a result chip survives a kill (F30)"))).toBe(true);
+    expect(onlyTiming("e2e", l("persist.spec.ts", "a kept line the store hands over after the 1 s cap is kept for the next start"))).toBe(false);
     expect(onlyTiming("e2e", l("unittap.spec.ts", "R801: a tap on a unit slot, 412 × 915 › a tap on the reading, then the hardware key m, still types into the slot"))).toBe(true);
     expect(onlyTiming("e2e", l("entrydash.spec.ts", "a job under 50 ms never shows the dash"))).toBe(true);
     expect(onlyTiming("e2e", l("library.spec.ts", "from the clipboard: beams.txt imports; a bad text is refused whole with its line"))).toBe(true);
