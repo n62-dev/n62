@@ -577,10 +577,9 @@ export class Session {
    *  its code (the tidy chunk, as R40's σ line) is in: the row keeps the line's place, so nothing moves when the text comes. */
   reason(item: HistoryItem): string | null {
     const m = this.settings.marks === "reason" ? this.mark(item) : null;
-    // R886: a unit row's σ with ⚠ adds the view's reason (units/row.ts UnitRow.why), on a row of any mark
-    const sw = this.settings.marks === "reason" && typeof item.units?.why === "string" ? item.units.why : "";
-    const w = m?.mark === "⚠" ? (sigmaCode?.whyLine(item, m, this.settings.digits) ?? "") : null;
-    return sw ? (w ? `${w} · ${sw}` : `⚠ ${sw}`) : w;
+    // R886: a unit row whose σ has ⚠ has the line too, on a row of any mark (whyLine.ts reasonLine); until the code is in
+    // only a ⚠ row keeps its place
+    return m ? (sigmaCode ? sigmaCode.reason(item, m, this.settings.digits) : m.mark === "⚠" ? "" : null) : null;
   }
   /** The mark before a finished result (docs/04 2.4), for the form it is drawn in; null: a non-number, or none known. */
   mark(item: HistoryItem): MarkInfo | null {

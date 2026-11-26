@@ -40,8 +40,8 @@ export function unitRow({ line, chips, q, slots, input, digits, job }: RowIn): O
   const chip = quantityChip(q);
   // R886: σ's ⚠ (G41: the view's `why`) stands before σ, as the view draws it, and its reason goes with the row (its
   // reason line, Session.reason)
-  const warn = q.unc?.why ? "⚠" : "";
-  const sigma = q.unc ? `\\pm${warn}${q.unc.text}` : "";
+  const w = q.unc?.why;
+  const sigma = q.unc ? (w ? "⚠" : "") + q.unc.text : ""; // never "" with a σ (Uncertainty.text is "0" for a σ of 0)
   const units: UnitRow = {
     slots,
     unit: q.unit,
@@ -50,9 +50,9 @@ export function unitRow({ line, chips, q, slots, input, digits, job }: RowIn): O
     ...(q.unc ? { unc: (({ value: _, ...rest }) => rest)(q.unc) } : {}),
     ...(q.note ? { note: q.note } : {}),
     ...(q.names?.length ? { names: unitNamesText(q.names) } : {}),
-    ...(q.unc?.why ? { why: unitWhyText(q.unc.why) } : {}),
-    latex: sigma + (q.unit ? unitLatex(q.unit) : ""),
-    text: (q.unc ? ` ± ${warn}${q.unc.text}` : "") + (q.unit ? ` ${q.unit}` : ""),
+    why: w && unitWhyText(w),
+    latex: (sigma && `\\pm${sigma}`) + (q.unit ? unitLatex(q.unit) : ""),
+    text: (sigma && ` ± ${sigma}`) + (q.unit ? ` ${q.unit}` : ""),
     input,
     ...(chip ? { chip } : {}),
   };
