@@ -34,6 +34,8 @@ describe("i18n", () => {
 // checks that file still builds the prefix, so a family cannot outlive its template.
 const SRC = join(import.meta.dirname, "..");
 const FAMILIES: readonly { prefix: string; suffixes: readonly string[] | "any"; file: string }[] = [
+  // R871: the notation word of Fmt's notice (fmtSaid)
+  { prefix: "fmtSay.", suffixes: ["std", "sci", "eng", "pfx", "fix", "exact"], file: "state/cycleForms.ts" },
   { prefix: "view.", suffixes: ["home", "cas", "symb", "plot", "num"], file: "apps/shellSheets.ts" }, // (R930: the Apps and ☰ sheets, out of shell.svelte.ts)
   { prefix: "angle.", suffixes: ["rad", "deg"], file: "views/modeSheet.ts" },
   { prefix: "status.angle.", suffixes: ["rad", "deg"], file: "views/StatusLine.svelte" }, // R783

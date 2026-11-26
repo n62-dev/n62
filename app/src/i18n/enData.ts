@@ -64,6 +64,7 @@ export const enData = {
   "part.units.own": "Your units",
   "part.word": "Word size and sign",
   "part.rpn": "RPN stack", // R252
+  "part.fmtSay": "Say the format", // R871
   // R128: Settings › Data › Sync folder, its notices and the start's offer (sync/backupSync.ts)
   "sync": "Sync folder",
   "sync.web": "Android only",

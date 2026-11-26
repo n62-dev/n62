@@ -599,8 +599,9 @@ export class Session {
   }
   /** The Format or the a b/c key on formRow's row, taken at the press before any await, and only when nothing runs: a later
    *  row must not take the act (R135f1). The code loaded: no await, the act is done before the next key. True when the
-   *  display changed; `dead` is called when nothing did (G785: the code was not in at the press, so deadPress could not know). */
-  async formKey(key: FormKey, at?: number | null, dead?: () => void): Promise<boolean> {
+   *  display changed (R871: Fmt's text to say instead, when Say the format is on); `dead` is called when nothing did (G785: the
+   *  code was not in at the press, so deadPress could not know). */
+  async formKey(key: FormKey, at?: number | null, dead?: () => void): Promise<boolean | string> {
     const item = this.formRow(key, at);
     if (!item || this.busy) return false; // (deadPress gave the dead press)
     const m = formsCode ?? (await loadForms());

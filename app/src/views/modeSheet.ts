@@ -31,6 +31,8 @@ import type { Layer } from "../keyboard/keyboard.ts";
 import { wordStore } from "../state/cycleForms.ts";
 import type { WordStore } from "../state/wordStore.svelte.ts";
 import { DEFAULT_WORD, WORD_SIZES, type WordBits, type WordSetting } from "../state/wordSetting.ts";
+import { fmtSay, type FmtSayStore } from "../state/fmtSay.svelte.ts";
+import { fmtSayText } from "../i18n/enFmtSay.ts";
 /** The presets' model (R88) is part of this chunk; R89 draws it in Mode (views/presetsView.svelte.ts). */
 export { presetsFor } from "../state/presets.svelte.ts";
 
@@ -123,10 +125,11 @@ function modeValue(session: Session): string {
 }
 
 /** R705: Settings open on top (App.svelte openSettings for an empty free key, `layer` the one it was pressed in): on into Your keys,
- *  onto that key's slot row; Alpha is the tap's row (an empty Alpha slot is the tap, docs/04 5.1). In this chunk, not the start
- *  chunk (its size pin). */
-export function toSlot(sheet: Sheet | null, slot: { id: string; layer: Layer }): void {
-  if (sheet?.enterAt("keys")) sheet.goKey(slot.id, slot.layer === "shift" ? "shift" : "primary");
+ *  onto that key's slot row; Alpha is the tap's row (an empty Alpha slot is the tap, docs/04 5.1). R871: a path of row ids, those
+ *  levels one in the other. In this chunk, not the start chunk (its size pin). */
+export function toSlot(sheet: Sheet | null, slot: { id: string; layer: Layer } | readonly string[]): void {
+  if (!("id" in slot)) slot.every((id) => sheet?.enterAt(id)); // R871: a path of rows (Shift + Fmt: Numbers, Fmt key cycle)
+  else if (sheet?.enterAt("keys")) sheet.goKey(slot.id, slot.layer === "shift" ? "shift" : "primary");
 }
 
 /** R927: the Settings root (App.svelte openSettings, openMode; Sheet.settingsOpen knows it by its title), on its row 1, Mode; with
@@ -468,10 +471,21 @@ export function numbersItems(session: Session, words: WordStore = wordStore): Me
   return [mark, cycleRow, decimals, uncertainty, marks, groups, wordRow];
 }
 
-/** The Fmt key's cycle: a tick per notation, in today's order, the hint a second line under the first. */
-function fmtTicks(session: Session): MenuItem[] {
+/** The Fmt key's cycle: a tick per notation, in today's order, the hint a second line under the first; then (R871) the switch
+ *  Say the format on each Fmt press (off), its own record (state/fmtSay.svelte.ts). Shift + Fmt opens this level. */
+export function fmtTicks(session: Session, say: FmtSayStore = fmtSay): MenuItem[] {
   const s = session.settings;
-  return NOTATION_MODES.map((mode, i): MenuItem => ({
+  void say.restore(); // the stored switch, before the row shows or sets it
+  const sayRow: MenuItem = {
+    id: "fmtSay",
+    label: fmtSayText("fmtSay.row"),
+    keep: true,
+    get selected() {
+      return say.on;
+    },
+    run: () => say.set(!say.on),
+  };
+  return [...NOTATION_MODES.map((mode, i): MenuItem => ({
     id: mode,
     label: modeText(`settings.fmt.${mode}` as ModeKey),
     ...(i === 0 ? { hint: modeText("settings.fmtCycle.hint") } : {}),
@@ -480,7 +494,7 @@ function fmtTicks(session: Session): MenuItem[] {
       return s.fmtCycle.includes(mode);
     },
     run: () => setFmtMode(session, mode, !s.fmtCycle.includes(mode)),
-  }));
+  })), sayRow];
 }
 
 /** The press counter (R70, docs/04 5.2: every key tap, flick and screen tap) and the Shift and Alpha tap counter (R9,

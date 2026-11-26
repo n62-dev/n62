@@ -255,11 +255,11 @@
   /** Settings as the ☰ menus' last row opens it (R49): one per session, its rows read the settings on every draw. */
   let settingsMenu: SubMenu | undefined;
   /** The ⚙ key, a user key that holds Settings, or a ☰ menu's ⚙ before the Mode code is in: the Settings root, on its row 1, Mode
-   *  (R49, R927, docs/05 3.4). `slot` (R705, an empty free key): Settings › Your keys, on that slot's row. */
-  function openSettings(slot?: FindSlot): void {
+   *  (R49, R927, docs/05 3.4). `slot` (R705, an empty free key): Settings › Your keys, on that slot's row; a path of rows (R871). */
+  function openSettings(slot?: FindSlot | readonly string[]): void {
     onModeSheet((m) => {
       m.showSettings(shell, session, settingsEnv);
-      if (slot) m.toSlot(shell.sheet, slot); // R705: on into Your keys
+      if (slot) m.toSlot(shell.sheet, slot); // R705: on into Your keys; R871: down the path
     });
   }
   // Android back is Esc for the open sheet (R21b, R49): it goes back one level, and the root closes. Each level it goes

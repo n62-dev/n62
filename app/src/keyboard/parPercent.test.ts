@@ -48,7 +48,7 @@ describe("R323: Shift + ( ) is ∥ (par), Shift + 0 is %", () => {
     expect(actionFor(k("d0"), false, false)).toEqual({ kind: "type", text: "0" });
     expect(k("d0").actions.alpha).toEqual({ kind: "special", name: "none" });
     expect(k("d0").label.alpha).toBeUndefined();
-    for (const id of ["frac", "d7", "fmt"]) {
+    for (const id of ["frac", "d7"]) {
       expect(k(id).actions.shift, id).toBeUndefined();
       expect(k(id).label.shift, id).toBeUndefined();
     }

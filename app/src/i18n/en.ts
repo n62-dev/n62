@@ -21,6 +21,8 @@ export const en = {
   "key.undo": "Undo",
   "key.redo": "Redo",
   "key.fmt": "Fmt",
+  /** Shift + Fmt (R871): the Fmt key cycle's page (at most 8 characters). */
+  "key.fmtSettings": "Cycle",
   "key.clear": "Clear",
   "key.sto": "Store",
   "key.emark": "ᴇ",

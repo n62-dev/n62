@@ -81,10 +81,9 @@ describe("keyboard spec", () => {
         const odd = a.kind === "special" && ((a.name === "copy" && at !== "select.shift") || (a.name === "paste" && at !== "deselect.shift") || a.name === "mode" || a.name === "menu");
         expect(odd, at).toBe(false);
       }
-    // R322: Mode left Fmt's Shift cell (R85); Shift + Fmt is RESERVED: no action, no legend; the tap stays Fmt
-    expect(actionFor(k("fmt"), true, false)).toBeUndefined();
-    expect(k("fmt").actions.shift).toBeUndefined();
-    expect(k("fmt").label).toEqual({ primary: "$key.fmt" });
+    // R322: Mode left Fmt's Shift cell (R85); R871 filled it: the Fmt key cycle's page; the tap stays Fmt
+    expect(actionFor(k("fmt"), true, false)).toEqual({ kind: "special", name: "fmtSettings" });
+    expect(k("fmt").label).toEqual({ primary: "$key.fmt", shift: "$key.fmtSettings" });
     expect(k("fmt").actions.primary).toEqual({ kind: "special", name: "fmt" });
     // Shift + Vars is Chars (R725; R723 had reserved it when Paste moved to Shift + Deselect)
     expect(k("vars").actions.shift).toEqual({ kind: "special", name: "chars" });

@@ -37,6 +37,7 @@ export const BACKUP_KEYS: readonly string[] = [
   UNITS_OWN,
   "word",
   "rpn", // R252: the RPN stack (entry/rpnStore.ts)
+  "fmtSay", // R871: Say the format on each Fmt press (state/fmtSay.svelte.ts)
 ];
 
 /** Parts an older app wrote that this one no longer keeps: an old file's part is skipped, never refused (R122;
@@ -242,6 +243,7 @@ export const VALIDATORS: Validators = {
   "units.targets": (v) => typeof v === "object" && v !== null,
   [UNITS_OWN]: recordOk, // G234: `{ units: [{ name, factor, of }] }` as strict as the start's read (units/ownRecord.ts)
   rpn: (v) => isObject(v) && Array.isArray(v["levels"]) && v["levels"].every(levelOk), // R252
+  fmtSay: bool, // R871: the switch (fmtSay.svelte.ts reads anything else as off)
   word: (v) => isObject(v) && Object.keys(v).length === 2 && fields(v, { bits: (n) => n === 8 || n === 16 || n === 32 || n === 64, signed: bool }), // R194: both fields, a size of 8, 16, 32 or 64, a boolean sign (the same rule as wordSetting.ts validWord, the start's check; word.test.ts runs both on one table; this file stays off its chunk)
 };
 

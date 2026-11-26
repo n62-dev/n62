@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The Format key (fmt) and the key vibration settings. Uses the real engine (GIAC_OUT).
-import { expect, test, type Page } from "@playwright/test";
-import { open, recordVibrations, sheet, sheetKey, tap, tapTwice, vibrations, tapHistory } from "./helpers.ts";
+import { readFileSync } from "node:fs";
+import { devices, expect, test, type Page } from "@playwright/test";
+import { open, recordVibrations, savePicker, sheet, sheetKey, tap, tapTwice, vibrations, tapHistory } from "./helpers.ts";
 
 const lastText = (page: Page) => page.locator('[data-testid="result"] .result').last();
 const ready = (page: Page) => page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
@@ -392,4 +393,149 @@ test("G795 controls: 2^100 FIX 4 stays the exact integer with =; sqrt(2)·10^15 
   await tap(page, ["fmt"]);
   await expect(lastText(page)).toHaveAttribute("data-text", "1414213562373095.05");
   await expect(markOfLast(page)).toHaveText("≈");
+});
+
+// R871 (owner, 2026-11-22, his point 22: Fmt gave no feedback on the notation): Shift + Fmt opens Settings › Numbers › Fmt key
+// cycle, whose last row "Say the format on each Fmt press" (off by default) has a Fmt press that changed the row say its notation
+// for 1.5 s where "Copied" shows (R774). The record is its own (`fmtSay`, as R194's word), read lazily, a backup part.
+const CYCLE = "Settings › Numbers › Fmt key cycle";
+const SAY = "fmtSay";
+const title = (page: Page) => page.getByTestId("sheet-title");
+const notice = (page: Page) => page.getByTestId("notice");
+const rowIds = (page: Page) => sheet(page).locator('[role="menuitem"]').evaluateAll((els) => els.map((e) => e.getAttribute("data-id")));
+/** Shift + Fmt: the Fmt key cycle's page. */
+async function cyclePage(page: Page): Promise<void> {
+  await tap(page, ["shift", "fmt"]);
+  await expect(title(page)).toHaveText(CYCLE);
+}
+/** From the cycle's page: up to Numbers, Settings, closed. */
+async function closeCycle(page: Page): Promise<void> {
+  await tap(page, ["esc", "esc", "esc"]);
+  await expect(sheet(page)).toBeHidden();
+}
+/** The switch, set from its page (a tap per change). */
+async function setSay(page: Page, on: boolean): Promise<void> {
+  await cyclePage(page);
+  if ((await row(page, SAY).getAttribute("data-selected")) !== String(on)) await row(page, SAY).tap();
+  await expect(row(page, SAY)).toHaveAttribute("data-selected", String(on));
+  await closeCycle(page);
+}
+
+for (const [width, height] of [
+  [360, 740],
+  [412, 915],
+] as const) {
+  test(`R871: Shift + Fmt opens the Fmt key cycle's page in Home and CAS, Esc goes up one level; in an app it is dead (${width} × ${height})`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await recordVibrations(page);
+    await open(page);
+    await page.evaluate(() => window.n62.session.setHaptics({ on: true, ms: 10 }));
+    const fmt = page.locator('[data-key="fmt"]');
+    await tap(page, ["shift"]);
+    await expect(fmt).not.toHaveAttribute("data-dead", "true"); // the Shift layer is live now
+    await tap(page, ["fmt"]);
+    await expect(title(page)).toHaveText(CYCLE);
+    expect(await rowIds(page)).toEqual(["std", "sci", "eng", "pfx", "fix", SAY]); // the five ticks, the switch last
+    await expect(row(page, SAY)).toHaveText(/Say the format on each Fmt press/);
+    await expect(row(page, SAY)).toHaveAttribute("data-selected", "false"); // off on a fresh profile
+    await tap(page, ["esc"]); // one level up, as from Mode
+    await expect(title(page)).toHaveText("Settings › Numbers");
+    await tap(page, ["esc", "esc"]);
+    await expect(sheet(page)).toBeHidden();
+    await tap(page, ["@cas"]);
+    await cyclePage(page);
+    await closeCycle(page);
+    // an app (Function's Symb): no Home result there, a dead press: the double pulse alone, no sheet
+    await tap(page, ["@symb"]);
+    await tap(page, ["shift"]);
+    const v1 = (await vibrations(page)).length;
+    await tap(page, ["fmt"]);
+    await expect.poll(async () => (await vibrations(page)).length - v1).toBe(2);
+    await page.waitForTimeout(300);
+    await expect(sheet(page)).toBeHidden();
+  });
+}
+
+test("R871: Say the format: off, 1/3 Enter Fmt says nothing; on, Fmt says Sci · this result for 1.5 s; a dead Fmt and a b/c say nothing", async ({ page }) => {
+  await open(page, "");
+  await ready(page);
+  // off (a fresh profile): no notice after a Fmt that changed the row, nor after a b/c
+  await tap(page, ["d1", "div", "d3", "enter"]);
+  await expect(lastText(page)).toHaveAttribute("data-text", "0.333333333333");
+  await tap(page, ["fmt"]);
+  await expect(lastText(page)).toHaveAttribute("data-text", "3.33333333333E-1");
+  await tap(page, ["frac"]);
+  await expect(lastText(page)).toHaveAttribute("data-text", "1/3");
+  await page.waitForTimeout(600);
+  await expect(notice(page)).toHaveCount(0);
+  // on
+  await setSay(page, true);
+  await tap(page, ["d1", "div", "d3", "enter"]);
+  await expect(lastText(page)).toHaveAttribute("data-text", "0.333333333333");
+  const t0 = Date.now();
+  await tap(page, ["fmt"]);
+  await expect(notice(page)).toHaveText("Sci · this result", { timeout: 300 });
+  await expect(lastText(page)).toHaveAttribute("data-text", "3.33333333333E-1");
+  await expect(notice(page)).toBeHidden({ timeout: Math.max(1, 2000 - (Date.now() - t0)) });
+  expect(Date.now() - t0).toBeGreaterThanOrEqual(1400); // it stayed its 1.5 s
+  // a b/c says nothing with the switch on too
+  await tap(page, ["frac"]);
+  await expect(lastText(page)).toHaveAttribute("data-text", "1/3");
+  await page.waitForTimeout(600);
+  await expect(notice(page)).toHaveCount(0);
+  // a press that changes nothing (G785: cycle STD only, on 5) says nothing
+  await page.evaluate(() => {
+    window.n62.session.settings.fmtCycle = ["std"];
+    window.n62.session.save();
+  });
+  await tap(page, ["d5", "enter"]);
+  await expect(lastText(page)).toHaveAttribute("data-text", "5");
+  await tap(page, ["fmt"]);
+  await page.waitForTimeout(600);
+  await expect(notice(page)).toHaveCount(0);
+  await expect(lastText(page)).toHaveAttribute("data-text", "5");
+});
+
+test("R871: Say the format survives a reload, and a backup and restore carries it", async ({ page, browser }) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 412, height: 915 });
+  await savePicker(page, "none"); // the backup comes back as a download
+  await open(page);
+  await setSay(page, true);
+  await page.waitForTimeout(500);
+  await page.reload();
+  await page.waitForFunction(() => window.n62 !== undefined);
+  await cyclePage(page);
+  await expect(row(page, SAY)).toHaveAttribute("data-selected", "true");
+  await closeCycle(page);
+  // the backup holds the part
+  await tap(page, ["help"]);
+  await row(page, "data").tap();
+  await expect(title(page)).toHaveText("Settings › Data");
+  const download = page.waitForEvent("download");
+  await row(page, "backup").tap();
+  const path = (await (await download).path()) as string;
+  const parts = (JSON.parse(readFileSync(path, "utf8")) as { parts: Record<string, { value: unknown }> }).parts;
+  expect(parts[SAY]?.value).toBe(true);
+  // restored into an empty store (a new context), where it was off
+  const ctx = await browser.newContext({ ...devices["Pixel 7"], baseURL: new URL(page.url()).origin });
+  const other = await ctx.newPage();
+  await open(other);
+  await cyclePage(other);
+  await expect(row(other, SAY)).toHaveAttribute("data-selected", "false");
+  await closeCycle(other);
+  await tap(other, ["help"]);
+  await row(other, "data").tap();
+  const chooser = other.waitForEvent("filechooser");
+  await row(other, "restore").tap();
+  await (await chooser).setFiles(path);
+  await expect(title(other)).toHaveText("Restore from a file");
+  await expect(row(other, SAY)).toBeVisible();
+  const load = other.waitForEvent("load");
+  await row(other, "restore").tap();
+  await load;
+  await other.waitForFunction(() => window.n62 !== undefined);
+  await cyclePage(other);
+  await expect(row(other, SAY)).toHaveAttribute("data-selected", "true");
+  await ctx.close();
 });

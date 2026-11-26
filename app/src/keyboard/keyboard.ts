@@ -34,10 +34,13 @@ export type Special =
   | "paste"
   /** Shift + Select (R723): what a hold on the picked row's result copies, else the last finished row's; it opens no sheet. */
   | "copy"
+  /** Shift + Fmt (R871): Settings › Numbers › Fmt key cycle, its ticks and Say the format; a dead press in an app. */
+  | "fmtSettings"
   /** A key whose function we don't have yet (it keeps its alpha letter): does nothing. */
   | "none";
-/** The specials that open a sheet (a list or a grid) instead of acting (R143: their legend carries the mark ▾; opens.ts). */
-export const OPENS_SHEET: readonly Special[] = ["settings", "mode", "apps", "menu", "tmpl", "relations", "symbols", "chars", "find", "vars", "memory", "base", "help", "matrix", "uncertainty"];
+/** The specials that open a sheet (a list or a grid) instead of acting (R143: their legend carries the mark ▾; opens.ts). The
+ *  first three come with the Mode sheet's code (route.ts SHEET_KEYS). */
+export const OPENS_SHEET: readonly Special[] = ["settings", "mode", "fmtSettings", "apps", "menu", "tmpl", "relations", "symbols", "chars", "find", "vars", "memory", "base", "help", "matrix", "uncertainty"];
 export const SPECIALS: readonly Special[] = [
   "shift", "alpha", "enter", "clear", "esc", "symb", "plot", "num", "fmt", "home", "cas", "switch", "slot", "units", "selectGrow", "selectShrink", "paste", "copy", "none", ...OPENS_SHEET,
 ];
