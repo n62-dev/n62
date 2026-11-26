@@ -636,12 +636,12 @@ want_checks() {
   case "$checks" in
     none) echo "";;
     auto)  # A83: the cheap checks first (medians: docs 3 s, typecheck 15 s, size 20 s, redfirst 5 s, vitest 53 s, golden 240 s, e2e 607 s)
-      local f app=0 list="docs,typecheck"; f="$(changed)"; grep -q '^app/' <<<"$f" && app=1
-      [[ $app -eq 0 ]] || list="$list,size"
+      local f list="docs,typecheck"; f="$(changed)"  # A280: size and e2e by the paths the build and the specs read (pipeline-lib.sh BUILD_RE, E2E_RE)
+      ! build_selected <<<"$f" || list="$list,size"
       ! red_first_wanted "$spec_file" || list="$list,redfirst"
       list="$list,vitest"
       ! golden_selected <<<"$f" || list="$list,golden"
-      [[ $app -eq 0 ]] || list="$list,e2e"
+      ! e2e_selected <<<"$f" || list="$list,e2e"
       ! shell_selected <<<"$f" || list="$list,shell"
       echo "$list";;
     *) echo "$checks";;
@@ -670,12 +670,12 @@ if [[ $dry -eq 1 ]]; then
     echo "red-first's stock engine (a package that says its tests fail on the stock build): $engine_root/stock-<key of build-wasm.sh stock-key>, built once with GIAC_PATCHES=none under host-cpu when missing"
   fi
   echo "checks: $checks; merge: $merge; audit model: $audit_model; no-worker: $nowork"
-  echo "checks: docs,typecheck,vitest always; + size, e2e when app/ changed; + redfirst when the package says its tests fail on phase-1 or the stock build; + golden and its stages when engine or parser changed; + shell when scripts/ or tools/*.sh changed"
+  echo "checks: docs,typecheck,vitest always; + size when app/ or a file the build reads changed, e2e when app/ or a file the e2e specs read changed (E2E_RE, BUILD_RE: spec/, tests/core/, tests/tasks/, ...; A280); + redfirst when the package says its tests fail on phase-1 or the stock build; + golden and its stages when engine or parser changed; + shell when scripts/ or tools/*.sh changed"
   echo "checks order (auto): docs, typecheck, size, redfirst, vitest, golden, stages, e2e, shell (A83: the cheap ones first); every queue round runs the whole list"
   if [[ -n "$pkg_drop" ]]; then echo "package file: $pkg_drop deleted on $branch in a commit of its own before each queue entry (A75; phase-1 keeps it until the merge, so <merge>^1 has it)"
   else echo "package file: none deleted (a FIX id or a task text)"; fi
   echo "dead links (A140): after every merge of phase-1 into the branch (a resumed worker start, the queue entry, review-only) every link in tracked Markdown to a missing docs/shifts/packages/*.md, any id, is unlinked in a commit of its own: chore($id): drop links to deleted package files (A140)"
-  echo "pre-flight (auto; after the worker and after each fix round, before the queue, in $wt without integ): lint (a new engine/giac/patches/NNNN-*.patch has its README row; a report commit), the Docs step (each docs file the task's Docs step names is changed on the branch or has a report line 'Docs not changed: <path>: at its budget', and only a file with a docs-check budget may use it, A275f1), docs, typecheck, size when app/ changed (under host-cpu); a failure is a fix round (one of the two; free when only docs, the Docs step or size failed, A124) and never enters the queue"
+  echo "pre-flight (auto; after the worker and after each fix round, before the queue, in $wt without integ): lint (a new engine/giac/patches/NNNN-*.patch has its README row; a report commit), the Docs step (each docs file the task's Docs step names is changed on the branch or has a report line 'Docs not changed: <path>: at its budget', and only a file with a docs-check budget may use it, A275f1), docs, typecheck, size when app/ or a file the build reads changed (BUILD_RE; under host-cpu); a failure is a fix round (one of the two; free when only docs, the Docs step or size failed, A124) and never enters the queue"
   if git show-ref --verify --quiet "refs/heads/$branch"; then changed() { git diff --name-only "phase-1...$branch"; }; echo "checks for $branch as it is now: $(want_checks)"; fi
   echo "stray check (A88): before the worker and each fix or resolve round the top level of $(dirname "$main") and $main/.claude/worktrees is listed; afterwards one log line per new entry: pipeline #<n> $id: WARN new file outside the worktree: <path> (a worktree git knows is not new; warns only)"
   echo "locks: $branch_lock for the whole run (a second run on $branch is refused); integ and host-cpu wait up to 7200 s each; lock order integ before host-cpu"
