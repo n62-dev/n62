@@ -63,8 +63,8 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 |---|---|---|---|---|
 | 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Opus | `p1/ron-keepline` | – |
 | 888e20 | R912 ▾ on Store | ron, Opus | `p1/ron-storemark` | – |
-| 888e21 | [R913](packages/R913.md) ▾ on the baseline | ron, Opus | `p1/ron-markbaseline` | R912 |
-| 888e22 | [R914](packages/R914.md) one name per sign | ron, Opus | `p1/ron-signnames` | – |
+| 888e21 | R913 ▾ on the baseline | ron, Opus | `p1/ron-markbaseline` | R912 |
+| 888e22 | R914 one name per sign | ron, Opus | `p1/ron-signnames` | – |
 | 888e23 | [A270](packages/A270.md) phones stay in portrait | annabell, Sonnet | `p1/annabell-portrait` | – |
 | 888i | [R868](packages/R868.md) a tap on the line unfolds the keys | ron, Opus | `p1/ron-linetapunfold` | R856 |
 | 888i1 | [R928](packages/R928.md) ⌄ folds the keys in Plot | ron, Opus | `p1/ron-plotfold` | R868, R924 |
