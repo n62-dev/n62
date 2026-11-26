@@ -26,6 +26,11 @@ async function mutedIs(l: Locator, digits: string): Promise<void> {
   expect(digitsOf(await l.textContent())).toBe(digits);
 }
 const store = (page: Page) => page.getByTestId("store");
+/** The unit view's second line shows its muted span: its colour differs from the plain digits before it (its parent's). */
+async function mutedShows(page: Page): Promise<void> {
+  const [plain, muted] = await sub(page).locator(".unc").evaluate((u) => [getComputedStyle(u.parentElement!).color, getComputedStyle(u).color]);
+  expect(muted).not.toBe(plain);
+}
 
 /** The value on Home's line (typed digits and ± are Shift + ,), the units key, `unit` in its slot, Eval. */
 async function inUnits(page: Page, value: string[], unit: string[]): Promise<void> {
@@ -62,6 +67,7 @@ test.describe("a typed ± mutes the digits past σ (R883)", () => {
     await flick(page, "enter", "up");
     await expect(page.getByTestId("unit-result").locator(".value")).toHaveText("9.811 ± 0.053");
     await mutedIs(sub(page).locator(".unc"), "1065219207");
+    await mutedShows(page);
     expect(digitsOf(await sub(page).textContent())).toMatch(/^981065219207/);
     await leave(page, 1);
     await expect(lastResult(page)).toHaveAttribute("data-text", /^9\.81065219207/);
@@ -72,6 +78,7 @@ test.describe("a typed ± mutes the digits past σ (R883)", () => {
   test("9.81 ± 0.02 m/s²: 9.8 plain, 1 muted; the same with Muted digits (no σ on tap)", async ({ page }) => {
     await inUnits(page, NINE81, M_S2);
     await mutedIs(sub(page).locator(".unc"), "1");
+    await mutedShows(page);
     await leave(page, 1);
     await mutedIs(rowMuted(page), "1");
     await page.evaluate(() => (window.n62.session.settings.uncertainty = "muted"));

@@ -46,9 +46,9 @@ export interface UnitShown {
   dim?: string;
   /** With σ, muted under the value line: the value and σ at the digits setting. */
   sub?: string;
-  /** R883: where in `sub` the value's digits past σ go muted, R40's rule (render/uncMute.ts): [from, to]; absent when no
-   *  digit is. */
-  subMuted?: readonly [number, number];
+  /** R883: where in `sub` its value stands and its digits past σ go muted (R40's rule, render/uncMute.ts):
+   *  [value from, muted from, muted to, value to]; the muted part is empty when no digit is. */
+  subCut?: readonly [number, number, number, number];
   /** The dimension key; "" for a pure number (no row). */
   dimension: string;
   /** The row's chips, fixed for as long as this result is on screen (not reordered); "More…" follows them. */
@@ -109,12 +109,13 @@ export function shownOf(q: Quantity | UnitError, u: UnitFormat, alts: readonly A
 }
 
 /** R883: the line under the value line (`sub`), and with σ's cut (render/uncMute.ts sigmaCut) where its value's digits
- *  go muted (`subMuted`), as Home's row and a constant's (R40) draw them. `value` is drawn (groups, decimal comma);
+ *  go muted (`subCut`), as Home's row and a constant's (R40) draw them. `value` is drawn (groups, decimal comma);
  *  `m` its real part's mantissa drawn the same way, with its sign, and the mantissa's power of ten. */
-function subLine(value: string, sigma: string, cut: number | undefined, m: [string, number | undefined] | undefined, mark: string): Pick<UnitShown, "sub" | "subMuted"> {
+function subLine(value: string, sigma: string, cut: number | undefined, m: [string, number | undefined] | undefined, mark: string): Pick<UnitShown, "sub" | "subCut"> {
   const sub = unitText("units.result.sub", { value, sigma });
   const [lead, exp] = m ?? [""];
   const at = cut === undefined || exp === undefined || !value.startsWith(lead) ? -1 : tailAt(lead, exp, cut, mark);
   const k = sub.indexOf(value);
-  return at < 0 ? { sub } : { sub, subMuted: [k + at, k + lead.length] };
+  const e = k + value.length;
+  return { sub, subCut: at < 0 ? [k, e, e, e] : [k, k + at, k + lead.length, e] };
 }
