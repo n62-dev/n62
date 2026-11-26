@@ -1530,12 +1530,43 @@ out="$(docs_step_lint "$dsd" "$(dspec "$free2")")"
 grep -q 'docs/04' <<<"$out" && fail "A275: a name after the Docs sentence's end is required: $out"
 # the way out: a report line for that file, for that file only
 git -C "$dsd" checkout -q -b p1/f phase-1; dwork docs/05-ui-plan.md
-dreport 'Docs not changed: docs/decisions.md: the file is at its budget (brief section 2).'
+dreport 'Docs not changed: docs/decisions.md: at its budget (brief section 2).'
 out="$(docs_step_lint "$dsd" "$(dspec "$step2")")" || fail "A275: a 'Docs not changed: docs/decisions.md: <reason>' line does not cover decisions.md: $out"
 out="$(docs_step_lint "$dsd" "$(dspec '3. **Docs:** docs/04 2.6; decisions.md: a line.')")"; rc=$?
 [[ $rc -ne 0 && "$out" == 'lint: the Docs step names docs/04-architecture.md and the branch does not change it' ]] || fail "A275: the way out for decisions.md covered docs/04 as well (rc $rc): $out"
 git -C "$dsd" checkout -q -b p1/g phase-1; dwork src.txt; dreport 'Docs not changed: docs/decisions.md'
 docs_step_lint "$dsd" "$(dspec '3. **Docs:** decisions.md: a line.')" >/dev/null && fail "A275: a 'Docs not changed:' line with no reason covers a file"
+# A275f1: the way out only for a file with a docs-check budget (read from tools/docs-check.mjs), its reason starting "at its budget"
+git -C "$dsd" checkout -q -b p1/g2 phase-1; dwork docs/05-ui-plan.md
+dreport 'Docs not changed: docs/04-architecture.md: at its budget'
+out="$(docs_step_lint "$dsd" "$(dspec '3. **Docs:** docs/05 3.1; docs/04 2.6.')")" || fail "A275f1: 'Docs not changed: docs/04-architecture.md: at its budget' does not cover docs/04 (a budgeted file): $out"
+git -C "$dsd" checkout -q -b p1/g3 phase-1; dwork src.txt
+dreport 'Docs not changed: docs/05-ui-plan.md: at its budget'
+out="$(docs_step_lint "$dsd" "$(dspec '3. **Docs:** docs/05 3.1.')")"; rc=$?
+[[ $rc -ne 0 && "$out" == 'lint: the Docs step names docs/05-ui-plan.md and the branch does not change it' ]] || fail "A275f1: 'at its budget' covers docs/05, which has no docs-check budget (rc $rc): $out"
+git -C "$dsd" checkout -q -b p1/g4 phase-1; dwork src.txt
+dreport 'Docs not changed: docs/05-ui-plan.md: the prompt allows no other shared file'
+out="$(docs_step_lint "$dsd" "$(dspec '3. **Docs:** docs/05 3.1.')")"; rc=$?
+[[ $rc -ne 0 ]] || fail "A275f1: the old prompt's reason covers docs/05 (rc $rc): $out"
+git -C "$dsd" checkout -q -b p1/g5 phase-1; dwork src.txt
+dreport 'Docs not changed: docs/decisions.md: the prompt allows no other shared file'
+out="$(docs_step_lint "$dsd" "$(dspec '3. **Docs:** decisions.md: a line.')")"; rc=$?
+[[ $rc -ne 0 ]] || fail "A275f1: a reason that does not start 'at its budget' covers decisions.md (rc $rc): $out"
+git -C "$dsd" checkout -q -b p1/g6 phase-1; dwork src.txt
+dreport 'Docs not changed: docs/decisions.md: the file is at its budget'
+docs_step_lint "$dsd" "$(dspec '3. **Docs:** decisions.md: a line.')" >/dev/null && fail "A275f1: 'the file is at its budget' (not starting at its budget) covers decisions.md"
+(source "$here/pipeline-lib.sh"; docs_budget_files) > "$tmp/bf" 2>/dev/null
+for f in docs/decisions.md docs/04-architecture.md docs/shifts/brief.md docs/backlog.md; do grep -qxF "$f" "$tmp/bf" || fail "A275f1: docs_budget_files lacks $f: $(cat "$tmp/bf")"; done
+grep -qxF docs/05-ui-plan.md "$tmp/bf" && fail "A275f1: docs_budget_files holds docs/05-ui-plan.md"
+# A275f1 (the prompts hold the backticks escaped, as source): the worker prompt and the fix round's prompt let the worker change the Docs step's files and ask for npm run size
+for pv in worker_prompt fix_prompt; do
+  pl="$(grep -m1 "^ *$pv=" "$here/pipeline.sh")"
+  grep -qF "the docs files your package's Docs step names" <<<"$pl" || fail "A275f1: the $pv does not allow the Docs step's files"
+  grep -qF 'When app/ changed, run \`npm run size\` from app/ before your report; a size failure is yours to fix, or to bring the pin'"'"'s cut for.' <<<"$pl" || fail "A275f1: the $pv does not ask for npm run size when app/ changed"
+done
+grep -m1 '^worker_prompt=' "$here/pipeline.sh" | grep -qF 'change no other shared file.' && fail "A275f1: the worker prompt still says 'change no other shared file.'"
+out="$("$script" ron "$ron_pkg" --dry-run 2>&1)"
+grep -qF 'at its budget' <<<"$(grep '^pre-flight' <<<"$out")" || fail "A275f1: the dry run's pre-flight line does not say the way out is for a file at its budget"
 # backlog.md is never required; a name that is no file is ignored; a file named with a :line or 's
 git -C "$dsd" checkout -q -b p1/h phase-1; dwork src.txt; dreport ""
 out="$(docs_step_lint "$dsd" "$(dspec '3. **Docs:** docs/backlog.md: tick the line; backlog.md again; docs/99 and docs/nothing.md do not exist.')")" || fail "A275: backlog.md or a name that is no file is required: $out"

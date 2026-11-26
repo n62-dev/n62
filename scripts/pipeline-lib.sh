@@ -533,7 +533,7 @@ preflight_lint() {
   return $bad
 }
 # A275: the third mechanical audit FIX: "the diff does not touch docs/05" (six FIXes in two days). docs_step_lint <worktree> <bundle>: the
-# files the task's Docs step names must be in the branch's diff against phase-1, or a report commit must say `Docs not changed: <path>: <why>`.
+# files the task's Docs step names must be in the branch's diff against phase-1, or a report commit must say `Docs not changed: <path>: at its budget` (A275f1: only a file with a docs-check budget, docs_budget_files).
 # The step is the first task-section line that starts with an optional "N. " or "- " and **Docs:**, else the sentence after `Docs:` in the task text.
 # `docs/NN` (a :line, 's or a section after it; with or without -<name>.md) is the one docs/NN-*.md, `docs/<path>.md` itself, a bare
 # decisions.md docs/decisions.md; docs/backlog.md (a tick waits for the pass when the file is full) and a name that is no file are skipped.
@@ -558,14 +558,19 @@ docs_step_files() {  # <worktree> <bundle>: the docs files the step names, one p
     grep -qE '(^|[^A-Za-z0-9_/.-])decisions\.md' <<<"$t" && echo docs/decisions.md
   } | { grep -vxE 'docs/backlog\.md|docs/shifts/packages/.*' || true; } | sort -u
 }
+# docs_budget_files: the files with a size budget in tools/docs-check.mjs's BUDGETS (the one list), one path a line.
+docs_budget_files() {
+  grep -oE '^ *\{ file: "[^"]+"' "$(dirname "${BASH_SOURCE[0]}")/../tools/docs-check.mjs" 2>/dev/null | sed -E 's/^.*"([^"]+)"$/\1/'
+}
 docs_step_lint() {  # <worktree> <bundle>
-  local wt="$1" f bad=0 changed bodies
+  local wt="$1" f bad=0 changed bodies budgeted
+  budgeted="$(docs_budget_files)"
   changed="$(git -C "$wt" diff --name-only phase-1...HEAD 2>/dev/null || true)"
   bodies="$(git -C "$wt" log --format=%b phase-1..HEAD 2>/dev/null || true)"
   while IFS= read -r f; do
     [[ -n "$f" ]] || continue
     grep -qxF "$f" <<<"$changed" && continue
-    grep -qE "^[-*# ]*Docs not changed: $f: ." <<<"$bodies" && continue
+    if grep -qxF "$f" <<<"$budgeted" && grep -qE "^[-*# ]*Docs not changed: $f: at its budget" <<<"$bodies"; then continue; fi
     echo "lint: the Docs step names $f and the branch does not change it"; bad=1
   done < <(docs_step_files "$wt" "$2")
   return $bad
