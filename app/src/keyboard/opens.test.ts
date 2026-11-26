@@ -24,6 +24,11 @@ describe("opensSheet (R143)", () => {
       expect(opensSheet({ kind: "special", name }), name).toBe(false);
   });
 
+  it("is true for an insert flagged `opens` (Store ▶, R912), false for the same insert without it", () => {
+    expect(opensSheet({ kind: "insert", latex: "\\blacktriangleright", opens: true })).toBe(true);
+    expect(opensSheet({ kind: "insert", latex: "\\blacktriangleright" })).toBe(false);
+  });
+
   it("is false for typing, templates, editing commands and a missing action", () => {
     const others: ActionBody[] = [{ kind: "type", text: "x" }, { kind: "insert", latex: "\\pi" }, { kind: "cmd", name: "undo" }];
     for (const a of others) expect(opensSheet(a), a.kind).toBe(false);
@@ -47,10 +52,10 @@ describe("opensSheet (R143)", () => {
     for (const s of used) expect(OPENS_SHEET.includes(s as never) || OPENS_NOTHING.has(s as never), s).toBe(true);
   });
 
-  it("the shipped layers that open a sheet are the ones the owner named (R143; Help and Settings on r0c4, R723; Shift + 4, R187; the uncertainty sheet on Shift + 1, R327; Copy and Paste on Shift + Select and Shift + Deselect open none)", () => {
+  it("the shipped layers that open a sheet are the ones the owner named (R143; Help and Settings on r0c4, R723; Shift + 4, R187; the uncertainty sheet on Shift + 1, R327; Store ▶ on Shift + ᴇ, R912; Copy and Paste on Shift + Select and Shift + Deselect open none)", () => {
     const seen: string[] = [];
     for (const k of keyboard.keys)
       for (const layer of ["primary", "shift", "alpha"] as const) if (opensSheet(k.actions[layer])) seen.push(`${k.id}/${layer}`);
-    expect(seen.sort()).toEqual(["d1/shift", "d4/shift", "d6/shift", "d9/shift", "help/primary", "help/shift", "math/primary", "math/shift", "sub/shift", "tmpl/primary", "vars/primary", "vars/shift"]);
+    expect(seen.sort()).toEqual(["d1/shift", "d4/shift", "d6/shift", "d9/shift", "emark/shift", "help/primary", "help/shift", "math/primary", "math/shift", "sub/shift", "tmpl/primary", "vars/primary", "vars/shift"]);
   });
 });
