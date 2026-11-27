@@ -4,7 +4,7 @@
 // Math, Memory, lists the same and deletes one (Enter) or all (the last row, Enter twice). In Find's lazy chunk. No
 // index is needed: the live items go through rank.ts's search over an empty index.
 import type { MenuItem } from "../apps/types.ts";
-import type { UserName } from "../engine/defs.ts";
+import type { LoggedDef, UserName } from "../engine/defs.ts";
 import type { EntryController } from "../entry/controller.ts";
 import { findText as t } from "../i18n/enFind.ts";
 import { decimalFromString, ZERO_VALUE } from "../engine/format.ts";
@@ -35,17 +35,50 @@ function insertOf(n: UserName): string {
 }
 
 /** Memory (R4b): purge these names from the engine and its definitions log. The list drops them at once, then reads
- *  the log again (a purge that failed brings a name back). Here, not in Session, since G785 (the start chunk's room). */
-export async function forget(session: Session, names: readonly string[]): Promise<void> {
-  if (names.length === 0) return;
+ *  the log again (a purge that failed brings a name back). R314: first their log entries are kept as the session's
+ *  Undo copy (`memoryUndo`, one level: a later delete replaces it). Here, not in Session, since G785 (the start chunk's room). */
+export function forget(session: Session, names: readonly string[]): Promise<void> {
+  if (names.length === 0) return Promise.resolve();
   const gone = new Set(names);
   session.userNames = session.userNames.filter((u) => !gone.has(u.name));
+  deleting = deleting.then(() => take(session, names)); // one after the other: each keeps its own entries before its purge
+  return deleting;
+}
+let deleting: Promise<void> = Promise.resolve();
+
+async function take(session: Session, names: readonly string[]): Promise<void> {
+  let rows: LoggedDef[] = [];
+  try {
+    rows = await session.calc.entriesOf(names);
+  } catch {
+    /* no copy: the delete goes on */
+  }
   try {
     await session.calc.home(`purge(${names.join(",")})`, session.settings);
   } catch {
     /* cancelled or the engine restarted: the names are read again below */
   }
   await session.refreshNames();
+  const live = new Set(session.userNames.map((u) => u.name));
+  const kept = rows.filter((r) => !live.has(r.entry.name)); // a purge that failed took nothing
+  if (kept.length) session.memoryUndo = kept;
+}
+
+/** R314: Memory's Undo: the entries of the last delete go back (the engine stores them again, the log takes them at their
+ *  old places) unless the name was defined since; the copy is dropped either way. `taken`: names left as they are. */
+export async function undoForget(session: Session): Promise<{ back: string[]; taken: string[] }> {
+  const rows = session.memoryUndo;
+  if (!rows) return { back: [], taken: [] };
+  session.memoryUndo = null;
+  let back: string[] = [];
+  try {
+    back = await session.calc.restoreDefs(rows);
+  } catch {
+    session.memoryUndo = rows; // cancelled or the engine restarted: the copy stays for another try
+    return { back: [], taken: [] };
+  }
+  await session.refreshNames();
+  return { back, taken: rows.map((r) => r.entry.name).filter((n) => !back.includes(n)) };
 }
 
 /** A variable's name as the line takes it (R258; the store sheet types it after ▶, R281). R337: a stand-in e_ or i_ (R67)
@@ -144,11 +177,12 @@ export function nameItems(names: readonly UserName[], row: (n: UserName, cell: b
 }
 
 /** Whether the clear-all row was pressed once (it clears on the second Enter). Reactive, so the row redraws. */
-const ui = $state({ armed: false });
+const ui = $state({ armed: false, note: "" });
 
 /** Vars (`memory` false) or Memory (true) as a sheet above the keypad, its keys those of Find (route.ts, sheetKeys.ts). */
 export function showNames(shell: { sheet: Sheet | null }, entry: EntryController, session: Session, memory: boolean): void {
   ui.armed = false;
+  ui.note = "";
   const names = (): readonly UserName[] => session.userNames;
   /** After a deletion: the hits are read again and the highlight stays on a row. */
   const settle = (): void => {
@@ -160,7 +194,8 @@ export function showNames(shell: { sheet: Sheet | null }, entry: EntryController
   const run = (n: UserName): void => {
     if (memory) {
       ui.armed = false;
-      void forget(session, [n.name]);
+      ui.note = "";
+      void forget(session, [n.name]).then(settle); // (the Undo row comes once the entries are kept)
       settle();
     } else entry.run({ kind: "insert", latex: insertOf(n) });
   };
@@ -177,8 +212,8 @@ export function showNames(shell: { sheet: Sheet | null }, entry: EntryController
     preview: t("vars.free", { name: letter }),
     run: () => entry.run({ kind: "insert", latex: letter }),
   });
-  /** Vars: the grid of letters with their values, then the other names; Memory: every name newest first, then Clear all. */
-  const listed = (): MenuItem[] => (memory ? all() : nameItems(names(), row, free));
+  /** Vars: the grid of letters with their values, then the other names; Memory: every name newest first, then Clear all, then Undo (R314). */
+  const listed = (): MenuItem[] => (memory ? [...all(), ...(names().length ? [clearAll] : []), ...undoRow()] : nameItems(names(), row, free));
   const newest = (): string | undefined => {
     const last = [...names()].sort((a, b) => b.time - a.time)[0];
     return last && liveItem(last).id;
@@ -193,10 +228,30 @@ export function showNames(shell: { sheet: Sheet | null }, entry: EntryController
       if (!ui.armed) ui.armed = true;
       else {
         ui.armed = false;
-        void forget(session, names().map((n) => n.name));
+        ui.note = "";
+        void forget(session, names().map((n) => n.name)).then(settle);
         settle();
       }
     },
+  };
+  /** R314: the row under the names after a delete: Undo, with what it brings back; after an Undo that found a name taken,
+   *  the note saying so (a tap clears it). The copy is the session's, so the next Enter on the line drops it. */
+  const undoRow = (): MenuItem[] => {
+    const copy = session.memoryUndo;
+    const label = ui.note || (copy ? (copy.length === 1 ? t("memory.undo1", { name: typedName(copy[0]!.entry.name) }) : t("memory.undoN", { n: String(copy.length) })) : "");
+    if (!label) return [];
+    return [
+      {
+        id: "undo",
+        label,
+        keep: true,
+        run: () => {
+          if (ui.note) ui.note = "";
+          else void undoForget(session).then((r) => ((ui.note = r.taken.length ? t("memory.taken", { names: r.taken.map(typedName).join(", ") }) : ""), settle()));
+          settle();
+        },
+      },
+    ];
   };
   /** Newest definition first (the empty query shows what was just stored). */
   const all = (): MenuItem[] => [...names()].sort((a, b) => b.time - a.time).map((n) => row(n));
@@ -208,7 +263,7 @@ export function showNames(shell: { sheet: Sheet | null }, entry: EntryController
     });
   };
   // Vars opens on the newest name, as before; its filter is Find's search over the names (the hits are rows, the grid is for the empty query)
-  shell.sheet = new Sheet("find", t(memory ? "memory.title" : "vars.title"), () => (memory && names().length ? [...all(), clearAll] : listed()), {
+  shell.sheet = new Sheet("find", t(memory ? "memory.title" : "vars.title"), listed, {
     search: found,
     remember: false,
     // R800: a digit key only highlights a Memory row (Enter deletes); it never deletes a name or arms Clear all

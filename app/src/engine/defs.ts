@@ -98,6 +98,25 @@ export function applyDefChanges(log: readonly DefEntry[], changes: readonly DefC
   return out.length > MAX_DEFS ? out.slice(out.length - MAX_DEFS) : out;
 }
 
+/** R314: an entry with its place in the log when it was taken out (Memory's Undo copy). */
+export interface LoggedDef {
+  at: number;
+  entry: DefEntry;
+}
+
+/** R314: `log` with the entries of `rows` (put in at its end by applyDefChanges) moved back to their old places, the
+ *  log's own version of each entry kept (a replay may have migrated it). */
+export function putBackDefs(log: readonly DefEntry[], rows: readonly LoggedDef[]): DefEntry[] {
+  const keys = new Set(rows.map((r) => keyOf(r.entry)));
+  const mine = new Map(log.filter((e) => keys.has(keyOf(e))).map((e) => [keyOf(e), e]));
+  const out = log.filter((e) => !keys.has(keyOf(e)));
+  for (const r of [...rows].sort((a, b) => a.at - b.at)) {
+    const e = mine.get(keyOf(r.entry));
+    if (e) out.splice(Math.min(r.at, out.length), 0, e);
+  }
+  return out;
+}
+
 /** The commands to replay, in order: symbolic values first (while every name in them is still free), then the rest. */
 export function replayOrder(log: readonly DefEntry[]): DefEntry[] {
   return [...log.filter((e) => e.early), ...log.filter((e) => !e.early)];

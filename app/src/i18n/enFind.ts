@@ -41,6 +41,10 @@ export const enFind = {
   "memory.clear": "Clear all",
   "memory.sure": "Enter again clears {n}",
   "memory.fn": "function",
+  /** R314: the row under Memory's names after a delete (a tap brings the names back), and what an Undo says of a name defined since. */
+  "memory.undo1": "{name} deleted · Undo",
+  "memory.undoN": "{n} names deleted · Undo",
+  "memory.taken": "{names} defined again, not restored",
   "slot.title": "Your key",
   "keys.title": "Your keys",
   "keys.none": "None set",

@@ -10,8 +10,8 @@ export type { ChipEntry, ChipFactsTable } from "../engine/chipFacts.ts";
 export type { ConstEntry, ConstTable } from "../engine/constUnc.ts";
 
 export type { AnalysisRequest, AnalysisResult, HomeResult, KnownValue, SolveOutcome, SolveRequest, SolveRoot, TableRequest, ValueFacts } from "../engine/types.ts";
-export type { UserName } from "../engine/defs.ts";
-import type { UserName } from "../engine/defs.ts";
+export type { LoggedDef, UserName } from "../engine/defs.ts";
+import type { LoggedDef, UserName } from "../engine/defs.ts";
 import type { LibraryReply } from "../engine/library.ts";
 import type { MathEngine } from "../engine/types.ts";
 export type { LibraryReply } from "../engine/library.ts";
@@ -135,6 +135,11 @@ export interface Calc {
   table(req: TableRequest, settings: CalcSettings): Promise<HomeResult[][]>;
   /** The user's variables and functions (Vars, Find's live items; docs/04 3.4), stored ones included once read. */
   names(): Promise<UserName[]>;
+  /** R314: the log entries of these names with their places (Memory keeps them as its Undo copy before it purges them). */
+  entriesOf(names: readonly string[]): Promise<LoggedDef[]>;
+  /** R314: put entries back (Memory's Undo): the engine replays them, the log takes them in at their old places. The
+   *  names it restored; a name defined since is left as it is (taken), and an engine that cannot restore gives none. */
+  restoreDefs(rows: readonly LoggedDef[]): Promise<string[]>;
   /** The unit view (G16, docs/04 4.2): the formula with its unit slots, evaluated exactly with the Find index's
    *  factors (loaded on the first call, never at start) in the Giac worker; Cancel stops it as it stops Home. */
   units(req: UnitRequest, settings: CalcSettings): Promise<Quantity | UnitError>;

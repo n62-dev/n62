@@ -14,7 +14,7 @@ import {
 import { WorkerEngine } from "../engine/workerEngine.ts";
 import { userNamesOf } from "../engine/defs.ts";
 import { mark } from "../marks.ts";
-import { CalcCancelled, type Calc, type CalcSettings, type ChipFactsTable, type ConstTable, type CasOutcome, type HomeOutcome, type Quantity, type UnitError, type UnitRequest, type UserName } from "./port.ts";
+import { CalcCancelled, type Calc, type CalcSettings, type ChipFactsTable, type ConstTable, type CasOutcome, type HomeOutcome, type LoggedDef, type Quantity, type UnitError, type UnitRequest, type UserName } from "./port.ts";
 import type { IndexItem } from "../find/types.ts";
 import type { WordStore } from "../state/wordStore.svelte.ts";
 
@@ -82,6 +82,19 @@ export class EngineCalc implements Calc {
 
   async names(): Promise<UserName[]> {
     return userNamesOf(await this.engine.definitions());
+  }
+
+  async entriesOf(names: readonly string[]): Promise<LoggedDef[]> {
+    const want = new Set(names);
+    return (await this.engine.definitions()).flatMap((entry, at) => (entry.kind !== "other" && want.has(entry.name) ? [{ at, entry }] : []));
+  }
+
+  async restoreDefs(rows: readonly LoggedDef[]): Promise<string[]> {
+    const taken = new Set((await this.engine.definitions()).map((e) => e.name));
+    const free = rows.filter((r) => !taken.has(r.entry.name));
+    if (!free.length || !this.engine.reinstate) return [];
+    await this.engine.reinstate(free);
+    return free.map((r) => r.entry.name);
   }
 
   async cancel(): Promise<void> {

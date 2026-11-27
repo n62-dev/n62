@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The only way UI code talks to maths (CLAUDE.md). Implementations run Giac off the main thread.
 import type { HomeResult, HomeSettings } from "./homeEval.ts";
-import type { DefEntry } from "./defs.ts";
+import type { DefEntry, LoggedDef } from "./defs.ts";
 import type { ConstEntry, ConstTable } from "./constUnc.ts";
 import type { ChipEntry, ChipFactsTable } from "./chipFacts.ts";
 import type { PrecisionWarn, PrecisionWhy } from "./format.ts";
@@ -285,6 +285,9 @@ export interface MathEngine {
   eval(input: string): Promise<EvalResult>;
   /** The definitions log (docs/04 6.2): what the user defined, the stored log included once it has been read. */
   definitions(): Promise<readonly DefEntry[]>;
+  /** R314: put entries taken out of the log back (Memory's Undo): replayed in the engine, kept in the log at their old
+   *  places. Only the app's WorkerEngine has it. */
+  reinstate?(rows: readonly LoggedDef[]): Promise<void>;
   /**
    * Abort whatever is running: terminates the worker, starts a new one and replays the variable
    * definitions. Pending calls reject with EngineCancelled. Mode settings are re-applied on the next call.
