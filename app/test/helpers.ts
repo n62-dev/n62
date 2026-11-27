@@ -465,7 +465,12 @@ export async function setFontScale(page: Page, scale: number): Promise<void> {
       if (px > 0) root.style.setProperty(name, `${px * s}px`);
     }
   }, scale);
-  await tap(page, ["shift"]);
-  await page.evaluate(() => window.n62.session.clearModifiers());
+  // the keypad re-fits on a change of its width (R729: no longer on a change of layer): one pixel narrower and back
+  const vp = page.viewportSize();
+  if (vp) {
+    await page.setViewportSize({ width: vp.width - 1, height: vp.height });
+    await page.waitForTimeout(50);
+    await page.setViewportSize(vp);
+  }
   await page.waitForTimeout(100);
 }

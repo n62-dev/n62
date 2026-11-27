@@ -800,9 +800,10 @@
   }
   /* the next press is lit, the rest dims: Shift lights the Shift legends, Alpha the letters (a key with no letter keeps its face:
      Alpha there is its tap, R728); a key that does nothing in this layer is dimmed, still readable, and so is a dead zone's arrow */
-  .shifted:not(.alphaed) .key:not([data-mod]) :is(.main, .alphalegend),
+  .shifted:not(.alphaed) .key:not([data-mod]) .alphalegend,
+  .shifted:not(.alphaed) .key:not([data-mod], [data-zone]) .main,
   .alphaed .key:not([data-mod]) .shiftlegend,
-  .alphaed .key:not([data-mod], [data-fallback="true"]) .main,
+  .alphaed .key:not([data-mod], [data-zone], [data-fallback="true"]) .main,
   .key[data-dead="true"] :is(.main, .shiftlegend, .alphalegend),
   .pad:has(.key[data-key="up"][data-dead="true"]) .arrows [data-arrow="up"],
   .pad:has(.key[data-key="down"][data-dead="true"]) .arrows [data-arrow="down"],

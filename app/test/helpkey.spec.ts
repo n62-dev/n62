@@ -133,6 +133,8 @@ test("Select's tap is still Select; Shift + Select is Copy now (R723), live and 
   expect(await page.evaluate(() => window.n62.entry.field?.getValue(window.n62.entry.field.selection, "latex"))).toBe("4");
   await tap(page, ["shift"]);
   await expect(page.locator('[data-key="select"]')).not.toHaveAttribute("data-dead", "true");
-  await expect(page.locator('[data-key="select"] .main')).toHaveText("Copy");
-  await expect(page.locator('[data-key="help"] .main')).toHaveText("Help");
+  // R729: the face stays the tap; the lit Shift legend says what the press does
+  await expect(page.locator('[data-key="select"] .shiftlegend')).toHaveText("Copy");
+  await expect(page.locator('[data-key="select"] .main')).toHaveText("Select");
+  await expect(page.locator('[data-key="help"] .shiftlegend')).toHaveText("Help");
 });
