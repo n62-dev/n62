@@ -388,6 +388,39 @@ describe("sessionCsv / sessionLatex (G232)", () => {
     expect(lines[2]).toBe("\\begin{align*}\\frac12 &= 0{,}5\\end{align*}");
     expect(lines[3]).toBe("\\begin{align*}12.34\\pm0.05\\,\\mathrm{m}\\times3.2\\pm0.1\\,\\mathrm{m} &\\approx 39{,}488\\,\\pm1{,}2\\,\\text{m²}\\end{align*}");
   });
+  // G400: a Home row with σ (2×G: the facts engine/constUnc.ts gives, σ 3.0e-15 as in the bu-3 probe); its σ line reads
+  // sigmaText (`3.0ᴇ-15`), the files write it as the work report does (`E`, the decimal comma when set).
+  const sigmaFacts = { exact: false, reliableDigits: null, uncSigma: "3.0e-15", uncDigits: 5 } as const;
+  const twoG = done({ latex: "2\\times G", view: "home", text: "1.33486E-10", full: "1.33486E-10", fullExact: false, value: re("1.33486e-10"), facts: sigmaFacts });
+  it("G400: CSV's sigma column holds a Home row's σ as the work report writes it; unit, plain and error rows unchanged", () => {
+    expect(sessionCsv([twoG, unit, half, bad], {}, CTX)).toBe(
+      ["input,value,mark,unit,sigma", "2× G,1.33486E-10,≈,,3.0E-15", "12.34±0.05 m×3.2±0.1 m,39.488,≈,m²,1.2", "1/2,0.5,=,,", "1+,Syntax error,,,"].join("\r\n") + "\r\n",
+    );
+    const c = { ...CTX, decimalComma: true };
+    expect(sessionCsv([twoG, unit, root], { decimalComma: true }, c)).toBe(
+      ["input;value;mark;unit;sigma", "2× G;1,33486E-10;≈;;3,0E-15", "12.34±0.05 m×3.2±0.1 m;39,488;≈;m²;1,2", "sqrt(2);1,4142;⚠;;"].join("\r\n") + "\r\n",
+    );
+  });
+  it("G400: LaTeX's line ends \\pm σ after a Home row's result, in the row's notation; unit, plain and error rows unchanged", () => {
+    expect(sessionLatex([twoG, unit, half, bad], {}, CTX, "0.1.0").split("\n").slice(1, 5)).toEqual([
+      "\\begin{align*}2\\times G &\\approx 1.33486\\times10^{-10}\\,\\pm3.0\\times10^{-15}\\end{align*}",
+      "\\begin{align*}12.34\\pm0.05\\,\\mathrm{m}\\times3.2\\pm0.1\\,\\mathrm{m} &\\approx 39.488\\,\\pm1.2\\,\\text{m²}\\end{align*}",
+      "\\begin{align*}\\frac12 &= 0.5\\end{align*}",
+      "\\begin{align*}1+ &\\rightarrow \\text{Syntax error}\\end{align*}",
+    ]);
+    const c = { ...CTX, decimalComma: true };
+    expect(sessionLatex([twoG], { decimalComma: true }, c, "0.1.0").split("\n")[1]).toBe(
+      "\\begin{align*}2\\times G &\\approx 1{,}33486\\times10^{-10}\\,\\pm3{,}0\\times10^{-15}\\end{align*}",
+    );
+    // PFX: σ with its prefix, as the σ line draws it (`3.0 f`) and the result is drawn (`133.486 p`)
+    expect(sessionLatex([{ ...twoG, fmt: "pfx" }], {}, CTX, "0.1.0").split("\n")[1]).toBe(
+      "\\begin{align*}2\\times G &\\approx 133.486\\,\\mathrm{p}\\,\\pm3.0\\,\\mathrm{f}\\end{align*}",
+    );
+  });
+  it("G400: Share session adds a Home row's ± σ after the value, as a unit row's", () => {
+    expect(sessionText([twoG, half], {}, CTX)).toBe("2× G ≈ 1.33486E-10 ± 3.0E-15\n1/2 = 0.5");
+    expect(sessionText([twoG], { decimalComma: true }, { ...CTX, decimalComma: true })).toBe("2× G ≈ 1,33486E-10 ± 3,0E-15");
+  });
   it("G232f1: no KaTeX-only macro reaches the file (htmlStyle, class): the unit row's unit, PFX, the muted digits, a rare pair", () => {
     const bare = /\\(?:htmlStyle|class|const|res|unit|pfx)(?![A-Za-z])/;
     // the unit as unitLatex draws it, in the result and in the stored σ part
