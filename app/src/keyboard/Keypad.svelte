@@ -84,12 +84,8 @@
   // (R820: while the face shows the key's letter, its letter line is empty: the letter is not drawn twice)
   // (R728: the letter in the case Alpha and a flick down type in the view: lower case in CAS, R58)
   const alphaHint = (k: Key): string => (alpha || !k.label.alpha || typed(k)?.toLowerCase() === k.label.alpha.toLowerCase() ? "" : labelFor(k, false, true, cas));
-  /** R728: a key with no Alpha action (Esc, Undo, ⌫, Fmt, `.`, ␣ …): Alpha and a flick down there are its tap, so it keeps the
-   *  tap's colour under Alpha and its flick-down bubble is the key pop's. Shift and Alpha are their own keys. */
-  const fallsBack = (k: Key): boolean => {
-    const p = k.actions.primary;
-    return !k.actions.alpha && !(p?.kind === "special" && (p.name === "shift" || p.name === "alpha"));
-  };
+  /** R728: no Alpha action (Esc, ⌫, `.` …; not Shift or Alpha): Alpha and a flick down are its tap, drawn in the tap's colour. */
+  const fallsBack = (k: Key): boolean => !k.actions.alpha && k.id !== "shift" && k.id !== "alpha";
   // R820: a letter typed into a query is upright (R142 is for a variable on the line): the data-v layers it would italicise are left out
   const varsOf = (k: Key): string | undefined => {
     const v = varLayers(k);
@@ -774,8 +770,7 @@
   .alphaed .arrows {
     color: var(--key-alpha);
   }
-  /* R728: a key with no letter does its tap under Alpha, so it keeps the tap's colour (the round pad's arrows too); :where keeps
-     it under Enter's own colour and a dead key's dim, which follow */
+  /* R728: a key with no letter does its tap under Alpha: the tap's colour (the arrows too); :where leaves Enter's and the dim to win */
   .alphaed :where(.key[data-fallback="true"]) .main,
   .alphaed .arrows {
     color: var(--key-text);
@@ -846,7 +841,6 @@
     border-color: var(--alpha);
     color: var(--alpha);
   }
-  /* R728: a flick down on a key with no letter is its tap: the key pop's colours */
   .bubble[data-tap="true"] {
     border-color: var(--key-text);
     color: var(--key-text);
