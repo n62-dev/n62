@@ -73,14 +73,16 @@ describe.skipIf(!giacAvailable())("G223 linreg and stats1 in the engine", () => 
 
   // G353 step 4: the mark of stats1 on a stored float list of equal values depended on what ran before (a linreg line between
   // gave ≈ 9.86E-32*i, without it ⚠ 1E-31*i): the facts' perturbation check met two rounding residues. Equal values now give
-  // exactly 0 (derived: no spread), and the value and its facts are the same in both orders, in one session.
+  // exactly 0 (derived: no spread), and the value and its facts are the same in both orders, in one session. G381: stats1
+  // gives Giac's list type, so the stored read shows braces as stats1(approx([1/10,1/10,1/10])) typed does (it showed [..]).
   it("gives stats1 of equal stored floats the same value and facts with or without a linreg line before it", () => {
     expect(home("L353:=approx([1/10,1/10,1/10])")).toMatchObject({ ok: true });
     const first = home("stats1(L353)");
     expect(home("linreg(L353,[1,2,3])")).toMatchObject({ ok: false, error: "xAllEqual" });
     expect(home("linreg([1,2,3],L353)")).toMatchObject({ ok: false, error: "yAllEqual" });
     const second = home("stats1(L353)");
-    expect(first).toMatchObject({ ok: true, display: "[3,0.1,0,0,0.1,0.1]" });
+    expect(first).toMatchObject({ ok: true, display: "{3,0.1,0,0,0.1,0.1}" });
+    expect(home("stats1(approx([1/10,1/10,1/10]))").display).toBe(first.display);
     expect(second.display).toBe(first.display);
     expect(second.facts).toEqual(first.facts);
     expect(first.facts.warn).toBeUndefined();
