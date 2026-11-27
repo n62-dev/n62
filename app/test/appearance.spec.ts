@@ -44,7 +44,7 @@ test.describe("the level", () => {
   test("Mode, 6, 1: Theme with its dots and name, Brightness, and five switches, four with a line (Key pop-ups: R163; Find opens full screen: R932)", async ({ page }) => {
     await tap(page, ["help", "d2"]);
     await expect(title(page)).toHaveText("Settings › Appearance");
-    await expect(sheet(page).getByRole("menuitem")).toHaveCount(7);
+    await expect(sheet(page).getByRole("menuitem")).toHaveCount(8); // (R781: Hand last)
     await expect(row(page, "theme").getByTestId("row-dots").locator("i")).toHaveCount(5);
     await expect(row(page, "theme").getByTestId("sheet-value")).toHaveText("N62");
     await expect(row(page, "brightness").getByTestId("sheet-value")).toHaveText("System");

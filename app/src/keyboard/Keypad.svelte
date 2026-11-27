@@ -160,7 +160,7 @@
   // hub at its centre (R15c) is the surface too: a drag from it steps, a tap on it is no zone and does nothing.
   const isPadKey = (k: Key): boolean => (PAD_KEYS as readonly string[]).includes(k.id);
   /** The round pad's cells; `span` is its width in columns, for the circle's diameter (R141). */
-  const padArea = ((): { rows: string; cols: string; span: number; from: number; to: number } | undefined => {
+  const padArea = ((): { rows: string; cols: string; span: number } | undefined => {
     const keys = keyboard.keys.filter(isPadKey);
     if (keys.length === 0) return undefined;
     const rows = keys.map((k) => k.row);
@@ -168,7 +168,7 @@
     const starts = places.map((p) => p.start);
     const ends = places.map((p) => p.start + p.span);
     const [from, to] = [Math.min(...starts), Math.max(...ends)];
-    return { rows: `${Math.min(...rows) + 1} / ${Math.max(...rows) + 2}`, cols: `${from} / ${to}`, span: to - from, from, to };
+    return { rows: `${Math.min(...rows) + 1} / ${Math.max(...rows) + 2}`, cols: `${from} / ${to}`, span: to - from };
   })();
 
   // Any other key fires when the finger lifts: a tap is the key in the current layer, a flick up or down its shift or
@@ -446,7 +446,6 @@
       data-dead={dead(key) ? "true" : undefined}
       data-fallback={fallsBack(key) ? "true" : undefined}
       data-zone={isPadKey(key) ? "true" : undefined}
-      style:--zone-col={isPadKey(key) && padArea ? `${padArea.from + padArea.to - place.start - place.span} / span ${place.span}` : undefined}
       data-mod={isMod(key) || undefined}
       data-letters={lettered ? "true" : undefined}
       data-user={key.user ? (userKeys.isEmpty(key) ? "empty" : "set") : undefined}
@@ -509,10 +508,11 @@
     --key-drop: 0 var(--key-shadow) 0 var(--key-edge);
   }
   /* R781: Hand = Left (data-hand on the root, theme/lookApply.ts) runs the grid right to left, the text in each item left to right;
-     the pad's zones take the pad's own columns mirrored back (--zone-col), so ◀ stays left of ▶ */
+     ◀ and ▶ trade columns (the centred pad's frozen cells; handZones.test.ts holds them to the spec), so ◀ stays left of ▶ */
   :global(:root[data-hand="left"]) .pad { direction: rtl; }
   :global(:root[data-hand="left"]) .pad > * { direction: ltr; }
-  :global(:root[data-hand="left"]) .key[data-zone] { grid-column: var(--zone-col) !important; }
+  :global(:root[data-hand="left"]) .key[data-key="left"] { grid-column: 16 / span 5 !important; }
+  :global(:root[data-hand="left"]) .key[data-key="right"] { grid-column: 11 / span 5 !important; }
   /* Each key has a legend line above the face (the shift function, top left) and one below it (the letter, bottom
      left), never overlapping it (P7 point 2); fit.ts shrinks what is too wide. */
   .key {
