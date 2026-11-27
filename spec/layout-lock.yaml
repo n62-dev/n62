@@ -21,6 +21,9 @@
 # right, R722), folded-bar (the folded bar's, R724) and folded-bar-app (Plot's, R928): `digit` = the row's id. Rows of stored content (names, matrices) are not pinned.
 # modifiers (R726): `<key>.<gesture>` = the state it leaves (off, arm, lock, capsLock, lowerLock, lower), built by running a Session.
 # app/src/keyboard/layoutLock.ts LIST_BUILDERS names the files that build each list; a file that opens a new one must be there.
+# Hand (R781; owner's yes 2026-11-20; docs/06 section 3b): Settings › Appearance › Hand = Left draws this layout mirrored, every key's
+# column and the bar's order right to left (`bar:`, `folded-bar:`, `folded-bar-app:` keep their digits). These lines pin Right, the default;
+# Left is no move: no layer, row, digit or id changes, and the round pad's ◀ ▶ zones keep their sides.
 schema: 1
 layers:
   "up.primary": "cmd moveUp"

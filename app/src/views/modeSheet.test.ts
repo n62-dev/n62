@@ -122,8 +122,8 @@ describe("Settings › Appearance (R50e)", () => {
   it("is the first section: Theme with its dots, Brightness, and the four switches with one line each (Key shadows: R156, Key pop-ups: R163)", () => {
     const s = settings(2);
     expect(s.path).toBe("Settings › Appearance");
-    expect(s.level.items.map((x) => x.id)).toEqual(["theme", "brightness", "contrast", "plain", "shadow", "pops", "findFull"]);
-    expect(s.level.items.length).toBeLessThanOrEqual(7); // a level of settings holds at most seven rows
+    expect(s.level.items.map((x) => x.id)).toEqual(["theme", "brightness", "contrast", "plain", "shadow", "pops", "findFull", "hand"]);
+    expect(s.level.items.length).toBeLessThanOrEqual(8); // seven rows a level, but Appearance's eighth, Hand (R781), which scrolls as Numbers does
     expect(byId(s, "theme")?.dots).toHaveLength(5);
     expect(byId(s, "theme")?.value).toBe("N62");
     expect(s.level.items.filter((x) => x.hint).map((x) => x.id)).toEqual(["contrast", "plain", "shadow", "pops"]);
@@ -190,9 +190,23 @@ describe("Settings › Appearance (R50e)", () => {
     expect(session.settings.look.pops).toBe(true);
     expect(pops).toEqual([false, true]);
   });
-  it("R932: Find opens full screen is the last row, a switch off by default; a digit, Enter or a tap toggles it and stays", () => {
+  it("R781: Hand is the last row, a value Right by default; ▶ makes it Left, ◀ Right again, round the ends; the sheet stays", () => {
     const s = settings(2);
-    expect(s.level.items.map((x) => x.id).at(-1)).toBe("findFull");
+    const seen: string[] = [];
+    session.onLook = (l) => void seen.push(l.hand);
+    expect(s.level.items.map((x) => x.id).at(-1)).toBe("hand");
+    expect(byId(s, "hand")).toMatchObject({ label: "Hand", value: "Right" });
+    expect(byId(s, "hand")?.selected).toBeUndefined(); // a value, not a switch
+    for (const [by, want] of [[1, "Left"], [1, "Right"], [-1, "Left"]] as const) {
+      byId(s, "hand")?.adjust?.(by);
+      expect(byId(s, "hand")?.value).toBe(want);
+    }
+    expect(seen).toEqual(["left", "right", "left"]);
+    expect(s.path).toBe("Settings › Appearance");
+  });
+  it("R932: Find opens full screen is the seventh row, a switch off by default; a digit, Enter or a tap toggles it and stays", () => {
+    const s = settings(2);
+    expect(s.level.items.map((x) => x.id).at(-2)).toBe("findFull"); // (R781: Hand after it)
     expect(byId(s, "findFull")).toMatchObject({ label: "Find opens full screen", selected: false });
     expect(byId(s, "findFull")?.hint).toBeUndefined(); // one string, the label
     expect(s.pickNumber(7)).toEqual({ kind: "stay" }); // a digit
@@ -387,7 +401,8 @@ describe("Settings, a level of the sheet (R49)", () => {
     const s = new Sheet("settings", "Settings", () => settingsSections(session, { userKeys, data: (run) => void run(clip) }), { remember: false });
     const over: string[] = [];
     const walk = (title: string, items: readonly MenuItem[], depth: number): void => {
-      if (items.length > 7) over.push(`${title}: ${items.length}`);
+      // (R781: Appearance's eighth row, Hand; the level scrolls at 372 × 767, as Numbers does; decisions.md "Needs the user")
+      if (items.length > (title === "Settings › Appearance" ? 8 : 7)) over.push(`${title}: ${items.length}`);
       if (depth < 2) for (const i of items) if (i.submenu && !i.submenu.text && i.id !== "keys") walk(`${title} › ${i.submenu.title}`, i.submenu.items, depth + 1);
     };
     expect(s.level.items.map((x) => x.id)).toEqual(["mode", "appearance", "numbers", "vibration", "keys", "data", "counters", "help"]); // R927: Mode and the seven sections

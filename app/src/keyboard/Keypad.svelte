@@ -507,6 +507,12 @@
   :global(:root[data-shadow="on"]) .pad {
     --key-drop: 0 var(--key-shadow) 0 var(--key-edge);
   }
+  /* R781: Hand = Left (data-hand on the root, theme/lookApply.ts) runs the grid right to left, the text in each item left to right;
+     ◀ and ▶ trade columns (the centred pad's frozen cells; handZones.test.ts holds them to the spec), so ◀ stays left of ▶ */
+  :global(:root[data-hand="left"]) .pad { direction: rtl; }
+  :global(:root[data-hand="left"]) .pad > * { direction: ltr; }
+  :global(:root[data-hand="left"]) .key[data-key="left"] { grid-column: 16 / span 5 !important; }
+  :global(:root[data-hand="left"]) .key[data-key="right"] { grid-column: 11 / span 5 !important; }
   /* Each key has a legend line above the face (the shift function, top left) and one below it (the letter, bottom
      left), never overlapping it (P7 point 2); fit.ts shrinks what is too wide. */
   .key {

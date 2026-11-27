@@ -56,11 +56,11 @@ test.beforeEach(async ({ page }) => {
   await open(page);
 });
 
-test("Appearance: Key pop-ups is a switch after Key shadows with its line, on at a first start; seven rows (R932: Find opens full screen last)", async ({ page }) => {
+test("Appearance: Key pop-ups is a switch after Key shadows with its line, on at a first start; eight rows (R932: Find opens full screen; R781: Hand last)", async ({ page }) => {
   expect(await pops(page)).toBe(true);
   await tap(page, ["help", "d2"]);
   const ids = await sheet(page).getByRole("menuitem").evaluateAll((els) => els.map((e) => e.getAttribute("data-id")));
-  expect(ids).toEqual(["theme", "brightness", "contrast", "plain", "shadow", "pops", "findFull"]);
+  expect(ids).toEqual(["theme", "brightness", "contrast", "plain", "shadow", "pops", "findFull", "hand"]);
   await expect(row(page, "pops").locator(".label")).toHaveText("Key pop-ups");
   await expect(row(page, "pops").getByTestId("row-hint")).toHaveText("A bubble over the key you press or flick");
   await expect(row(page, "pops")).toHaveAttribute("data-selected", "true");

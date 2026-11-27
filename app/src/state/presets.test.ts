@@ -106,7 +106,7 @@ describe("presets (R88)", () => {
     session.setAngle("deg");
     setFixDecimals(session, 7);
     setFmtMode(session, "pfx", true);
-    session.settings.look = { family: "solarized", brightness: "light", contrast: true, plain: true, shadow: false, pops: false, findFull: false };
+    session.settings.look = { family: "solarized", brightness: "light", contrast: true, plain: true, shadow: false, pops: false, findFull: false, hand: "right" };
     userKeys.set(U2, "shift", mol);
     cells.set(C1, "up", { unit: "mol" });
     const id = presets.capture("Chemistry", PRESET_GROUPS);
@@ -355,6 +355,9 @@ describe("presets (R88)", () => {
     expect(VALIDATORS[PRESETS_KEY]?.(old)).toBe(true);
   });
 
+  it("R781: Look holds Hand, as every Appearance row", () => {
+    expect(GROUP_FIELDS.look).toContain("hand");
+  });
   it("R932: Look holds Find opens full screen, as every Appearance row", () => {
     expect(GROUP_FIELDS.look).toContain("findFull");
   });

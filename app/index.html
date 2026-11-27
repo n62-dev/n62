@@ -25,6 +25,7 @@
         if (h) r.setAttribute("data-contrast", "high");
         if (p) r.setAttribute("data-keys", "plain");
         if (s) r.setAttribute("data-shadow", "on");
+        if (l.hand === "left") r.setAttribute("data-hand", "left");
         if (a == l.family && /^#[0-9a-f]{3,8}$/i.test(l.bg)) document.querySelector('meta[name="theme-color"]').setAttribute("content", l.bg);
         if (a != "n62" || h || p) w.push(a);
         if (h || p) w.push("modes");

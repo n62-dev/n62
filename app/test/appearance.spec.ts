@@ -44,7 +44,7 @@ test.describe("the level", () => {
   test("Mode, 6, 1: Theme with its dots and name, Brightness, and five switches, four with a line (Key pop-ups: R163; Find opens full screen: R932)", async ({ page }) => {
     await tap(page, ["help", "d2"]);
     await expect(title(page)).toHaveText("Settings › Appearance");
-    await expect(sheet(page).getByRole("menuitem")).toHaveCount(7);
+    await expect(sheet(page).getByRole("menuitem")).toHaveCount(8); // (R781: Hand last)
     await expect(row(page, "theme").getByTestId("row-dots").locator("i")).toHaveCount(5);
     await expect(row(page, "theme").getByTestId("sheet-value")).toHaveText("N62");
     await expect(row(page, "brightness").getByTestId("sheet-value")).toHaveText("System");
@@ -75,7 +75,7 @@ test.describe("the level", () => {
     await sheetKey(page, ["down", "right", "right"]); // Brightness: Light, Dark
     await expect(row(page, "brightness").getByTestId("sheet-value")).toHaveText("Dark");
     await tap(page, ["d3", "d4"]);
-    expect(await look(page)).toEqual({ family: "bw", brightness: "dark", contrast: true, plain: true, shadow: true, pops: true, findFull: false });
+    expect(await look(page)).toEqual({ family: "bw", brightness: "dark", contrast: true, plain: true, shadow: true, pops: true, findFull: false, hand: "right" });
     await expect.poll(() => attrs(page)).toEqual(["bw", "dark", "high", "plain"]); // the lazy CSS is in first
   });
 
@@ -160,9 +160,9 @@ test.describe("survives a reload", () => {
     await row(page, "brightness").getByTestId("step-up").tap(); // Light
     await row(page, "contrast").tap();
     await row(page, "plain").tap();
-    await expect.poll(() => stored(page)).toEqual({ family: "solarized", brightness: "light", contrast: true, plain: true, shadow: true, pops: true, findFull: false });
+    await expect.poll(() => stored(page)).toEqual({ family: "solarized", brightness: "light", contrast: true, plain: true, shadow: true, pops: true, findFull: false, hand: "right" });
     await reload(page);
-    expect(await look(page)).toEqual({ family: "solarized", brightness: "light", contrast: true, plain: true, shadow: true, pops: true, findFull: false });
+    expect(await look(page)).toEqual({ family: "solarized", brightness: "light", contrast: true, plain: true, shadow: true, pops: true, findFull: false, hand: "right" });
     expect(await attrs(page)).toEqual(["solarized", "light", "high", "plain"]);
     await tap(page, ["help", "d2"]);
     await expect(row(page, "theme").getByTestId("sheet-value")).toHaveText("Solarized");
@@ -174,7 +174,7 @@ test.describe("survives a reload", () => {
   test("each of the four values, set by keys", async ({ page }) => {
     await tap(page, ["help", "d2"]);
     await sheetKey(page, ["left", "down", "left", "d3", "d4"]); // Solarized (left wraps), Dark, High contrast, Plain keys
-    await expect.poll(() => stored(page)).toEqual({ family: "solarized", brightness: "dark", contrast: true, plain: true, shadow: true, pops: true, findFull: false });
+    await expect.poll(() => stored(page)).toEqual({ family: "solarized", brightness: "dark", contrast: true, plain: true, shadow: true, pops: true, findFull: false, hand: "right" });
     await reload(page);
     expect(await attrs(page)).toEqual(["solarized", "dark", "high", "plain"]);
     await tap(page, ["help", "d2"]);
@@ -184,7 +184,7 @@ test.describe("survives a reload", () => {
   test("switching the switches off again survives too", async ({ page }) => {
     await tap(page, ["help", "d2", "d3", "d4", "d3", "d4"]);
     await expect.poll(() => attrs(page)).toEqual(["n62", "dark", null, null]);
-    await expect.poll(() => stored(page)).toEqual({ family: "n62", brightness: "system", contrast: false, plain: false, shadow: true, pops: true, findFull: false });
+    await expect.poll(() => stored(page)).toEqual({ family: "n62", brightness: "system", contrast: false, plain: false, shadow: true, pops: true, findFull: false, hand: "right" });
     await reload(page);
     expect(await attrs(page)).toEqual(["n62", "dark", null, null]);
   });

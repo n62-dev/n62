@@ -84,6 +84,16 @@ describe("checkBackup (r11 section 3.4)", () => {
     expect(migrateSettings(older.parts["settings"]).settings.look.findFull).toBe(false); // a missing field: off
     expect(refused(withLook({ ...defaultLook(), findFull: "yes" })).part).toBe("settings");
   });
+  it("R781: a settings part whose look has Hand Left restores it; an older file without it reads Right; a wrong value is refused", () => {
+    const withLook = (look: Record<string, unknown>) => withPart("settings", at({ schema: SETTINGS_SCHEMA, ...migrateSettings({}).settings, look }));
+    const left = checkBackup(bytes(withLook({ ...defaultLook(), hand: "left" }))) as CheckedBackup;
+    expect(left.ok).toBe(true);
+    expect(migrateSettings(left.parts["settings"]).settings.look.hand).toBe("left");
+    const older = checkBackup(bytes(withLook({ family: "n62", brightness: "system", contrast: false, plain: false, shadow: true, pops: true, findFull: false }))) as CheckedBackup;
+    expect(older.ok).toBe(true);
+    expect(migrateSettings(older.parts["settings"]).settings.look.hand).toBe("right"); // a missing field: Right
+    expect(refused(withLook({ ...defaultLook(), hand: "up" })).part).toBe("settings");
+  });
   it("R884: a settings part with Uncertainty Rounded to σ restores it; an older one without the field reads as the default", () => {
     const { uncertainty: _u, ...older } = migrateSettings({}).settings;
     const round = checkBackup(bytes(withPart("settings", at({ schema: SETTINGS_SCHEMA, ...migrateSettings({}).settings, uncertainty: "round" })))) as CheckedBackup;

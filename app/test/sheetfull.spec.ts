@@ -311,11 +311,11 @@ async function small(page: Page): Promise<void> {
   expect(covers(await boxOf(page, '[role="menu"]'))).toBe(false);
 }
 
-test("R932: Appearance ends with Find opens full screen, off at a first start; a tap toggles it and it survives a reload", async ({ page }) => {
+test("R932: Appearance has Find opens full screen (before Hand), off at a first start; a tap toggles it and it survives a reload", async ({ page }) => {
   expect(await findFull(page)).toBe(false);
   await tap(page, ["help", "d2"]);
   const ids = await sheet(page).getByRole("menuitem").evaluateAll((els) => els.map((e) => e.getAttribute("data-id")));
-  expect(ids.at(-1)).toBe("findFull");
+  expect(ids.at(-2)).toBe("findFull"); // (R781: Hand after it)
   await expect(findRow(page).locator(".label")).toHaveText("Find opens full screen");
   await expect(findRow(page)).toHaveAttribute("data-selected", "false");
   await findRow(page).tap();

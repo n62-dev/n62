@@ -526,6 +526,29 @@
     font-size: var(--fs-key-fn);
     color: var(--text);
   }
+  /* R781: Hand = Left (Appearance; theme/lookApply.ts and index.html set data-hand on the root) mirrors the bar's order, open and
+     folded (Fold.svelte turns its row): ⌄ at the right end, ☰ at the left; each control, the track and the modes group read as
+     before. Every margin above changes side, so each control stands at the mirror of its Right x. */
+  :global(:root[data-hand="left"]) .bar {
+    flex-direction: row-reverse;
+  }
+  :global(:root[data-hand="left"]) .slot,
+  :global(:root[data-hand="left"]) .modes {
+    margin-left: 0;
+    margin-right: auto;
+  }
+  :global(:root[data-hand="left"]) .slot + .modes,
+  :global(:root[data-hand="left"]) .folded .slot {
+    margin-right: 0;
+  }
+  :global(:root[data-hand="left"]) .folded .place {
+    margin-left: 0;
+    margin-right: calc(var(--bar-h) - var(--unfold-w, var(--bar-h)) + 2 * var(--bar-gap));
+  }
+  :global(:root[data-hand="left"]) .folded .modes {
+    margin-right: 0;
+    margin-left: var(--bar-gap);
+  }
   /* narrow (a phone under 400 px wide): one gap of 1 px, the track's inset and gap 1 px, the word 33 px and ☰ 32 px, the same in
      every place, so an app's views and the 16 px ⇧ α slot fit at 360 (R856: 359 px in Function with a hardware keyboard) */
   @media (max-width: 400px) {
