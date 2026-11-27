@@ -4,7 +4,7 @@
 // Find index times the dimension symbols of dims.ts. Main thread, plain TS, no engine.
 import { BASES, dimKeyOf, dimSymbols, isExponent, parseDimKey, siSlot, unitProduct } from "./dims.ts";
 import { isOwnId, OWN_PREFIX, type FactorTable, type UnitFactor } from "./factors.ts";
-import { balanced, callsOf, closing, mapNames, names, topLevelArgs, unbracket, walk } from "../engine/giacPrint.ts";
+import { balanced, callsOf, closing, isNameChar, mapNames, names, topLevelArgs, unbracket, walk } from "../engine/giacPrint.ts";
 import { basisGiac, basisOf, correlated, LEAF_PREFIX } from "../engine/constBasis.ts";
 import { isChipName } from "../engine/ourNames.ts";
 import { PASDEG } from "../engine/pasdeg.ts";
@@ -123,7 +123,8 @@ function plainNumber(num: string): boolean {
 }
 
 /** G370: one side of T1 − T2: `number*pasuN` (or `pasuN`), in brackets or not, where the number may hold ± values
- *  (`pasupm(…)`, each a number here). Its slot index and its number with each ± value as its value, else null. */
+ *  (`pasupm(…)`, each a number here). Its slot index and its number with each ± value as its value, else null. G385: no
+ *  × or ÷ outside brackets in the number (2*80 °C reads as 2·(80 °C), no temperature). */
 function tempSide(term: string): { slot: number; num: string } | null {
   const m = numberTimesSlot(unbracket(term, "typed"));
   if (!m) return null;
@@ -141,7 +142,8 @@ function tempSide(term: string): { slot: number; num: string } | null {
   }
   num += raw.slice(i);
   plain += raw.slice(i);
-  return plainNumber(plain) ? { slot: m.slot - 1, num } : null;
+  const product = walk(plain, 0, (_k, d, c) => d === 0 && (c === "*" || c === "/"), "typed") >= 0;
+  return plainNumber(plain) && !product ? { slot: m.slot - 1, num } : null;
 }
 
 /** A slot that is one temperature unit alone (°C, °F, K, °R: no prefix, power or ÷), or null. */
@@ -151,22 +153,58 @@ function bareTemperature(slot: UnitSlot | undefined, table: FactorTable): { id: 
   return t && u?.dim === "K1" ? { id: t.unit, u } : null;
 }
 
-/** G370 (owner, 2026-11-14): a formula that is exactly two temperatures joined by −, T1 − T2, in brackets or not, one
- *  of them absolute (°C or °F). Of one scale (°C − °C, °F − °F) it is a difference, a point minus a point: the two slots
- *  are intervals (G37) and `kelvin` holds each temperature as a number in K, for the check that none is below 0 K. Of
- *  two scales (K − °C, °C − °F) `scales` names them as typed. Null for every other formula: a sum, a product, a power, a
- *  third term, a constant (G17 refuses those); K − K and °R − °R need no rule, K and °R have no offset. */
-export function tempDifference(req: UnitRequest, table: FactorTable): { kelvin: [string, string] } | { scales: [string, string] } | null {
-  if (req.slots.length !== 2 || req.consts?.length) return null;
-  const terms = splitTop(unbracket(req.formula, "typed"), "terms");
-  if (terms.length !== 2 || !terms[1]!.startsWith("-") || terms[0]!.startsWith(",")) return null;
-  const a = tempSide(terms[0]!);
-  const b = tempSide(terms[1]!.slice(1));
+/** Two terms of a sum, T1 − T2, each one temperature alone (`number*pasuN`, bareTemperature), one of them absolute (°C
+ *  or °F): its sides, else null. K − K and °R − °R need no rule, K and °R have no offset. */
+function tempPair(first: string, second: string, req: UnitRequest, table: FactorTable) {
+  if (!second.startsWith("-") || first.startsWith(",")) return null;
+  const a = tempSide(first.replace(/^\+/, ""));
+  const b = tempSide(second.slice(1));
   if (!a || !b || a.slot === b.slot) return null;
   const [ta, tb] = [bareTemperature(req.slots[a.slot], table), bareTemperature(req.slots[b.slot], table)];
-  if (!ta || !tb || (!isAffine(ta.u) && !isAffine(tb.u))) return null;
-  if (ta.id !== tb.id) return { scales: [ta.u.symbol, tb.u.symbol] };
-  return { kelvin: [specialSource(ta.id, ta.u, a.num, numberDims), specialSource(tb.id, tb.u, b.num, numberDims)] };
+  return ta && tb && (isAffine(ta.u) || isAffine(tb.u)) ? { a, b, ta, tb } : null;
+}
+
+/** The whole formula and the inside of every bracket that is no call's (`(…)`, `((…))`, not `sin(…)`), at any depth. */
+function groupTexts(formula: string): string[] {
+  const out = [formula];
+  walk(formula, 0, (k, _d, c) => {
+    if (c !== "(" || isNameChar(formula.charAt(k - 1))) return;
+    const close = closing(formula, k, "typed");
+    if (close > k) out.push(formula.slice(k + 1, close));
+  }, "typed");
+  return out;
+}
+
+/** G370 (owner, 2026-11-14), G385 (owner, 2026-11-16): a group that is exactly two temperatures joined by −, T1 − T2,
+ *  one of them absolute (°C or °F): the whole formula, in brackets or not, or any bracket in it. Of one scale (°C − °C,
+ *  °F − °F) it is a difference, a point minus a point, an interval in K that takes part in arithmetic: its two slots
+ *  are intervals (G37, `slots`) and `kelvin` holds each temperature as a number in K, for the check that none is below
+ *  0 K. A group of two scales (K − °C, °C − °F) is refused: `scales` names them as typed. Null without a group: an
+ *  absolute temperature anywhere else stays refused (G17), a sum of two, an unbracketed T1 − T2 in a longer formula. */
+export function tempDifference(req: UnitRequest, table: FactorTable): { kelvin: string[]; slots: Set<number> } | { scales: [string, string] } | null {
+  const kelvin: string[] = [];
+  const slots = new Set<number>();
+  for (const text of groupTexts(req.formula)) {
+    const terms = splitTop(unbracket(text, "typed"), "terms");
+    const p = terms.length === 2 ? tempPair(terms[0]!, terms[1]!, req, table) : null;
+    if (!p || slots.has(p.a.slot)) continue;
+    if (p.ta.id !== p.tb.id) return { scales: [p.ta.u.symbol, p.tb.u.symbol] };
+    kelvin.push(specialSource(p.ta.id, p.ta.u, p.a.num, numberDims), specialSource(p.tb.id, p.tb.u, p.b.num, numberDims));
+    slots.add(p.a.slot).add(p.b.slot);
+  }
+  return slots.size ? { kelvin, slots } : null;
+}
+
+/** G385: an unbracketed T1 − T2 of one scale among more terms (80 °C − 20 °C + 5 K), in the formula or a bracket: the
+ *  refusal asks for brackets around it. A list (a comma) is arguments, not terms. */
+function bareDifference(req: UnitRequest, table: FactorTable): boolean {
+  return groupTexts(req.formula).some((text) => {
+    const terms = splitTop(unbracket(text, "typed"), "terms");
+    return terms.length > 2 && !terms.some((t) => t.startsWith(",")) && terms.slice(1).some((t, i) => {
+      const p = tempPair(terms[i]!, t, req, table);
+      return p !== null && p.ta.id === p.tb.id;
+    });
+  });
 }
 
 /** A source quantity that is alone and absolute: °C, °F by K = a·x + b, a logarithmic unit by its level's ratio; with
@@ -589,16 +627,17 @@ export function buildJob(req: UnitRequest, table: FactorTable): UnitJob | UnitEr
 
 function jobOf(req: UnitRequest, table: FactorTable): UnitJob | UnitError {
   try {
-    // G370: T1 − T2 of one scale is a difference (its slots intervals, and an end slot no absolute temperature); of two
-    // scales it is refused, naming them.
+    // G370, G385: T1 − T2 of one scale, the whole formula or a bracket, is a difference (its slots intervals, and an end
+    // slot no absolute temperature); of two scales it is refused, naming them.
     const diff = tempDifference(req, table);
     if (diff && "scales" in diff) throw new Refused({ error: "scales", units: diff.scales });
     if (diff && req.end) {
       const e = specialIn(req.end, table);
       if (e) throw refuseSpecial(e.id, e.u);
     }
+    const inGroup = (i: number): boolean => diff?.slots.has(i) === true;
     // An absolute temperature or a logarithmic unit is allowed only alone, as the whole quantity.
-    const sp = diff ? [] : req.slots.map((s) => specialIn(s, table));
+    const sp = req.slots.map((s, i) => (inGroup(i) ? null : specialIn(s, table)));
     const alone = sp.findIndex((x) => x !== null);
     if (alone >= 0) {
       const x = sp[alone]!;
@@ -618,6 +657,8 @@ function jobOf(req: UnitRequest, table: FactorTable): UnitJob | UnitError {
         const slot = `pasu${alone + 1}`;
         if (neg && (aloneNumber(neg[1]!, alone + 1) !== null || new RegExp(`^\\s*pasupm\\([^()]*\\)\\s*\\*\\s*${slot}\\s*$`).test(neg[1]!)))
           throw new Refused({ error: "minus", unit: x.u.symbol });
+        // G385: 80 °C − 20 °C + 5 K takes part in arithmetic only in brackets
+        if (isAffine(x.u) && bareDifference(req, table)) throw new Refused({ error: "bracket" });
         throw refuseSpecial(x.id, x.u);
       }
       // No end slot: °C, °F give K, dBm, dBW give W; a dB, bel or Np ratio has no SI unit (20 dB is not 10).
@@ -633,8 +674,8 @@ function jobOf(req: UnitRequest, table: FactorTable): UnitJob | UnitError {
       }
       return { expr: specialSource(x.id, x.u, num), number: specialSource(x.id, x.u, num, numberDims), ...endJob(req, table), ...abs, inexact: false };
     }
-    const slots = req.slots.map((s) => slotGiac(s, table, dimSymbols, diff !== null));
-    const slotNumbers = req.slots.map((s) => slotGiac(s, table, numberDims, diff !== null));
+    const slots = req.slots.map((s, i) => slotGiac(s, table, dimSymbols, inGroup(i)));
+    const slotNumbers = req.slots.map((s, i) => slotGiac(s, table, numberDims, inGroup(i)));
     const vars: UncVar[] = [];
     const formula = uncertainValues(req.formula, vars, sigmaIn(req, table));
     const seen = new Map<string, string>();

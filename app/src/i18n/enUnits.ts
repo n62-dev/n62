@@ -11,6 +11,8 @@ export const enUnits = {
   "units.temperature": "Use K or Δ°C for a temperature difference",
   // G370: T1 − T2 of two temperature scales; {a}, {b} their symbols as typed ("K", "°C")
   "units.scales": "{a} and {b} are two scales: write both temperatures in one",
+  // G385: T1 − T2 of one scale among more terms, unbracketed (80 °C − 20 °C + 5 K)
+  "units.bracket": "Put the temperature difference in brackets: (T1 − T2)",
   "units.logarithmic": "{unit} converts only",
   "units.level": "A level needs a positive value",
   "units.belowzero": "Below absolute zero",

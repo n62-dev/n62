@@ -19,6 +19,8 @@ export function unitErrorMessage(e: UnitError): string {
       return unitText("units.temperature");
     case "scales":
       return unitText("units.scales", { a: e.units[0], b: e.units[1] });
+    case "bracket":
+      return unitText("units.bracket");
     case "logarithmic":
       return unitText("units.logarithmic", { unit: e.unit });
     case "nofactor":
