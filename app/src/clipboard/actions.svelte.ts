@@ -199,6 +199,10 @@ export class ClipActions {
   private noNumber(i: HistoryItem | undefined): boolean {
     return i !== undefined && i.status === "done" && noDigit(this.session.mark(i));
   }
+  /** R895: Paste in the unit view (the key, a system paste): the view holds units, not a number the line takes. */
+  refusePaste(): void {
+    this.say(tc("unit.pasteRefused"));
+  }
   private refuseNoDigit(): false {
     this.say(tc("clip.noDigit"));
     return false;

@@ -362,20 +362,22 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem, unit?: FindItem)
       }
       c2.session.clearModifiers();
       const cmd = a?.kind === "cmd" ? a.name : undefined;
+      const sp = a?.kind === "special" ? a.name : undefined;
       if (cmd === "moveToPreviousChar") view.move(-1);
       else if (cmd === "moveToNextChar") view.move(1);
       else if (cmd === "moveDown") view.down();
       else if (cmd === "moveUp") view.up();
-      else if (a?.kind === "special" && a.name === "esc") {
+      else if (sp === "esc") {
         if (!view.escape()) close();
       }
       else if (a?.kind === "insert" && a.latex === STORE_ARROW) store();
-      else if (a?.kind === "special" && a.name === "copy") copyResult(); // R797: Shift + Select, as a hold on the result
-      else if (a?.kind === "special" && a.name === "menu") {
+      else if (sp === "paste") refusePaste(c2);
+      else if (sp === "copy") copyResult(); // R797: Shift + Select, as a hold on the result
+      else if (sp === "menu") {
         // R862: the view's tools and Constants over it (a second ☰, Esc or Back closes the sheet: sheetKeys.ts, watchSheet)
         void unitFind().then((m) => current?.view === view && c2.shell.sheet === null && m.showUnitMenu(c2.shell, index, tools(), constant), () => c2.dead());
       }
-      else if (a?.kind === "special" && a.name === "help") {
+      else if (sp === "help") {
         // R870: the active slot's units with their exact sizes, or the units tip, as a sheet over the view (R838's path; Esc, Back, ×
         // or a second Help close it: sheetKeys.ts, watchSheet). A chunk of its own, and for an empty slot the tip from the tips' chunk
         // (views/tipsHost.ts); the keys pressed while they load wait for them
@@ -387,7 +389,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem, unit?: FindItem)
           else c2.dead();
         }));
       }
-      else if (a?.kind === "special" && a.name === "uncertainty") {
+      else if (sp === "uncertainty") {
         const row = rowId === undefined ? undefined : c2.session.home.find((r) => r.id === rowId); // R327: the result's row
         lazy(c2, import("../views/uncSheet.ts").then((m) => m.showUncertainty(c2, row)));
       }
@@ -432,10 +434,13 @@ function layerAction(key: Key, mods: Mods): Key["actions"]["primary"] {
   return mods.alpha ? (key.actions.alpha ?? key.actions.primary) : mods.shift ? key.actions.shift : key.actions.primary;
 }
 
+/** R895: Paste (the key, a system paste) has no place in the view: the notice says why, the view stays. */
+const refusePaste = (c: RouteCtx): void => c.withClip((x) => x.refusePaste());
+
 /** The field: read-only, never MathLive's keyboard nor the system keyboard (inputmode none, as the entry line), with
  *  the entry line's macros (chips, ᴇ). The view's element holds the focus (tabindex -1, nothing editable in it, so no system
  *  keyboard) and its capture keydown gives a hardware key to the view's typing (R313, units/typed.ts: letters into the
- *  slot) and else down the keypad's path (entry/hwkeys.ts unitViewKey), from the field too; a paste, a drop,
+ *  slot) and else down the keypad's path (entry/hwkeys.ts unitViewKey), from the field too; a paste (with the notice why, R895), a drop,
  *  a cut and the browser's own text input (an IME) are stopped. MathLive's own beforeinput for setPromptValue is not
  *  trusted and goes through (cancelling it would cancel the write). */
 function setUp(mf: MathfieldElement, element: HTMLElement, c: RouteCtx, hw: Hw, typing: HwTyping): void {
@@ -457,10 +462,11 @@ function setUp(mf: MathfieldElement, element: HTMLElement, c: RouteCtx, hw: Hw, 
     if (c.shell.sheet === null && typing.key(ev)) {
       ev.preventDefault();
       ev.stopPropagation();
-    } else hw.unitViewKey(ev, c.entry, c.shell.sheet !== null, () => c.dead()); // (R303: in hwkeys.ts)
+    } else hw.unitViewKey(ev, c.entry, c.shell.sheet !== null, (paste) => (paste ? refusePaste(c) : c.dead())); // (R303: in hwkeys.ts)
   }, { capture: true });
   const stop = (ev: Event): void => {
     if (ev.type === "beforeinput" && !ev.isTrusted) return;
+    if (ev.type === "paste") refusePaste(c); // R895: stopped with its reason
     ev.preventDefault();
     ev.stopPropagation();
   };

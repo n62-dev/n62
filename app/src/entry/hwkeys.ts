@@ -160,14 +160,15 @@ function pressChord(ev: KeyboardEvent, tg: HwTarget, only?: (t: DeskTarget) => b
  *  lives on the keys), and with a sheet open over the view (`sheet`: Find) a letter types into its query (`onLetter`,
  *  route.ts typeLetter); with none a letter does nothing here, as does anything else (`dead`): R313, the view's typing
  *  (units/typed.ts) takes letters into the slot as a unit's symbol before this runs.
- *  Copy and select all stay MathLive's; Tab and the bare modifiers the browser's. */
-export function unitViewKey(ev: KeyboardEvent, tg: HwTarget, sheet: boolean, dead: () => void): void {
+ *  A paste (Ctrl+V, no sheet) is `dead(true)`: the view gives it a notice (R895). Copy and select all stay MathLive's; Tab and the bare modifiers the browser's. */
+export function unitViewKey(ev: KeyboardEvent, tg: HwTarget, sheet: boolean, dead: (paste?: true) => void): void {
   if (ev.isComposing) return;
   const mod = isChord(ev);
   if (mod && (ev.key === "c" || ev.key === "a")) return;
   if (["Tab", "Shift", "Control", "Alt", "Meta"].includes(ev.key)) return;
   ev.preventDefault();
   ev.stopPropagation();
+  if (mod && !sheet && ev.key.toLowerCase() === "v") return dead(true); // R895: a paste, refused with its notice (no paste event follows a stopped keydown)
   if (mod) return void (pressChord(ev, tg, (t) => !("action" in t && t.action === "fold")) || dead());
   if (sheet && /^[A-Za-z]$/.test(ev.key)) return tg.onLetter(ev.key, ev.repeat);
   const k = controlKey(ev) ?? (ev.key.length === 1 ? keypadKeyOf(ev.key, tg.decimalComma) : undefined);
