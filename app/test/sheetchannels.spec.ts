@@ -9,7 +9,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { entryValue, open, recordVibrations, setClipboard, tap, useClipboardLock, vibrations } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
-useClipboardLock();
+useClipboardLock(); // A281: Ctrl+V and Ctrl+X are the browser's own keys on the system clipboard (the file is small)
 
 const sheetId = (page: Page): Promise<string | null> =>
   page.evaluate(() => {

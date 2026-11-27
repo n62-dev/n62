@@ -4,12 +4,10 @@
 // the term under the finger, and a drag still scrolls the line and copies nothing (linetouch.spec.ts holds the rest).
 // Synthetic touches through CDP; the fake engine.
 import { expect, test, type Page } from "@playwright/test";
-import { open, setClipboard, tap, useClipboardLock } from "./helpers.ts";
+import { open, setClipboard, tap } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 test.describe.configure({ mode: "serial" });
-
-useClipboardLock(); // first hook: the lock is held before the page opens (copy.spec, rows.spec, the core list)
 
 const clipboard = (page: Page): Promise<string> => page.evaluate(() => navigator.clipboard.readText());
 const ranges = (page: Page) => page.evaluate(() => JSON.stringify(window.n62.entry.field?.selection.ranges));

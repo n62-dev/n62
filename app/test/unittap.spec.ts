@@ -2,7 +2,7 @@
 // R801 (owner, 2026-11-20, walk point B4): a tap on a unit slot makes it the active slot (refused as ◀ ▶ is when the active
 // slot cannot be left), and after any tap that opens no sheet the keys stay with the unit view (the focus is on its element).
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, flick, open, tap, useClipboardLock } from "./helpers.ts";
+import { entryValue, flick, open, tap } from "./helpers.ts";
 
 const up = (page: Page): Promise<unknown> =>
   page.waitForFunction(() => window.n62.unitView !== undefined && document.activeElement === window.n62.unitView.element && document.querySelector('[data-pad="unit"]') !== null);
@@ -193,7 +193,6 @@ test.describe("R918: a tap on the history under the unit view", () => {
 
   test.describe("a hold", () => {
     test.use({ permissions: ["clipboard-read", "clipboard-write"] });
-    useClipboardLock();
     test("a hold on the row's result copies its value, as without the view; the line unchanged", async ({ page }) => {
       await page.evaluate(() => navigator.clipboard.writeText("before"));
       const box = await row(page).boundingBox();

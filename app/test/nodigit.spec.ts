@@ -2,10 +2,9 @@
 // G23: a result with no confirmed digit shows "⚠ no digit confirmed" and no number; ⚠ n with n > 0 is unchanged.
 // sin(10^2000) is out of reach of every evaluation within the budget (oracle: needs about 2000 digits).
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, open, setClipboard, useClipboardLock } from "./helpers.ts";
+import { entryValue, open, setClipboard } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
-useClipboardLock(); // first hook: the system clipboard is one for every worker (R74f1)
 
 const submit = (page: Page, latex: string): Promise<void> =>
   page.evaluate((l) => window.n62.session.submit(l), latex);

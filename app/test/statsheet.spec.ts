@@ -6,12 +6,10 @@
 // g223-linreg (x 1..4, y 2.1 3.9 6.2 7.8: slope 97/50, intercept 3/20) and 2+3 = 5.
 import { expect, test, type Page } from "@playwright/test";
 import { finger, STILL_MS } from "./core-lib.ts";
-import { entryValue, open, setClipboard, sheetKey, tap, useClipboardLock } from "./helpers.ts";
+import { entryValue, open, setClipboard, sheetKey, tap } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 test.describe.configure({ mode: "serial" });
-
-useClipboardLock();
 
 const LINREG = "\\operatorname{linreg}\\left(\\left\\{1,2,3,4\\right\\},\\left\\{2.1,3.9,6.2,7.8\\right\\}\\right)";
 const clipboard = (page: Page): Promise<string> => page.evaluate(() => navigator.clipboard.readText());

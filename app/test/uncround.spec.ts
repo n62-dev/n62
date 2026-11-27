@@ -6,12 +6,11 @@
 // 9.81065219207 with σ ≈ 0.0527 → 9.811 ± 0.053 (R883's probe); G·5.972ᴇ24 = 3.98589196ᴇ14 with σ = 8.958ᴇ9 → σ 9.0ᴇ9,
 // its last digit at 10⁸ → 3.985892ᴇ14; 9.81 ± 0.02 stored in G → σ 0.020, last digit at 10⁻³ → 9.810.
 import { expect, test, type Page } from "@playwright/test";
-import { COPY, flick, lastResult, open, tap, useClipboardLock } from "./helpers.ts";
+import { COPY, flick, lastResult, open, tap } from "./helpers.ts";
 import type * as Finder from "../src/find/finder.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 test.describe.configure({ mode: "serial" });
-useClipboardLock(); // R74f1: first hook, so the lock is held before the page opens
 
 const done = (page: Page) => page.locator('[data-status="done"]');
 const ready = (page: Page) => page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });

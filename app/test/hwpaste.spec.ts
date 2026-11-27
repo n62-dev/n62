@@ -11,7 +11,7 @@ test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 // The system clipboard is one for the whole browser: these tests run one after another.
 test.describe.configure({ mode: "serial" });
 
-useClipboardLock();
+useClipboardLock(); // A281: the Ctrl+V way is a real browser paste of the system clipboard (the file is small: 8 tests)
 
 test.beforeEach(async ({ page }) => {
   await open(page, "");

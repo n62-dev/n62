@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { invariantsLine } from "./golden/invariants.ts";
-import { countMismatch, failedItems, FLAKE_CAP, failNames, flakeLines, isTiming, NAMES_CHARS, NAMES_MAX, onlyTiming, rerunnable } from "./pipeline-logs.ts";
+import { countMismatch, E2E_TIMING, E2E_TIMING_GREP, failedItems, FLAKE_CAP, failNames, flakeLines, isTiming, NAMES_CHARS, NAMES_MAX, onlyTiming, rerunnable } from "./pipeline-logs.ts";
 
 const dir = join(dirname(fileURLToPath(import.meta.url)), "../../tests/fixtures/pipeline");
 const colour = readFileSync(join(dir, "vitest-find-timing.log"), "utf8");
@@ -141,6 +141,30 @@ describe("golden and e2e logs", () => {
     expect(onlyTiming("e2e", l("copy.spec.ts", "copy → paste gives the value back (P5)"))).toBe(true);
     expect(onlyTiming("e2e", l("solve.spec.ts", "equations and values are stored"))).toBe(true);
     expect(onlyTiming("e2e", l("working.spec.ts", "the Cancel key stops a job"))).toBe(false);
+  });
+  it("e2e (A281f1): #1645's load reds are timing, in the quiet project's log lines too", () => {
+    const l = (f: string, t: string, p = "chromium-phone-quiet") => `  1) [${p}] › test/${f}:85:5 › ${t} ────────────\n`;
+    expect(onlyTiming("e2e", l("persist.spec.ts", "R255: a kept 5, then + 3 Enter before the field: 8, no Ans"))).toBe(true);
+    expect(onlyTiming("e2e", l("persist.spec.ts", "a half-typed line with a fraction and a result chip survives a kill (F30)"))).toBe(true);
+    expect(onlyTiming("e2e", l("persist.spec.ts", "a kept line the store hands over after the 1 s cap is kept for the next start"))).toBe(false);
+    expect(onlyTiming("e2e", l("unittap.spec.ts", "R801: a tap on a unit slot, 412 × 915 › a tap on the reading, then the hardware key m, still types into the slot"))).toBe(true);
+    expect(onlyTiming("e2e", l("entrydash.spec.ts", "a job under 50 ms never shows the dash"))).toBe(true);
+    expect(onlyTiming("e2e", l("library.spec.ts", "from the clipboard: beams.txt imports; a bad text is refused whole with its line"))).toBe(true);
+    expect(onlyTiming("e2e", l("sheetsview.spec.ts", "412 × 915 › (a) Base: the sheet lies in the history area and clear of the keypad"))).toBe(true);
+    expect(onlyTiming("e2e", l("startcut.spec.ts", "Menu, then 3, typed before the Menu's rows' code is in, picks the third row (Clear history) once it is"))).toBe(true);
+    // the same title in another file, or another sheet of sheetsview, is not
+    expect(onlyTiming("e2e", l("persist.spec.ts", "R255: 2 + 3 Enter before the field, with a stored result: 5, no Ans in front"))).toBe(false);
+    expect(onlyTiming("e2e", l("sheetsview.spec.ts", "412 × 915 › (a) Copy ›: the sheet lies in the history area and clear of the keypad"))).toBe(false);
+    expect(onlyTiming("e2e", l("rows.spec.ts", "a job under 50 ms never shows the dash"))).toBe(false);
+  });
+  it("e2e (A281f1): the quiet project's grep takes a list entry only in its own file (Playwright's grep title: file, describes, title)", () => {
+    const grep = (title: string): boolean => E2E_TIMING_GREP.some((r) => r.test(title));
+    expect(grep("chromium-phone-quiet unittap.spec.ts R801: a tap on a unit slot, 360 × 740 a tap on the reading, then the hardware key m, still types into the slot")).toBe(true);
+    expect(grep(" persist.spec.ts R255: a kept 5, then + 3 Enter before the field: 8, no Ans")).toBe(true);
+    expect(grep(" rows.spec.ts a job under 50 ms never shows the dash")).toBe(false);
+    expect(grep(" mypersist.spec.ts R255: a kept 5, then + 3 Enter before the field: 8, no Ans")).toBe(false);
+    expect(E2E_TIMING_GREP).toHaveLength(E2E_TIMING.length);
+    for (const t of E2E_TIMING) expect(() => readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../test", t.file)), t.file).not.toThrow();
   });
   it("e2e: a count that differs from Playwright's own summary is a mismatch, never timing", () => {
     const one = "  1) [chromium-phone] › test/copy.spec.ts:89:1 › copy → paste gives the value back (P5) ────────────\n";

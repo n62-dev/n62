@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { linkSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { errors, test, type Locator, type Page } from "@playwright/test";
+import { errors, test, type BrowserContext, type Locator, type Page } from "@playwright/test";
 
 /** The bar's controls (R15c1, R15c2, R722), for keys that left the cluster: `@place` (Apps ▾, the Apps sheet), `@menu`
  *  (☰), `@symb` / `@plot` / `@num` (the view tab; from Home or CAS the last app is opened first from the Apps sheet, as
@@ -169,7 +169,7 @@ export async function systemPaste(page: Page): Promise<void> {
   });
 }
 
-/** Put text on the system clipboard (a spec that does holds the clipboard lock: useClipboardLock). */
+/** Put text on the page's clipboard: its context's own store (A281, `open`), or the system clipboard in a test under useClipboardLock. */
 export const setClipboard = (page: Page, text: string): Promise<void> => page.evaluate((s) => navigator.clipboard.writeText(s), text);
 /** Press ⌫ once and return the line. */
 export async function bksp(page: Page): Promise<string> {
@@ -177,7 +177,12 @@ export async function bksp(page: Page): Promise<string> {
   return entryValue(page);
 }
 
-export async function open(page: Page, query = "engine=fake"): Promise<void> {
+/** Options of `open`. `systemClipboard`: leave navigator.clipboard as Chromium has it (no store of the context's own,
+ *  A281f1): core-lib.ts's `start`, so the core list runs on the real clipboard as the device does. */
+export type OpenOptions = { systemClipboard?: boolean };
+
+export async function open(page: Page, query = "engine=fake", opts: OpenOptions = {}): Promise<void> {
+  if (!realClipboard && opts.systemClipboard !== true) await ownClipboard(page.context());
   // R15c4: a fresh profile shows the first-start tips over the app; every other test runs without them (`tips=on` keeps them)
   await page.goto(`/?${query}${query.includes("tips=") ? "" : "&tips=off"}`);
   await page.waitForFunction(() => customElements.get("math-field") !== undefined && window.n62 !== undefined);
@@ -270,6 +275,27 @@ export async function drag(page: Page, id: string, dx: number, dy: number): Prom
 /** Flick a key up (its shift layer) or down (its letter): a 40 px slide, then lift (R9; FlickTracker arms at 20 px). */
 export const flick = (page: Page, id: string, dir: "up" | "down"): Promise<void> => drag(page, id, 0, dir === "up" ? -40 : 40);
 
+/** After a hide (visibilitychange): wait until the kept line (R34) in the page's store is `latex` ("" for none), at most 8 s,
+ *  then go on (the test's own check says what it saw). The fixed 300 ms the specs waited was too short on a loaded host: with
+ *  no clipboard lock (A281) every worker is busy at once. */
+export async function waitKeptLine(page: Page, latex: string): Promise<void> {
+  await page.waitForTimeout(300);
+  try {
+    await page.waitForFunction(
+      async (want) => {
+        const url = "/src/state/storage.ts";
+        const { kvGet } = (await import(/* @vite-ignore */ url)) as typeof import("../src/state/storage.ts");
+        const r = await kvGet<{ latex?: string } | null>("entry");
+        return (r.kind === "value" && r.value ? (r.value.latex ?? "") : "") === want;
+      },
+      latex,
+      { timeout: 8000, polling: 100 },
+    );
+  } catch (e) {
+    if (!(e instanceof errors.TimeoutError)) throw e;
+  }
+}
+
 /** Record navigator.vibrate calls (call before `open`); read them with `vibrations`. */
 export async function recordVibrations(page: Page): Promise<void> {
   await page.addInitScript(() => {
@@ -280,9 +306,51 @@ export async function recordVibrations(page: Page): Promise<void> {
 }
 export const vibrations = (page: Page): Promise<unknown[]> => page.evaluate(() => (window as unknown as { __vib: unknown[] }).__vib);
 
+// A281: every test has its own clipboard. `open` gives the page's context a store (ownClipboard) that stands in for
+// navigator.clipboard (writeText, readText, write, read), so Copy and Paste of the app, `setClipboard` and the specs' reads
+// never meet another test's text. The app is not touched and nothing of this ships.
+const ownStores = new WeakSet<BrowserContext>();
+/** True while a test holds the clipboard lock (useClipboardLock): its pages keep Chromium's own clipboard. */
+let realClipboard = false;
+
+/** Give `context` a clipboard of its own: the text lives here in the test process, so it survives a reload and is shared by the
+ *  context's pages and by nothing else. Done once per context, before the page loads (`open`). */
+async function ownClipboard(context: BrowserContext): Promise<void> {
+  if (ownStores.has(context)) return;
+  ownStores.add(context);
+  let text = "";
+  await context.exposeFunction("__n62ClipGet", () => text);
+  await context.exposeFunction("__n62ClipSet", (t: string) => void (text = t));
+  await context.addInitScript(() => {
+    const w = window as unknown as { __n62ClipGet: () => Promise<string>; __n62ClipSet: (t: string) => Promise<void> };
+    const clip = {
+      writeText: (t: string): Promise<void> => w.__n62ClipSet(String(t)),
+      readText: (): Promise<string> => w.__n62ClipGet(),
+      write: async (items: ClipboardItem[]): Promise<void> => {
+        const item = items.find((i) => i.types.includes("text/plain"));
+        await w.__n62ClipSet(item ? await (await item.getType("text/plain")).text() : "");
+      },
+      read: async (): Promise<ClipboardItem[]> => [new ClipboardItem({ "text/plain": new Blob([await w.__n62ClipGet()], { type: "text/plain" }) })],
+    };
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: clip });
+  });
+}
+
+/** The spec files that call useClipboardLock, each with why: they test Chromium's one system clipboard on purpose (a real
+ *  Copy, Paste or Ctrl+V through its permission and API). clipboard-lock.spec.ts checks that every call sits in a listed file
+ *  and carries a reason comment on its line, and that no listed file has dropped the call. */
+export const CLIPBOARD_LOCK_FILES: Record<string, string> = {
+  "clipboard-lock.spec.ts": "the lock itself, and a real Copy and Paste through the system clipboard",
+  "core.spec.ts": "the core list's clipboard cases, on the real clipboard as on the device (P23; A281f1)",
+  "hwpaste.spec.ts": "Ctrl+V: the browser's own paste reads the system clipboard",
+  "sheetchannels.spec.ts": "Ctrl+V and Ctrl+X reach the system clipboard",
+};
+
 // R74f1: the system clipboard is one for every Playwright worker, so a test that writes or reads it holds this lock
 // (an exclusive lock file under test-results, holding its owner's pid and a nonce) for its whole run. A lock whose
 // owner process is dead (a killed worker) is taken over; a live owner is never overridden, however long it holds.
+// A281: only the files of CLIPBOARD_LOCK_FILES hold it now; every other test has its own clipboard (ownClipboard), but the
+// core list's (core-lib.ts `start`: the real one, A281f1).
 const LOCK = resolve("test-results", "clipboard.lock");
 
 /** F202: a waiter first takes a numbered ticket in this directory (a file named by its number, holding its pid and a
@@ -413,14 +481,17 @@ export async function withClipboardLock<T>(fn: () => Promise<T>): Promise<T> {
   }
 }
 
-/** Call at the top of a spec file or describe: every test in it holds the clipboard lock from its first hook to its last. */
+/** Call at the top of a describe of a file in CLIPBOARD_LOCK_FILES: every test in it holds the clipboard lock from its first hook
+ *  to its last and runs on Chromium's system clipboard (`open` leaves navigator.clipboard alone). */
 export function useClipboardLock(): void {
   let release: (() => void) | undefined;
   test.beforeEach(async () => {
     test.setTimeout(clipboardBudget(test.info().project.timeout)); // the wait for the lock must not eat the test's own budget
     release = await acquireClipboardLock();
+    realClipboard = true;
   });
   test.afterEach(() => {
+    realClipboard = false;
     release?.();
     release = undefined;
   });

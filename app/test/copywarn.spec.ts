@@ -4,12 +4,10 @@
 // (mpmath, 30 digits): 2^(1/3) = 1.25992104989487316476721…, the root of cos(x) = x 0.739085133215160641655…, each to 12.
 import { expect, test, type Page } from "@playwright/test";
 import { finger } from "./core-lib.ts";
-import { open, setClipboard, useClipboardLock } from "./helpers.ts";
+import { open, setClipboard } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 test.describe.configure({ mode: "serial" });
-
-useClipboardLock(); // first hook: the lock is held before the page opens
 
 const clipboard = (page: Page): Promise<string> => page.evaluate(() => navigator.clipboard.readText());
 const rows = (page: Page) => page.locator('[data-status="done"]');

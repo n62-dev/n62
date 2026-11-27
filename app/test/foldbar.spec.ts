@@ -3,11 +3,10 @@
 // and the slice are one 44 px row: ⌃ · Home | CAS · the free stretch · ⇧/α · Store ▶ · Copy › (with a pick) · ☰.
 // The fake engine; touches through CDP (helpers.ts `touch`).
 import { expect, test, type Page } from "@playwright/test";
-import { open, sheet, tap, touch, useClipboardLock } from "./helpers.ts";
+import { open, sheet, tap, touch } from "./helpers.ts";
 import { finger } from "./core-lib.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"], actionTimeout: 10_000 }); // (a missing control fails in 10 s, not at the clipboard budget)
-useClipboardLock();
 
 const CHEV = '[data-testid="fold-chevron"]';
 const FBAR = '[data-testid="folded-bar"]';

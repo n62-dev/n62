@@ -4,13 +4,9 @@
 // are drawn and copied with the comma, and a pasted 1,5e-3 is a number. Key sequences on the real engine. Expected values
 // are derived: 3,5 × 2 = 7, 1,5 ÷ 2 = 0,75, 1,5ᴇ-3 = 0,0015, 3,ᴇ3 = 3.ᴇ3 = 3000.
 import { expect, test, type Page } from "@playwright/test";
-import { COPY, PASTE, entryValue, lastResult, menuItem, open, setClipboard, sheetKey, tap, useClipboardLock } from "./helpers.ts";
+import { COPY, PASTE, entryValue, lastResult, menuItem, open, setClipboard, sheetKey, tap } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
-// The system clipboard is one for the whole browser: these tests run one after another.
-test.describe.configure({ mode: "serial" });
-
-useClipboardLock();
 
 test.beforeEach(async ({ page }) => {
   await open(page, "");

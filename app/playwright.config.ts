@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { defineConfig, devices } from "@playwright/test";
+import { E2E_TIMING_GREP } from "./scripts/pipeline-logs.ts";
 
 // PW_PORT: use a different port per checkout, so parallel runs never reuse each other's dev server.
 const port = Number(process.env["PW_PORT"] ?? 5181);
@@ -20,5 +21,12 @@ export default defineConfig({
   },
   reporter: [["list"], ["./test/core-reporter.ts"]],
   use: { baseURL: `http://localhost:${port}` },
-  projects: [{ name: "chromium-phone", use: { ...devices["Pixel 7"] } }],
+  // A281f1: the wall-clock tests (pipeline-logs.ts E2E_TIMING, the list isTiming reads) run in a project of their own, alone
+  // (one worker) once the main one is done, so the parallel files never load the host under them. It is the main project's
+  // `teardown`, not a dependant: it runs when the main project failed too, and a run of some files (the pipeline's rerun)
+  // does not run the whole main project. A file run (`playwright test x.spec.ts`) runs every quiet test; `--no-deps` does not.
+  projects: [
+    { name: "chromium-phone", use: { ...devices["Pixel 7"] }, grepInvert: E2E_TIMING_GREP, teardown: "chromium-phone-quiet" },
+    { name: "chromium-phone-quiet", use: { ...devices["Pixel 7"] }, grep: E2E_TIMING_GREP, workers: 1 },
+  ],
 });

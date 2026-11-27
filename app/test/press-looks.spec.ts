@@ -3,10 +3,9 @@
 // a pressed d-pad zone shows a dot behind its arrow, a locked Shift's ring stays inside its key, and a notice ("Copied")
 // draws over the history's foot instead of moving the rows. Computed style and pixels, the fake engine.
 import { expect, test, type Page } from "@playwright/test";
-import { COPY, flick, lastResult, open, tap, useClipboardLock } from "./helpers.ts";
+import { COPY, flick, lastResult, open, tap } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
-useClipboardLock(); // (the "Copied" test writes the system clipboard)
 
 const highlights = (page: Page, root: string): Promise<{ n: number; bad: string[] }> =>
   page.evaluate((root) => {
