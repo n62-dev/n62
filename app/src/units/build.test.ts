@@ -214,7 +214,8 @@ describe("unit view builder (G16)", () => {
     expect(two("K", "oR")).not.toHaveProperty("error");
   });
   it("G385: a bracketed T1 − T2 of one scale takes part in arithmetic; an absolute temperature outside it stays refused", () => {
-    const [oC, oF, K] = ["oC", "oF", "K"].map((unit) => ({ tokens: [{ unit }] }));
+    const one = (unit: string): UnitSlot => ({ tokens: [{ unit }] });
+    const [oC, oF, K] = [one("oC"), one("oF"), one("K")] as const;
     const sc = factorTable([unit("oC", "1+5463/20", "K1", "°C"), unit("oF", "5/9+45967/180", "K1", "°F"), unit("K", "1", "K1"), unit("oR", "5/9", "K1", "°R")]);
     const job = (formula: string, slots: UnitSlot[], end?: UnitSlot) => buildJob({ formula, slots, ...(end ? { end } : {}) }, sc);
     const iv = "(((1)*pasdimK^(1)))";
