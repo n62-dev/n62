@@ -7,7 +7,7 @@ Phase 0 (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md). This fil
 
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
-- **R781, Hand = Left:** every key column mirrors (digits 9 8 7, Redo left of Undo; the pad's ◀ ▶ kept); the bar turns, its track and modes read as before; Appearance has 8 rows. Recommended: keep; confirm the lock and docs/06 3b line.
+- **R781, Hand = Left:** every key column mirrors, so the digits read 9 8 7 and Redo stands left of Undo (the pad's ◀ ▶ kept); the bar turns, its track and modes read as before; Appearance has 8 rows. Recommended (pass 254): keep the mirror but keep the reading order inside a run (the digits 7 8 9, Undo then Redo, ⇤ then ⇥), a follow-up R781f1 of about half a day, and confirm the lock and docs/06 3b line.
 - **G784, Paste of a copied name:** Copy writes letters (`2*i`, `β*2`); Paste reads one number, so `2*i` copied from the name i came back as the constant i (principle 3); G784f1 refuses a text copied from a row with a stand-in. Recommended: keep Paste a number reader; reading expressions is its own package (the letter i against the constant i needs a rule first).
 - **G622f2, a singular float inv:** Recommended: refuse, as exact inv does. `inv(approx(10^-9*[[2.5,2E8,e],[2.5,π,2E-3],[5,2E8+π,e+2E-3]]))` is 1E14–1E22 noise, row 3 ≈.
 - **The release bar's week (A273, G799; pass 241):** Recommended: a night counts when every `NIGHTLY` finding falls under a package or bug line the pass names (no new cause), as the clock seed never repeats a known row. Night 1 (11-25): all 118 named (G802, G804, G805, G622f2, F145, F480, F487).
@@ -51,8 +51,6 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **R4b's four defaults, as built:** Memory deletes a name without asking (Clear all asks once); a Find pick for a slot closes the sheets; a key's constant keeps its value and σ; Vars is dead without an entry line. Archived.
 - **R15c1 menus (owner, 2026-10-20): a long menu scrolls** in the viewport (docs/05 3.1); the ⚙ in its title opens Settings (R145). Would change if: the scroll feels slow on the APK.
 - **M4-2 (owner, 2026-10-20):** the task budgets (t02 9 presses, t04 12, t10 25, t05 4), t09's two deviations, ± on Shift + `,` (R71), the unit result as its mockup (R62). Archived. Your hand timing stays the gate.
-- **S8 (owner, 2026-10-20):** every press is counted (R70); Android's backup is off (A23). Archived.
-- **S6 (owner, 2026-10-20; A11, R38a, R38b): the backup** leaves by Android's "Save to" screen and returns by a file picker; restore checks the whole file. Archived. Would change if: a supported WebView has no Save-to screen.
 - **R15c Store (owner, 2026-10-19; G2 item 58, device):** Shift + ᴇ (Store ▶) on an empty line after a result starts `Ans ▶`, as + − × ÷ do; built in R15c2.
 - **The bar on the keypad (R722, R783, R785, R856) and P16's fold (R53, R283, R724, R786, R782, R868, R928):** built; rules docs/05 3.2, docs/03 rule 9; full text and the Would change if: archived ("Moved 2026-11-26").
 - **Keys of 2026-11-17 (owner, R723):** row 0, col 4 is Settings (⚙), Shift Help since R863; Shift + Select is Copy, Shift + Deselect Paste, Shift + Vars Chars (R725); Mode has no key (`STD 12 ▾`, an app's ☰ › Mode, a user key, Alt + Shift + O). Rule: docs/06 3b, docs/05 3.2. Would change if: Shift + Select is pressed fewer than 10 times in four weeks (`select:shift` and `select:up`); then that cell is reserved.
@@ -66,7 +64,6 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
   - **Store ▶ keeps the fold (owner, 2026-11-17, R740):** the sheet "Store in" opens over the history with the keys down; a folded sheet ends with New name…, which brings them up. Would change if `store.new` is over half of folded stores in four weeks (then Store ▶ unfolds again).
 - **R21 (2026-10-14), changed by R770 (owner, 2026-11-19: every window in the viewport): every sheet rises in the viewport over the history, Settings too, never over the keys;** a sheet taller than the viewport scrolls inside its box. Archived.
 - **Engine defaults, not G2 copies (owner, 2026-10-19):** a G2 special case stays only for a silent wrong number or a saved keystroke. Archived.
-- **P12 (2026-10-13): the keypad against the G2.** Rule: docs/04 5.1 and [06-keypad-vs-g2.md](06-keypad-vs-g2.md). Archived.
 - **P11 (2026-10-13): back to the G2's flow; milestone 4a before the rest of milestone 4.** Departures sit on top of the G2 way, never instead of it (docs/03 rules 5–13). Archived.
 - **P7 (2026-10-12, revised by P11): keypad gestures.** The arrow keys are one trackpad; flicks on every key. Archived.
 - **Find stands out, way A (owner, 2026-11-22, R865):** a lens in the Find key's top-right corner and a 4 px foot bar, in `--ring`, in every view; no fill (Enter's) and no ring (armed). Rule: docs/05 3.10. Would change if: the bar is read as "armed".
@@ -79,13 +76,10 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 ### Precision, engine and parser
 - **G141: a literal past `MAX_EVAL_DIGITS` makes the value ⚠ unchecked,** a power of ten too; G126's and G153's rows turn ⚠ until S20.
-- **G58, G59:** a Giac call deaf to its interrupt gets a `control_c()` patch at its cause (P19); when the exact and numeric answers disagree Home shows ⚠. Archived.
-- **S13, G57 (owner, 2026-10-20; built by G65): names from Giac's state;** an undecided run-once store is refused as `a:=` is. Archived. Would change if: A16's RAD Enter p95 > 150 ms.
 - **P19 (2026-10-20): a Giac bug is fixed at its cause** (patch, canary, link to Parisse; a TypeScript workaround only for a cause that is not local, registered in S17). Rule: `docs/rules-core.md`. Archived.
 - **P20 (2026-10-20; narrowed by G85's GO, 2026-10-22): Giac's tree, not its text.** Names, stores, bound names, settings and a value's kind come from the bridge (`bridge.ts`); only Giac's print is read as text, in one module (G105); new code adds no bracket loop or name regex (the text baseline, G88). Would change if: a question the bridge cannot answer.
 - **P24 (2026-11-08): commercial reuse of our Giac fixes** is permitted to B. Parisse (email 13). Archived. Would change if: a contributor other than the owner writes a Giac fix.
 - **R58b (2026-10-19; built by R67): a letter typed with Alpha is always a name,** in CAS too; e and i come only from their keys. Archived.
-- **S14: the angle mode, route R (owner, 2026-10-19; built by R64 and G46).** Giac runs in radians in every mode, our parser carries `pasdeg`; rule: docs/04 2.12. Archived.
 - **An undecided decision is refused (owner, 2026-10-19; built by G57):** a sign, comparison, floor or branch on a cut Giac cannot decide is refused as undecided, never a guess. Would change if: refusals turn up in everyday work where a ⚠ value served better.
 - **F29 (2026-10-18, G2 item 54): `exp` ignores the angle mode,** as on the G2 (`e^(i·90)` is −0.4481+0.8940·i in both modes); built by G21. Would change if: a Giac patch (G21b) replaces the rewrite.
 - **R29: the parser's messages, and a space between two numbers (2026-10-17).** The messages are i18n keys (R52); a space between two numbers is an error ("put × between two numbers", R51), though the G2 gives 6. Archived.
@@ -101,8 +95,6 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **Ans in history (owner, 2026-11-20, G642/R836):** frozen in the history row, live on the entry line, a recalled row comes back live. Rejected: literal digits (1/3 ×3 gives 0.999999999999 or ≈1, σ and unit lost), Giac text (radians, no text over 2 kB), numbered ans1/ans2 (numbers shift when rows are deleted). Would change if: the G2 re-resolves a recalled Ans differently (tests/golden/g2.yaml question) or daily use asks.
 - **Ans in the unit view (R259; owner, 2026-11-12):** no slot before v0.1.0; an Ans with a unit or σ is refused, naming its row's chip. Would change if: daily use asks (≈0.5 d).
 - **Prefix entry (owner, 2026-10-31; night review fh-8):** Home has none; a prefix goes in the unit view's prefix cells (P11, docs/05 §7.2), and docs/04 2.7's prefix chip is dropped.
-- **S1 (2026-10-13): the unit slots.** The number comes before the units key; digits in a slot are only exponents; a live reading under the slot. Archived.
-- **S4 (2026-10-18): a library file carries definitions only;** settings and key slots go only in the backup. Archived. Would change if: keyboard set-ups are shared (a `// key:` line).
 - **U1–U6 over the unit pad (R838; pass 230):** while the pad is up they are its cells (R24d), so a user key that holds Settings or Mode does not open it there; Shift + Help, the bar's chip and Alt + Shift + O do. Would change if: the owner wants his user keys over the pad.
 - **Formula, then units (owner, 2026-11-16):** letters get unit slots; → Check turns the end slot on (R349); Store ▶ in the view (R353); SI names, no J or Hz (G389).
 
@@ -137,7 +129,6 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **An app's line stays with the app** (R76, R76f1, R262): cleared on the way back to Home or CAS. Archived.
 - **Working… after 150 ms** (F8): the busy line and Cancel are drawn late; Cancel works from 0 ms.
 - **One-line mode:** `^` is literal and the exponent is the next signed factor. **Results are insertable**, bracketed when a sum. **Default angle mode: radians.**
-- **R98, Clear and Delete:** rule: docs/05 3.5 (cancelled and note rows too; one Undo copy per view; a backup never holds it). Archived.
 - **R112: a key drawn dead, or a press the route's one rule finds dead (route.ts deadPress), gives the double pulse alone, no look, pop or click; every other key gives one pulse at finger-down.** The unit pad's dead presses keep three (the touch's, then the double; docs/05 3.7), as does a sheet's Paste of no name (R900, a late clipboard read).
 - **R144, R146, changed by R770 (owner, 2026-11-19: every window in the viewport):** the keys stay live below an open sheet and drive it; a key it does not use is dead and the sheet stays. Rule: docs/05 3.1. Archived.
 - **R157, the mark:** `--mark-faint` is the hint's colour at 1.25:1, ≤ 1.3:1; Home's glyph is a house (R874, R856: owner, 2026-11-22), 16 × 16 on the bar and in the Apps sheet; shown whenever the view is empty (R860); no tap (owner, 2026-11-23, R924). Archived. Would change if: the owner's look on his phone (B&W Dark, N62 Dark).
@@ -166,6 +157,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **G806's float pivots (pass 249):** det or rank of a float matrix is ⚠ without a count when patch 0071 warns, a singular typed one too: `rank(approx([[0.1,0.3],[0.2,0.6]]))` is ⚠ 1 (its doubles are exactly singular, 0.2 = 2·0.1, 0.6 = 2·0.3, but equal inexact products look like a coincidence; the golden row's note is wrong there); `rank(approx([[1,1],[1,1]]))` stays =. Would change if: the patch proves a product pair equal.
 - **G404's climb (pass 249):** its top level is CLIMB_TOP = 980 (the check's second run at MAX_EVAL_DIGITS); infinite at every level is ⚠ past the cap when its stated size is within MPFR's range, else an overflow; CAS approx and evalf climb as Home's; a list element past reach leaves Giac's text. Would change if: a value finite only from 981 digits.
 - **Built, archived (Opus pass 253):** G19, R87, G116 in archive/decisions-2026-10.md, G212, G232 in archive/decisions-2026-11.md; their rules stand in code.
+- **Archived (Opus pass 254; rules in docs, P19, P20):** S1, S4, S6, S8, S13, S14, P12, G58, G59, G34's check in [archive/decisions-2026-10.md](archive/decisions-2026-10.md), R98 in [archive/decisions-2026-11.md](archive/decisions-2026-11.md).
 
 **Units**
 - **Built, archived ("2026-11-17, the fix lane"):** G17; G13, G7; R24a, R24af1; R61; R63; R92; The deep check of 2026-10-19 (G41).
@@ -185,7 +177,6 @@ The defaults that bind code and tests, one line each. A default changes when its
 
 
 **Library, release and process**
-- **The check of 2026-10-19:** a Home value that leaves its evaluation is the value shown in any later angle mode (G34). Archived.
 - **Built, archived ("2026-11-17, the fix lane"):** R59, R59f1; R89; R40, R124, R125 (owner, 2026-11-04); R156; A66; G218, G219, G233, G234.
 - **The release path (A7, A8, A45, A48):** APK and website from one tag; golden on the release engine before signing; the web names frozen; `master` follows phase-1. Archived.
 - **Releases:** the engine built in the pinned container (P2), `setarch -R`, bit-reproducible. **Minimum WebView:** Chrome 111 (R160; minSdk 24). Archived.
@@ -203,4 +194,5 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R361f1:** the names a Plot slot reads are Giac's tree of its text (a bound k or t is none); a call of a function with no definition (`f(x)`) notes "F1 uses f: not drawn, it holds no value"; a stored user function stays silent. Would change if: user functions are drawn (after the tag).
 - **G576:** a power past Home's power limit is ≈ even when the input makes it exact (`10^(10^6)` ≈ 1E1000000): the float path proves no exactness and ≈ is never false (principle 3); no package. Would change if: the exact path can state such a power.
 - **A280 (pass 246):** docs/backlog.md and find/ plan no e2e (no core case has a `known:` id). Would change if: one gets one.
+- **A257's queue (pass 254):** a try without a wait (`devlock.sh acquire … 0`) takes only a lock nobody waits for, a free one too, so a poller never jumps the queue; `lock_wait` then waits in it, its log line naming the holder `?`. Would change if: a caller needs a free lock at once.
 - **G524:** after a rejected pole the search goes on, so a real root found may not be the nearest; "no root found" only when no bracket holds one. Archived. Would change if: the owner wants the nearest root.

@@ -12,6 +12,9 @@ Moved here as they stood (links adjusted to this folder): decided entries of Opu
 - **G557 (Opus pass 213): patch 0045's dropped square root is a fix, not a plan change:** `normal(sqrt(2^(1/3)+3^(1/3)))` and two more show `= 1` (right 1.64382803851; mpmath), an exact wrong answer of our own patch, so G340f1 fixes 0045 at its cause before features (brief 0's order; a fix row after the freeze). Would change if: the cause is past a day of work (then Needs the user). Done: G340f1 (run 1355), cause under a day.
 - **G78 (Opus pass 45; F50, F51):** `√(asinh(asin 3.7))` stays refused at Home's budget; a series or limit at ±∞ keeps Giac's infinity. Archived, "Opus pass 106". Would change if: the owner wants these refused or computed.
 
+## Moved 2026-11-27 (Opus pass 254: decisions.md over 39 kB; its rule stands in docs/05 3.5)
+- **R98, Clear and Delete:** rule: docs/05 3.5 (cancelled and note rows too; one Undo copy per view; a backup never holds it). Archived.
+
 ## Moved 2026-11-22 (coord, owner's yes: room for the 2026-11-22 packages)
 
 - **R780's `.` and space in Find (pass 225):** on an empty query they pick rows 11 and 12, as the digits pick 1–10; a hardware `.` or space there picks too (Shift + `.` types `.`); with a typed query they do what they did before. Would change if: a query needs `.` first.

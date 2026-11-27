@@ -5,6 +5,17 @@ History only: read it when a decision is questioned. What still binds is in [../
 
 ## Decided proposals moved here later
 
+### Moved by Opus pass 254 (2026-11-27: decisions.md over 39 kB; rules in docs, P19 and P20), as they stood
+- **S8 (owner, 2026-10-20):** every press is counted (R70); Android's backup is off (A23). Archived.
+- **S6 (owner, 2026-10-20; A11, R38a, R38b): the backup** leaves by Android's "Save to" screen and returns by a file picker; restore checks the whole file. Archived. Would change if: a supported WebView has no Save-to screen.
+- **P12 (2026-10-13): the keypad against the G2.** Rule: docs/04 5.1 and [06-keypad-vs-g2.md](../06-keypad-vs-g2.md). Archived.
+- **G58, G59:** a Giac call deaf to its interrupt gets a `control_c()` patch at its cause (P19); when the exact and numeric answers disagree Home shows ⚠. Archived.
+- **S13, G57 (owner, 2026-10-20; built by G65): names from Giac's state;** an undecided run-once store is refused as `a:=` is. Archived. Would change if: A16's RAD Enter p95 > 150 ms.
+- **S14: the angle mode, route R (owner, 2026-10-19; built by R64 and G46).** Giac runs in radians in every mode, our parser carries `pasdeg`; rule: docs/04 2.12. Archived.
+- **S1 (2026-10-13): the unit slots.** The number comes before the units key; digits in a slot are only exponents; a live reading under the slot. Archived.
+- **S4 (2026-10-18): a library file carries definitions only;** settings and key slots go only in the backup. Archived. Would change if: keyboard set-ups are shared (a `// key:` line).
+- **The check of 2026-10-19:** a Home value that leaves its evaluation is the value shown in any later angle mode (G34). Archived.
+
 ### Shortened 2026-11-20 (coord, the owner's yes) to make room for R810, R811, R815 and the user-key packages, as they stood
 - **No freeze until Tue 11-17 (owner, 2026-11-12); the beta after the layout rows and R744 merge, the release candidate Mon 11-23, the tag Tue 11-24, no history rewrite, only what the layout lock pins before the tag and the rest in v0.1.1 (owner, 2026-11-17):** to the freeze the order is use, critical bugs, features (brief section 0); the days, the bar and what v0.1.0 keeps for good (point 7): [release-0.1.0.md](../release-0.1.0.md).
 - **Owner answers of the night and architecture reviews:** 11-09/10 [archive](night-review-2026-11-09.md) section 6; 11-10 [arch](../research/arch-review-2026-11-10.md) section 3; 11-14 [archive](night-review-2026-11-14.md) section 6; 11-16 [note](../research/night-review-2026-11-16.md) section 5 (Function and Solve open after the tag; `5 % 3` kept). Each package rewrites its line here when it lands. Would change if: the G2 or an outside round reads one otherwise.
