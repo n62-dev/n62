@@ -11,6 +11,8 @@ const menu = (page: Page) => page.getByTestId("menu");
 const rows = (page: Page) => find(page).getByRole("menuitem");
 /** Vars' stored names (R282: the grid also holds a free cell for every letter, `name:B`). */
 const vrows = (page: Page) => find(page).locator('[role="menuitem"]:not([data-id^="name:"])');
+/** Memory's names and Clear all (R314: its Undo row, `undo`, comes after a delete). */
+const nrows = (page: Page) => find(page).locator('[role="menuitem"]:not([data-id="undo"])');
 const row = (page: Page, id: string) => find(page).locator(`[role="menuitem"][data-id="${id}"]`);
 const mrow = (page: Page, id: string) => menu(page).locator(`[role="menuitem"][data-id="${id}"]`);
 const active = (page: Page) => find(page).locator('[role="menuitem"][data-active="true"]');
@@ -143,18 +145,18 @@ test.describe("Memory", () => {
     await store(page, "d7", "math", 2);
     await tap(page, ["shift", "math"]);
     await expect(title(page)).toHaveText("Memory");
-    await expect(rows(page)).toHaveCount(3); // B, A and Clear all
+    await expect(nrows(page)).toHaveCount(3); // B, A and Clear all
     await expect(active(page)).toHaveAttribute("data-id", "var:B");
     await tap(page, ["enter"]); // deletes B; the sheet stays
     await expect(find(page)).toBeVisible();
-    await expect(rows(page)).toHaveCount(2);
+    await expect(nrows(page)).toHaveCount(2);
     await expect(row(page, "var:B")).toHaveCount(0);
     await expect.poll(() => names(page)).toEqual(["A"]);
     await tap(page, ["down", "enter"]); // Clear all asks once
     await expect(row(page, "clearall")).toContainText("Enter again clears 1");
     await expect(row(page, "var:A")).toBeVisible();
     await tap(page, ["enter"]);
-    await expect(rows(page)).toHaveCount(0);
+    await expect(nrows(page)).toHaveCount(0);
     await expect.poll(() => names(page)).toEqual([]);
     await tap(page, ["esc"]);
     await expect(find(page)).toBeHidden();
@@ -169,13 +171,13 @@ test.describe("Memory", () => {
     await store(page, "d5", "vars", 1);
     await store(page, "d7", "math", 2);
     await tap(page, ["shift", "math", "d1"]);
-    await expect(rows(page)).toHaveCount(3); // B, A and Clear all, nothing deleted
+    await expect(nrows(page)).toHaveCount(3); // B, A and Clear all, nothing deleted
     await expect(active(page)).toHaveAttribute("data-id", "var:B");
     await tap(page, ["d3"]);
     await expect(active(page)).toHaveAttribute("data-id", "clearall");
     await tap(page, ["d3"]); // a second 3 does not clear
     await expect(row(page, "clearall")).not.toContainText("again");
-    await expect(rows(page)).toHaveCount(3);
+    await expect(nrows(page)).toHaveCount(3);
     await expect.poll(() => names(page)).toEqual(["A", "B"]);
     await tap(page, ["d2"]);
     await expect(active(page)).toHaveAttribute("data-id", "var:A");
@@ -189,11 +191,11 @@ test.describe("Memory", () => {
     await store(page, "d5", "vars", 1);
     await store(page, "d7", "math", 2);
     await tap(page, ["shift", "math", "vars"]); // a: the search finds A only
-    await expect(rows(page)).toHaveCount(1);
+    await expect(nrows(page)).toHaveCount(1);
     await tap(page, ["enter"]);
-    await expect(rows(page)).toHaveCount(0); // A is gone from the hits at once
+    await expect(nrows(page)).toHaveCount(0); // A is gone from the hits at once
     await tap(page, ["bksp"]);
-    await expect(rows(page)).toHaveCount(2); // B and Clear all
+    await expect(nrows(page)).toHaveCount(2); // B and Clear all
     await reload(page);
     expect(await names(page)).toEqual(["B"]);
   });
@@ -209,8 +211,36 @@ test.describe("Memory", () => {
     await row(page, "clearall").tap();
     await expect(row(page, "clearall")).toContainText("again");
     await row(page, "clearall").tap();
-    await expect(rows(page)).toHaveCount(0);
+    await expect(nrows(page)).toHaveCount(0);
     await expect.poll(() => names(page)).toEqual([]);
+  });
+  test("R314: a delete has a one-level Undo row; Undo brings the name back, the next Enter drops it", async ({ page }) => {
+    await start(page);
+    await store(page, "d5", "vars", 1);
+    await store(page, "d7", "math", 2);
+    await tap(page, ["shift", "math"]);
+    await expect(row(page, "undo")).toHaveCount(0); // nothing deleted yet
+    await row(page, "var:A").tap();
+    await expect(row(page, "var:A")).toHaveCount(0);
+    await expect(row(page, "undo")).toContainText("A deleted · Undo");
+    await row(page, "undo").tap();
+    await expect(row(page, "var:A")).toBeVisible();
+    await expect(row(page, "undo")).toHaveCount(0); // one level: the copy went with the Undo
+    await expect.poll(() => names(page)).toEqual(["A", "B"]);
+    await tap(page, ["esc"]);
+    await tap(page, ["alpha", "vars", "enter"]); // A is 5 again
+    await expect(page.locator('[data-status="done"],[data-status="error"]')).toHaveCount(3);
+    await expect(lastResult(page)).toHaveAttribute("data-text", "5");
+    // Clear all, then an Enter on the line drops the copy
+    await tap(page, ["shift", "math"]);
+    await row(page, "clearall").tap();
+    await row(page, "clearall").tap();
+    await expect(row(page, "undo")).toContainText("2 names deleted · Undo");
+    await expect.poll(() => names(page)).toEqual([]);
+    await tap(page, ["esc", "d1", "enter"]);
+    await expect(page.locator('[data-status="done"],[data-status="error"]')).toHaveCount(4);
+    await tap(page, ["shift", "math"]);
+    await expect(row(page, "undo")).toHaveCount(0);
   });
 });
 

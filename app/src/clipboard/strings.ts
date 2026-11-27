@@ -109,6 +109,9 @@ const clip = {
   "why.areNotChecked": "are not checked",
   "why.notChecked": "not checked",
   "why.notConfirmed": "fewer digits confirmed than shown",
+  "why.sigmaOf": "σ of",
+  "why.sigma": "σ",
+  "why.sigmaNotCarried": "not carried through this input",
 } as const;
 
 export type ClipKey = keyof typeof clip;

@@ -46,11 +46,29 @@ export function namesChanged(defs: readonly DefChange[]): Set<string> {
 }
 
 /** `body` for σ (constUnc.ts sigmaExpr): each name of `named` (nameSigmaInputs') as its free symbol, an independent
- *  input with the value and σ the name held before the run. Calls of a name are left alone. */
-export function nameSigma(body: string, named: readonly NameSigmaInput[]): { body: string; inputs: SigmaInput[] } {
-  if (!named.length) return { body, inputs: [] };
+ *  input with the value and σ the name held before the run. Calls of a name are left alone. G550: `through`, the names
+ *  of `named` the body does not hold, and `reached` (sigmaThrough's): their σ is not carried. */
+export function nameSigma(body: string, named: readonly NameSigmaInput[], reached: readonly string[] = []): { body: string; inputs: SigmaInput[]; through: string[] } {
   const names = named.map((v) => v.stored);
-  return { body: mapNames(body, ({ name, call }) => (!call && names.includes(name) ? SIGMA_PREFIX + name : null), "typed"), inputs: named.map((v) => v.input) };
+  const held = new Set<string>();
+  const out = names.length ? mapNames(body, ({ name, call }) => (!call && names.includes(name) ? (held.add(name), SIGMA_PREFIX + name) : null), "typed") : body;
+  const through = [...new Set([...names.filter((n) => !held.has(n)), ...reached])];
+  return { body: out, inputs: named.map((v) => v.input), through };
+}
+
+/** G550: the run `out` with why.sigmaLost naming `lost` (the σ inputs whose σ the result does not carry: a stored name,
+ *  `pasc_<id>`, `pasr_<k>`) and its σ facts dropped (a σ without them would be too small); the variable `stored` sets
+ *  is not checked either (`warn: "unchecked"`), so a read of it is ⚠ too, never a bare value. `out` as it is when
+ *  `lost` is empty. */
+export function withSigmaLost<R extends { facts: ValueFacts }>(out: { result: R; defs: DefChange[] }, lost: readonly string[], stored?: string): { result: R; defs: DefChange[] } {
+  if (!lost.length) return out;
+  const { uncDigits: _d, uncSigma: _s, ...facts } = out.result.facts;
+  const defs = out.defs.map((c) => {
+    if (stored === undefined || !("set" in c) || c.set.kind !== "var" || c.set.name !== stored) return c;
+    const f = c.set.facts ?? { exact: false, reliableDigits: null };
+    return { set: { ...c.set, facts: { ...f, exact: false, warn: f.warn ?? ("unchecked" as const) } } };
+  });
+  return { result: { ...out.result, facts: { ...facts, why: { ...(facts.why ?? {}), sigmaLost: [...lost] } } }, defs };
 }
 
 /** The unit a store's right side `rhs` (as typed, chips by name) carries: a unit result's chip alone, or a stored name
@@ -80,15 +98,26 @@ export function withNameFacts(defs: DefChange[], name: string | undefined, unc: 
  *  the closure facts.ts nameFacts walks), so a name reached only through a function is named too. Home has no units:
  *  the row says the unit was dropped (session.svelte.ts unitDropped). */
 export function unitNamesOf(reads: readonly string[], byName: ReadonlyMap<string, DefEntry>, namesOf: (name: string) => readonly string[]): string[] {
+  return reachedVars(reads, byName, namesOf, (e) => e.unit !== undefined);
+}
+
+/** G550: the stored variables with σ an input reaches through a stored value or function body (`f(2)` of `f(t):=W·t`
+ *  reaches W), not as a name it reads itself: their σ is not carried (the σ body holds the input's own text). */
+export function sigmaThrough(reads: readonly string[], byName: ReadonlyMap<string, DefEntry>, namesOf: (name: string) => readonly string[]): string[] {
+  return reachedVars(reads.flatMap(namesOf), byName, namesOf, (e) => storedSigma(e) !== undefined);
+}
+
+/** The variables of `byName` that `pick` holds, reached from `start` through `namesOf`, each once, in the order met. */
+function reachedVars(start: readonly string[], byName: ReadonlyMap<string, DefEntry>, namesOf: (name: string) => readonly string[], pick: (e: DefEntry) => boolean): string[] {
   const out: string[] = [];
   const seen = new Set<string>();
-  const queue = [...reads];
+  const queue = [...start];
   for (let n = queue.shift(); n !== undefined; n = queue.shift()) {
     if (seen.has(n)) continue;
     seen.add(n);
     const e = byName.get(n);
     if (!e || e.kind === "assume" || e.kind === "other") continue;
-    if (e.kind === "var" && e.unit) out.push(n);
+    if (e.kind === "var" && pick(e)) out.push(n);
     queue.push(...namesOf(n));
   }
   return out;
