@@ -355,6 +355,9 @@ describe("keyboard spec", () => {
     const k = loadKeyboard(slim);
     const plain = (a: unknown) => JSON.parse(JSON.stringify(a, (key, v: unknown) => (["sample", "source", "check"].includes(key) ? undefined : v)));
     expect(plain(k.keys)).toEqual(plain(keyboard.keys));
+    // R864: a label that is the character its layer types (7 and Q on d7, y on x, = on .) is left out, and loads back
+    const slimKey = (id: string): unknown => (slim as { keys: { id: string; label: unknown }[] }).keys.find((x) => x.id === id)?.label;
+    expect([slimKey("d7"), slimKey("x"), slimKey("dot"), slimKey("space")]).toEqual([{}, {}, {}, { primary: "␣" }]);
     expect(JSON.stringify(slim)).not.toMatch(/"desc"/);
     // R18, R91: the palettes (Tmpl, Shift + 6, Shift + 9) are not in the start chunk's copy; their own chunk's copy loads to the same cells
     expect(JSON.stringify(slim)).not.toMatch(/"(templates|relations|symbols)":/);

@@ -9,7 +9,7 @@ import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
 import type { IndexItem } from "../find/types.ts";
 import { actionFor, keyboard, labelFor, MATHS_ROW, type Key } from "../keyboard/keyboard.ts";
-import { keyLabels } from "../keyboard/keyNames.ts";
+import { keyLabels, plain } from "../keyboard/keyNames.ts";
 import { opensSheet } from "../keyboard/opens.ts";
 import { UnitPad, defaultUser } from "./pad.ts";
 
@@ -108,13 +108,14 @@ describe("what a cell shows and emits", () => {
     expect(pad.press("pow", "shift")).toEqual({ do: "power", n: 4 });
   });
 
-  it("R803: the power keys read x², x³, x⁴, x⁻¹ and √x, as the main keypad's x² does", () => {
-    expect(shown(pad, "sq", false, false)).toMatchObject({ face: "x²", up: "√x" });
-    expect(shown(pad, "pow", false, false)).toMatchObject({ face: "x³", up: "x⁴" });
-    expect(shown(pad, "div", false, false)).toMatchObject({ face: "÷", up: "x⁻¹" });
-    expect(shown(pad, "sq", true, false)).toMatchObject({ face: "√x", up: "" });
-    expect(shown(pad, "pow", true, false)).toMatchObject({ face: "x⁴", up: "" });
-    expect(shown(pad, "div", true, false)).toMatchObject({ face: "x⁻¹", up: "" });
+  it("R803: the power keys read x², x³, x⁴, x⁻¹ and √x, as the main keypad's x² does (R864: the x marked as its variable)", () => {
+    expect(shown(pad, "sq", false, false)).toMatchObject({ face: "`x`²", up: "√`x`" });
+    expect(shown(pad, "pow", false, false)).toMatchObject({ face: "`x`³", up: "`x`⁴" });
+    expect(shown(pad, "div", false, false)).toMatchObject({ face: "÷", up: "`x`⁻¹" });
+    expect(shown(pad, "sq", true, false)).toMatchObject({ face: "√`x`", up: "" });
+    expect(shown(pad, "pow", true, false)).toMatchObject({ face: "`x`⁴", up: "" });
+    expect(shown(pad, "div", true, false)).toMatchObject({ face: "`x`⁻¹", up: "" });
+    expect(plain(shown(pad, "pow", true, false).face)).toBe("x⁴");
   });
 
   it("keeps Math, ⌫ and Enter, and leaves Shift and Alpha to the keypad", () => {

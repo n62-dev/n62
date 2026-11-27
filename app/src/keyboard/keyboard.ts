@@ -154,6 +154,11 @@ export interface Keyboard {
 
 export class KeyboardSpecError extends Error {}
 
+/** R864: the checks that only a wrong spec fails (a key's place, its pairs of label and action, a palette cell's): run by the tests and the
+ *  dev server, which load the whole spec/keyboard.yaml; the built app's copy (shipped.ts) is that same file, so it leaves them out (the
+ *  start chunk's bytes). What reads a value (str, int) and parseAction (a user's stored key, userKeys.svelte.ts) always check. */
+const SPEC = !import.meta.env.PROD;
+
 const LAYERS: readonly Layer[] = ["primary", "shift", "alpha"];
 
 type Obj = Record<string, unknown>;
@@ -223,57 +228,59 @@ function parseBody(v: unknown, where: string): ActionBody {
 }
 
 /** Validate the parsed YAML and build the lookup tables. Throws KeyboardSpecError with the position of the problem. */
-export function loadKeyboard(doc: unknown): Keyboard {
-  if (!isObj(doc) || doc["schema"] !== 1) throw new KeyboardSpecError("keyboard.yaml: schema must be 1");
+export function loadKeyboard(input: unknown): Keyboard {
+  if (SPEC && (!isObj(input) || input["schema"] !== 1)) throw new KeyboardSpecError("keyboard.yaml: schema must be 1");
+  const doc = input as Obj;
   // the built app's copy has no `source` and no `sample` (src/keyboard/shipped.ts); tests load the whole file
   const shipped = doc["shipped"] === true;
   const columns = int(doc, "columns", "keyboard.yaml");
   const rowColumns = new Map<number, number>();
   const rc = doc["row_columns"];
   if (rc !== undefined) {
-    if (!isObj(rc)) throw new KeyboardSpecError("keyboard.yaml: 'row_columns' must be a mapping");
-    for (const [r, n] of Object.entries(rc)) {
-      if (!/^\d+$/.test(r) || typeof n !== "number" || !Number.isInteger(n) || n < 1)
+    if (SPEC && !isObj(rc)) throw new KeyboardSpecError("keyboard.yaml: 'row_columns' must be a mapping");
+    for (const [r, n] of Object.entries(rc as Obj)) {
+      if (SPEC && (!/^\d+$/.test(r) || typeof n !== "number" || !Number.isInteger(n) || n < 1))
         throw new KeyboardSpecError(`keyboard.yaml: row_columns ${r} must be a positive integer`);
-      rowColumns.set(Number(r), n);
+      rowColumns.set(Number(r), n as number);
     }
   }
   const cellsOf = (row: number): number => rowColumns.get(row) ?? columns;
   const list = doc["keys"];
-  if (!Array.isArray(list)) throw new KeyboardSpecError("keyboard.yaml: 'keys' must be a list");
+  if (SPEC && !Array.isArray(list)) throw new KeyboardSpecError("keyboard.yaml: 'keys' must be a list");
   const keys: Key[] = [];
   const byId = new Map<string, Key>();
   const cells = new Set<string>();
-  for (const item of list) {
-    if (!isObj(item)) throw new KeyboardSpecError("keyboard.yaml: a key must be a mapping");
+  for (const item of list as Obj[]) {
+    if (SPEC && !isObj(item)) throw new KeyboardSpecError("keyboard.yaml: a key must be a mapping");
     const id = str(item, "id", "key");
     const where = `key '${id}'`;
-    if (byId.has(id)) throw new KeyboardSpecError(`${where}: duplicate id`);
+    if (SPEC && byId.has(id)) throw new KeyboardSpecError(`${where}: duplicate id`);
     const row = int(item, "row", where);
     const col = int(item, "col", where);
     const span = item["span"] === undefined ? 1 : int(item, "span", where);
-    if (span < 1) throw new KeyboardSpecError(`${where}: span must be at least 1`);
-    if (col + span > cellsOf(row)) throw new KeyboardSpecError(`${where}: col ${col} is outside ${cellsOf(row)} columns`);
-    for (let c = col; c < col + span; c++) {
-      if (cells.has(`${row},${c}`)) throw new KeyboardSpecError(`${where}: position ${row},${c} is taken`);
-      cells.add(`${row},${c}`);
+    if (SPEC) {
+      if (span < 1) throw new KeyboardSpecError(`${where}: span must be at least 1`);
+      if (col + span > cellsOf(row)) throw new KeyboardSpecError(`${where}: col ${col} is outside ${cellsOf(row)} columns`);
+      for (let c = col; c < col + span; c++) {
+        if (cells.has(`${row},${c}`)) throw new KeyboardSpecError(`${where}: position ${row},${c} is taken`);
+        cells.add(`${row},${c}`);
+      }
     }
     const cls = str(item, "cls", where) as KeyClass;
     const source = shipped ? undefined : (str(item, "source", where) as Source);
-    const labelRaw = item["label"];
-    if (!isObj(labelRaw)) throw new KeyboardSpecError(`${where}: label not a mapping`);
+    const labelRaw = item["label"] as Obj;
+    if (SPEC && !isObj(labelRaw)) throw new KeyboardSpecError(`${where}: label not a mapping`);
     const label: Partial<Record<Layer, string>> = {};
     const actions: Partial<Record<Layer, Action>> = {};
     for (const layer of LAYERS) {
-      const l = labelRaw[layer];
-      if (l !== undefined) label[layer] = String(l);
       const a = item[layer];
-      if (a !== undefined) actions[layer] = parseAction(a, `${where} ${layer}`);
+      const typed = a === undefined ? undefined : (actions[layer] = parseAction(a, `${where} ${layer}`));
+      // (shipped.ts left out a label that is the character its layer types)
+      const l = labelRaw[layer] ?? (shipped && typed?.kind === "type" ? typed.text : undefined);
+      if (l !== undefined) label[layer] = String(l);
     }
-    const typed = actions.alpha;
-    if (shipped && typed?.kind === "type" && label.alpha === undefined) label.alpha = typed.text; // (shipped.ts left it out)
-    if (!label.primary || !actions.primary) throw new KeyboardSpecError(`${where}: needs a primary label and action`);
-    for (const layer of ["shift", "alpha"] as const) {
+    if (SPEC && (!label.primary || !actions.primary)) throw new KeyboardSpecError(`${where}: needs a primary label and action`);
+    if (SPEC) for (const layer of ["shift", "alpha"] as const) {
       const a = actions[layer];
       // a layer made dead on purpose (`special: none`) has no legend; alpha then does not fall back to the primary
       if (a?.kind === "special" && a.name === "none" && label[layer] === undefined) continue;
@@ -281,7 +288,7 @@ export function loadKeyboard(doc: unknown): Keyboard {
         throw new KeyboardSpecError(`${where}: ${layer} needs both a label and an action`);
     }
     const user = item["user"] === true;
-    if (user && row >= MATHS_ROW) throw new KeyboardSpecError(`${where}: a user key sits in the top cluster`);
+    if (SPEC && user && row >= MATHS_ROW) throw new KeyboardSpecError(`${where}: a user key sits in the top cluster`);
     const key: Key = { id, row, col, span, cls, label, actions, ...(source ? { source } : {}), ...(user ? { user: true as const } : {}) };
     keys.push(key);
     byId.set(id, key);
@@ -297,46 +304,48 @@ export function loadKeyboard(doc: unknown): Keyboard {
  *  insert action with a sample. */
 export function loadPalette(v: unknown, section: string, byId: ReadonlyMap<string, Key>, shipped: boolean): Palette {
   if (v === undefined) return { columns: 1, items: [] };
-  if (!isObj(v)) throw new KeyboardSpecError(`${section}: must be a mapping`);
-  const columns = int(v, "columns", section);
-  const list = v["items"];
-  if (!Array.isArray(list)) throw new KeyboardSpecError(`${section}: 'items' must be a list`);
+  if (SPEC && !isObj(v)) throw new KeyboardSpecError(`${section}: must be a mapping`);
+  const columns = int(v as Obj, "columns", section);
+  const list = (v as Obj)["items"];
+  if (SPEC && !Array.isArray(list)) throw new KeyboardSpecError(`${section}: 'items' must be a list`);
   const picks = new Set<string>();
   const items: PaletteItem[] = [];
   const ids = new Set<string>();
   const cells = new Set<string>();
-  for (const it of list) {
-    if (!isObj(it)) throw new KeyboardSpecError(`${section}: an item must be a mapping`);
+  for (const it of list as Obj[]) {
+    if (SPEC && !isObj(it)) throw new KeyboardSpecError(`${section}: an item must be a mapping`);
     const id = str(it, "id", section);
     const where = `${section} '${id}'`;
-    if (ids.has(id)) throw new KeyboardSpecError(`${where}: duplicate id`);
-    ids.add(id);
     const row = int(it, "row", where);
     const col = int(it, "col", where);
-    if (col >= columns) throw new KeyboardSpecError(`${where}: col ${col} is outside ${columns} columns`);
-    if (cells.has(`${row},${col}`)) throw new KeyboardSpecError(`${where}: position ${row},${col} is taken`);
-    cells.add(`${row},${col}`);
+    if (SPEC) {
+      if (ids.has(id)) throw new KeyboardSpecError(`${where}: duplicate id`);
+      ids.add(id);
+      if (col >= columns) throw new KeyboardSpecError(`${where}: col ${col} is outside ${columns} columns`);
+      if (cells.has(`${row},${col}`)) throw new KeyboardSpecError(`${where}: position ${row},${col} is taken`);
+      cells.add(`${row},${col}`);
+    }
     const check = it["check"] === true;
     const refused = it["refused"] === true;
     let pick: string | undefined;
     if (it["pick"] !== undefined) {
       pick = str(it, "pick", where);
-      if (!byId.has(pick)) throw new KeyboardSpecError(`${where}: pick '${pick}' is not a key`);
-      if (picks.has(pick)) throw new KeyboardSpecError(`${where}: pick '${pick}' picks two cells`);
+      if (SPEC && !byId.has(pick)) throw new KeyboardSpecError(`${where}: pick '${pick}' is not a key`);
+      if (SPEC && picks.has(pick)) throw new KeyboardSpecError(`${where}: pick '${pick}' picks two cells`);
       picks.add(pick);
     }
     const extra = { check, refused, ...(pick ? { pick } : {}) };
     if (it["key"] !== undefined) {
-      if (it["insert"] !== undefined) throw new KeyboardSpecError(`${where}: either 'key' or 'insert', not both`);
+      if (SPEC && it["insert"] !== undefined) throw new KeyboardSpecError(`${where}: either 'key' or 'insert', not both`);
       const keyId = str(it, "key", where);
       const layer = str(it, "layer", where) as Layer;
-      if (!LAYERS.includes(layer)) throw new KeyboardSpecError(`${where}: unknown layer '${layer}'`);
+      if (SPEC && !LAYERS.includes(layer)) throw new KeyboardSpecError(`${where}: unknown layer '${layer}'`);
       const action = byId.get(keyId)?.actions[layer];
-      if (action?.kind !== "insert") throw new KeyboardSpecError(`${where}: key '${keyId}' has no template in its ${layer} layer`);
+      if (SPEC && action?.kind !== "insert") throw new KeyboardSpecError(`${where}: key '${keyId}' has no template in its ${layer} layer`);
       items.push({ id, row, col, key: keyId, layer, action: action as InsertAction, ...extra });
     } else {
       const action = parseAction({ insert: it["insert"], sample: it["sample"] }, where);
-      if (action.kind !== "insert" || (!action.sample && !shipped)) throw new KeyboardSpecError(`${where}: needs 'insert' and 'sample'`);
+      if (SPEC && (action.kind !== "insert" || (!action.sample && !shipped))) throw new KeyboardSpecError(`${where}: needs 'insert' and 'sample'`);
       items.push({ id, row, col, action: action as InsertAction, ...extra });
     }
   }

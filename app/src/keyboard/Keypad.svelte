@@ -7,7 +7,7 @@
   import { keyNames, loadKeyNames } from "./keyNamesLoader.svelte.ts";
   import { actionFor, alphaLower, gridPlace, keyboard, labelFor, type Key, type Layer } from "./keyboard.ts";
   import { opensSheet } from "./opens.ts";
-  import { typesVariable, varLayers } from "./variable.ts";
+  import { parts, typesVariable, varLayers } from "./variable.ts";
   import { createPressFlag } from "../input/pressFlag.ts";
   import type { FinishedTouch } from "../state/pressCount.ts";
   import { sheetChunk } from "../views/sheetView.svelte.ts";
@@ -78,6 +78,10 @@
     const t = sheetOf(k)?.text;
     return t === " " ? "␣" : t;
   };
+  /** R864: a face or legend drawn as its runs (variable.ts parts): a template's letter an <i>, in the variable face (raised: class
+   *  r); a user's own legend (a free key, a user cell) as typed. An attachment: it redraws when the text changes. */
+  const runs = (s: string, k: Key) => (el: HTMLElement): void =>
+    el.replaceChildren(...parts(s, !k.user && k.pad !== "user").map((p) => (p.v ? Object.assign(document.createElement("i"), { textContent: p.t, className: p.r ? "r" : "" }) : p.t)));
   const face = (k: Key): string => typed(k) ?? legend(k.label.primary || "");
   /** What a press types in the current layer (the key pop, R162): the active layer's label, or the tap where it has none. */
   const pressText = (k: Key): string => typed(k) ?? legend(labelFor(k, shift, alpha, cas) || k.label.primary || "");
@@ -188,7 +192,7 @@
 
   /** The key pop (R162): the pressed key's face above the finger, in the flick bubble's box and offset. One at a time, set in
    *  down(), gone with the key's press look (the later of the lift and 80 ms) or at once for a flick bubble or a cancel. */
-  let pop = $state<{ x: number; y: number; text: string; layer: "shift" | "alpha" | undefined; variable: boolean } | null>(null);
+  let pop = $state<{ x: number; y: number; text: string; key: Key; layer: "shift" | "alpha" | undefined; variable: boolean } | null>(null);
   let popEl: HTMLElement | undefined;
   let popNode: HTMLDivElement | undefined = $state();
   function hidePop(): void {
@@ -203,7 +207,7 @@
     const k = target as Key;
     // R729: in the colour of the layer it types (none: the tap's; a letterless key under Alpha does its tap)
     const layer = typed(k) !== undefined || isMod(k) ? undefined : alpha ? (fallsBack(k) ? undefined : "alpha") : shift ? "shift" : undefined;
-    pop = { x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop, text, layer, variable: typed(k) === undefined && typesVariable(act(k)) };
+    pop = { x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop, text, key: k, layer, variable: typed(k) === undefined && typesVariable(act(k)) };
   }
   // the pop and the flick bubble stay inside the pad's width (a key at the edge; R905: one clamp), measured once drawn, before it is painted (+1: offsetWidth is rounded)
   const clampLeft = (node: HTMLElement | undefined, x = 0): void => {
@@ -215,7 +219,7 @@
 
   /** The bubble above a key while a flick is armed (P7 point 2): what the lift will fire, or ✕ for nothing. None while
    *  Key pop-ups is off (R163): the flick still fires. */
-  let bubble = $state<{ x: number; y: number; dir: Flick; text: string; none: boolean; variable: boolean; tap: boolean; lock?: { sign: "shift" | "alpha"; fill: boolean } } | null>(null);
+  let bubble = $state<{ x: number; y: number; dir: Flick; text: string; key: Key; none: boolean; variable: boolean; tap: boolean; lock?: { sign: "shift" | "alpha"; fill: boolean } } | null>(null);
   let bubbleOwner: number | undefined;
   let bubbleNode: HTMLDivElement | undefined = $state();
 
@@ -252,7 +256,7 @@
     // (the bubble's letter follows the same flag as the legend it shows; ✕ is none)
     const variable = !sheet && text !== "" && typesVariable(actionFor(g.key, st === "up", st === "down", false, cas));
     const lock = lockFlick(g.key, st);
-    bubble = { x: g.el.offsetLeft + g.el.offsetWidth / 2, y: g.el.offsetTop, dir: st, text: text || "✕", none: text === "", variable: variable && !lock, tap: st === "down" && fallsBack(g.key), ...(lock ? { lock } : {}) };
+    bubble = { x: g.el.offsetLeft + g.el.offsetWidth / 2, y: g.el.offsetTop, dir: st, text: text || "✕", key: g.key, none: text === "", variable: variable && !lock, tap: st === "down" && fallsBack(g.key), ...(lock ? { lock } : {}) };
   }
   const gestures = new Map<number, Gesture>();
   /** The app goes away (home, app switcher, a lost pointerup): every gesture ends and nothing fires. */
@@ -449,14 +453,14 @@
       data-pad={key.pad}
       data-v={varsOf(key)}
     >
-      <span class="shiftlegend" data-fit="legend" data-opens={opensSheet(key.actions.shift) || undefined}>{hint(key)}</span>
-      <span class="main" data-fit="face" data-opens={(typed(key) === undefined && opensSheet(actionFor(key, false, false, false, cas))) || undefined}>{face(key)}</span>
-      {#if lettered}<span class="alphalegend" data-fit="legend">{alphaHint(key)}</span>{/if}
+      <span class="shiftlegend" data-fit="legend" data-opens={opensSheet(key.actions.shift) || undefined} {@attach runs(hint(key), key)}></span>
+      <span class="main" data-fit="face" data-opens={(typed(key) === undefined && opensSheet(actionFor(key, false, false, false, cas))) || undefined} {@attach runs(face(key), key)}></span>
+      {#if lettered}<span class="alphalegend" data-fit="legend" {@attach runs(alphaHint(key), key)}></span>{/if}
     </button>
   {/each}
   {#if padArea}<div class="hub" data-trackpad data-testid="pad-hub" style:grid-row={padArea.rows} style:grid-column={padArea.cols}></div>{/if}
   {#if pop}
-    <div class="bubble pop" data-testid="key-pop" data-var={pop.variable} data-layer={pop.layer} style:left={`${pop.x}px`} style:top={`${pop.y}px`} bind:this={popNode} aria-hidden="true">{pop.text}</div>
+    <div class="bubble pop" data-testid="key-pop" data-var={pop.variable} data-layer={pop.layer} style:left={`${pop.x}px`} style:top={`${pop.y}px`} bind:this={popNode} aria-hidden="true" {@attach runs(pop.text, pop.key)}></div>
   {/if}
   {#if bubble}
     <div
@@ -472,7 +476,8 @@
       style:top={`${bubble.y}px`}
       bind:this={bubbleNode}
       aria-hidden="true"
-    >{bubble.text}</div>
+      {@attach runs(bubble.text, bubble.key)}
+    ></div>
   {/if}
 </div>
 
@@ -546,7 +551,9 @@
   /* R142: a legend that types a variable is italic in every mode (ISO 80000-2; the Alpha letters, x, y, Greek letters a layer
      types), in the face the entry line draws a typed letter in (MathLive's math italic, from mathlive/static.css, loaded
      for the entry line) and a real italic serif behind it, never a synthesised slant. Functions, units, numbers and
-     constants stay upright. No bold anywhere: the meaning is the position and the colour. */
+     constants stay upright. No bold anywhere: the meaning is the position and the colour. R864: and a template's letter (an <i>
+     run, variable.ts parts), the rest of its legend upright; a raised one (ʸ ˣ ⁿ, which the face lacks) is its letter raised. */
+  .pad :global(i),
   .bubble[data-var="true"],
   .key[data-v*="s"] .shiftlegend,
   .key[data-v*="a"] .alphalegend,
@@ -554,6 +561,11 @@
     font-style: italic;
     font-family: KaTeX_Math, "STIX Two Text", "Times New Roman", "Times", serif;
     font-weight: 400;
+  }
+  .pad :global(.r) {
+    position: relative;
+    bottom: var(--raise-lift);
+    font-size: var(--raise-size);
   }
   /* R143 (owner, 2026-11-06): a legend whose layer opens a menu or grid instead of typing ends in ▾, the sign the status
      line's place name uses for "opens a list". In the legend's own colour (so Plain keys and every family keep it), the

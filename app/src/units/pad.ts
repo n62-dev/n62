@@ -57,14 +57,15 @@ interface RawSpec {
 }
 const spec = raw as unknown as RawSpec;
 
+/** The op cells; their x is the operand, marked as spec/keyboard.yaml marks it (R864: a backtick pair, the variable face). */
 const OPS: Readonly<Record<string, { text: string; emit: PadEmit }>> = {
   per: { text: "÷", emit: { do: "per" } },
-  inverse: { text: "x⁻¹", emit: { do: "power", n: -1 } },
+  inverse: { text: "`x`⁻¹", emit: { do: "power", n: -1 } },
   product: { text: "×", emit: { do: "times" } },
-  square: { text: "x²", emit: { do: "power", n: 2 } },
-  sqrt: { text: "√x", emit: { do: "sqrt" } },
-  cube: { text: "x³", emit: { do: "power", n: 3 } },
-  fourth: { text: "x⁴", emit: { do: "power", n: 4 } },
+  square: { text: "`x`²", emit: { do: "power", n: 2 } },
+  sqrt: { text: "√`x`", emit: { do: "sqrt" } },
+  cube: { text: "`x`³", emit: { do: "power", n: 3 } },
+  fourth: { text: "`x`⁴", emit: { do: "power", n: 4 } },
 };
 const KEEP: Readonly<Record<string, { text: () => string; emit: PadEmit }>> = {
   find: { text: () => unitText("units.pad.find"), emit: { do: "find" } },

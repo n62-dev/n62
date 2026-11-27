@@ -339,8 +339,8 @@ test("the Alpha key's a and A are italic in the variable face at rest, Shift arm
   const mathit = first(await variableFamily(page));
   for (const [name, shift, alpha] of [["at rest", false, false], ["Shift armed", true, false], ["Alpha armed", false, true]] as const) {
     await page.evaluate(([s, a]) => {
-      window.n62.session.shift = s;
-      window.n62.session.alpha = a;
+      window.n62.session.shift = s as boolean;
+      window.n62.session.alpha = a as boolean;
     }, [shift, alpha]);
     await page.waitForTimeout(120);
     const seen = await legends(page);
