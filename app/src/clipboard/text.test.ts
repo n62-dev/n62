@@ -438,7 +438,7 @@ describe("sessionCsv / sessionLatex (G232)", () => {
     const mctx: DisplayContext = { ...CTX, mute: muter };
     expect(renderNumeric(m, "std", mctx, true)?.latex).toContain("\\class{unc}"); // the screen mutes (grouped); the export draws ungrouped
     const ml = sessionLatex([m], {}, mctx, "0.1.0").split("\n")[1] ?? "";
-    expect(ml).toBe("\\begin{align*}x &\\approx 1.23456\\end{align*}");
+    expect(ml).toBe("\\begin{align*}x &\\approx 1.23456\\,\\pm1.0\\times10^{-2}\\end{align*}"); // G400: its σ (0.01) after it
     // a unit row whose input holds a rare pair
     const rare = { ...unit, units: { ...unit.units, input: "5\\,\\class{pas-rare}{\\mathrm{M}\\mathrm{m}}\\to\\,\\mathrm{m}" } };
     const rl = sessionLatex([rare], {}, CTX, "0.1.0").split("\n")[1] ?? "";
