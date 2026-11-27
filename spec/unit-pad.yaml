@@ -15,7 +15,7 @@
 #   row 3   mi ↑yd ↓mil | Find      | knot ↑mph | Hz ↑rpm   | ° ↑rad    | ⌫
 #   row 4   x³ ↑x⁴      | A         | V         | Ω ↑S      | F         | T
 #   row 5   x² ↑√x      | J ↑Wh ↓Btu| W ↑hp ↓TR | L ↑gal_US ↓bbl | Enter (next slot; ↑ evaluate now)
-#   row 6   mol         | G ↑T      | M         | m ↑ft ↓in | ÷ per ↑x⁻¹
+#   row 6   mol ↓cd     | G ↑T      | M         | m ↑ft ↓in | ÷ per ↑x⁻¹
 #   row 7   Alpha       | k ↓h      | c         | g ↑lb ↓t  | × ·
 #   row 8   Shift       | m         | µ         | s ↑h ↓min | N ↑lbf
 #   row 9   atm ↑ksi ↓Torr | n      | p ↓f      | K ↑°C ↓°F | Pa ↑bar ↓psi
@@ -25,12 +25,13 @@
 # left) to the smallest (p); the next column holds the base units m, g, s, K; the operator column keeps ÷ and × and
 # adds force and pressure; row 4 holds electricity (A V Ω F T), row 5 energy, power and volume, row 3 the second
 # length cell, speed, frequency and angle. Each cell is one quantity (or a reciprocal or close partner: Ω and S, Hz and
-# rpm, ° and rad): its SI unit on the tap unless another unit of it is used at least twice as much (none is, at S5's
-# weighting: °C is 1.65 times K, so K keeps the tap; decisions.md "P14 arrangement"), the commonest other units on the
-# flicks, their legends drawn on the cell (up top left, down bottom left, as R9 draws them). Shift then a cell gives
-# its up item and Alpha then a cell its down item, so the G2's taps reach everything without flicks. The prefix cells
-# have their own colour and a slot line after the letter (G_, R866), so the prefix m and the metre m differ by shape as
-# well. Where a cell sits is not scored (there is no measured reach data); a quantity the draft had keeps its key, and the
+# rpm, ° and rad; one exception, R796: the candela, luminous intensity, on the mol cell's flick down, so the seven SI
+# base units m kg s A K mol cd are all on the pad, the owner's K2 of 2026-11-20): its SI unit on the tap unless another
+# unit of it is used at least twice as much (none is, at S5's weighting: °C is 1.65 times K, so K keeps the tap;
+# decisions.md "P14 arrangement"), the commonest other units on the flicks, their legends drawn on the cell (up top
+# left, down bottom left, as R9 draws them). Shift then a cell gives its up item and Alpha then a cell its down item, so
+# the G2's taps reach everything without flicks. The prefix cells have their own colour and a slot line after the
+# letter (G_, R866), so the prefix m and the metre m differ by shape as well. Where a cell sits is not scored (there is no measured reach data); a quantity the draft had keeps its key, and the
 # new cells sit next to their kin.
 #
 # Rules (r9 section 2): a prefix arms (highlighted) and the next unit takes it; another prefix replaces it, the same
@@ -94,7 +95,7 @@ units:
   - { key: tmpl, quantity: speed, tap: knot, up: mph }                    # 33.6
   - { key: x, quantity: frequency, tap: Hz, up: rpm }                     # 156.1
   - { key: frac, quantity: angle, tap: deg, up: rad }                     # 119.7
-  - { key: emark, quantity: amount, tap: mol }                            # 35.7
+  - { key: emark, quantity: amount, tap: mol, down: cd }                  # 35.7; cd (R796, the owner's K2): all seven SI base units on the pad
   - { key: fmt, quantity: pressure, tap: atm, up: ksi, down: Torr }       # 36.7
 
 # The user unit cells: U1-U6 in the top cluster while a unit slot is open (the owner, 2026-10-17), tap, up and down
