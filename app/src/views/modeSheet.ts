@@ -21,7 +21,7 @@ import { lookText } from "../i18n/enLook.ts";
 import { helpItems } from "./aboutItems.ts";
 import { findText } from "../i18n/enFind.ts";
 import { dataSection } from "./dataSection.svelte.ts";
-import { BRIGHTNESS, validLook, type Look } from "../theme/look.ts";
+import { BRIGHTNESS, validLook, type Hand, type Look } from "../theme/look.ts";
 import { familyOf, FAMILIES, stepped } from "../theme/lookView.ts";
 import { yourKeysItems, yourKeysValue, type SettingsEnv } from "./yourKeys.ts";
 import { presetRow, switchedRow } from "./presetsView.svelte.ts";
@@ -253,8 +253,11 @@ export function settingsSections(session: Session, env: SettingsEnv = {}, modeAt
   ];
 }
 
+/** Hand's two values (R781), in the row's ◀ ▶ order. */
+const HANDS: readonly Hand[] = ["right", "left"];
+
 /** Appearance (R50e): the theme (◀ ▶ step through the five families; a tap, a digit or Enter lists them, and a pick
- *  keeps the sheet open so the status line and keys above show it), the brightness, and the five switches (Key shadows: R156; Key pop-ups: R163; Find opens full screen: R932, no line under it). */
+ *  keeps the sheet open so the status line and keys above show it), the brightness, and the five switches (Key shadows: R156; Key pop-ups: R163; Find opens full screen: R932, no line under it), then Hand (R781). */
 function appearanceItems(session: Session): MenuItem[] {
   const look = () => session.settings.look;
   const setLook = (patch: Partial<Look>): void => {
@@ -347,6 +350,16 @@ function appearanceItems(session: Session): MenuItem[] {
         return look().findFull;
       },
       run: () => setLook({ findFull: !look().findFull }),
+    },
+    {
+      // R781: Right or Left, a value row as Brightness; Left mirrors the keypad's columns and the bar's order (lookApply.ts)
+      id: "hand",
+      label: lookText("appearance.hand"),
+      keep: true,
+      get value() {
+        return lookText(`appearance.hand.${look().hand}`);
+      },
+      adjust: (by) => setLook({ hand: stepped(HANDS, look().hand, by) }),
     },
   ];
 }

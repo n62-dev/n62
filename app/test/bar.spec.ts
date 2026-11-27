@@ -160,7 +160,7 @@ const look = (page: Page, brightness: "dark" | "light"): Promise<void> =>
   page.evaluate(async (l) => {
     const url = "/src/theme/lookApply.ts";
     const m = (await import(/* @vite-ignore */ url)) as typeof import("../src/theme/lookApply.ts");
-    await m.applyLook({ ...l, shadow: true, pops: true, findFull: false });
+    await m.applyLook({ ...l, shadow: true, pops: true, findFull: false, hand: "right" });
   }, { family: "n62", brightness, contrast: false, plain: false } satisfies Look);
 const PLACES = ["home", "cas", "function:symb", "function:plot", "function:num"] as const;
 async function goTo(page: Page, place: (typeof PLACES)[number]): Promise<void> {

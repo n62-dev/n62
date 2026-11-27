@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// The texts of Settings › Appearance (R50e; Key shadows R156, Key pop-ups R163). A table of its own, loaded with the Mode sheet's chunk
+// The texts of Settings › Appearance (R50e; Key shadows R156, Key pop-ups R163, Hand R781). A table of its own, loaded with the Mode sheet's chunk
 // (views/modeSheet.ts), so the start chunk does not carry it (R91's pin, docs/04 8.3; moved out of en.ts by R156, as
 // G183f1 moved enKeyFeel.ts). English only so far.
 export const enLook = {
@@ -17,6 +17,9 @@ export const enLook = {
   "appearance.pops": "Key pop-ups",
   "appearance.pops.hint": "A bubble over the key you press or flick",
   "appearance.findFull": "Find opens full screen",
+  "appearance.hand": "Hand",
+  "appearance.hand.right": "Right",
+  "appearance.hand.left": "Left",
 } as const;
 
 export type LookKey = keyof typeof enLook;

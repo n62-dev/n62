@@ -27,7 +27,7 @@ const show = (page: Page, look: Look): Promise<void> =>
   page.evaluate(async (l) => {
     const url = "/src/theme/lookApply.ts";
     const m = (await import(/* @vite-ignore */ url)) as typeof import("../src/theme/lookApply.ts");
-    await m.applyLook({ ...l, shadow: true, pops: true, findFull: false });
+    await m.applyLook({ ...l, shadow: true, pops: true, findFull: false, hand: "right" });
   }, look);
 
 const credits = (page: Page) => page.getByTestId("credits");
