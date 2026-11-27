@@ -32,8 +32,11 @@ describe("literalDigits", () => {
   });
   it("reads no other name, no non-literal exponent and no call of another name (G307)", () => {
     expect(literalDigits("api^200+e^200+x^200", "typed")).toBe(3);
-    expect(literalDigits("myexp(200)+exp(200*x)+exp(x+200)+exp(200.5)", "typed")).toBe(3);
-    expect(literalDigits("pi^(200*x)+pi^200.5+pi^2e3", "typed")).toBe(3);
+    expect(literalDigits("myexp(200)+exp(200*x)+exp(x+200)", "typed")).toBe(3);
+    expect(literalDigits("pi^(200*x)", "typed")).toBe(3);
+    // G403: a constant exponent that is no integer literal is sized by its double (200.5·log10 e, 200.5·log10 pi)
+    expect(literalDigits("exp(200.5)", "typed")).toBe(88);
+    expect(literalDigits("pi^200.5", "typed")).toBe(100);
     expect(literalDigits(`"exp(200)"+"pi^200"+1`, "typed")).toBe(1);
   });
 });
@@ -157,9 +160,11 @@ describe("a power of a constant base (G363)", () => {
     expect(literalDigits("(1+i)^5000+ln(-2)^5000+asin(2)^5000+(1-1)^5000+0^5000", "typed")).toBe(4);
     // a base 0 in exact maths that the double rounds (cos(pi/2) is 6.1E-17) counts too many digits: a later start or ⚠, never ≈
     expect(literalDigits("cos(pi/2)^5", "typed")).toBe(82); // ⌈5·16.21⌉
-    expect(literalDigits("sin(1)^(5000*x)+sin(1)^5000.5", "typed")).toBe(4);
-    // a right-associative exponent is no literal; its own power (5000² = 25000000) counts as one
-    expect(literalDigits("sin(1)^(5000)^2", "typed")).toBe(8);
+    expect(literalDigits("sin(1)^(5000*x)", "typed")).toBe(4);
+    // G403: a constant exponent that is no integer literal, sized by its double
+    expect(literalDigits("sin(1)^5000.5", "typed")).toBe(375);
+    // a right-associative exponent is no literal; G403: the power is sized by its double (25000000·log10(1/sin(1)))
+    expect(literalDigits("sin(1)^(5000)^2", "typed")).toBe(1874022);
     expect(literalDigits(`"sin(1)^5000"+1`, "typed")).toBe(1);
     // a base of exactly 1 is no magnitude; an integer base stays a power of two integer literals (G141)
     expect(literalDigits("cos(0)^5000", "typed")).toBe(4);
@@ -231,5 +236,39 @@ describe("uncheckedPastCap (G141f2)", () => {
   it("leaves an exact element and a no-digit one as they are", () => {
     expect(uncheckedPastCap(f(true, null))).toEqual(f(true, null));
     expect(uncheckedPastCap(f(false, 0))).toEqual(f(false, 0));
+  });
+});
+
+// G403: the digit counts are ⌈|log10|⌉ of the oracle's magnitudes (mpmath): exp(100*pi) 136.44, cosh(300) 129.99,
+// erfc(12) -63.87, exp(exp(7)) 476.26, cosh(1000) 433.99, ln(1+sin(1)^5000)^2 -749.61
+describe("a constant subterm the double can size (G403)", () => {
+  const at = (t: string, P = 12): { at: number; unchecked: boolean } => literalStart(t, P, 1000, "printed");
+  it("starts the agreement check past a tiny or huge constant reached without an integer literal exponent", () => {
+    expect(at("(1+exp(-100*pi))^(exp(100*pi))")).toEqual({ at: 149, unchecked: false });
+    expect(at("(1+1/cosh(300))^(cosh(300))")).toEqual({ at: 142, unchecked: false });
+    expect(at("(1+1-erf(12))^(1/(1-erf(12)))")).toEqual({ at: 76, unchecked: false });
+    expect(literalStart("(1+erfc(12))^(1/erfc(12))", 12, 1000, "typed")).toEqual({ at: 76, unchecked: false });
+    expect(at("(1+exp(-exp(7)))^(exp(exp(7)))")).toEqual({ at: 489, unchecked: false });
+    expect(at("(1+1/cosh(1000))^(cosh(1000))")).toEqual({ at: 446, unchecked: false });
+    expect(at("(1+ln(1+sin(1)^5000)^2)^(ln(1+sin(1)^5000)^-2)")).toEqual({ at: 762, unchecked: false });
+    expect(at("(1+ln(1+sin(1)^5000)^2)^(ln(1+sin(1)^5000)^-2)", 30)).toEqual({ at: 780, unchecked: false });
+    expect(at("ln(1+exp(-100*pi))*exp(100*pi)")).toEqual({ at: 149, unchecked: false });
+  });
+  it("keeps the start of the controls (as on phase-1)", () => {
+    expect(at("(1+exp(-300))^(exp(300))")).toEqual({ at: 143, unchecked: false });
+    expect(at("exp(1)^2")).toEqual({ at: 13, unchecked: false });
+    expect(at("cosh(2)+1")).toEqual({ at: 13, unchecked: false });
+    expect(at("2^100")).toEqual({ at: 43, unchecked: false });
+    expect(at("exp(10000000)")).toEqual({ at: 20, unchecked: false });
+  });
+  it("reads a text that is no arithmetic call by call, and a place read modulo a period", () => {
+    expect(at("[(1+1/cosh(300))^cosh(300),2]")).toEqual({ at: 142, unchecked: false });
+    expect(at("sin(exp(100*pi))")).toEqual({ at: 149, unchecked: false });
+    // exp(exp(8)) has 1295 digits (exp(8)·log10 e = 1294.6): alone it rounds nothing away (G307f1), in sin it is the
+    // argument, and with a small value beside it past the cap: ⚠
+    expect(at("exp(exp(8))")).toEqual({ at: 13, unchecked: false });
+    expect(at("sin(exp(exp(8)))")).toEqual({ at: 12, unchecked: true });
+    expect(at("(1+exp(-exp(8)))^(exp(exp(8)))")).toEqual({ at: 12, unchecked: true });
+    expect(literalPastCap("exp(exp(8))", 12, 1000, "printed")).toBe(true);
   });
 });

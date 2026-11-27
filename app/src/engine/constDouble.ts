@@ -21,6 +21,15 @@ const FUNCTIONS: Readonly<Record<string, (x: number) => number>> = {
 /** The double value of `a` (arithmeticOf's tree) when it is a constant expression (above), else NaN; out of the double's
  *  range it is 0 or ±Infinity (constantLog10 reads past it). */
 export function constantDouble(a: Arith): number {
+  let d = doubles.get(a);
+  if (d === undefined) doubles.set(a, (d = doubleOf(a)));
+  return d;
+}
+/** G403: constantDouble and constantLog10 of each node, once (literalPrec.ts reads every node of a tree). */
+const doubles = new WeakMap<Arith, number>();
+const logs = new WeakMap<Arith, number>();
+
+function doubleOf(a: Arith): number {
   switch (a.op) {
     case "num":
       return Number(a.text);
@@ -43,6 +52,33 @@ export function constantDouble(a: Arith): number {
   }
 }
 
+/** The logarithms rule (b) of constantLog10 reads (`log` is ln). */
+const LOGS: ReadonlySet<string> = new Set(["ln", "log", "log10"]);
+
+/** `a` is the integer literal 1. */
+const isOne = (a: Arith): boolean => a.op === "num" && a.text === "1";
+
+/** G403: u of `1+u`, `u+1` or `1-u` when u holds more than numbers, else null. */
+function besideOne(a: Arith): Arith | null {
+  const u = a.op === "+" ? (isOne(a.a) ? a.b : isOne(a.b) ? a.a : null) : a.op === "-" && isOne(a.a) ? a.b : null;
+  return u && !ofLiterals(u) ? u : null;
+}
+
+/** `a` holds numbers alone (no name, no call). */
+function ofLiterals(a: Arith): boolean {
+  switch (a.op) {
+    case "num":
+      return true;
+    case "name":
+    case "call":
+      return false;
+    case "neg":
+      return ofLiterals(a.a);
+    default:
+      return ofLiterals(a.a) && ofLiterals(a.b);
+  }
+}
+
 /** Below this log10 a double is no longer normal: a sum that is 0 in double has operands this small (an underflow), not a
  *  cancellation. */
 const TINY_LOG10 = -300;
@@ -54,15 +90,27 @@ const TINY_LOG10 = -300;
  * operands that underflow is bounded by the larger. `(sin(1)^5000)^-2` is 750, where the double of its base is 0. Any
  * other value the double cannot hold counts as Infinity (a start past the cap: ⚠, never ≈). A value 0 in double where
  * its operands are normal (`(1-1)`, `sin(0)`, `ln(1)`) is no magnitude (NaN, as 0^n), and so is a value that is not
- * constant or not real: a tiny term the double rounds away (`ln(1+sin(1)^5000)`) is S20's (intervals).
+ * constant or not real. G403: three values the double cannot hold are read by their asymptotes: cosh and sinh past
+ * its range, ln(1 ± u) and log10(1 ± u) where 1 ± u rounds to 1 (`ln(1+sin(1)^5000)` is about u, 1E-374.8), and
+ * erfc(x) for x > 5, typed or as Giac prints it (`1-erf(x)`): exp(-x²)/(x·√π), 1E-63.9 for erfc(12).
  */
 export function constantLog10(a: Arith): number {
+  let l = logs.get(a);
+  if (l === undefined) logs.set(a, (l = log10Of(a)));
+  return l;
+}
+
+function log10Of(a: Arith): number {
   // first, as 1^Infinity is NaN in double
   const e = a.op === "^" ? integerLiteral(a.b) : null;
   if (a.op === "^" && e) {
     const l = constantLog10(a.a);
     return Number.isNaN(l) ? NaN : e.n === 0 || l === 0 ? 0 : e.n * l;
   }
+  // G403 (c): erfc has no double here; its relative error at x = 5 is 2 % (0.008 in log10)
+  const erfcOf = a.op === "call" && a.name === "erfc" ? a.arg : a.op === "-" && isOne(a.a) && a.b.op === "call" && a.b.name === "erf" ? a.b.arg : null;
+  const xc = erfcOf ? constantDouble(erfcOf) : NaN;
+  if (xc > 5) return -xc * xc * Math.LOG10E - Math.log10(xc * Math.sqrt(Math.PI));
   const d = constantDouble(a);
   if (Number.isNaN(d)) return NaN;
   const inRange = Number.isFinite(d) && d !== 0;
@@ -90,7 +138,14 @@ export function constantLog10(a: Arith): number {
       const x = constantDouble(a.arg);
       if (Number.isNaN(x)) return NaN;
       if (a.name === "exp") return x * Math.LOG10E;
-      // an argument in the double's range: 0 is a zero of it (ln(1), sin(0)), no magnitude; else an overflow (cosh(1000))
+      // G403 (a): cosh(1000) is e^1000/2 to the double's last digit, 1E434.0
+      if ((a.name === "cosh" || a.name === "sinh") && Number.isFinite(x)) return Math.abs(x) * Math.LOG10E - Math.log10(2);
+      // G403 (b): ln(1 + u) is u to its first digits, log10(1 + u) is u/ln(10); a u of literals alone counts by its
+      // literals (G141; g186-exp-sqrt-acosh-1e-300-12 prints ln(1/10^600+1)^2, which 1200 digits would send past the cap)
+      const u = d === 0 && LOGS.has(a.name) ? besideOne(a.arg) : null;
+      const lu = u ? constantLog10(u) : NaN;
+      if (lu < -15) return a.name === "log10" ? lu - Math.log10(Math.LN10) : lu;
+      // an argument in the double's range: 0 is a zero of it (ln(1), sin(0)), no magnitude; else an overflow
       if (Number.isFinite(x) && x !== 0) return d === 0 ? NaN : Infinity;
       // the argument itself is past the range
       const l = constantLog10(a.arg);

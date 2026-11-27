@@ -70,3 +70,36 @@ describe("constantLog10 (G363 fix round 2)", () => {
     expect(l("ln((1/10^300)^2+1)^2")).toBeNaN();
   });
 });
+
+// G403: the oracle's values, mpmath at 1200 digits (log10 of the exact value)
+describe("constantLog10 past the double by an asymptote (G403)", () => {
+  it("(a) reads cosh and sinh past the double's range as |x|·log10 e − log10 2, where they were an overflow", () => {
+    // cosh(1000) is Infinity in double; mpmath: 433.993451907588
+    expect(l("cosh(1000)")).toBeCloseTo(433.993451907588, 9);
+    expect(l("sinh(-1000)")).toBeCloseTo(433.993451907588, 9);
+    expect(l("1/cosh(1000)")).toBeCloseTo(-433.993451907588, 9);
+    // in the double's range as before (mpmath: 129.987314575312)
+    expect(l("cosh(300)")).toBeCloseTo(129.987314575312, 9);
+  });
+  it("(b) reads ln(1 ± u) and log10(1 ± u) as u where 1 ± u rounds to 1 in double", () => {
+    // mpmath: log10 ln(1+sin(1)^5000) = -374.804272802478, log10 log10(1+sin(1)^5000) = -375.166488491177
+    expect(l("ln(1+sin(1)^5000)")).toBeCloseTo(-374.804272802478, 9);
+    expect(l("log(sin(1)^5000+1)")).toBeCloseTo(-374.804272802478, 9);
+    expect(l("ln(1-sin(1)^5000)")).toBeCloseTo(-374.804272802478, 9);
+    expect(l("log10(1+sin(1)^5000)")).toBeCloseTo(-375.166488491177, 9);
+    // its square by the literal-power rule (G363)
+    expect(l("ln(1+sin(1)^5000)^2")).toBeCloseTo(-749.608545604955, 8);
+    // a u of numbers alone counts by its literals (G141), and ln(1) is still no magnitude
+    expect(l("ln((1/10^300)^2+1)")).toBeNaN();
+    expect(l("ln(1+sin(0))")).toBeNaN();
+  });
+  it("(c) reads erfc(x) and Giac's 1-erf(x) for x > 5 as −x²·log10 e − log10(x·√π)", () => {
+    // mpmath: log10 erfc(12) = -63.8676566722511, log10 erfc(6) = -16.6671630464354: the asymptote is within 0.002 and 0.006
+    expect(l("erfc(12)")).toBeCloseTo(-63.8676566722511, 2);
+    expect(l("1-erf(12)")).toBeCloseTo(-63.8676566722511, 2);
+    expect(l("erfc(6)")).toBeCloseTo(-16.6671630464354, 1);
+    expect(l("erfc(12)^2")).toBeCloseTo(2 * -63.8676566722511, 2);
+    // x ≤ 5 or not constant: no double here, as before
+    for (const t of ["erfc(4)", "1-erf(5)", "erfc(x)", "2-erf(12)"]) expect(l(t), t).toBeNaN();
+  });
+});

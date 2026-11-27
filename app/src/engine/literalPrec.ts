@@ -2,12 +2,13 @@
 // G141 (night review 2026-10-30, be-1): the working precision a long exact literal needs. Two evaluations at P and P + 20
 // agree on whatever both lose: (1+10^-100)^(10^100) is exp(10^100*ln(1+1/10^100)), and at 40 and 60 digits the 10^-100
 // is rounded away, so both give 1 and the agreement check confirmed 38 digits of a value that is e. A literal of n digits
-// cancels at most n, so the check starts at n + P instead, and confirms as many digits as it does without one. An
-// intermediate loss with no long literal (a tiny value stored in a name) is not caught here (S20's intervals are the
+// cancels at most n, so the check starts at n + P instead, and confirms as many digits as it does without one. G403: a
+// constant subterm the double can size (constantTerms: `exp(-100*pi)`, `1/cosh(1000)`, `1-erf(12)`) counts as a literal
+// that long. A tiny value stored in a name is not caught here, nor one the double cannot size (S20's intervals are the
 // general cure). The literals are read by giacPrint's number reader. Only erasable TypeScript syntax, so Node runs this
 // file directly.
 import type { PrecisionWarn } from "./format.ts";
-import { arithmeticOf, callsOf, integerLiteral, isNameChar, namesIn, negated, numbers, powersIn, withoutStrings, type Quoting } from "./giacPrint.ts";
+import { arithmeticOf, type Arith, callsOf, integerLiteral, isNameChar, namesIn, negated, numbers, powersIn, withoutStrings, type Quoting } from "./giacPrint.ts";
 import { PERIODIC } from "./converge.ts";
 import { constantLog10 } from "./constDouble.ts";
 
@@ -83,6 +84,51 @@ function periodicPlaces(text: string, q: Quoting): [number, number][] {
   return out;
 }
 
+/** G403: brackets deeper than this are not read by constantTerms (arithmeticOf recurses on each, and reads each to its
+ *  close: 140 ms at 1000, a stack overflow at 3000). */
+const MAX_NESTING = 200;
+
+/** The deepest bracket nesting of `text`, strings counted too (more, never less). */
+function nesting(text: string): number {
+  let depth = 0;
+  let max = 0;
+  for (const c of text) {
+    if (c === "(" || c === "[" || c === "{") max = Math.max(max, ++depth);
+    else if (c === ")" || c === "]" || c === "}") depth--;
+  }
+  return max;
+}
+
+/** G403: log10 |t| of every subterm t of `text` that holds a name or a call and that constantLog10 sizes (`exp(-100*pi)`,
+ *  `1/cosh(1000)`, `1-erf(12)`, `ln(1+sin(1)^5000)^2`), and whether it stands in a place read modulo a period (the
+ *  argument of a PERIODIC call or the exponent of a negative base, as periodicPlaces). One walk of arithmeticOf's tree of
+ *  the whole text, or, when it is no arithmetic (a list, a call of several arguments), of each call that is. */
+function constantTerms(text: string, q: Quoting): { log10: number; periodic: boolean }[] {
+  const out: { log10: number; periodic: boolean }[] = [];
+  // whether `a` holds a name or a call (numbers alone are the literal rules' own)
+  const walk = (a: Arith, periodic: boolean): boolean => {
+    if (a.op === "num") return false;
+    let named = true;
+    if (a.op === "call") walk(a.arg, periodic || PERIODIC.has(a.name));
+    else if (a.op === "neg") named = walk(a.a, periodic);
+    else if (a.op !== "name") named = [walk(a.a, periodic), walk(a.b, periodic || (a.op === "^" && a.a.op === "neg"))].includes(true);
+    const log10 = named ? constantLog10(a) : NaN;
+    if (!Number.isNaN(log10)) out.push({ log10, periodic });
+    return named;
+  };
+  if (nesting(text) > MAX_NESTING) return out;
+  const whole = arithmeticOf(text, q);
+  if (whole) walk(whole, false);
+  else {
+    let places: [number, number][] | null = null;
+    for (const c of callsOf(text, undefined, q)) {
+      const a = c.close < 0 ? null : arithmeticOf(text.slice(c.at, c.close + 1), q);
+      if (a) walk(a, (places ??= periodicPlaces(text, q)).some(([from, to]) => c.at >= from && c.at < to));
+    }
+  }
+  return out;
+}
+
 /** literalDigits, and the same count without the powers of a constant or exp (constantPower) that stand outside every place read
  *  modulo a period (periodicPlaces, G348). */
 function literalCounts(text: string, q: Quoting): { digits: number; withoutHuge: number } {
@@ -109,6 +155,8 @@ function literalCounts(text: string, q: Quoting): { digits: number; withoutHuge:
     if (a < 2 || b === 0) return;
     count(Math.floor(b * Math.log10(a)) + 1);
   });
+  // G403: a huge or tiny constant counts as the power of a constant does (constantPower)
+  for (const t of constantTerms(text, q)) count(Math.ceil(Math.abs(t.log10)), !t.periodic);
   return { digits: total, withoutHuge };
 }
 
@@ -132,8 +180,8 @@ function formsSmall(text: string, q: Quoting): boolean {
  * The digit count of the longest exact integer in `text`: an integer as Giac prints it, or, in a text as typed, a power
  * of two integer literals (`10^(-100)` stands for a 101-digit denominator); and, G307, a power of pi or exp of an integer
  * literal (`pi^(-200)` stands for a 100-digit magnitude, `exp(-200)` for an 87-digit one; Giac prints them as
- * `1/pi^200`, `1/exp(200)`), and, G363, a power of any constant base (`sin(1)^5000`, 375 digits; constantPowers).
- * 0 when there is none. Strings, other names and decimals count nothing.
+ * `1/pi^200`, `1/exp(200)`), and, G363, a power of any constant base (`sin(1)^5000`, 375 digits; constantPowers), and,
+ * G403, any constant subterm the double sizes (`exp(-100*pi)`, 137 digits; constantTerms). 0 when there is none. Strings, other names and decimals count nothing.
  */
 export function literalDigits(text: string, q: Quoting): number {
   return literalCounts(text, q).digits;
@@ -144,7 +192,7 @@ export function literalDigits(text: string, q: Quoting): number {
  * digits with n + LITERAL_MARGIN > P, at n + P. When those levels pass `cap` (MAX_EVAL_DIGITS), at P, and the value is
  * `unchecked` (⚠, never ≈): a power of ten too (G141f1, Opus pass 68: `(1-cos(10^-600))*10^1200+1` is 1.5, and at P and
  * P + 20 both round the 10^-600 away; S20's intervals are the cure), and a power of pi or exp (G307,
- * `(1+pi^(-2200))^(pi^2200)`). A power of a constant (G363) or exp past the cap counts nothing in a text that forms no small value
+ * `(1+pi^(-2200))^(pi^2200)`). A power of a constant (G363), exp, or a constant subterm (G403) past the cap counts nothing in a text that forms no small value
  * (formsSmall, G307f1) when it stands outside every place read modulo a period (periodicPlaces; G307f2, G348): alone it
  * rounds no term away, and MPFR evaluates
  * exp(10000000) (`exp(10^7)` as Giac prints it) right at every level, which ≈ said before G307 (g58-exp-1e7-12). A
