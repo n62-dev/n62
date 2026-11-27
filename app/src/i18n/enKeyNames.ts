@@ -108,8 +108,9 @@ export const enKeyNames = {
 export type KeyNameKey = keyof typeof enKeyNames;
 
 /**
- * R709: the words for a face with no letter (or a bare abbreviation) that the app draws on a key in place of the spec's (keyboard/keyNames.ts): by
- * `<key id> <face>` first, else by the face. The unit pad's operator and control cells take the main pad's names instead.
+ * R709: the words for a face with no letter (or a bare abbreviation) that the app draws on a key in place of the spec's
+ * (keyboard/keyNames.ts): by `<key id> <face>` first, else by the face. The unit pad's operator and control cells take the
+ * main pad's names instead.
  */
 export const enFaceNames: Readonly<Record<string, string>> = {
   // the decimal comma (R57): the `.` key types the comma, the `,` key the argument separator

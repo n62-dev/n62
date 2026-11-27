@@ -29,19 +29,19 @@ const named = (k: string): string | undefined => (k in enKeyNames ? enKeyNames[k
 
 /**
  * R709: a face with no letter says nothing of what the key does ("÷", "⌫", "°", the decimal comma's ";"), nor does a bare
- * abbreviation (the unit cell "TR"). A unit pad's operator,
- * control or empty cell takes the main pad's name of its key and layer (÷ is Divide there too), another face its word
- * (enFaceNames). undefined: the face itself is the name.
+ * abbreviation (the unit cell "TR"). A unit pad's operator, control or empty cell takes the main pad's name of its key and
+ * layer (÷ is Divide there too), another face its word (enFaceNames). undefined: the face itself is the name.
  */
 function spoken(key: Key, layer: Layer, face: string): string | undefined {
-  if (/\p{L}/u.test(face) && !/^[A-Z]{2,4}$/.test(face)) return undefined; // (a bare abbreviation says as little: TR)
+  if (/\p{L}/u.test(face) && !/^[A-Z]{2,4}$/.test(face)) return undefined;
   const main = key.pad === "op" || key.pad === "keep" || key.pad === "empty" ? named(layer === "primary" ? key.id : `${key.id}.${layer}`) : undefined;
   return main ?? enFaceNames[`${key.id} ${face}`] ?? enFaceNames[face];
 }
 
 /**
  * What one layer of a key is called: the table's name for the spec's own layers, the key's face for a layer the app changed
- * (a user key's binding, a unit cell), in words where that face has no letter (`spoken`). An Alpha letter is the letter, in the case the view types (`cas`, R58; `shift` is Shift + Alpha).
+ * (a user key's binding, a unit cell), in words where that face has no letter (`spoken`). An Alpha letter is the letter, in
+ * the case the view types (`cas`, R58; `shift` is Shift + Alpha).
  */
 export function layerName(key: Key, layer: Layer, cas: boolean, shift = false): string | undefined {
   if (!hasLayer(key, layer)) return undefined;
