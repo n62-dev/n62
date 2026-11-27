@@ -417,8 +417,9 @@ _lib_log() { if declare -F log >/dev/null; then log "$*"; fi; }
 # A273: the family tests' nightly runs (pipeline.sh nightly <n>): <name>:<script in app/> [its options]; each runs as `node <script> --nightly [options]`, prints
 # a last line `<TOOL> NIGHTLY: ...` with its runs (`N runs` or `N checked`), failures (`N failures` or `N failed`), the new ones (`N not in the
 # known files` or `; N new` at the end) and `seed S`; G805: viewsweep (G799's checks; its runs are its comparisons) at count 300 (178.5 s on
-# 2026-11-25, seed 20782; its default 600 ran past 600 s with 30 engine hangs and crashes, near the 1200 s limit); G800 adds its own here.
-NIGHTLY_TOOLS=(sweep:scripts/sweep.ts casback:scripts/casback.ts "viewsweep:scripts/viewsweep.ts --count 300")
+# 2026-11-25, seed 20782; its default 600 ran past 600 s with 30 engine hangs and crashes, near the 1200 s limit); G800: unitsweep (round trips,
+# σ against the GUM, one drawing; its runs are its checks) at its default 2000 cases (about 30 s on 2026-11-27).
+NIGHTLY_TOOLS=(sweep:scripts/sweep.ts casback:scripts/casback.ts "viewsweep:scripts/viewsweep.ts --count 300" unitsweep:scripts/unitsweep.ts)
 # nightly_counts <output file>: "<runs> <known> <new> <seed>" from the tool's last NIGHTLY line (known = failures - new), else fails.
 nightly_counts() {
   local l runs failed new seed
@@ -617,12 +618,12 @@ head_is() {  # <dir> <sha>
 # the golden gate or its engine stages run (golden.ts and golden/, golden-*.ts, invariants, calls-budget, behaviour-diff, the sweeps and their
 # known/parts files), and the app modules outside those directories that the gate or a stage imports (A136: what a mark, a chip and a Copy are
 # built from; A277: apps/function/compile.ts, which casback and viewsweep compile plots with); scripts/pipeline.test.sh walks the import closure
-# of all of them (tools/golden-closure.mjs: golden.ts, the five stages and behaviour-diff.ts) and fails when one is missing here.
+# of all of them (tools/golden-closure.mjs: golden.ts, the six stages and behaviour-diff.ts) and fails when one is missing here.
 # A277: app/src/input/ and app/src/units/ are not listed whole: a file there plans golden only when it is in that closure (golden_selected
 # runs the tool once per plan) or is a data file (.yaml, .json: GOLDEN_DATA_RE); a tool that fails plans golden for both folders.
 # A277f1: what the gate starts as a child process or reads by a path (tools/giac-regress/, run by engine.ts; spec/keyboard.yaml and
 # spec/unit-pad.yaml, read by the rpn and units stages; behaviour-diff's Worker) is listed too: golden-closure.mjs --children finds them.
-GOLDEN_RE='^(engine/|app/src/engine/|app/src/(apps/function/compile|clipboard/(exact|paste|plaintext|strings|text|whyLine)|entry/(macros|rpn|rpnCompose)|goldenRun|i18n/(en|enEngine|enParser|enUnits|index|sumWords)|render/home|state/(displayMode|resultItem|results|sigmaDigits))\.ts|tests/golden/|find/|tools/find-index/|tools/giac-regress/|spec/(keyboard|unit-pad)\.yaml|tools/probes/(giac-check\.mjs|giaccheck/|sweep/|casback/|findcensus/)|tests/engine/|app/scripts/(unit-case\.ts|golden\.ts|golden/.*\.ts|golden-[a-z-]+\.ts|invariants\.ts|calls-budget\.ts|behaviour-diff(-worker)?\.ts|sweep(-[a-z]+)?\.ts|seqsweep\.ts|casback\.ts|viewsweep(-[a-z]+)?\.ts|findcensus\.ts))'
+GOLDEN_RE='^(engine/|app/src/engine/|app/src/(apps/function/compile|clipboard/(exact|paste|plaintext|strings|text|whyLine)|entry/(macros|rpn|rpnCompose)|goldenRun|i18n/(en|enEngine|enParser|enUnc|enUnits|index|sumWords)|render/(home|groupText|sigmaForm|tidy|uncMute)|state/(displayMode|resultItem|results|sigmaDigits|sigmaLine))\.ts|tests/golden/|find/|tools/find-index/|tools/giac-regress/|spec/(keyboard|unit-pad)\.yaml|tools/probes/(giac-check\.mjs|giaccheck/|sweep/|casback/|findcensus/)|tests/engine/|app/scripts/(unit-case\.ts|golden\.ts|golden/.*\.ts|golden-[a-z-]+\.ts|invariants\.ts|calls-budget\.ts|behaviour-diff(-worker)?\.ts|sweep(-[a-z]+)?\.ts|seqsweep\.ts|casback\.ts|viewsweep(-[a-z]+)?\.ts|findcensus\.ts|unitsweep(-[a-z]+)?\.ts))'
 GOLDEN_DIRS_RE='^app/src/(input|units)/'
 GOLDEN_DATA_RE='\.(yaml|json)$'
 golden_lib_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -686,9 +687,9 @@ behaviour_section() {
 }
 
 # The gate's engine stages, run after golden (A25; app/scripts/gate.ts).
-ENGINE_STAGES=(sweep seqsweep casback viewsweep findcensus)
+ENGINE_STAGES=(sweep seqsweep casback viewsweep findcensus unitsweep)
 # stage_findings <log>: prints the lines naming a NEW, NOW PASSING, CHANGED or GONE entry of a stage and succeeds when there are any.
-stage_findings() { grep -E '^ {2}(sweep|seq|casback|viewsweep|findcensus) (NEW|NOW PASSING|CHANGED|GONE)' "$1"; }
+stage_findings() { grep -E '^ {2}(sweep|seq|casback|viewsweep|findcensus|unitsweep) (NEW|NOW PASSING|CHANGED|GONE)' "$1"; }
 
 # ---- A47c: night lanes ----
 # lane_tag: "[A] " or "[B] " when N62_LANE (exported by `night.sh --lane`) names a lane, else nothing; every log line of a lane

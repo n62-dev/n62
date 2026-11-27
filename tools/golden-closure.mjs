@@ -7,7 +7,7 @@
 // A277: golden_selected plans golden for a file of app/src/input/ or app/src/units/ only when it is in this list, so a walk that misses a
 // file would skip a golden round silently. The walk follows relative paths only; a module that imports an app/src file by an alias
 // (`@/x`, `~/x`, `#x`, `$x`, `/x`) or a bare path (`src/x`, `app/src/x`, `input/x`) makes it exit 1 with the file and the import named.
-// The default entries are every script the golden gate and its engine stages run (the golden gate, the five stages, the behaviour diff),
+// The default entries are every script the golden gate and its engine stages run (the golden gate, the six stages, the behaviour diff),
 // and the probe libraries they import are walked with them; entries given on the command line replace them.
 //   node tools/golden-closure.mjs [--children] [<entry>...]     (GOLDEN_CLOSURE_ROOT: the tree to walk, for the tests)
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -15,7 +15,7 @@ import { dirname, join, normalize, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = process.env.GOLDEN_CLOSURE_ROOT ?? resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const ENTRIES = ["golden", "casback", "sweep", "seqsweep", "viewsweep", "findcensus", "behaviour-diff"].map((n) => `app/scripts/${n}.ts`);
+const ENTRIES = ["golden", "casback", "sweep", "seqsweep", "viewsweep", "findcensus", "unitsweep", "behaviour-diff"].map((n) => `app/scripts/${n}.ts`);
 const args = process.argv.slice(2).filter((a) => a !== "--children");
 const entries = args.length > 0 ? args : ENTRIES;
 const FROM = /^\s*(?:import|export)\s+([^;"']*?)\s*from\s*["']([^"']+)["']/gm;

@@ -2,7 +2,7 @@
 // `npm run gate`: every check a branch must pass (docs/shifts/brief.md section 8), one line each, the full log in
 // app/_out/gate/<name>.log. Exit 1 on any FAIL.
 //   npm run gate            # typecheck, index (when missing), vitest (FIND_INDEX=required), e2e, golden (when engine or
-//                           # parser code changed against phase-1), sweep (G61, the oracle sweep), seqsweep (G62), casback (G64), pydiff (G215), viewsweep (G63), findcensus (G110), size test, docs sizes, g2check (G79), oraclecheck (G200, oracle.py when tests/golden changed)
+//                           # parser code changed against phase-1), sweep (G61, the oracle sweep), seqsweep (G62), casback (G64), pydiff (G215), viewsweep (G63), unitsweep (G800), findcensus (G110), size test, docs sizes, g2check (G79), oraclecheck (G200, oracle.py when tests/golden changed)
 //   npm run gate -- --quick # typecheck and vitest only (engine tests skipped, and said so, when no engine build is found)
 //   npm run gate -- --update-text-baseline # rules stage (G88: text matches and `.eval(` outside engine and units are counted): write app/scripts/text-baseline.json (G88)
 // The vitest stage sets ENGINE=required (G146) unless --quick finds no engine build.
@@ -17,7 +17,7 @@ import { problemLines, touchesOracle } from "./oraclecheck.ts";
 import { checkImportDirection } from "./import-rules.ts";
 import { countAll, evalOutside, judge, readBaseline, totals, writeBaseline } from "./text-rules.ts";
 import {
-  duration, formatLine, playwrightFailedSpecs, retryable, summarizeDocs, summarizeGolden, summarizePlaywright, summarizeCasBack, summarizePyDiff, summarizeSeqSweep, summarizeSize, summarizeSweep, summarizeViewSweep, summarizeFindCensus, summarizeTypecheck, regeneratesIndex, selectsGolden, summarizeVitest, vitestFailures,
+  duration, formatLine, playwrightFailedSpecs, retryable, summarizeDocs, summarizeGolden, summarizePlaywright, summarizeCasBack, summarizePyDiff, summarizeSeqSweep, summarizeSize, summarizeSweep, summarizeViewSweep, summarizeUnitSweep, summarizeFindCensus, summarizeTypecheck, regeneratesIndex, selectsGolden, summarizeVitest, vitestFailures,
   type Summary,
 } from "./gate-summary.ts";
 
@@ -232,6 +232,17 @@ const checks: Check[] = [
       if (!engine) return { ok: false, detail: "no engine build: set GIAC_OUT (absolute)" };
       const r = run("viewsweep", "node", ["scripts/viewsweep.ts"], { GIAC_OUT: engine }, 5 * 60_000);
       return summarizeViewSweep(r.out, r.code);
+    },
+  },
+  {
+    // G800: the unit sweep (round trips, σ against the GUM, one drawing in STD, SCI, ENG and PFX; scripts/unitsweep.ts; tests/golden/unitsweep-known.yaml)
+    name: "unitsweep",
+    skip: () => (quick ? "--quick" : null),
+    run: () => {
+      const engine = giacOut();
+      if (!engine) return { ok: false, detail: "no engine build: set GIAC_OUT (absolute)" };
+      const r = run("unitsweep", "node", ["scripts/unitsweep.ts"], { GIAC_OUT: engine }, 3 * 60_000);
+      return summarizeUnitSweep(r.out, r.code);
     },
   },
   {
