@@ -13,7 +13,6 @@ State: the newest night report in this folder. Every merge: `git log --merges --
 - Workers run on the model of their row; `.coord/model-cap` (A262) caps them to Sonnet while it exists (lifted 2026-11-20). `--audit-model auto` gives Opus to gorge packages and to diffs in the engine, input or units. Every package keeps its own audit.
 - An Opus pass runs after every six packages (A260).
 - No hourly monitor sessions, and no `/night-review` for now (rules 4a).
-- A256 and A257 wait until after the tag.
 
 **The daily stop** (rules section 4a): usage limits are waited out (rule 7); the stop covers planned reboots and Windows updates; a lane lost to an unplanned reboot restarts at the next stop.
 
@@ -62,11 +61,6 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Opus | `p1/ron-keepline` | – |
-| 892 | R729 key legends: armed ring, locked fill (K4); pass 252: review-only (`--no-worker`) of the kept branch at 6365316c | ron, Opus | `p1/ron-keylegends` | R723, R726, R728 |
-| 892a | R864 the letter in a template key is italic | ron, Opus | `p1/ron-templateitalic` | R728, R729 |
-| 892b | R865 Find stands out: a lens and a foot bar | ron, Opus | `p1/ron-findlook` | R861, R729, R864 |
-| 897 | A257 host-cpu goes to the oldest waiter first | annabell, Sonnet | `p1/annabell-fairlock` | A256 |
-| 898 | R781 a left-hand layout setting (owner, 2026-11-20) | ron, Opus | `p1/ron-lefthand` | R729 |
 | 905 | [R796](packages/R796.md) Alpha + mol is cd in the unit view (K2) | ron, Opus | `p1/ron-candela` | – |
 | 906 | [R797](packages/R797.md) a hold copies in the unit view (U7) | ron, Opus | `p1/ron-unitholdcopy` | R790 |
 | 906a | [R895](packages/R895.md) Paste in units says why | ron, Opus | `p1/ron-unitpaste` | R797 |
