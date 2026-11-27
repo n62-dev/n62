@@ -20,7 +20,11 @@ const UNITS = ["m", "s", "N", "J", "g", "K", "Hz", "km", "ms"], PFX = ["k", "m",
 /** The sequences, in order: the same on every run (the probe's linear congruential generator, seed 7). */
 export function sequences(count: number): PadAction[][] {
   let seed = 7;
-  const rnd = (n: number): number => ((seed = (seed * 1103515245 + 12345) % 2147483648), seed % n);
+  // (exact: a double loses the low bits of seed * 1103515245 once it passes 2^53; the high bits, as the low ones of a power-of-two LCG repeat)
+  const rnd = (n: number): number => {
+    seed = Number((BigInt(seed) * 1103515245n + 12345n) % 2147483648n);
+    return Math.floor(seed / 65536) % n;
+  };
   const press = (): PadAction => {
     switch (rnd(8)) {
       case 0: case 1: case 2: return { do: "unit", id: UNITS[rnd(UNITS.length)] as string };

@@ -149,6 +149,8 @@ const fixture = readFileSync(join(here, "slot.caret.fixture.txt"), "utf8").trimE
 describe("R806: the caret at the end", () => {
   it("20 000 random press sequences: the slot, LaTeX, reading, armed state and the refusals equal the reference; the caret is at the end", () => {
     const seqs = sequences(20000);
+    const kinds = new Set<string>(), powers = new Set<number>();
+    let refused = 0;
     for (const [t, seq] of seqs.entries()) {
       const m = new SlotModel(CAT), r = new Reference();
       const oks: boolean[] = [];
@@ -156,6 +158,9 @@ describe("R806: the caret at the end", () => {
         const ok = m.apply(a).ok;
         expect(ok, `${JSON.stringify(seq)} at ${JSON.stringify(a)}`).toBe(r.press(a));
         oks.push(ok);
+        kinds.add(a.do);
+        if (a.do === "power") powers.add(a.n);
+        if (!ok) refused++;
         expect(m.caret, JSON.stringify(seq)).toEqual({ side: r.side, i: r.i });
       }
       const shown = { slot: m.slot, latex: m.latex, reading: m.reading, armed: m.armed, empty: m.empty };
@@ -163,10 +168,15 @@ describe("R806: the caret at the end", () => {
       expect(shown, JSON.stringify(seq)).toEqual(ref);
       if (t < 2000) expect(digest(oks, shown), `fixture ${t}: ${JSON.stringify(seq)}`).toBe(fixture[t]);
     }
+    // the generator must reach every key (an inexact generator once made nothing but unit presses)
+    expect([...kinds].sort()).toEqual(["delete", "per", "power", "prefix", "sqrt", "unit"]);
+    expect([...powers].sort()).toEqual([-1, 2, 3, 4]);
+    expect(refused).toBeGreaterThan(1000);
   });
   it("the fixture is the phase-1 model's: 2 000 lines, some presses refused", () => {
     expect(fixture).toHaveLength(2000);
-    expect(fixture.some((l) => l.includes("0"))).toBe(true);
+    expect(fixture.some((l) => (l.split(" ")[0] as string).includes("0"))).toBe(true);
+    expect(new Set(fixture.filter((l) => l.startsWith("1 ")).map((l) => l.split(" ")[1])).size).toBeGreaterThan(1);
   });
   it("a fresh slot, one restored from a UnitSlot and one after ÷ have the caret at the end of the last list", () => {
     expect(new SlotModel(CAT).caret).toEqual({ side: "num", i: 0 });
