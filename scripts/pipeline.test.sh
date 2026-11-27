@@ -62,6 +62,10 @@ grep -q 'mismatch' "$here/pipeline.sh" || fail "pipeline.sh does not compare the
 grep -qE 'reuseExistingServer: *false' "$here/../app/playwright.config.ts" || fail "playwright.config.ts reuses an existing server"
 # point 3: a stale dist fails with a message
 tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
+# A256f1: no case writes the real .coord/log.md: a call that logs (a usage refusal) lands in this scratch coord dir; a case that sets or
+# unsets N62_COORD does so itself. A sandbox repo under $tmp has its own .coord (its cases read it), so a `cd` into one drops the variable.
+export N62_COORD="$tmp/coord-default"; mkdir -p "$N62_COORD"
+cd() { builtin cd "$@" || return; if [[ "$PWD" == "$tmp"/* ]]; then unset N62_COORD; else export N62_COORD="$tmp/coord-default"; fi; }
 # A259: the stand-ins answer as `claude -p --output-format json` does: the reply in .result, the counts in .usage and .modelUsage.
 # `jout "$*" <text>` (the model is the --model in the arguments; 4500 tokens in with the cache, 1200 out, $0.50 a call);
 # JOUT_TEXT=1 makes it print the plain text (an old CLI)
@@ -2484,6 +2488,8 @@ git -C "$sy" checkout -q -b p1/sy5 phase-1; echo p > "$sy/p5.txt"; git -C "$sy" 
 sy_in SY5 p1/sy5 --sync
 [[ $rc -eq 2 ]] && grep -q '^RESULT -: NOT STARTED (--sync: .*no merge commit' "$sy/out.txt" && [[ ! -s "$sy/audit.stdin" ]] || fail "A256: --sync with no merge commit is not refused at the start (rc $rc): $(tail -n 2 "$sy/out.txt")"
 grep -q -- '--sync' <<<"$("$script" 2>&1 | head -n 1; sed -n 1,40p "$script")" || fail "A256: the usage lines do not document --sync"
+# A256f1: that usage refusal logged NOT STARTED into the scratch coord dir (the default one above), never the main checkout's log
+grep -q 'pipeline: NOT STARTED (usage' "$tmp/coord-default/log.md" 2>/dev/null || fail "A256f1: the no-argument usage call did not log into the scratch N62_COORD"
 
 [[ $fails -eq 0 ]] || { echo "pipeline.test.sh: $fails failure(s) in $count packages" >&2; exit 1; }
 echo "pipeline.test.sh: ok ($count packages)"
