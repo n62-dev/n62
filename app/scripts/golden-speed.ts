@@ -99,6 +99,11 @@ export const SPEED_KNOWN: Record<string, string> = {
   "precision/g804-cas-keep-deg-int-int-abs-sin-1e50-30": "HOME_CLOCK_S",
   "home/g325f1-acos-sqrt-neg2-1e-400-minus-2": "HOME_DEADLINE_MS",
   "home/g618-sum-k(4k+1)": "HOME_DEADLINE_MS",
+  // G405's row solve(x^3-3*x+2-10^-22=0,x): Giac's solve is one call of 17-50 ms (5 fresh engines, key-7af2dd3422e9df4a,
+  // 2026-11-27), Home's whole Enter about 250 ms (the row on a fresh engine 290-320 ms, its load 23-38 ms, host load 2-3). It keeps
+  // its answer at a clock ×8 (3 of 3), stops at ×9 and ×10 once in 3 and at ×11 3 of 3, so ×8 differs under the load of other
+  // runs' checks (run 1683, G807, a units package)
+  "precision/g405-keep-solve-x3-3x+2-1e-22": "HOME_DEADLINE_MS",
 };
 
 const root = fileURLToPath(new URL("../../", import.meta.url));

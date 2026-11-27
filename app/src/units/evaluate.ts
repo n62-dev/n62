@@ -59,7 +59,9 @@ const BOOL = "['<','<=','>','>=','==','=','!=','and','or','not','xor','piecewise
  * - pasun(f,g): the number of f in the unit g (the agreement check runs it again at higher precision);
  * - pasuo(a,b) (G41): σ from its first-order part a and second-order part b (both in the result's dimension squared):
  *   [pasuq's answer for σ, the share |b|/(a+b)]; σ² = a + b when that is above 0, else a with the share 2 (first order
- *   fails). pasuq reads σ² and σ is its square root (pasuq on a square root of sums of sin and cos costs 10 ms);
+ *   fails). pasuq reads σ² and σ is its square root (pasuq on a square root of sums of sin and cos costs 10 ms). G807: a,
+ *   b and the share are 30-digit floats, whose exponent has no double's range: a σ under 1E-154 (σ² under 1E-308) gets
+ *   the share of the same formula at size 1 (a double made σ² 0, so ⚠ and the first order alone);
  * - pasusg(e,t,a,s) (G41): 1 when a real point where e (f's derivative in t) is not defined lies within a ± 2s, else 0;
  * - pasujl(e,q) (G143): the step functions in e, as a flat list [kind, argument, …]: kind 0 jumps where the argument is an
  *   integer (floor, ceil, trunc, iPart, frac, fPart; Giac writes ceil, trunc, round and frac with floor and sign), 2 at
@@ -121,8 +123,8 @@ export const UNIT_DEFINITIONS: readonly string[] = [
   `pasup(pasm_):={if (denom(normal(pasm_))==1) return 10^pasm_; return exp(pasm_*ln(10)); }`,
   `pasul(pase_):={local pasr_,pass_; pasr_:=normal(pase_); pass_:=simplify(pasr_); if (length(string(pass_))<length(string(pasr_))) return pass_; return pasr_; }`,
   `pasun(pasf_,pasg_):={local pasa_,pasb_; pasa_:=pasuq(normal(pasf_)); pasb_:=pasuq(normal(pasg_)); return normal(pasa_[2]/pasb_[2]); }`,
-  `pasuo(pasa_,pasb_):={local pasx_,pasy_,past_,pasr_,pasq_; if (pasa_==0 and pasb_==0) return [[4],0]; pasx_:=evalf(subst(pasa_,${S},${ONES})); pasy_:=evalf(subst(pasb_,${S},${ONES})); ` +
-    `if (pasx_+pasy_>0) { past_:=pasa_+pasb_; pasr_:=abs(pasy_)/(pasx_+pasy_); } else { past_:=pasa_; pasr_:=2; } pasq_:=pasuq(normal(past_)); ` +
+  `pasuo(pasa_,pasb_):={local pasx_,pasy_,past_,pasr_,pasq_; if (pasa_==0 and pasb_==0) return [[4],0]; pasx_:=evalf(subst(pasa_,${S},${ONES}),30); pasy_:=evalf(subst(pasb_,${S},${ONES}),30); ` +
+    `if (pasx_+pasy_>0) { past_:=pasa_+pasb_; pasr_:=evalf(abs(pasy_)/(pasx_+pasy_),30); } else { past_:=pasa_; pasr_:=2; } pasq_:=pasuq(normal(past_)); ` +
     `if (pasq_[0]==0) return [[0,pasq_[1]/2,sqrt(pasq_[2])],pasr_]; return [pasq_,pasr_]; }`,
   `pasusg(pase_,past_,pasa_,pass_):={local pasL_,pasj_,pasp_; pasL_:=singular(pase_,past_); if (type(pasL_)!=DOM_LIST) return 0; ` +
     `for (pasj_:=0;pasj_<size(pasL_);pasj_++) { pasp_:=evalf(pasL_[pasj_]); if (im(pasp_)==0 and abs(pasp_-pasa_)<=2*pass_) return 1; } return 0; }`,

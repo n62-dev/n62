@@ -109,7 +109,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | B9a | G791 hamdist: signed reads, opposite signs refused | gorge, Opus | `p1/gorge-hamdistsigned` | – |
 | B11 | [G381](packages/G381.md) a float list stays a list | gorge, Opus | `p1/gorge-storedlist` | – |
 | B12 | G382 a decimal inside a string is never rounded | gorge, Opus | `p1/gorge-stringdigits` | – |
-| B12a | [G807](packages/G807.md) a tiny σ keeps its second order, no false ⚠ (F490, pass 251) | gorge, Opus | `p1/gorge-tinysigma` | – |
+| B12a | G807 a tiny σ keeps its second order, no false ⚠ (F490, pass 251) | gorge, Opus | `p1/gorge-tinysigma` | – |
 | B12b | [R935](packages/R935.md) a value rounding to 0 at σ draws no 21-digit σ (F491, pass 251) | ron, Opus | `p1/ron-zerosigma` | – |
 | B13 | [G550](packages/G550.md) a Home row whose σ cannot be carried says so | gorge, Opus | `p1/gorge-sigmalost` | – |
 | B14 | [G400](packages/G400.md) Export › CSV and LaTeX carry a Home row's σ | gorge, Opus | `p1/gorge-exportsigma` | – |
