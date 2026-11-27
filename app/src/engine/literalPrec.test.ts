@@ -34,9 +34,10 @@ describe("literalDigits", () => {
     expect(literalDigits("api^200+e^200+x^200", "typed")).toBe(3);
     expect(literalDigits("myexp(200)+exp(200*x)+exp(x+200)", "typed")).toBe(3);
     expect(literalDigits("pi^(200*x)", "typed")).toBe(3);
-    // G403: a constant exponent that is no integer literal is sized by its double (200.5·log10 e, 200.5·log10 pi)
-    expect(literalDigits("exp(200.5)", "typed")).toBe(88);
-    expect(literalDigits("pi^200.5", "typed")).toBe(100);
+    // G403: alone they count nothing; beside a tiny constant they are sized by their double (200.5·log10 e, 200.5·log10 pi)
+    expect(literalDigits("exp(200.5)+pi^200.5", "typed")).toBe(0);
+    expect(literalDigits("(1+exp(-200.5))^exp(200.5)", "typed")).toBe(88);
+    expect(literalDigits("(1+pi^-200.5)^pi^200.5", "typed")).toBe(100);
     expect(literalDigits(`"exp(200)"+"pi^200"+1`, "typed")).toBe(1);
   });
 });
@@ -161,10 +162,11 @@ describe("a power of a constant base (G363)", () => {
     // a base 0 in exact maths that the double rounds (cos(pi/2) is 6.1E-17) counts too many digits: a later start or ⚠, never ≈
     expect(literalDigits("cos(pi/2)^5", "typed")).toBe(82); // ⌈5·16.21⌉
     expect(literalDigits("sin(1)^(5000*x)", "typed")).toBe(4);
-    // G403: a constant exponent that is no integer literal, sized by its double
-    expect(literalDigits("sin(1)^5000.5", "typed")).toBe(375);
-    // a right-associative exponent is no literal; G403: the power is sized by its double (25000000·log10(1/sin(1)))
-    expect(literalDigits("sin(1)^(5000)^2", "typed")).toBe(1874022);
+    // G403: a constant exponent that is no integer literal, sized by its double beside a tiny constant
+    expect(literalDigits("sin(1)^5000.5", "typed")).toBe(1);
+    expect(literalDigits("(1+sin(1)^5000.5)^(1/sin(1)^5000.5)", "typed")).toBe(375);
+    // a right-associative exponent is no literal; its own power (5000² = 25000000) counts as one (alone, G403 too)
+    expect(literalDigits("sin(1)^(5000)^2", "typed")).toBe(8);
     expect(literalDigits(`"sin(1)^5000"+1`, "typed")).toBe(1);
     // a base of exactly 1 is no magnitude; an integer base stays a power of two integer literals (G141)
     expect(literalDigits("cos(0)^5000", "typed")).toBe(4);
@@ -261,14 +263,20 @@ describe("a constant subterm the double can size (G403)", () => {
     expect(at("2^100")).toEqual({ at: 43, unchecked: false });
     expect(at("exp(10000000)")).toEqual({ at: 20, unchecked: false });
   });
-  it("reads a text that is no arithmetic call by call, and a place read modulo a period", () => {
+  it("reads a text that is no arithmetic part by part, a place read modulo a period, and a constant alone", () => {
     expect(at("[(1+1/cosh(300))^cosh(300),2]")).toEqual({ at: 142, unchecked: false });
     expect(at("sin(exp(100*pi))")).toEqual({ at: 149, unchecked: false });
-    // exp(exp(8)) has 1295 digits (exp(8)·log10 e = 1294.6): alone it rounds nothing away (G307f1), in sin it is the
-    // argument, and with a small value beside it past the cap: ⚠
-    expect(at("exp(exp(8))")).toEqual({ at: 13, unchecked: false });
+    // exp(exp(8)) has 1295 digits (exp(8)·log10 e = 1294.6): alone it rounds nothing away (G307f1; its exp(8) counts 4,
+    // G307, as on phase-1), in sin it is the argument, and with a small value beside it past the cap: ⚠
+    expect(at("exp(exp(8))")).toEqual({ at: 16, unchecked: false });
+    expect(at("exp(200000000*1/2)")).toEqual({ at: 21, unchecked: false });
+    expect(at("(1/2)^(1073741000+sqrt(2))")).toEqual({ at: 22, unchecked: false });
     expect(at("sin(exp(exp(8)))")).toEqual({ at: 12, unchecked: true });
     expect(at("(1+exp(-exp(8)))^(exp(exp(8)))")).toEqual({ at: 12, unchecked: true });
-    expect(literalPastCap("exp(exp(8))", 12, 1000, "printed")).toBe(true);
+    // a decision reads it only in a place read modulo a period (sqrt(exp(2e8)) is decided, g58-sqrt-exp-2e8-12)
+    expect(literalPastCap("exp(exp(8))", 12, 1000, "printed")).toBe(false);
+    expect(literalPastCap("sin(exp(exp(8)))", 12, 1000, "printed")).toBe(true);
+    // ±Infinity, a size constantLog10 cannot tell (asinh of a value below the double's range), counts nothing
+    expect(literalStart("evalf(asinh(10^-400))", 40, 1000, "typed")).toEqual({ at: 441, unchecked: false });
   });
 });

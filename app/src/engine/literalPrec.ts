@@ -8,7 +8,7 @@
 // general cure). The literals are read by giacPrint's number reader. Only erasable TypeScript syntax, so Node runs this
 // file directly.
 import type { PrecisionWarn } from "./format.ts";
-import { arithmeticOf, type Arith, callsOf, integerLiteral, isNameChar, namesIn, negated, numbers, powersIn, withoutStrings, type Quoting } from "./giacPrint.ts";
+import { arithmeticOf, type Arith, callsOf, closing, topLevelArgs, integerLiteral, isNameChar, namesIn, negated, numbers, powersIn, withoutStrings, type Quoting } from "./giacPrint.ts";
 import { PERIODIC } from "./converge.ts";
 import { constantLog10 } from "./constDouble.ts";
 
@@ -102,9 +102,10 @@ function nesting(text: string): number {
 /** G403: log10 |t| of every subterm t of `text` that holds a name or a call and that constantLog10 sizes (`exp(-100*pi)`,
  *  `1/cosh(1000)`, `1-erf(12)`, `ln(1+sin(1)^5000)^2`), and whether it stands in a place read modulo a period (the
  *  argument of a PERIODIC call or the exponent of a negative base, as periodicPlaces). One walk of arithmeticOf's tree of
- *  the whole text, or, when it is no arithmetic (a list, a call of several arguments), of each call that is. */
-function constantTerms(text: string, q: Quoting): { log10: number; periodic: boolean }[] {
-  const out: { log10: number; periodic: boolean }[] = [];
+ *  the whole text, or, when it is no arithmetic (a list, a call of several arguments), of each argument or element that is. */
+function constantTerms(text: string, q: Quoting): { log10: number; periodic: boolean; whole: boolean }[] {
+  const out: { log10: number; periodic: boolean; whole: boolean }[] = [];
+  let root: Arith | null = null;
   // whether `a` holds a name or a call (numbers alone are the literal rules' own)
   const walk = (a: Arith, periodic: boolean): boolean => {
     if (a.op === "num") return false;
@@ -112,18 +113,33 @@ function constantTerms(text: string, q: Quoting): { log10: number; periodic: boo
     if (a.op === "call") walk(a.arg, periodic || PERIODIC.has(a.name));
     else if (a.op === "neg") named = walk(a.a, periodic);
     else if (a.op !== "name") named = [walk(a.a, periodic), walk(a.b, periodic || (a.op === "^" && a.a.op === "neg"))].includes(true);
+    // ±Infinity is constantLog10's "of unknown size" (asinh(10^-400)): no count
     const log10 = named ? constantLog10(a) : NaN;
-    if (!Number.isNaN(log10)) out.push({ log10, periodic });
+    if (Number.isFinite(log10)) out.push({ log10, periodic, whole: a === root });
     return named;
   };
   if (nesting(text) > MAX_NESTING) return out;
-  const whole = arithmeticOf(text, q);
-  if (whole) walk(whole, false);
-  else {
-    let places: [number, number][] | null = null;
-    for (const c of callsOf(text, undefined, q)) {
-      const a = c.close < 0 ? null : arithmeticOf(text.slice(c.at, c.close + 1), q);
-      if (a) walk(a, (places ??= periodicPlaces(text, q)).some(([from, to]) => c.at >= from && c.at < to));
+  const whole = (root = arithmeticOf(text, q));
+  if (whole) {
+    walk(whole, false);
+    return out;
+  }
+  // each argument or element of a bracket, outermost first, that no part read before holds
+  const t = withoutStrings(text, (x) => " ".repeat(x.length), q);
+  const places = periodicPlaces(text, q);
+  let covered = -1;
+  for (let k = 0; k < t.length; k++) {
+    if (k < covered || !"([{".includes(t.charAt(k))) continue;
+    const close = closing(t, k, "typed");
+    if (close < 0) continue;
+    let from = k + 1;
+    for (const part of topLevelArgs(t.slice(k + 1, close), "typed")) {
+      const a = arithmeticOf(text.slice(from, from + part.length), q);
+      if (a) {
+        walk(a, places.some(([p, r]) => from >= p && from < r));
+        covered = Math.max(covered, from + part.length);
+      }
+      from += part.length + 1;
     }
   }
   return out;
@@ -131,7 +147,7 @@ function constantTerms(text: string, q: Quoting): { log10: number; periodic: boo
 
 /** literalDigits, and the same count without the powers of a constant or exp (constantPower) that stand outside every place read
  *  modulo a period (periodicPlaces, G348). */
-function literalCounts(text: string, q: Quoting): { digits: number; withoutHuge: number } {
+function literalCounts(text: string, q: Quoting): { digits: number; withoutHuge: number; decided: number } {
   const ints = [...numbers(text, q)].filter((n) => n.exp === undefined && !n.mant.includes("."));
   let total = 0;
   let withoutHuge = 0;
@@ -155,9 +171,15 @@ function literalCounts(text: string, q: Quoting): { digits: number; withoutHuge:
     if (a < 2 || b === 0) return;
     count(Math.floor(b * Math.log10(a)) + 1);
   });
-  // G403: a huge or tiny constant counts as the power of a constant does (constantPower)
-  for (const t of constantTerms(text, q)) count(Math.ceil(Math.abs(t.log10)), !t.periodic);
-  return { digits: total, withoutHuge };
+  // G403: a huge or tiny constant counts as the power of a constant does (constantPower); for a decision
+  // (literalPastCap) only in a place read modulo a period, so sqrt(exp(2e8)) is still decided (g58-sqrt-exp-2e8-12)
+  // outside such a place only beside a tiny constant, the term a sum rounds away (`1/cosh(1000)` in `1+1/cosh(1000)`):
+  // alone a huge or tiny value is right at every level (`exp(200000000*1/2)`, g58-sqrt-exp-2e8-12; `(1/2)^(1073741000+sqrt(2))`)
+  const decided = total;
+  const terms = constantTerms(text, q);
+  const tiny = terms.some((t) => !t.whole && t.log10 < -LITERAL_MARGIN);
+  for (const t of terms) if (tiny || t.periodic) count(Math.ceil(Math.abs(t.log10)), !t.periodic);
+  return { digits: total, withoutHuge, decided: Math.max(decided, withoutHuge) };
 }
 
 /**
@@ -207,12 +229,13 @@ export function literalStart(text: string, P: number, cap: number, q: Quoting): 
 
 /**
  * G307 fix round 2: `text` holds an exact magnitude that no precision we run holds, a huge power of pi or exp included
- * (the full literalDigits count, which literalStart leaves out for the value). The decisions read this (decideTwice): a
+ * (the full literalDigits count, which literalStart leaves out for the value; G403's constant subterms only in a place read
+ * modulo a period). The decisions read this (decideTwice): a
  * value is right at every level when alone it rounds no term away, but a sign or a branch taken on it is not, as at
  * P0 + 40 pi^2200 is off by about 10^1054 and the sign of sin(pi^2200) is a coin toss, as for sin(10^2000) (G156).
  */
 export function literalPastCap(text: string, P: number, cap: number, q: Quoting): boolean {
-  const n = literalDigits(text, q);
+  const n = literalCounts(text, q).decided;
   return n + LITERAL_MARGIN > P && n + P + LEVELS_ABOVE > cap;
 }
 
