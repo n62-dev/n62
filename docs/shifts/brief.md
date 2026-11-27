@@ -113,7 +113,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | B5k | [A281f1](packages/A281f1.md) A281's clipboard per test made to pass: reload-proof store, core on the real clipboard, timing tests shielded (owner, 2026-11-26: asap; Opus, not Fable) | annabell, Opus | `p1/annabell-pageclip` | – |
 | B6i | G800 a unit sweep | gorge, Opus | `p1/gorge-unitsweep` | R885 |
 | B9 | [G403](packages/G403.md) a tiny constant raises the check's start | gorge, Opus | `p1/gorge-tinyconst` | – |
-| B9a | [G791](packages/G791.md) hamdist: signed reads, opposite signs refused | gorge, Opus | `p1/gorge-hamdistsigned` | – |
+| B9a | G791 hamdist: signed reads, opposite signs refused | gorge, Opus | `p1/gorge-hamdistsigned` | – |
 | B10 | [G385](packages/G385.md) a bracketed ΔT in arithmetic | gorge, Opus | `p1/gorge-tempdiffarith` | – |
 | B11 | [G381](packages/G381.md) a float list stays a list | gorge, Opus | `p1/gorge-storedlist` | – |
 | B12 | [G382](packages/G382.md) a decimal inside a string is never rounded | gorge, Opus | `p1/gorge-stringdigits` | – |
