@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // G141: the precision a long exact literal needs (literalPrec.ts). Engine-free; the values are counted by hand.
+import { cpus, loadavg } from "node:os";
 import { describe, expect, it } from "vitest";
 import { literalDigits, literalPastCap, literalStart, uncheckedPastCap } from "./literalPrec.ts";
 
@@ -306,21 +307,29 @@ describe("a long chain of terms (G403f1)", () => {
     ["a sum of sin(1)", "sin(1)", "+", { at: 13, unchecked: false }],
     ["a product of pi", "pi", "*", { at: 12, unchecked: false }],
   ];
+  // the time this thread runs (its CPU time), the best of three whole readings (no cache outlives a call): the suite's other
+  // files and other runs' checks share the host, and one call's wall clock tripled under them (a sum of 30000 sin(1): 70 ms
+  // alone, 205 to 275 ms in the suite). G403f2: a bar on the growth, not on the ms (an absolute 200 ms failed twice under load)
+  const bestMs = (text: string): number =>
+    Math.min(...[0, 1, 2].map(() => {
+      const t0 = process.threadCpuUsage();
+      literalStart(text, 12, 4000, "typed");
+      const t = process.threadCpuUsage(t0);
+      return (t.user + t.system) / 1000;
+    }));
   for (const n of [10000, 30000])
     for (const [name, term, op, start] of cases)
-      it(`${name}, ${n} terms: phase-1's start, no throw, under 200 ms`, () => {
+      it(`${name}, ${n} terms: phase-1's start, no throw${n === 30000 ? ", 30000 take at most 6 times 10000 and under 1000 ms" : ""}`, () => {
         const text = chain(term, op, n);
         expect(literalStart(text, 12, 4000, "typed")).toEqual(start);
-        // the time this thread runs (its CPU time), the best of three whole readings (no cache outlives a call): the
-        // suite's other files and other runs' checks share the host, and one call's wall clock tripled under them (a sum
-        // of 30000 sin(1): 70 ms alone, 205 to 275 ms in the suite)
-        const ms = [0, 1, 2].map(() => {
-          const t0 = process.threadCpuUsage();
-          literalStart(text, 12, 4000, "typed");
-          const t = process.threadCpuUsage(t0);
-          return (t.user + t.system) / 1000;
-        });
-        expect(Math.min(...ms)).toBeLessThan(200);
+        if (n !== 30000) return;
+        const busy = loadavg()[0] ?? 0;
+        if (busy > cpus().length) { console.warn(`literalPrec: host load ${busy.toFixed(1)} > ${cpus().length} cores; the growth and ceiling checks of ${name} are skipped`); return; }
+        // a linear walk takes 3 times as long for 3 times the text, a quadratic one 9 times
+        const small = bestMs(chain(term, op, 10000));
+        const big = bestMs(text);
+        expect(big, `30000 terms ${big.toFixed(1)} ms, 10000 terms ${small.toFixed(1)} ms`).toBeLessThan(1000);
+        expect(big, `30000 terms ${big.toFixed(1)} ms, 10000 terms ${small.toFixed(1)} ms`).toBeLessThanOrEqual(6 * small);
       });
   it("reads a deep tree with no recursion of constDouble.ts either (a power's base, a product beside a sum)", () => {
     expect(() => literalStart(`(${chain("1", "+", 10000)})^2`, 12, 4000, "typed")).not.toThrow();

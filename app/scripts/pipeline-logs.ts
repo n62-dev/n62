@@ -144,6 +144,8 @@ export function isTiming(check: Check, item: Item): boolean {
       (item.file.endsWith("engine/converge.test.ts") && /Home and CAS refuse 3\*int\(1\/x,x,-1,1\)\+1$/.test(item.title)) ||
       (item.file.endsWith("engine/host.test.ts") && /switching CAS -> Home restores Home's 300 ms budget/.test(item.title)) ||
       (item.file.endsWith("engine/valueKind.test.ts") && /10\^1000000\+7 is exact/.test(item.title)) ||
+      // G403f2: the growth and ceiling checks of a long chain of terms, in the 30000-term tests
+      (item.file.endsWith("engine/literalPrec.test.ts") && /terms: phase-1's start, no throw/.test(item.title)) ||
       (item.file.endsWith("input/fuzz.test.ts") && /20000 random token strings parse or fail/.test(item.title));
   }
   if (check === "e2e") return E2E_TIMING.some((t) => t.file === item.file && t.title.test(item.title));
