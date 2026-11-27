@@ -766,8 +766,7 @@
   .shifted .arrows {
     color: var(--key-shift);
   }
-  .alphaed .main,
-  .alphaed .arrows {
+  .alphaed .main {
     color: var(--key-alpha);
   }
   /* R728: a key with no letter does its tap under Alpha: the tap's colour (the arrows too); :where leaves Enter's and the dim to win */
@@ -832,15 +831,12 @@
     white-space: nowrap;
     pointer-events: none;
   }
-  /* the key pop (R162): the same box in the key's own text colour; no fade, no motion */
-  .bubble.pop {
-    border-color: var(--key-text);
-    color: var(--key-text);
-  }
   .bubble[data-dir="down"] {
     border-color: var(--alpha);
     color: var(--alpha);
   }
+  /* the key pop (R162): the same box in the key's own text colour; no fade, no motion. R728: so is a flick down that is the tap */
+  .bubble.pop,
   .bubble[data-tap="true"] {
     border-color: var(--key-text);
     color: var(--key-text);
