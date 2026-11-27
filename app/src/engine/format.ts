@@ -417,7 +417,7 @@ function weakest(a: MarkInfo, b: MarkInfo): MarkInfo {
 export function markOf(f: PrecisionFacts, o: FormatOptions): MarkInfo | null {
   const m = markOfValue(f, o);
   // G550: a σ input whose σ is not carried (why.sigmaLost) is ⚠ on any row with a mark, never = or a bare ≈
-  return m && f.why?.sigmaLost?.length && m.mark !== "⚠" ? { mark: "⚠" } : m;
+  return m && m.mark !== "⚠" && f.why?.sigmaLost ? { mark: "⚠" } : m;
 }
 
 function markOfValue(f: PrecisionFacts, o: FormatOptions): MarkInfo | null {
