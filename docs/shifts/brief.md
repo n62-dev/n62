@@ -66,7 +66,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 888n1 | R885 one σ drawing rule | ron, Opus | `p1/ron-sigmarule` | R883 |
 | 888n2 | R886 a unit row keeps σ's ⚠ | ron, Opus | `p1/ron-sigmawarn` | R885 |
 | 888o | R884 Settings › Uncertainty: "Rounded to σ" | ron, Opus | `p1/ron-uncround` | R885 |
-| 890 | [R742](packages/R742.md) zebra history rows; the picked row's edge | ron, Opus | `p1/ron-zebra` | R832, R743 |
+| 890 | R742 zebra history rows; the picked row's edge | ron, Opus | `p1/ron-zebra` | R832, R743 |
 | 891 | [R728](packages/R728.md) the keys say what they do | ron, Opus | `p1/ron-keyssay` | R723, R726 |
 | 892 | [R729](packages/R729.md) key legends: armed ring, locked fill (K4) | ron, Opus | `p1/ron-keylegends` | R723, R726, R728 |
 | 892a | [R864](packages/R864.md) the letter in a template key is italic | ron, Opus | `p1/ron-templateitalic` | R728, R729 |
