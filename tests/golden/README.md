@@ -25,6 +25,7 @@ The Cases column is written by `npm run trust:refresh` and checked by `npm run t
 | `sweep-known.yaml` | — | G61: the oracle sweep's failures today (`app/scripts/sweep.ts`), each with the package whose fix removes it |
 | `seqsweep-known.yaml` | — | G62: the sequence sweep's failures today (`app/scripts/seqsweep.ts`), each with its backlog id |
 | `viewsweep-known.yaml` | — | G63: the view sweep's failures today (`app/scripts/viewsweep.ts`), each with its backlog id |
+| `unitsweep-known.yaml` | — | G800: the unit sweep's failures today (`app/scripts/unitsweep.ts`: round trips, σ against the GUM, one drawing in four formats), each with its finding or backlog id |
 | `casback-known.yaml` | — | G64: the CAS check-back's failures today (`app/scripts/casback.ts`), each with its backlog id |
 | `findcensus-known.yaml` | — | G110: the census of Find's tier-1 functions (`app/scripts/findcensus.ts`): each function's classes in Home and CAS |
 | `giaccheck-known.yaml` | — | A19: the inputs of Giac's own check suite whose answer differs on our build (`tools/probes/giac-check.mjs`) |

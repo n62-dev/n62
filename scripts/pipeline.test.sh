@@ -388,6 +388,12 @@ done
 for st in "${ENGINE_STAGES[@]}" golden behaviour-diff; do
   grep -qxF "app/scripts/$st.ts" <<<"$clo" || fail "A277: stage $st is not an entry of tools/golden-closure.mjs"
 done
+# G800: the unit sweep is an engine stage and a nightly tool; its scripts and known file plan golden
+[[ " ${ENGINE_STAGES[*]} " == *" unitsweep "* ]] && printf '%s\n' "${NIGHTLY_TOOLS[@]}" | grep -qx 'unitsweep:scripts/unitsweep.ts' || fail "G800: unitsweep is not in ENGINE_STAGES and NIGHTLY_TOOLS"
+for f in app/scripts/unitsweep.ts app/scripts/unitsweep-checks.ts app/scripts/unitsweep-gen.ts tests/golden/unitsweep-known.yaml; do
+  printf '%s\n' "$f" | golden_selected || fail "G800: a diff touching only $f does not plan the golden check"
+done
+printf '  unitsweep NEW PFX 12 x [form]: y\nUNITSWEEP FAILED: 1\n' > "$tmp/st3.log"; stage_findings "$tmp/st3.log" >/dev/null || fail "G800: a NEW unitsweep line is not a stage finding"
 printf '%s\n' app/src/units/open.ts app/src/units/build.ts | golden_selected || fail "A277: a diff with one closure file and one outside does not plan the golden check"
 for f in engine/giac/x.patch tests/golden/x.yaml find/x.yaml tools/find-index/x.mjs app/src/units/x.yaml app/src/units/x.json app/src/input/x.yaml app/src/input/x.json; do
   printf '%s\n' "$f" | golden_selected || fail "A277: a diff touching only $f does not plan the golden check"
@@ -435,7 +441,7 @@ stage_findings "$tmp/st2.log" >/dev/null && fail "A25: a known stage line is a f
 # A25 item 5, behaviour: a sandbox whose sweep prints NOW PASSING (exit 0) fails the checks once golden runs
 s5="$tmp/s5"; mkdir -p "$s5/bin" "$s5/tools" "$s5/docs/shifts" "$s5/app/scripts"; git init -q -b main "$s5"
 cp "$sb/tools/devlock.sh" "$s5/tools/"; : > "$s5/docs/shifts/brief.md"; echo t > "$s5/app/keep"
-for st in sweep seqsweep casback viewsweep findcensus; do echo 'console.log("fine");' > "$s5/app/scripts/$st.ts"; done
+for st in "${ENGINE_STAGES[@]}"; do echo 'console.log("fine");' > "$s5/app/scripts/$st.ts"; done
 echo 'console.log("  sweep NOW PASSING g1: remove it from sweep-known.yaml"); console.log("SWEEP PASSED: 1 runs");' > "$s5/app/scripts/sweep.ts"
 cp "$sb/bin/claude" "$s5/bin/"; printf '#!/bin/sh\n[ "$1" = ci ] && { mkdir -p node_modules/x; exit 0; }\nexit 0\n' > "$s5/bin/npm"; chmod +x "$s5/bin/"*
 git -C "$s5" add -A; gc "$s5" init; git -C "$s5" branch phase-1
@@ -485,7 +491,7 @@ printf 'a\tt\na\tt\n' > "$tmp/d1"; : > "$tmp/d2"
 [[ -z "$(flaky_items 2 "$tmp/d1" "$tmp/d1")" ]] || fail "A37: a duplicate line in two runs is not always failing"
 
 # A273: `nightly <n>` runs each family tool (NIGHTLY_TOOLS) once under host-cpu and logs one NIGHTLY line per tool; a failing tool is a
-# FAILED line and the step goes on; a busy host-cpu is SKIPPED. Sandbox with fake sweep.ts, casback.ts and viewsweep.ts (G805) in the phase-1 tree.
+# FAILED line and the step goes on; a busy host-cpu is SKIPPED. Sandbox with fake sweep.ts, casback.ts, viewsweep.ts (G805) and unitsweep.ts (G800) in the phase-1 tree.
 out="$("$script" nightly 3 --dry-run 2>&1)"; rc=$?
 [[ $rc -eq 0 ]] || fail "A273: nightly --dry-run: exit $rc: $out"
 for want in 'host-cpu' 'sweep' 'casback' '--nightly' '.tasks/nightly-' '1200 s' 'NIGHTLY 3 <tool>: <runs> runs, <known> known, <new> new (seed <s>)' 'NIGHTLY 3: SKIPPED (host-cpu)'; do
@@ -518,6 +524,14 @@ console.log("known (G94) rad home 1 x [crash]: z");
 console.log("FINDING rad cas 0.3 \\sin\\left(x\\right) [mark]: w");
 console.log("VIEWSWEEP NIGHTLY: 3 failures (2 not in the known files); 1180 runs (comparisons) of 600 expressions (seed 20417), total 400.0 s; 3 engine restarts, 90000 Giac calls, heap up to 300 MB");
 STUB
+# G800: unitsweep's nightly line as unitsweep.ts prints it
+cat > "$nt/app/scripts/unitsweep.ts" <<'STUB'
+import { appendFileSync } from "node:fs";
+appendFileSync(process.env["NT_CALLS"] ?? "/dev/null", `unitsweep ${process.argv.slice(2).join(" ")} in ${process.cwd()} giac ${process.env["GIAC_OUT"]}\n`);
+console.log("UNITSWEEP SEED 31 (repeat: node scripts/unitsweep.ts --nightly --seed 31 --count 2000)");
+console.log("FINDING PFX 12 pasupm(4.7,0.1)*{k:m} [form]: v");
+console.log("UNITSWEEP NIGHTLY: 2 failures (1 not in the known files); 11000 runs of 2000 cases (seed 31), 30.0 s");
+STUB
 # G805: viewsweep runs at the count NIGHTLY_TOOLS gives it (a whole run at its default 600 passes the 1200 s limit), after --nightly
 vs_count="$(printf '%s\n' "${NIGHTLY_TOOLS[@]}" | sed -n 's/^viewsweep:scripts\/viewsweep\.ts --count \([0-9][0-9]*\)$/\1/p')"
 [[ -n "$vs_count" && "$vs_count" -lt 600 ]] || fail "G805: NIGHTLY_TOOLS does not run viewsweep with a --count under 600: ${NIGHTLY_TOOLS[*]}"
@@ -526,11 +540,11 @@ git -C "$nt" add -A; gc "$nt" init; git -C "$nt" branch phase-1
 ntrun() { (cd "$nt" && PATH="$sb/bin:$PATH" GIAC_OUT="$nt/engine" NT_CALLS="$nt/calls" N62_NIGHTLY_WAIT=2 "$@" "$script" nightly 7 2>&1); }
 out="$(ntrun env)"; rc=$?
 [[ $rc -eq 0 ]] || fail "A273: nightly: exit $rc: $out"
-for want in 'NIGHTLY 7 sweep: 25000 runs, 2 known, 1 new (seed 42)' 'NIGHTLY 7 casback: 1100 runs, 2 known, 0 new (seed 9)' 'NIGHTLY 7 viewsweep: 1180 runs, 1 known, 2 new (seed 20417)'; do
+for want in 'NIGHTLY 7 sweep: 25000 runs, 2 known, 1 new (seed 42)' 'NIGHTLY 7 casback: 1100 runs, 2 known, 0 new (seed 9)' 'NIGHTLY 7 viewsweep: 1180 runs, 1 known, 2 new (seed 20417)' 'NIGHTLY 7 unitsweep: 11000 runs, 1 known, 1 new (seed 31)'; do
   grep -qF -- "$want" "$nt/.coord/log.md" || fail "A273: the log lacks '$want': $(cat "$nt/.coord/log.md")"
   grep -qF -- "$want" <<<"$out" || fail "A273: the RESULT line lacks '$want': $out"
 done
-[[ "$(wc -l < "$nt/calls")" -eq 3 && "$(grep -c '^sweep --nightly in .*/app giac ' "$nt/calls")" -eq 1 && "$(grep -c '^casback --nightly in .*/app giac ' "$nt/calls")" -eq 1 && "$(grep -c "^viewsweep --nightly --count $vs_count in .*/app giac " "$nt/calls")" -eq 1 ]] || fail "A273: each tool is not run once with --nightly in the phase-1 tree's app: $(cat "$nt/calls")"
+[[ "$(wc -l < "$nt/calls")" -eq 4 && "$(grep -c '^unitsweep --nightly in .*/app giac ' "$nt/calls")" -eq 1 && "$(grep -c '^sweep --nightly in .*/app giac ' "$nt/calls")" -eq 1 && "$(grep -c '^casback --nightly in .*/app giac ' "$nt/calls")" -eq 1 && "$(grep -c "^viewsweep --nightly --count $vs_count in .*/app giac " "$nt/calls")" -eq 1 ]] || fail "A273: each tool is not run once with --nightly in the phase-1 tree's app: $(cat "$nt/calls")"
 grep -q "giac $nt/engine\$" <<<"$(head -n1 "$nt/calls")" || fail "A273: the tools do not get the shared GIAC_OUT: $(cat "$nt/calls")"
 nrep="$(ls "$nt"/.tasks/nightly-*-7.md 2>/dev/null | head -n1)"
 [[ -n "$nrep" ]] && grep -q 'FINDING angle 12' "$nrep" && ! grep -q 'known (G79' "$nrep" || fail "A273: .tasks/nightly-<date>-7.md is missing or does not hold the findings that are not known rows: $(cat "$nrep" 2>/dev/null)"
@@ -1811,7 +1825,7 @@ STUB
 printf '| Patch | Why |\n|---|---|\n' > "$fr/engine/giac/patches/README.md"; : > "$fr/docs/shifts/brief.md"; echo t > "$fr/app/keep"; echo node_modules/ > "$fr/.gitignore"
 # A279: the trust files: tests/golden/home.yaml holds one row a line; tests/golden/README.md says how many (npm run trust:check compares, trust:refresh writes it)
 mkdir -p "$fr/tests/golden" "$fr/app/scripts"; printf 'cases:\n- { id: a }\n' > "$fr/tests/golden/home.yaml"; echo 'cases: 2' > "$fr/tests/golden/README.md"
-for st in sweep seqsweep casback viewsweep findcensus; do echo 'console.log("fine");' > "$fr/app/scripts/$st.ts"; done
+for st in "${ENGINE_STAGES[@]}"; do echo 'console.log("fine");' > "$fr/app/scripts/$st.ts"; done
 cat > "$fr/bin/npm" <<STUB
 #!/bin/sh
 case "\$*" in
@@ -1928,7 +1942,7 @@ grep '^worker_prompt=' "$here/pipeline.sh" | grep -qF 'npm run trust:refresh' &&
 ab="$tmp/ab"; mkdir -p "$ab/bin" "$ab/tools" "$ab/docs/shifts" "$ab/app/scripts"; git init -q -b main "$ab"
 printf '#!/bin/sh\necho "$*" >> "%s/locks"\nexit 0\n' "$ab" > "$ab/tools/devlock.sh"
 echo 'process.exit(0);' > "$ab/tools/docs-check.mjs"; cp "$ab/tools/docs-check.mjs" "$ab/tools/docs-check.test.mjs"
-for st in sweep seqsweep casback viewsweep findcensus; do echo 'console.log("fine");' > "$ab/app/scripts/$st.ts"; done
+for st in "${ENGINE_STAGES[@]}"; do echo 'console.log("fine");' > "$ab/app/scripts/$st.ts"; done
 : > "$ab/docs/shifts/brief.md"; echo node_modules/ > "$ab/.gitignore"
 printf '%s\n' "import fs from 'node:fs'; fs.appendFileSync('$ab/seen', 'behaviour\n'); fs.appendFileSync('$ab/locks', 'behaviour\n'); console.log('none');" > "$ab/behaviour.mjs"
 cat > "$ab/bin/npm" <<STUB

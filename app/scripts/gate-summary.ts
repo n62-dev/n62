@@ -238,6 +238,16 @@ export function summarizeViewSweep(out: string, exitCode: number): Summary {
   return { ok: false, detail: news.length > 0 ? `${news.length} to look at: ${news.slice(0, 2).join(" | ")}; ${tail}` : tail };
 }
 
+/** G800: the unit sweep (scripts/unitsweep.ts) ends in `UNITSWEEP PASSED|FAILED: <r> runs of <c> cases (seed <s>), <t> s; <k> known failures, <n> new, <p> now passing[ (over 30 s)]`; the lines before it name each NEW or NOW PASSING one. */
+export function summarizeUnitSweep(out: string, exitCode: number): Summary {
+  const last = out.trim().split("\n").filter((l) => /^UNITSWEEP (PASSED|FAILED)/.test(l)).slice(-1)[0];
+  const m = last && /(\d+) runs of (\d+) cases \(seed \d+\), ([\d.]+) s; (\d+) known failures/.exec(last);
+  if (exitCode === 0 && last?.startsWith("UNITSWEEP PASSED")) return { ok: true, detail: m ? `${m[2]} cases, ${m[1]} runs, ${m[4]} known failures, ${m[3]} s` : "UNITSWEEP PASSED" };
+  const news = out.split("\n").filter((l) => /^ {2}unitsweep (NEW|NOW PASSING)/.test(l)).map((l) => l.trim().slice(10, 110));
+  const tail = last ? last.replace(/^UNITSWEEP FAILED: .*?; (\d+ known failures)/, "$1").slice(0, 100) : `exit ${exitCode}: ${out.trim().split("\n").slice(-1)[0]?.slice(0, 100) ?? ""}`;
+  return { ok: false, detail: news.length > 0 ? `${news.length} to look at: ${news.slice(0, 2).join(" | ")}; ${tail}` : tail };
+}
+
 /** G110: the Find census (scripts/findcensus.ts) ends in `FINDCENSUS PASSED|FAILED: <n> runs of <m> inputs (…): <class counts>; …; total <s> s; <k> findings filed, …`; the lines before it name each CHANGED, NEW, GONE or NOW PASSING one. */
 export function summarizeFindCensus(out: string, exitCode: number): Summary {
   const last = out.trim().split("\n").filter((l) => /^FINDCENSUS (PASSED|FAILED)/.test(l)).slice(-1)[0];
