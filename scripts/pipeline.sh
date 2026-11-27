@@ -29,7 +29,7 @@
 #                           A33: the core list on the night's device ($ANDROID_SERIAL): test APK of phase-1's HEAD, install, tools/core-device.sh;
 #                           logs `CORE DEVICE <p>/<a> (known <k>, new <ids or none>) on <sha>`; skips (DEVICE SKIPPED), never fails
 #   scripts/pipeline.sh nightly <n> [--dry-run]
-#                           A273: the family tests' nightly runs (NIGHTLY_TOOLS: sweep, casback, viewsweep) on phase-1's engine under host-cpu, each at most 20 min;
+#                           A273: the family tests' nightly runs (NIGHTLY_TOOLS: sweep, casback, viewsweep, unitsweep) on phase-1's engine under host-cpu, each at most 20 min;
 #                           logs `NIGHTLY <n> <tool>: <runs> runs, <known> known, <new> new (seed <s>)` or `NIGHTLY <n> <tool>: FAILED (<first line>)`,
 #                           `NIGHTLY <n>: SKIPPED (host-cpu)`; report .tasks/nightly-<date>-<n>.md; never fails
 #   scripts/pipeline.sh flakes <n> [--dry-run]
@@ -810,7 +810,7 @@ agent_cut() {  # <who: "worker" | "worker of fix round N">
 
 # The deterministic checks; the failing excerpt goes to $run/fail-<round>.txt.
 excerpt() {  # the failing lines of a check log, capped (A83: docs-check's and the pre-flight lint's lines, the stage findings too)
-  grep -nE 'FAIL|Error|error TS|✘|×|✗|AssertionError|Expected|Received|expected|Timed out|not ok|GOLDEN GATE FAILED|^(budget|path|lines|ids|research|index|lint|trust): |^ {2}(sweep|seq|casback|viewsweep|findcensus) (NEW|NOW PASSING|CHANGED|GONE)' -A4 "$1" | grep -vE '^[0-9]+[:-] *(✓|- +[0-9]+ \[|PASS )' | head -n 150 || true  # A83f1: a passing Playwright line (✓) that holds × is no failure; A130: nor a skipped one (-) or a golden stage line that starts with PASS
+  grep -nE 'FAIL|Error|error TS|✘|×|✗|AssertionError|Expected|Received|expected|Timed out|not ok|GOLDEN GATE FAILED|^(budget|path|lines|ids|research|index|lint|trust): |^ {2}(sweep|seq|casback|viewsweep|findcensus|unitsweep) (NEW|NOW PASSING|CHANGED|GONE)' -A4 "$1" | grep -vE '^[0-9]+[:-] *(✓|- +[0-9]+ \[|PASS )' | head -n 150 || true  # A83f1: a passing Playwright line (✓) that holds × is no failure; A130: nor a skipped one (-) or a golden stage line that starts with PASS
   [[ -s "$1" ]] && { echo "--- tail ---"; tail -n 30 "$1"; }
 }
 # Wall-clock tests: the Find 16 ms/key test, the golden units p95 bar, the solve.spec.ts persistence test, the clipboard
