@@ -61,15 +61,9 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Sonnet | `p1/ron-keepline` | – |
-| 905 | R796 Alpha + mol is cd in the unit view (K2) | ron, Sonnet | `p1/ron-candela` | – |
-| 906 | R797 a hold copies in the unit view (U7) | ron, Opus | `p1/ron-unitholdcopy` | R790 |
-| 906r | R511 matrixsize's menu tests stop flaking ("2 adds a column", "1 × 1"; owner 2026-11-27: before the tag) | ron, Sonnet | `p1/ron-matrixflake` | – |
-| 906a | R895 Paste in units says why | ron, Sonnet | `p1/ron-unitpaste` | R797 |
-| 907 | [R806](packages/R806.md) a unit slot gets a caret: model (C1) | ron, Sonnet | `p1/ron-unitcaret` | R801 |
 | 908 | [R807](packages/R807.md) the slot draws its caret and its marks (C2) | ron, Sonnet | `p1/ron-unitcaretdraw` | R806 |
 | 909 | [R808](packages/R808.md) the caret moves; ⌫ and the powers act at it (C3) | ron, Sonnet | `p1/ron-unitcaretmove` | R807 |
 | 909a | [R896](packages/R896.md) Clear and Undo in the unit view | ron, Sonnet | `p1/ron-unitundo` | R808 |
-| 910 | R314 Memory delete has Undo | ron, Sonnet | `p1/ron-memoryundo` | – |
 | 911 | [R813](packages/R813.md) Memory: a swipe left deletes, with Undo (C6) | ron, Sonnet | `p1/ron-memswipe` | R314 |
 | 912 | [R814](packages/R814.md) Memory: Shift + ⌫ deletes (C6) | ron, Sonnet | `p1/ron-memdelkey` | R813 |
 | 913 | [R815](packages/R815.md) Memory copies the full value (C6) | ron, Sonnet | `p1/ron-memcopy` | R814 |
