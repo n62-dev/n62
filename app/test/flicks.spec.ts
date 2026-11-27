@@ -326,7 +326,8 @@ test("a typed key waiting for the load keeps its layer, and a Shift pressed afte
 });
 
 test("F40: Shift + Alpha shows and types lower case; Alpha alone capitals; the lower-case lock until released", async ({ page }) => {
-  const face = (id: string) => page.locator(`[data-key="${id}"] .main`);
+  // (R729: the letter line shows what Alpha types; the face stays the tap)
+  const face = (id: string) => page.locator(`[data-key="${id}"] .alphalegend`);
   await tap(page, ["alpha"]);
   await expect(face("vars")).toHaveText("A");
   await tap(page, ["vars"]);
@@ -339,7 +340,7 @@ test("F40: Shift + Alpha shows and types lower case; Alpha alone capitals; the l
   await expect(face("vars")).toHaveText("a");
   expect(await entryValue(page)).toBe("Aaa");
   await tap(page, ["alpha"]); // released
-  await expect(face("vars")).not.toHaveText("a");
+  await expect(face("vars")).toHaveText("A");
 });
 
 // R905: the bubble is clamped to the screen as the key pop is (keypop.spec.ts): on phase-1 at 360 px Esc up, Redo down and

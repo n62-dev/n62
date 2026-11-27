@@ -53,8 +53,9 @@ test("legends ∥ and %; the taps unchanged; Alpha + 0 dead; a b/c and 7 reserve
     await expect(key(page, id), id).toHaveAttribute("data-dead", "true");
     expect(await shiftLegend(page, id), id).toBe("");
   }
-  await expect(key(page, "vars")).not.toHaveAttribute("data-dead", "true"); // R725: Chars, its face while Shift is on
-  await expect(key(page, "vars").locator(".main")).toHaveText("Chars");
+  await expect(key(page, "vars")).not.toHaveAttribute("data-dead", "true"); // R725: Chars, its lit legend while Shift is on (R729)
+  await expect(key(page, "vars").locator(".shiftlegend")).toHaveText("Chars");
+  await expect(key(page, "vars").locator(".main")).toHaveText("Vars");
   await tap(page, ["shift"]); // Shift off
   await tap(page, ["alpha"]);
   await expect(key(page, "d0")).toHaveAttribute("data-dead", "true");

@@ -13,6 +13,8 @@ class El {
   dataset: Record<string, string> = {};
   children: El[] = [];
   attrs = new Set<string>();
+  /** R729: a legend's side padding (px, fixed: it does not follow the font), hung by a negative left margin of the same size. */
+  sidePx = 0;
   constructor(
     public cls: string,
     /** The stylesheet's size (px), before the zoom. */
@@ -29,7 +31,7 @@ class El {
     return this.specPx * zoom;
   }
   get scrollWidth(): number {
-    return Math.ceil(this.text.length * 0.6 * this.drawnPx + this.markPx * zoom);
+    return Math.ceil(this.text.length * 0.6 * this.drawnPx + this.markPx * zoom + 2 * this.sidePx);
   }
   get scrollHeight(): number {
     return Math.ceil(this.drawnPx * 1.1);
@@ -94,8 +96,10 @@ beforeEach(() => {
     lineHeight: `${e.drawnPx * 1.1}px`,
     paddingTop: "0px",
     paddingBottom: "2px",
-    paddingLeft: "4px",
-    paddingRight: "4px",
+    // (the key's side padding; a face has none, a legend its sidePx, hung into the key's padding: R729)
+    paddingLeft: e.cls === "key" ? "4px" : `${e.sidePx}px`,
+    paddingRight: e.cls === "key" ? "4px" : `${e.sidePx}px`,
+    marginLeft: `${-e.sidePx}px`,
   });
 });
 afterEach(() => {
@@ -121,6 +125,18 @@ function key(face: string, opts: { opens?: boolean; facePx?: number } = {}): { p
   pad.children.push(k);
   return { pad, face: f };
 }
+
+/** R729: a legend's ring padding (2 px a side, the left hung into the key's padding) is room the text does not get, and does not
+ *  scale with it: "Display" (46.2 px at 11 px) in 42 is fitted to 9.1 px and its box ends inside the key; the padding scaled
+ *  with the text made it 8.8 px. */
+it("fits a legend with its fixed ring padding, no smaller than it must", async () => {
+  const { pad } = key("1");
+  const sh = pad.children[0]!.children[0]!;
+  [sh.text, sh.sidePx] = ["Display", 2];
+  fitLegends(pad as unknown as HTMLElement);
+  expect(sh.style["fontSize"]).toBe("9.1px");
+  expect(sh.scrollWidth - sh.sidePx).toBeLessThanOrEqual(inner);
+});
 
 /** A fit, and its second pass once the zoom's chunk is in (a macrotask: the import and its callback have run). */
 const fit = async (pad: El): Promise<void> => {

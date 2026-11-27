@@ -36,6 +36,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 ### Feel, keys and screen (milestone 4a)
 - **The rainbow egg (owner, 2026-11-22, point 18; R881):** rainbow then Enter, for the session only (never stored); typed again, a theme pick or a restart ends it; a stored one-letter name among its letters keeps it a calculation; its turning keypad is an exception to docs/05 rule 6, still under reduced motion. The key texts are grey while it is on (pass 248: the one way found that keeps 4.5:1 at every turn). Rule: docs/05 "Rainbow". Would change if: the owner's look on the phone.
 - **Help explains the highlight (owner, 2026-11-22):** cursor, Find's row, then the unit view; cards from the index only (R869, R870).
+- **Key legends (owner, 2026-11-17, R729):** nothing on a key moves: the face is the tap, the corners their layers; armed a ring, locked a fill on keys and bar; the rest dims (docs/05 3.7, 3.10; [the mockup](mockups/key-legends.html)). Would change if: the 11 px lit legends misread in daily use.
 - **Enter's rule (owner, 2026-11-22, R872):** docs/05 3.10; values: theme-gen.test.ts. Would change if: his phone.
 - **Round pad and key line floors (owner, 2026-11-22, R873):** docs/05 3.10; values: theme-gen.test.ts. Would change if: his phone.
 - **Super mode dropped (owner, 2026-11-22):** no super mode; Select then ⌫ deletes a block; the unit view's slot buttons (R853), Your keys one window (R849, R848), N62 Light's Enter (R843). Built; full text: [archive/decisions-2026-11.md](archive/decisions-2026-11.md).

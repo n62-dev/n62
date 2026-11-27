@@ -101,9 +101,9 @@ test("the cells are the keys' own faces and legends, the prefixes in their own c
   await expect(text("d9", "alphalegend")).toHaveText("in");
   await expect(text("vars", "alphalegend")).toHaveText("mil");
   await expect(text("math", "main")).toHaveText("Find");
-  await tap(page, ["shift"]);
-  await expect(text("d9", "main")).toHaveText("ft");
-  await expect(text("d9", "shiftlegend")).toHaveText("");
+  await tap(page, ["shift"]); // (R729: nothing moves; the Shift legend is lit)
+  await expect(text("d9", "main")).toHaveText("m");
+  await expect(text("d9", "shiftlegend")).toHaveText("ft");
   await page.evaluate(() => window.n62.session.releaseModifiers()); // off again (a second Shift tap would lock it, R726)
   const bg = (id: string): Promise<string> => page.locator(`[data-key="${id}"]`).evaluate((el) => getComputedStyle(el).backgroundColor);
   await expect(page.locator('[data-key="d1"]')).toHaveAttribute("data-pad", "prefix");
@@ -154,7 +154,6 @@ test("every legend and face fits its key within the fit code's floor at 360 px",
 // on a digit, Torr 16 px on a control key). Every unit and prefix cell's face has one size before fit.ts shrinks a long one (its
 // inline size taken off for the reading), the digits' 20 px, in all three layers.
 test("every unit and prefix face has one size before fitting, in all three layers", async ({ page }) => {
-  const shrunk: string[] = [];
   for (const state of [[], ["shift"], ["alpha"]]) {
     await tap(page, state);
     const sizes = await page.evaluate(() => {
@@ -171,15 +170,19 @@ test("every unit and prefix face has one size before fitting, in all three layer
       }
       return out;
     });
-    shrunk.push(...(sizes["fitted"] ?? []));
     delete sizes["fitted"];
     const where = state.join("+") || "plain";
     expect(Object.values(sizes).flat().length, `${where}: the cells`).toBeGreaterThan(20);
     expect(Object.keys(sizes), `${where}: ${JSON.stringify(sizes)}`).toEqual(["20px"]);
     if (state.length) await tap(page, state); // off again
   }
-  // control: fit.ts still shrinks a long one (gal_US under Shift: 14.6 px at 360 px)
-  expect(shrunk, "fit.ts shrinks gal_US").toContain("gal_US");
+  // control (R729: gal_US is Shift's legend in every layer, no longer a face under Shift): fit.ts draws it whole in its key
+  const gal = await page.evaluate(() => {
+    const el = [...document.querySelectorAll<HTMLElement>(".pad .shiftlegend")].find((e) => e.textContent === "gal_US");
+    const key = el?.closest<HTMLElement>(".key");
+    return el && key ? el.getBoundingClientRect().right <= key.getBoundingClientRect().right + 0.5 : null;
+  });
+  expect(gal, "gal_US whole in its key").toBe(true);
 });
 
 // R803: the power keys read x², √x, x³, x⁴, ÷ and x⁻¹ (upright, as the main keypad's x²), whole at both phone widths
@@ -202,10 +205,11 @@ for (const [w, h] of [[412, 915], [360, 740]] as const)
       return out;
     });
     expect(bad).toEqual([]);
-    await tap(page, ["shift"]);
-    await expect(part("sq", "main")).toHaveText("√x");
-    await expect(part("pow", "main")).toHaveText("x⁴");
-    await expect(part("div", "main")).toHaveText("x⁻¹");
+    await tap(page, ["shift"]); // (R729: the faces stay; the Shift legends are lit)
+    await expect(part("sq", "main")).toHaveText("x²");
+    await expect(part("sq", "shiftlegend")).toHaveText("√x");
+    await expect(part("pow", "shiftlegend")).toHaveText("x⁴");
+    await expect(part("div", "shiftlegend")).toHaveText("x⁻¹");
   });
 
 // R861: the Math cell's face "Find" ends in ▾ (it opens Find on units, R143), and at 360 px face and mark fit its key at (within 5 %
@@ -367,14 +371,14 @@ for (const [w, h] of [[360, 740], [412, 915]] as const)
         expect(Math.abs((k.textL + lineR) / 2 - (k.keyL + k.keyR) / 2), `${where}: letter and line centred in the key`).toBeLessThanOrEqual(1);
       });
     }
-    // Shift armed: T (Shift + G) is a prefix and keeps its line; σ (Shift + 1, the uncertainty sheet) is no prefix: ▾ only
+    // Shift armed: T (Shift + G, its legend: R729) is a prefix and keeps its line; σ (Shift + 1, the uncertainty sheet) is no prefix: ▾ only
     await page.evaluate(() => {
       window.n62.session.shift = true;
     });
     await page.waitForTimeout(120);
     const face = (id: string) =>
       page.evaluate((id) => {
-        const el = document.querySelector<HTMLElement>(`.pad [data-key="${id}"] .main`) as HTMLElement;
+        const el = document.querySelector<HTMLElement>(`.pad [data-key="${id}"] .shiftlegend`) as HTMLElement;
         return [el.textContent, getComputedStyle(el, "::after").content];
       }, id);
     expect(await face("d7")).toEqual(["T", '""']);

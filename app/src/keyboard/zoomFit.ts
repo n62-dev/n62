@@ -19,10 +19,10 @@ export function refit(pad: HTMLElement, z: number): void {
   const all = [...pad.querySelectorAll<HTMLElement>(".key")].flatMap((key) => {
     const cs = getComputedStyle(key);
     const inner = key.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-    // (the room as fit.ts gives it: a maths key's ▾ may use 6 px of its side padding)
+    // (the room as fit.ts gives it: a maths key's ▾ may use 6 px of its side padding; R729: a legend's ring padding hangs 2 px into it)
     return [...key.querySelectorAll<HTMLElement>("[data-fit]")].map((el) => ({
       el,
-      room: inner + (key.dataset["letters"] && el.dataset["opens"] ? 6 : 0) - 1,
+      room: inner + (key.dataset["letters"] && el.dataset["opens"] ? 6 : 0) - Math.min(0, parseFloat(getComputedStyle(el).marginLeft) || 0) - 1,
       floor: el.dataset["fit"] === "legend" ? MIN_LEGEND_PX : MIN_FACE_PX,
       size: parseFloat(getComputedStyle(el).fontSize),
       w1: el.scrollWidth,

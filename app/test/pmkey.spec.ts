@@ -11,7 +11,7 @@ test.describe("± on Shift + ,", () => {
   test("the legend is ± and the line gets \\pm; the tap on `,` is unchanged", async ({ page }) => {
     await open(page, "engine=fake");
     await tap(page, ["d2", "dot", "d5", "shift"]);
-    await expect(key(page, "comma").locator(".main")).toHaveText("±");
+    await expect(key(page, "comma").locator(".shiftlegend")).toHaveText("±"); // (R729: the face stays the tap)
     await tap(page, ["comma"]);
     expect(await entryValue(page)).toBe("2.5\\pm");
     await tap(page, ["d0", "dot", "d1", "comma"]);

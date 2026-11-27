@@ -472,8 +472,8 @@ test("an operator on an empty line starts with Ans; (−) stays negation", async
 });
 
 // R58 (G2 item 45): in CAS, Alpha types lower case and Shift + Alpha the capital; Home is the reverse.
-test("CAS: Alpha T types t, Shift Alpha T types T; Home the reverse; the faces show what the tap types", async ({ page }) => {
-  const face = (id: string) => page.locator(`[data-key="${id}"] .main`);
+test("CAS: Alpha T types t, Shift Alpha T types T; Home the reverse; the letter line shows what the press types", async ({ page }) => {
+  const face = (id: string) => page.locator(`[data-key="${id}"] .alphalegend`); // (R729: the face stays the tap)
   await tap(page, ["alpha", "vars"]);
   expect(await entryValue(page)).toBe("A");
   await tap(page, ["esc", "shift", "alpha"]);
