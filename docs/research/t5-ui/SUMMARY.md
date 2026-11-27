@@ -61,7 +61,7 @@ In the brief's table form. The steps are left for the owner to number. "Fix" row
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | – | [R701](../../shifts/packages/R701.md) the folder plugin is never handed to a Promise: Sync folder works on Android (fix, F380) | annabell, Sonnet | `p1/annabell-folderproxy` | – |
-| – | [R710](../../shifts/packages/R710.md) Plot draws its axes, numbers and trace dot in the theme's colours (fix, F385) | ron, Sonnet | `p1/ron-plotaxes` | – |
+| – | R710 Plot draws its axes, numbers and trace dot in the theme's colours (fix, F385) | ron, Sonnet | `p1/ron-plotaxes` | – |
 | – | R700 Android Back undoes a picked row, the unit view and an armed Shift or Alpha (fix, F381) | ron, Sonnet | `p1/ron-backlayers` | – |
 | – | [R709](../../shifts/packages/R709.md) every control has a spoken name that says what it is (fix, F384) | ron, Sonnet | `p1/ron-spokennames` | – |
 | – | R702 Store ▶ with nothing to store is a dead press; a lone ▶ says what it needs (fix, F382) | ron, Sonnet | `p1/ron-storeempty` | – |

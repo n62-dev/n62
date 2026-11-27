@@ -11,3 +11,9 @@ new MutationObserver(() => {
   fam = document.documentElement.dataset["family"] ?? "n62";
 }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-family"] });
 export const family = (): string => fam;
+/** R710: High contrast on or off (data-contrast; its tokens differ, so Plot's canvas reads them again). */
+let hc = $state<boolean>(document.documentElement.dataset["contrast"] === "high");
+new MutationObserver(() => {
+  hc = document.documentElement.dataset["contrast"] === "high";
+}).observe(document.documentElement, { attributes: true, attributeFilter: ["data-contrast"] });
+export const highContrast = (): boolean => hc;
