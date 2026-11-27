@@ -7,6 +7,7 @@ Phase 0 (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md). This fil
 
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
+- **R781, Hand = Left:** every key column mirrors (digits 9 8 7, Redo left of Undo; the pad's ◀ ▶ kept); the bar turns, its track and modes read as before; Appearance has 8 rows. Recommended: keep; confirm the lock and docs/06 3b line.
 - **G784, Paste of a copied name:** Copy writes letters (`2*i`, `β*2`); Paste reads one number, so `2*i` copied from the name i came back as the constant i (principle 3); G784f1 refuses a text copied from a row with a stand-in. Recommended: keep Paste a number reader; reading expressions is its own package (the letter i against the constant i needs a rule first).
 - **G622f2, a singular float inv:** Recommended: refuse, as exact inv does. `inv(approx(10^-9*[[2.5,2E8,e],[2.5,π,2E-3],[5,2E8+π,e+2E-3]]))` is 1E14–1E22 noise, row 3 ≈.
 - **The release bar's week (A273, G799; pass 241):** Recommended: a night counts when every `NIGHTLY` finding falls under a package or bug line the pass names (no new cause), as the clock seed never repeats a known row. Night 1 (11-25): all 118 named (G802, G804, G805, G622f2, F145, F480, F487).
