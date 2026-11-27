@@ -2,21 +2,28 @@
 /* Plain keys and High contrast (R50d). Lazy: applyTheme loads it with the switch, so the start chunk does not carry it.
    Plain keys turns the colour off and changes nothing else (R142): the meaning stays in position (Shift top left, the
    letter bottom left) and in the italic letter, which every mode has (Keypad.svelte). The two exceptions keep their
-   colour: the ⚠ mark and error text (principle 3), and the plot curves (not touched here). */
-:root[data-keys="plain"] .shiftlegend,
-:root[data-keys="plain"] .alphalegend,
-:root[data-keys="plain"] .shifted .main,
-:root[data-keys="plain"] .alphaed .main,
+   colour: the ⚠ mark and error text (principle 3), and the plot curves (not touched here). R729: the legends' ring and fill stay
+   (the shape tells armed from locked), in the text's colour; Enter keeps its own (Keypad.svelte sets them on .key.enter). */
+:root[data-keys="plain"] .pad {
+  --c-shift: var(--key-text);
+  --c-alpha: var(--key-text);
+  --on-c-shift: var(--key-num);
+  --on-c-alpha: var(--key-num);
+}
 :root[data-keys="plain"] .shifted .arrows,
 :root[data-keys="plain"] .alphaed .arrows {
   color: var(--key-text);
 }
-/* the flick bubble keeps one colour in both layers */
-:root[data-keys="plain"] .bubble {
+/* the flick bubble and the key pop keep one colour in both layers; a lock's sign fills in it */
+:root[data-keys="plain"] .pad .bubble {
   color: var(--text);
   border-color: var(--text);
 }
-:root[data-keys="plain"] .bubble[data-none="true"] {
+:root[data-keys="plain"] .pad .bubble[data-fill="true"] {
+  color: var(--panel);
+  background: var(--text);
+}
+:root[data-keys="plain"] .pad .bubble[data-none="true"] {
   color: var(--text-dead);
   border-color: var(--text-dead);
 }
@@ -27,17 +34,8 @@
 :root[data-keys="plain"] .error {
   color: var(--error);
 }
-/* Enter keeps the inverted pair of the tokens in every layer */
-:root[data-keys="plain"] .key.enter .main,
-:root[data-keys="plain"] .key.enter .shiftlegend,
-:root[data-keys="plain"] .key.enter .alphalegend {
-  color: var(--on-enter);
-}
-/* dead keys stay dimmed */
-:root[data-keys="plain"] .key[data-dead="true"] .main {
-  color: var(--key-text-dead);
-}
-:root[data-contrast="high"] .key:not([aria-pressed="true"]):not([data-locked="true"]):not([data-zone="true"]):not(:focus-visible),
+/* R729: the Shift and Alpha keys keep their outline in every state (the ring and the fill are on their faces) */
+:root[data-contrast="high"] .key:not([data-zone="true"]):not(:focus-visible),
 :root[data-contrast="high"] .trackpad:not(:focus-visible) {
   outline-width: 1.5px;
   outline-style: solid;
@@ -51,5 +49,3 @@
 }
 /* the four arrow zones are transparent rectangles over the round pad: no outline of their own, so the pad (the rule above)
    reads as one round key (R141) */
-/* an armed Shift/Alpha fills with its colour and has no outline (R140); only a locked one keeps Keypad's own 3px outline,
-   so a lock still differs from a press */

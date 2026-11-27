@@ -53,7 +53,7 @@
   ] as const);
   /** The current tile's ring: a job running, or the engine starting (R82f2: the ⟳ went). */
   const ring = $derived(busy || session.engineState === "starting");
-  /** The ⇧ α slot: one sign, underlined when locked; `a` when Alpha types lower case here, `α` when it types capitals (R101). */
+  /** The ⇧ α slot: one sign, ringed when armed and filled when locked (R729); `a` when Alpha types lower case here, `α` when it types capitals (R101). */
   const mod = $derived(
     session.alpha
       ? { id: "alpha" as const, lock: session.alphaLock, text: alphaLower(session.shift, true, cas) ? "a" : "α" }
@@ -444,11 +444,15 @@
     justify-content: center;
   }
   /* R726: the sign is a button while one is on: the bar's 28 × 28 target over the 16 px slot (the slot keeps its width, so
-     nothing moves; the group after it is drawn over the overlap); a lock's underline sits on the bar's lower edge */
+     nothing moves; the group after it is drawn over the overlap). R729: armed, a ring in its colour; locked, a fill, as on the keys */
   .mod {
-    color: var(--shift);
+    --c: var(--shift);
+    --on-c: var(--on-shift);
+    color: var(--c);
     font-weight: 700;
     line-height: var(--lh-small);
+    border-radius: var(--radius-s);
+    box-shadow: inset 0 0 0 var(--stroke-mid) currentColor;
   }
   .slot button.mod {
     width: var(--bar-h);
@@ -456,10 +460,13 @@
     min-width: 0;
   }
   .mod[data-testid="mod-alpha"] {
-    color: var(--alpha);
+    --c: var(--alpha);
+    --on-c: var(--on-alpha);
   }
-  .mod[data-lock="true"] {
-    box-shadow: inset 0 calc(-1 * var(--stroke)) 0 currentColor;
+  .bar .mod[data-lock="true"] {
+    background: var(--c);
+    color: var(--on-c);
+    box-shadow: none;
   }
   /* R856: the modes, one outlined group (owner, 2026-11-22: no on/off look, never filled): `STD 12 ▾`, a divider, the word RAD or
      DEG at a fixed width, last; in an app the word alone. It takes the room left over (the slot before it, when drawn, does). */

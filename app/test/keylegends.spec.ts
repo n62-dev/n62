@@ -152,12 +152,14 @@ for (const width of [412, 360])
 
     test("nothing moves: every face, legend and bar button keeps its box in every state and in CAS", async ({ page }) => {
       await hwOn(page);
-      const rest = await boxes(page);
+      const [rest, restLeft] = [await boxes(page), await boxes(page, false)];
       for (const keys of [["shift"], ["shift", "shift"], ["alpha"], ["alpha", "alpha"], ["shift", "alpha"], ["shift", "alpha", "alpha"]]) {
         await page.evaluate(() => window.n62.session.releaseModifiers());
         await hwOn(page);
         await tapHw(page, keys);
-        expect(await boxes(page), keys.join(" ")).toEqual(rest);
+        // (Shift + Alpha draws the letters in the case it types, lower case: their widths change, never their place)
+        if (keys.length > 1 && keys[0] === "shift" && keys[1] === "alpha") expect(await boxes(page, false), keys.join(" ")).toEqual(restLeft);
+        else expect(await boxes(page), keys.join(" ")).toEqual(rest);
       }
       await page.evaluate(() => window.n62.session.releaseModifiers());
       await hwOn(page);

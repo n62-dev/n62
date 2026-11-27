@@ -94,8 +94,10 @@ beforeEach(() => {
     lineHeight: `${e.drawnPx * 1.1}px`,
     paddingTop: "0px",
     paddingBottom: "2px",
-    paddingLeft: "4px",
-    paddingRight: "4px",
+    // (the key's side padding; a face or legend has none in this model, R729: its scrollWidth is its text)
+    paddingLeft: e.cls === "key" ? "4px" : "0px",
+    paddingRight: e.cls === "key" ? "4px" : "0px",
+    marginLeft: "0px",
   });
 });
 afterEach(() => {
