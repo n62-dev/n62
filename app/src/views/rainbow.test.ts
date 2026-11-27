@@ -51,8 +51,7 @@ for (const [sel, t] of blocks)
             }
       }
       expect(low).toEqual([]);
-      // ~1 s alone, over 5 s under the lanes' load (load 37 on 32 cores, run 1690): a CPU-bound sweep, so a roomy timeout, no assertion on time
-    }, 60_000);
+    });
     it("each face keeps its token's OKLCH lightness (a grey one, where no hue keeps the floor, moves at most 0.1); the faces change colour round the wheel", () => {
       const seen = new Set<string>();
       for (const h of hues) {
