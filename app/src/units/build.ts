@@ -4,7 +4,7 @@
 // Find index times the dimension symbols of dims.ts. Main thread, plain TS, no engine.
 import { BASES, dimKeyOf, dimSymbols, isExponent, parseDimKey, siSlot, unitProduct } from "./dims.ts";
 import { isOwnId, OWN_PREFIX, type FactorTable, type UnitFactor } from "./factors.ts";
-import { balanced, callsOf, closing, isNameChar, mapNames, names, topLevelArgs, unbracket, walk } from "../engine/giacPrint.ts";
+import { balanced, callsOf, closing, mapNames, names, outerGroups, topLevelArgs, unbracket, walk } from "../engine/giacPrint.ts";
 import { basisGiac, basisOf, correlated, LEAF_PREFIX } from "../engine/constBasis.ts";
 import { isChipName } from "../engine/ourNames.ts";
 import { PASDEG } from "../engine/pasdeg.ts";
@@ -157,22 +157,19 @@ function bareTemperature(slot: UnitSlot | undefined, table: FactorTable): { id: 
  *  or °F): its sides, else null. K − K and °R − °R need no rule, K and °R have no offset. */
 function tempPair(first: string, second: string, req: UnitRequest, table: FactorTable) {
   if (!second.startsWith("-") || first.startsWith(",")) return null;
-  const a = tempSide(first.replace(/^\+/, ""));
+  const a = tempSide(first.startsWith("+") ? first.slice(1) : first);
   const b = tempSide(second.slice(1));
   if (!a || !b || a.slot === b.slot) return null;
   const [ta, tb] = [bareTemperature(req.slots[a.slot], table), bareTemperature(req.slots[b.slot], table)];
   return ta && tb && (isAffine(ta.u) || isAffine(tb.u)) ? { a, b, ta, tb } : null;
 }
 
-/** The whole formula and the inside of every bracket that is no call's (`(…)`, `((…))`, not `sin(…)`), at any depth. */
-function groupTexts(formula: string): string[] {
-  const out = [formula];
-  walk(formula, 0, (k, _d, c) => {
-    if (c !== "(" || isNameChar(formula.charAt(k - 1))) return;
-    const close = closing(formula, k, "typed");
-    if (close > k) out.push(formula.slice(k + 1, close));
-  }, "typed");
-  return out;
+/** The text and the inside of every round bracket in it that is no call's (`(…)`, `((…))`, not `sin(…)`), at any depth. */
+function groupTexts(text: string): string[] {
+  return [text, ...outerGroups(text, "typed").flatMap((g) => {
+    const inside = groupTexts(text.slice(g.open + 1, g.close));
+    return g.caller === "" && text.startsWith("(", g.open) ? inside : inside.slice(1);
+  })];
 }
 
 /** G370 (owner, 2026-11-14), G385 (owner, 2026-11-16): a group that is exactly two temperatures joined by −, T1 − T2,
