@@ -14,6 +14,21 @@ audited_head_check() {
   return 0
 }
 
+# sync_diff <worktree> <sha> (A256): the audit input of a --sync run, on stdout: (1) the merge commits on the branch's own line since
+# phase-1 with their --remerge-diff (only the hunks resolved by hand; first-parent, so the commits a merge brought in are not walked), or
+# the one line "no conflicts: the merge resolved nothing by hand"; (2) the run's own non-merge commits on that line in full (a merge-back's
+# reverts, a sync's fix rounds); (3) one stat of phase-1...<sha>, headed "audited where it was made".
+sync_diff() {
+  local wt="$1" sha="$2" merges
+  merges="$(git -C "$wt" log --first-parent --merges -p --diff-merges=remerge -U5 --format='### merge commit %h %s' "phase-1..$sha")"
+  echo "## Merge commits: conflict resolutions (git log --first-parent --merges --remerge-diff -U5 phase-1..$sha)"
+  if grep -q '^diff ' <<<"$merges"; then printf '%s\n' "$merges"; else echo "no conflicts: the merge resolved nothing by hand"; fi
+  echo; echo "## The run's own commits, in full (git log -p --no-merges --first-parent -U5 phase-1..$sha)"
+  git -C "$wt" log --first-parent --no-merges -p -U5 --format='### commit %h %s' "phase-1..$sha"
+  echo; echo "## The rest of phase-1...$sha, audited where it was made (git diff --stat phase-1...$sha)"
+  git -C "$wt" diff --stat "phase-1...$sha"
+}
+
 # from_opus_pass <reply file>: the reply from its last OPUS PASS line on (a line before it breaks the brief's form;
 # passes 20, 21, 24 and 27 began with one; pass 91's reply held three blocks, A85). A reply without that line is printed whole.
 from_opus_pass() {
