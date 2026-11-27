@@ -36,6 +36,18 @@ describe("quantityText: the form `<number> [± <number>] <unit>` (syntax only, n
     expect(quantityText("-1.5E-3 m")).toMatchObject({ value: "-1.5e-3", unit: "m" });
     expect(quantityText("5 1/s")).toMatchObject({ value: "5", unit: "1/s" });
   });
+  it("R886f1: one ⚠ right after ± is taken off before σ is read (a unit row's Copy text with a warned σ)", () => {
+    expect(quantityText("1024 ± ⚠580 m")).toMatchObject({ value: "1024", sigma: "580", unit: "m" });
+    expect(quantityText("0,00 ± ⚠0,64 m", { decimalComma: true })).toMatchObject({ value: "0.00", sigma: "0.64", unit: "m" });
+    expect(quantityText("0.00 ± ⚠0.64 m")).toMatchObject({ value: "0.00", sigma: "0.64", unit: "m" });
+    expect(quantityText("9.810 ± 0.050 m")).toMatchObject({ value: "9.810", sigma: "0.050", unit: "m" }); // control
+    expect(quantityText("1024 ± ⚠⚠580 m")).toBeNull(); // one sign only
+  });
+  it("R886f1: a ⚠ anywhere else is still not the form", () => {
+    expect(quantityText("⚠1024 ± 580 m")).toBeNull();
+    expect(quantityText("1024 ± 580 ⚠m")).toBeNull();
+    expect(quantityText("1024 ⚠± 580 m")).toBeNull();
+  });
   it("is not the form (Paste says: not a number, as before)", () => {
     expect(quantityText("1.5 ± 0.2")).toBeNull(); // a value with σ and no unit
     expect(quantityText("1.5 ±0.2")).toBeNull();
