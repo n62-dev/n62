@@ -228,6 +228,7 @@ export function copyMark(i: CopySource, ctx: DisplayContext): { mark: Mark; n?: 
 const markText = (m: ReturnType<typeof copyMark>): string => (m === undefined ? "=" : m.mark === "⚠" && m.n !== undefined && !m.warn ? `⚠ ${m.n}` : m.mark);
 
 import { entryText, exportLatex } from "./plaintext.ts";
+import { rowSigma, sigmaLatex } from "./rowSigma.ts";
 import { whyLine } from "./whyLine.ts";
 export { entryText };
 
@@ -239,13 +240,19 @@ function rowInput(i: CopySource): { input: string; unitRow: boolean } {
   return u && typeof u.input === "string" && typeof u.text === "string" ? { input: u.input, unitRow: true } : { input: i.latex, unitRow: false };
 }
 
-/** The session as text: one line per finished entry, `input mark result` with the full value; an error line shows the message. */
+/** σ of a row drawn as Home's (no unit row) in the row's notation, as LaTeX draws the result: the facts' σ (G400), never a
+ *  unit row's σ without its unit. */
+const homeSigma = (i: CopySource, ctx: DisplayContext, comma: boolean): string | null => rowSigma({ facts: i.facts }, modeOf(i, ctx) ?? ctx.format, comma);
+
+/** The session as text: one line per finished entry, `input mark result` with the full value and its ` ± σ` (a unit row's
+ *  through copyFull, else the facts' in the value's `E` notation, G400); an error line shows the message. */
 export function sessionText(items: readonly CopySource[], o: TextOptions, ctx: DisplayContext): string {
   const lines: string[] = [];
   for (const i of items) {
     if (i.status === "done") {
       const { input, unitRow } = rowInput(i);
-      const result = (unitRow ? copyFull(i, o) : undefined) ?? valueFull(i, o) ?? i.text;
+      const sigma = unitRow ? null : rowSigma({ facts: i.facts }, "sci", !!o.decimalComma); // the value's notation (E), not the row's
+      const result = ((unitRow ? copyFull(i, o) : undefined) ?? valueFull(i, o) ?? i.text) + (sigma === null ? "" : ` ± ${sigma}`);
       lines.push(`${entryText(input, o)} ${markText(copyMark(i, ctx))} ${result}`);
     } else if (i.status === "error") lines.push(`${entryText(i.latex, o)} → ${i.text}`);
   }
@@ -269,15 +276,16 @@ const str = (x: unknown): string => (typeof x === "string" ? x : "");
 /**
  * G232: the history as CSV (a preview in v0.1.0). The header `input,value,mark,unit,sigma`, then one row per finished
  * entry: the entry as text, the full value (every confirmed digit, as Copy writes it) alone, the mark glyph, a unit row's
- * unit and σ. An error row has its message in `value` and no mark. No comment line (it breaks a spreadsheet's import).
+ * unit, and σ (rowSigma: a unit row's, else a Home row's σ in `E` notation as the value, G400). An error row has its
+ * message in `value` and no mark. No comment line (it breaks a spreadsheet's import).
  * "" when there is no row to write. Quoting, separator (`;` with the decimal comma) and CRLF are tableCsv's.
  */
 export function sessionCsv(items: readonly CopySource[], o: TextOptions, ctx: DisplayContext): string {
   const rows = exported(items).map((i): string[] => {
     if (i.status === "error") return [entryText(i.latex, o), i.text, "", "", ""];
     const { input } = rowInput(i);
-    const sigma = str(i.units?.unc?.text);
-    return [entryText(input, o), valueFull({ ...i, units: undefined }, o) ?? i.text, rowMark(i, ctx).mark, str(i.units?.unit), o.decimalComma ? sigma.replace(".", ",") : sigma];
+    const sigma = rowSigma(i, "sci", !!o.decimalComma) ?? ""; // as the value column: E, never a PFX prefix (a number cell)
+    return [entryText(input, o), valueFull({ ...i, units: undefined }, o) ?? i.text, rowMark(i, ctx).mark, str(i.units?.unit), sigma];
   });
   return rows.length ? tableCsv(["input", "value", "mark", "unit", "sigma"], rows, o) : "";
 }
@@ -303,7 +311,8 @@ function drawnLatex(i: CopySource, o: TextOptions, ctx: DisplayContext): string 
 /**
  * G232: the history as LaTeX (a preview in v0.1.0; the first line says so, `version` is the app's). One `align*` line per
  * finished entry: the entry's LaTeX, the mark as the relation (`=`, `\approx`, `\triangle` for ⚠ with the reason after the
- * result), the result as the screen draws it (its text when the row keeps no LaTeX; a unit row adds its σ and unit). An
+ * result), the result as the screen draws it (its text when the row keeps no LaTeX; a unit row adds its σ and unit, a Home row its
+ * `\pm` σ, G400). An
  * error row has `\rightarrow` and its message. "" when there is no row to write.
  */
 export function sessionLatex(items: readonly CopySource[], o: TextOptions, ctx: DisplayContext, version: string): string {
@@ -317,6 +326,8 @@ export function sessionLatex(items: readonly CopySource[], o: TextOptions, ctx: 
     // R886: σ's ⚠ as the file's ⚠ relation (\triangle), not a glyph LaTeX has no font for
     const ul = typeof i.units?.latex === "string" ? i.units.latex.replace(/⚠/g, "\\triangle ") : undefined;
     if (unitRow && ul !== undefined) result += `\\,${comma ? commaResult(ul, true) : ul}`;
+    const sigma = unitRow ? null : homeSigma(i, ctx, comma);
+    if (sigma !== null) result += `\\,\\pm${sigmaLatex(sigma)}`;
     const why = mark === "⚠" && info ? whyLine(i, info, ctx.digits) : null;
     const reason = why ? `\\quad\\text{(${latexText(why.replace(/^⚠\s*/, "").replace(/ · /g, "; "))})}` : "";
     return `\\begin{align*}${exportLatex(`${input} &${rel} ${result}`)}${reason}\\end{align*}`;

@@ -127,7 +127,7 @@ Cost: one `evalf` more (about 1 ms, desktop) per irrational or float result.
 | Solve root, analysis value | full value | yes | — | — |
 | Num table | CSV (Menu, Export): a header of the function names, full values, `,` between them (`;` with decimal comma) | — | — | — |
 | Units result (m5) | `20 m/s`, `39.488 ± 1.2 m²`: the value full, then the row's own ` ± σ unit` as drawn (As shown and Share too; R269); Paste reads it back (R325) | yes | `(1397/3125) m/s` | yes |
-| Session (Menu, Share) | text: one line per entry, `input = result` with the mark, full values | — | — | — |
+| Session (Menu, Share) | text: one line per entry, `input = result` with the mark, full values ± σ | — | — | — |
 
 **A value with σ** (R885, `render/sigmaForm.ts`): σ at 2 significant digits, the value drawn at least to σ's last digit (never cut above it; the digits setting may draw more, muted past σ, R883), never below the value's confirmed digits (a finer σ leaves the value at those, σ in its own form) and in σ's form (σ in the value's exponent or prefix: `4.70 k ± 0.10 k`; a value that rounds to 0 at σ's place is written `0`, σ plain up to 12 digits, past them in its own E form, the zero in σ's exponent or prefix in SCI, ENG and PFX: `0 ± 120`, `0 ± 2.2E20`, `0E18 ± 220E18`, R935); the unit row, Copy as shown and the unit view (its headline cut at σ's last digit, its second line's σ in E form above the units place: `σ 9.0E9`) draw through it.
 
