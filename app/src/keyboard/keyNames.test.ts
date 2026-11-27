@@ -82,6 +82,7 @@ describe("key names (R41)", () => {
     expect(keyLabels(cell("bksp"), false, false, false).label).toBe("Backspace");
     expect(keyLabels(cell("frac"), false, false, false)).toEqual({ label: "Degree sign", description: "Shift: rad" });
     expect(keyLabels(cell("d9"), false, false, false)).toEqual({ label: "m", description: "Shift: ft. Alpha: in" });
+    expect(keyLabels(cell("paren"), false, true, false).label).toBe("Ton of refrigeration, TR");
     // an empty user cell ("+"): the free key's own name
     const empty = new UnitPad({}).key(keyboard.byId.get("u1") as Key, null) as Key;
     expect(keyLabels(empty, false, false, false).label).toBe("Free key 1, empty: tap to set it");

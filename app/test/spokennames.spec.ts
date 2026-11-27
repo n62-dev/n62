@@ -62,6 +62,17 @@ const STATES: [string, (p: Page) => Promise<void>][] = [
     await flick(p, "tmpl", "up");
     await unitUp(p);
   }],
+  // (the unit cells' flick legs are the label with Shift and Alpha armed: the walk heard "TR" there)
+  ["the unit view, Shift armed", async (p) => {
+    await flick(p, "tmpl", "up");
+    await unitUp(p);
+    await tap(p, ["shift"]);
+  }],
+  ["the unit view, Alpha armed", async (p) => {
+    await flick(p, "tmpl", "up");
+    await unitUp(p);
+    await tap(p, ["alpha"]);
+  }],
   ["Mode", (p) => tap(p, ["@mode"])],
   // (row 4 of Mode, Digits: a digit key opens its list of counts)
   ["Mode's digits list", (p) => tap(p, ["@mode", "d4"])],

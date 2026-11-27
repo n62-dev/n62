@@ -28,12 +28,13 @@ const word = (k: KeyNameKey): string => enKeyNames[k];
 const named = (k: string): string | undefined => (k in enKeyNames ? enKeyNames[k as KeyNameKey] : undefined);
 
 /**
- * R709: a face with no letter says nothing of what the key does ("÷", "⌫", "°", the decimal comma's ";"). A unit pad's operator,
+ * R709: a face with no letter says nothing of what the key does ("÷", "⌫", "°", the decimal comma's ";"), nor does a bare
+ * abbreviation (the unit cell "TR"). A unit pad's operator,
  * control or empty cell takes the main pad's name of its key and layer (÷ is Divide there too), another face its word
  * (enFaceNames). undefined: the face itself is the name.
  */
 function spoken(key: Key, layer: Layer, face: string): string | undefined {
-  if (/\p{L}/u.test(face)) return undefined;
+  if (/\p{L}/u.test(face) && !/^[A-Z]{2,4}$/.test(face)) return undefined; // (a bare abbreviation says as little: TR)
   const main = key.pad === "op" || key.pad === "keep" || key.pad === "empty" ? named(layer === "primary" ? key.id : `${key.id}.${layer}`) : undefined;
   return main ?? enFaceNames[`${key.id} ${face}`] ?? enFaceNames[face];
 }
