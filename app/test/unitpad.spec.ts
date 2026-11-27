@@ -437,6 +437,19 @@ test.describe("on the engine (check 2026-10-19, Part 2 point 5)", () => {
     await expect(page.getByTestId("unit-why")).toHaveText("first order does not hold here");
   });
 
+  // R796 (the owner's K2): Alpha then the mol cell is the candela, so all seven SI base units are on the pad
+  test("1, the units key, Alpha, mol cell: the slot holds cd, the reading names the candela, Enter gives 1 cd", async ({ page }) => {
+    await tap(page, ["d1"]);
+    await unitsKey(page);
+    await expect(page.locator('[data-key="emark"][data-pad="unit"]')).toContainText("cd"); // its letter-line legend
+    await tap(page, ["alpha", "emark"]);
+    expect(meant(await tokens(page, "u1"))).toBe("cd");
+    await expect(reading(page)).toHaveText("candela");
+    await tap(page, ["enter"]); // R349: the last slot, so Enter evaluates
+    await expect(result(page)).toHaveAttribute("data-text", "1");
+    await expect(result(page)).toHaveAttribute("data-unit", "cd");
+  });
+
   test("kg·m²/s³ → W on an empty line is 1 W; without an end slot the typed unit is kept", async ({ page }) => {
     await unitsKey(page);
     for (const s of "d4 d6 d9 sq div d3 pow".split(" ")) await step(page, s);

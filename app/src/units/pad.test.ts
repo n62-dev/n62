@@ -91,6 +91,27 @@ describe("what a cell shows and emits", () => {
     expect(pad.press("vars", "alpha")).toEqual({ do: "unit", id: "thou" });
   });
 
+  it("R796: the mol cell holds cd on its flick down (Alpha), so all seven SI base units are on the pad; Shift + ᴇ stays Store", () => {
+    expect(shown(pad, "emark", false, false)).toMatchObject({ pad: "unit", face: "mol", down: "cd", dead: false });
+    expect(shown(pad, "emark", false, true)).toMatchObject({ face: "cd", down: "", dead: false });
+    expect(pad.press("emark", "primary")).toEqual({ do: "unit", id: "mol" });
+    expect(pad.press("emark", "alpha")).toEqual({ do: "unit", id: "cd" });
+    expect(pad.press("emark", "shift")).toBeNull(); // (the cell has no up item: Store ▶ passes through, R353)
+    const base = new Set(pad.cells.flatMap((c) => [c.tap, c.up, c.down]).flatMap((l) => (l?.emit.do === "unit" ? [l.emit.id] : [])));
+    expect(["m", "g", "s", "A", "K", "mol", "cd"].filter((u) => !base.has(u))).toEqual([]);
+  });
+
+  it("R796 control: every other cell keeps its tap, up and down (only the mol cell gained cd)", () => {
+    expect(pad.cells.map((c) => `${c.key} ${c.tap?.text ?? "-"} ${c.up?.text ?? "-"} ${c.down?.text ?? "-"}`)).toEqual([
+      "math Find - -", "bksp ⌫ - -", "enter Enter Eval -", "div ÷ `x`⁻¹ -", "mul × - -", "sq `x`² √`x` -", "pow `x`³ `x`⁴ -",
+      "d7 G T -", "d8 M - -", "d4 k - h", "d5 c - -", "d1 m - -", "d2 µ - -", "d0 n - -", "dot p - f", "d9 m ft in",
+      "d6 g lb t", "d3 s h min", "space K °C °F", "sub N lbf -", "add Pa bar psi", "neg J Wh Btu", "paren W hp TR",
+      "comma L gal_US bbl", "sin A - -", "cos V - -", "tan Ω S -", "ln F - -", "log T - -", "vars mi yd mil",
+      "tmpl knot mph -", "x Hz rpm -", "frac ° rad -", "emark mol - cd", "fmt atm ksi Torr", "u1 dB - -", "u2 H - -",
+      "u3 ton l ton -", "u4 cal eV -", "u5 d - -", "u6 P St -",
+    ]);
+  });
+
   it("emits a prefix for a prefix cell, marked as one", () => {
     expect(shown(pad, "d2", false, false)).toMatchObject({ pad: "prefix", face: "µ" });
     expect(pad.press("d2", "primary")).toEqual({ do: "prefix", id: "u" });
