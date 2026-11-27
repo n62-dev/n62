@@ -476,8 +476,7 @@
       style:top={`${bubble.y}px`}
       bind:this={bubbleNode}
       aria-hidden="true"
-      {@attach runs(bubble.text, bubble.key)}
-    ></div>
+      {@attach runs(bubble.text, bubble.key)}></div>
   {/if}
 </div>
 
