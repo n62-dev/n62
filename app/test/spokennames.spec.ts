@@ -63,6 +63,8 @@ const STATES: [string, (p: Page) => Promise<void>][] = [
     await unitUp(p);
   }],
   ["Mode", (p) => tap(p, ["@mode"])],
+  // (row 4 of Mode, Digits: a digit key opens its list of counts)
+  ["Mode's digits list", (p) => tap(p, ["@mode", "d4"])],
   ["Settings", (p) => tap(p, ["help"])],
   ["☰", (p) => tap(p, ["@menu"])],
   ["Apps", (p) => tap(p, ["@place"])],

@@ -2,7 +2,7 @@
 // R41: the names a screen reader gets for a key: its aria-label (what a tap gives in the layer that is on) and its
 // aria-description (the other layers), the press dot of the round pad (placeDot) and the pad's touchmove guard (noFling, R838f1).
 // The chunk of its own, loaded after the first paint (keyNamesLoader.svelte.ts).
-import { enKeyNames, type KeyNameKey } from "../i18n/enKeyNames.ts";
+import { enFaceNames, enKeyNames, type KeyNameKey } from "../i18n/enKeyNames.ts";
 import { legend } from "../i18n/index.ts";
 import { keyboard, labelFor, type Key, type Layer } from "./keyboard.ts";
 // R838f1: with the key names, which come after the first paint, so the start chunk (at its pin) carries none of it; a flick
@@ -28,13 +28,27 @@ const word = (k: KeyNameKey): string => enKeyNames[k];
 const named = (k: string): string | undefined => (k in enKeyNames ? enKeyNames[k as KeyNameKey] : undefined);
 
 /**
+ * R709: a face with no letter says nothing of what the key does ("÷", "⌫", "°", the decimal comma's ";"). A unit pad's operator,
+ * control or empty cell takes the main pad's name of its key and layer (÷ is Divide there too), another face its word
+ * (enFaceNames). undefined: the face itself is the name.
+ */
+function spoken(key: Key, layer: Layer, face: string): string | undefined {
+  if (/\p{L}/u.test(face)) return undefined;
+  const main = key.pad === "op" || key.pad === "keep" || key.pad === "empty" ? named(layer === "primary" ? key.id : `${key.id}.${layer}`) : undefined;
+  return main ?? enFaceNames[`${key.id} ${face}`] ?? enFaceNames[face];
+}
+
+/**
  * What one layer of a key is called: the table's name for the spec's own layers, the key's face for a layer the app changed
- * (a user key's binding, a unit cell). An Alpha letter is the letter, in the case the view types (`cas`, R58; `shift` is Shift + Alpha).
+ * (a user key's binding, a unit cell), in words where that face has no letter (`spoken`). An Alpha letter is the letter, in the case the view types (`cas`, R58; `shift` is Shift + Alpha).
  */
 export function layerName(key: Key, layer: Layer, cas: boolean, shift = false): string | undefined {
   if (!hasLayer(key, layer)) return undefined;
-  const face = (): string => legend(labelFor(key, shift && layer === "alpha", layer === "alpha", cas) || key.label.primary || "");
-  if (!specLayer(key, layer)) return face() || named(key.id) || undefined;
+  const face = (): string => legend(labelFor(key, layer === "shift" || (shift && layer === "alpha"), layer === "alpha", cas) || key.label.primary || "");
+  if (!specLayer(key, layer)) {
+    const f = face();
+    return spoken(key, layer, f) ?? (f || named(key.id) || undefined);
+  }
   if (layer === "alpha" && /^[A-Z]$/.test(key.label.alpha ?? "")) return face();
   return named(layer === "primary" ? key.id : `${key.id}.${layer}`) ?? face();
 }
