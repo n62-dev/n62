@@ -9,9 +9,10 @@ const LAYERS = ["primary", "shift", "alpha"];
 /** The palette sections of spec/keyboard.yaml and the `special` that opens each. */
 const PALETTES = [["templates", "tmpl"], ["relations", "relations"], ["symbols", "symbols"]];
 
-/** The text of a keyboard legend: "$key.x" is a message of the English table, anything else is shown as is. */
+/** The text of a keyboard legend: "$key.x" is a message of the English table, anything else is shown as is, without the backticks
+ *  that mark a template's letter (R864, spec/keyboard.yaml's header: "`x`²" reads x²). */
 function legendText(label, msgs) {
-  if (typeof label !== "string" || !label.startsWith("$")) return label;
+  if (typeof label !== "string" || !label.startsWith("$")) return typeof label === "string" ? label.replaceAll("`", "") : label;
   if (label.startsWith("$$")) return label.slice(1);
   const text = msgs[label.slice(1)];
   if (text === undefined) throw new Error(`where: missing message ${label.slice(1)}`);

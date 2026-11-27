@@ -6,7 +6,8 @@
 //   check      a palette cell to confirm on the device; keyboard.test.ts reads it
 //   desc       a palette cell's description for readers of the yaml; the app names cells through i18n
 //   desktop    the desktop keys (R131): their own lazy chunk (`keyboard.yaml?desktop`, with MathLive's hwkeys.ts)
-//   label.alpha  where it is the letter its alpha action types (the 26 letters, R142's bytes): loadKeyboard puts it back
+//   label.<layer>  where it is the character its layer types (the 26 letters, R142's bytes; the digits, x and y, `.` `,` `=` `_` `#` `:`
+//                `;`, R864's bytes): loadKeyboard puts it back
 // `shipped: true` tells loadKeyboard not to ask for them.
 
 const DROP = new Set(["sample", "source", "check", "desc"]);
@@ -22,8 +23,8 @@ function strip(v: unknown): unknown {
 export function shippedKeyboard(doc: unknown): unknown {
   if (doc === null || typeof doc !== "object" || Array.isArray(doc)) return doc;
   const { templates: _templates, relations: _relations, symbols: _symbols, chars: _chars, desktop: _desktop, ...rest } = doc as Record<string, unknown>;
-  const out = strip(rest) as { keys: { label: { alpha?: string }; alpha?: { type?: string } }[] };
-  for (const k of out.keys) if (k.alpha?.type === k.label.alpha) delete k.label.alpha;
+  const out = strip(rest) as { keys: (Record<string, { type?: string }> & { label: Record<string, string> })[] };
+  for (const k of out.keys) for (const l of ["primary", "shift", "alpha"]) if (k[l]?.type === k.label[l]) delete k.label[l];
   return { ...out, shipped: true };
 }
 
