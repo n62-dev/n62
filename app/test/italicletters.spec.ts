@@ -51,16 +51,14 @@ const legends = (page: Page): Promise<Seen[]> =>
     return out;
   });
 
-/** What the spec says a legend is, in the layer state: italic exactly when the shown action types one letter. */
-function expected(shift: boolean, alpha: boolean, cas: boolean): Map<string, boolean> {
+/** What the spec says a legend is, in every layer state: italic exactly when its action types one letter. R729: the face is
+ *  always the tap and both legends always show, so the state changes none of it. */
+function expected(): Map<string, boolean> {
   const m = new Map<string, boolean>();
   for (const k of spec) {
-    const lower = alpha && shift !== cas;
-    const face = alpha ? (k.alpha ?? k.primary) : shift ? k.shift : k.primary;
-    const hasShiftHint = !(shift && !alpha) && k.label?.shift !== undefined;
-    const hasAlphaHint = !alpha && k.label?.alpha !== undefined;
-    void lower;
-    m.set(`${k.id}/main`, isLetter(face));
+    const hasShiftHint = k.label?.shift !== undefined;
+    const hasAlphaHint = k.label?.alpha !== undefined;
+    m.set(`${k.id}/main`, isLetter(k.primary));
     m.set(`${k.id}/shiftlegend`, hasShiftHint && isLetter(k.shift));
     m.set(`${k.id}/alphalegend`, hasAlphaHint && isLetter(k.alpha));
   }
@@ -90,7 +88,7 @@ for (const keys of ["colour", "plain"])
         window.n62.session.alpha = a as boolean;
       }, [shift, alpha]);
       await page.waitForTimeout(120);
-      const want = expected(shift, alpha, cas);
+      const want = expected();
       let italics = 0;
       for (const s of await legends(page)) {
         if (s.text === "") continue;

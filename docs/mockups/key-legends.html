@@ -1,0 +1,200 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Key legends</title>
+<style>
+/* N62 · Dark and N62 · Light tokens, copied from app/src/style.css (n62 blocks) and drafts/2026-11-17-layout/B-bar-on-keypad.html:224-225 */
+:root{
+  --bg:#cae6e5;--panel:#e0f3f2;--line:#88adab;--key-num:#eefaf9;--key-op:#d7efee;--key-fn:#d7efee;--key-ctl:#d7efee;--key-nav:#d7efee;
+  --key-enter:#529997;--on-enter:#000000;--text:#062424;--text-dead:#587271;--muted:#314e4d;--shift:#5b2400;--alpha:#005b5a;
+  --on-shift:#ffffff;--on-alpha:#ffffff;--key-edge:#8da1a0;--ring:#368281;--page:#eef5f4;--card:#f7fbfa;--sub:#3e5856;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#092726;--panel:#0e2f2e;--line:#335b59;--key-num:#194241;--key-op:#123736;--key-fn:#123736;--key-ctl:#123736;--key-nav:#123736;
+  --key-enter:#529997;--on-enter:#000000;--text:#ebf6f6;--text-dead:#749392;--muted:#abccca;--shift:#ffa800;--alpha:#6ae5e2;
+  --on-shift:#000000;--on-alpha:#000000;--key-edge:#000000;--ring:#529997;--page:#061615;--card:#0b1f1e;--sub:#9cbab7;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#092726;--panel:#0e2f2e;--line:#335b59;--key-num:#194241;--key-op:#123736;--key-fn:#123736;--key-ctl:#123736;--key-nav:#123736;
+  --key-enter:#529997;--on-enter:#000000;--text:#ebf6f6;--text-dead:#749392;--muted:#abccca;--shift:#ffa800;--alpha:#6ae5e2;
+  --on-shift:#000000;--on-alpha:#000000;--key-edge:#000000;--ring:#529997;--page:#061615;--card:#0b1f1e;--sub:#9cbab7;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--text);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:412px;margin:0 auto;padding:12px 0 32px}
+h1{font-size:19px;margin:4px 16px 6px}
+p,li{color:var(--sub);font-size:13.5px}
+.intro{margin:0 16px 10px}
+.intro ol{padding-left:18px;margin:6px 0}
+.intro li{margin:3px 0}
+.intro b{color:var(--text);font-weight:600}
+.swatch{display:inline-block;padding:0 4px;border-radius:3px;font-size:11px;line-height:15px}
+.sw-ring-s{box-shadow:inset 0 0 0 1.5px var(--shift);color:var(--shift)}
+.sw-fill-s{background:var(--shift);color:var(--on-shift)}
+.sw-ring-a{box-shadow:inset 0 0 0 1.5px var(--alpha);color:var(--alpha);font-family:"Times New Roman",serif;font-style:italic}
+.sw-fill-a{background:var(--alpha);color:var(--on-alpha);font-family:"Times New Roman",serif;font-style:italic}
+.theme{display:flex;gap:6px;margin:0 16px 12px;font-size:13px;color:var(--sub)}
+.theme button{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:3px 10px;cursor:pointer}
+section{margin:0 0 18px}
+h2{font-size:15px;margin:0 16px 2px}
+.cap{margin:0 16px 6px;font-size:12.5px}
+/* the phone's bottom part: entry line, bar, keypad */
+.dev{background:var(--bg)}
+.entry{padding:6px 8px;background:var(--bg)}
+.field{height:40px;border-radius:8px;background:var(--panel);outline:2.5px solid var(--ring);outline-offset:-2.5px;display:flex;align-items:center;padding:0 10px;font:22px "Times New Roman",serif}
+.s-shift .field,.s-shiftlock .field{outline:3.5px solid var(--shift);outline-offset:-3.5px}
+.s-alpha .field,.s-alphalock .field{outline:3.5px solid var(--alpha);outline-offset:-3.5px}
+.bar{display:flex;align-items:flex-start;gap:2px;height:36px;padding:2px 4px 0;background:var(--panel)}
+.bar span{height:26px;display:flex;align-items:center;padding:0 5px;border-radius:6px;font-size:13px;white-space:nowrap}
+.bar .tab{background:var(--key-nav)}
+.bar .tab.cur{box-shadow:inset 0 -3px 0 var(--ring)}
+.bar .chip{color:var(--muted)}
+.bar .menu{margin-left:auto;font-size:17px;padding:0 8px}
+.bar .mk{margin-left:1px}
+.bar .slot{min-width:30px;justify-content:center;font-size:15px}
+.mk{font-size:.7em;margin-left:2px;opacity:.85}
+/* the modifier sign: armed = ring, locked = fill, the same on the bar, the Shift and Alpha keys and the legends */
+.ring-s{box-shadow:inset 0 0 0 1.5px var(--shift);color:var(--shift)}
+.fill-s{background:var(--shift);color:var(--on-shift)}
+.ring-a{box-shadow:inset 0 0 0 1.5px var(--alpha);color:var(--alpha)}
+.fill-a{background:var(--alpha);color:var(--on-alpha)}
+.pad{display:grid;grid-template-columns:repeat(30,minmax(0,1fr));gap:4px;padding:4px;background:var(--panel)}
+.k{position:relative;display:grid;grid-template-rows:14px 1fr;min-width:0;height:32px;border-radius:7px;background:var(--key-ctl);color:var(--text);font-size:14px;box-shadow:0 2px 0 var(--key-edge)}
+.k.lt{grid-template-rows:12px 1fr 12px;height:42px}
+.k.num{background:var(--key-num);font-size:19px}
+.k.op{background:var(--key-op);font-size:19px}
+.k.fn{background:var(--key-fn);font-size:16px}
+.k.enter{background:var(--key-enter);color:var(--on-enter);font-size:15px}
+.k.user{background:transparent;box-shadow:inset 0 0 0 1px var(--line);color:var(--muted)}
+.k.user.set{background:var(--key-nav);box-shadow:inset 0 0 0 1px var(--muted),0 2px 0 var(--key-edge);color:var(--text)}
+.lg{display:flex;justify-content:space-between;align-items:center;padding:0 3px;font-size:10px;line-height:12px;white-space:nowrap;overflow:hidden}
+.sl,.ul{border-radius:3px;padding:0 2px;line-height:12px}
+.sl{color:var(--shift)}
+.ul{color:var(--alpha);font-family:"Times New Roman",serif;font-style:italic}
+.f{display:flex;align-items:center;justify-content:center;line-height:1;white-space:nowrap}
+.al{align-self:end;justify-self:start;margin:0 0 1px 3px;padding:0 2px;border-radius:3px;font-size:10px;line-height:11px;color:var(--alpha);font-family:"Times New Roman",serif;font-style:italic}
+i.v{font-family:"Times New Roman",serif;font-style:italic}
+/* the lit layer wins over the legend's own colour */
+.k .ring-s{box-shadow:inset 0 0 0 1.5px var(--shift);color:var(--shift)}
+.k .fill-s{background:var(--shift);color:var(--on-shift)}
+.k .ring-a{box-shadow:inset 0 0 0 1.5px var(--alpha);color:var(--alpha)}
+.k .fill-a{background:var(--alpha);color:var(--on-alpha)}
+.k.shift .f{color:var(--shift)}
+.k.alpha .f{color:var(--alpha)}
+.k.shift .f span,.k.alpha .f span{padding:1px 6px;border-radius:5px}
+.k.enter .sl{color:var(--on-enter);opacity:.75}
+.k.enter .f.dim{color:var(--on-enter)!important;opacity:.45}
+.k.enter .sl.ring-s{box-shadow:inset 0 0 0 1.5px var(--on-enter);color:var(--on-enter);opacity:1}
+.k.enter .sl.fill-s{background:var(--on-enter);color:var(--key-enter);opacity:1}
+.k.enter .sl.dimlg{color:var(--on-enter)!important;opacity:.45}
+.circ{grid-row:1/4;grid-column:11/21;place-self:center;height:100%;aspect-ratio:1;border-radius:50%;background:var(--key-ctl);box-shadow:0 2px 0 var(--key-edge);position:relative;color:var(--text);font-size:12px}
+.circ b{position:absolute;font-weight:400;opacity:.7}
+.circ .u{top:8%;left:50%;transform:translateX(-50%)}.circ .d{bottom:8%;left:50%;transform:translateX(-50%)}
+.circ .l{left:9%;top:50%;transform:translateY(-50%)}.circ .r{right:9%;top:50%;transform:translateY(-50%)}
+/* the states: lit is what the next press does */
+.dim{color:var(--text-dead) !important}
+.dimlg{color:var(--text-dead) !important;opacity:.8}
+.rule{margin:0 16px;padding:8px 10px;border-left:3px solid var(--line);background:var(--card);font-size:12.5px;color:var(--sub)}
+.rule b{color:var(--text);font-weight:600}
+footer{margin:12px 16px 0;font-size:12px;color:var(--sub)}
+</style>
+</head>
+<body>
+<main>
+<h1>Key legends: one scheme</h1>
+<div class="intro">
+  <p>Nothing on a key moves. The face is the tap; the top-left text is Shift (and the flick up); the bottom-left letter is Alpha (and the flick down). What the next press does is lit, the rest dims.</p>
+  <ol>
+    <li><b>Armed is a ring, locked is a fill.</b> Shift armed: <span class="swatch sw-ring-s">sin⁻¹</span>; locked: <span class="swatch sw-fill-s">sin⁻¹</span>. Alpha: <span class="swatch sw-ring-a">G</span> and <span class="swatch sw-fill-a">G</span>. The bar's ⇧/α sign and the Shift and Alpha keys use the same ring and fill.</li>
+    <li><b>The faces dim</b> while a layer is armed, except where that layer is the tap: Alpha on a key with no letter does its tap, so Esc, Undo, Fmt, <code>.</code> and ⌫ stay lit.</li>
+    <li><b>An empty corner is an empty layer.</b> Shift armed and nothing lit on a key: that press does nothing (7, a b/c and Fmt are reserved).</li>
+    <li><b>Flicks get no mark:</b> the corner is the flick. Two exceptions, said in Help: ⌫ and the round pad have none.</li>
+    <li><b>Orange is Shift's only</b> (docs/05 3.10); letters are Alpha's colour, in italics (R142). A user key's Alpha slot sits top right, as rows 0–2 have no letter line. In CAS the letter line is lower case.</li>
+  </ol>
+</div>
+<div class="theme"><span>Look:</span><button type="button" data-t="dark">Dark</button><button type="button" data-t="light">Light</button><button type="button" data-t="">System</button></div>
+<div id="states"></div>
+<div class="rule"><b>Ends a lock:</b> a third tap on the key, or one tap on the bar's ⇧/α sign (R726). <b>Today</b> the face takes over the armed layer's text and the legends hide (Keypad.svelte:60-69); this scheme leaves every text in place.</div>
+<footer>sandra, 2026-11-17 · drafts/2026-11-17-keys · tokens from app/src/style.css (N62 · Dark, N62 · Light) · the planned layout of R722–R725 (Help at row 0, col 4; Copy and Paste on Select and Deselect; Chars on Vars).</footer>
+</main>
+<script>
+// Each key: [id, cols (of 30), cls, face, shift legend, alpha letter, flags]. "" = empty layer. Planned state (R723, R725).
+const V = (s) => `<i class="v">${s}</i>`;
+const ROWS = [
+  [["u1",5,"user set","kΩ","MΩ","",{slot:"Rload"}],["u2",5,"user","＋","",""],["pad",10],["help",5,"nav","Help▾","Settings▾",""],["esc",5,"nav","Esc","Clear",""]],
+  [["u3",5,"user","＋","",""],["u4",5,"user","＋","",""],["skip",10],["undo",5,"nav","Undo","⇤",""],["redo",5,"nav","Redo","⇥",""]],
+  [["u5",5,"user","＋","",""],["u6",5,"user","＋","",""],["skip",10],["select",5,"nav","Select","Copy",""],["deselect",5,"nav","Deselect","Paste",""]],
+  [["vars",5,"fn","Vars▾","Chars▾","A"],["math",5,"fn","Math▾","Mem▾","B"],["tmpl",5,"fn","Tmpl▾","Units","C"],["x",5,"fn",V("x"),V("y"),"D"],["frac",5,"fn","a b/c","","E"],["bksp",5,"ctl","⌫","Del",""]],
+  [["pow",5,"fn","xʸ","ⁿ√","F"],["sin",5,"fn","sin","sin⁻¹","G"],["cos",5,"fn","cos","cos⁻¹","H"],["tan",5,"fn","tan","tan⁻¹","I"],["ln",5,"fn","ln","eˣ","J"],["log",5,"fn","log","10ˣ","K"]],
+  [["sq",5,"fn","x²","√","L"],["neg",5,"fn","(−)","|x|","M"],["paren",5,"op","( )","∥","N"],["comma",5,"op",",","±","O"],["enter",10,"enter","Enter","≈",""]],
+  [["emark",6,"fn","ᴇ","Store","P"],["d7",6,"num","7","","Q"],["d8",6,"num","8","{ }","R"],["d9",6,"num","9","α∞▾","S"],["div",6,"op","÷","x⁻¹","T"]],
+  [["alpha",6,"ctl alpha","alpha","",""],["d4",6,"num","4","Mat▾","U"],["d5",6,"num","5","[ ]","V"],["d6",6,"num","6","≤≠▾","W"],["mul",6,"op","×","∡","X"]],
+  [["shift",6,"ctl shift","shift","",""],["d1",6,"num","1","σ▾","Y"],["d2",6,"num","2",V("i"),"Z"],["d3",6,"num","3","π","#"],["sub",6,"op","−","Base▾",":"]],
+  [["fmt",6,"ctl","Fmt","",""],["d0",6,"num","0","%",""],["dot",6,"num",".","=",""],["space",6,"num","␣","_",""],["add",6,"op","+","Ans",";"]],
+];
+const STATES = [
+  {id:"normal", t:"At rest", c:"Faces bright; Shift's text top left in orange, the letter bottom left in Alpha's colour; nothing ringed."},
+  {id:"shift", t:"Shift armed (one press)", c:"Every Shift text gets a ring and the faces dim. 7, a b/c and Fmt light nothing: Shift does nothing there. The bar's ⇧ and the Shift key are ringed too."},
+  {id:"alpha", t:"Alpha armed (one press)", c:"The letters are ringed and the letter keys' faces dim. Esc, Undo, Select, Fmt, . and ␣ stay lit: Alpha there is their tap (as on the G2)."},
+  {id:"shiftlock", t:"Shift locked (Shift, Shift)", c:"The same as armed, but filled: the fill says it stays. A third Shift tap, or a tap on the bar's ⇧, ends it."},
+  {id:"alphalock", t:"Alpha locked (Alpha, Alpha)", c:"Letters filled. Inside the lock a Shift tap flips the next letter's case (session.svelte.ts:402-405). A third Alpha tap, or a tap on the bar's α, ends it."},
+  {id:"cas", t:"CAS view, at rest", c:"The letter line is lower case, because Alpha and the flick down type lower case in CAS (fix 5; Keypad.svelte:69 draws capitals today)."},
+];
+function md(s){return s.replace("▾",'<span class="mk">▾</span>')}
+function keyHtml(k, st){
+  const [id,span,cls,face,sh,al,fl={}] = k;
+  const letters = ["vars","math","tmpl","x","frac","bksp","pow","sin","cos","tan","ln","log","sq","neg","paren","comma","enter","emark","d7","d8","d9","div","alpha","d4","d5","d6","mul","shift","d1","d2","d3","sub","fmt","d0","dot","space","add"].includes(id);
+  const user = cls.startsWith("user");
+  const S = st==="shift"||st==="shiftlock", A = st==="alpha"||st==="alphalock";
+  const lock = st.endsWith("lock");
+  let faceCls="", slCls="", alCls="", ulCls="";
+  let letter = al;
+  if (st==="cas" && /^[A-Z]$/.test(al)) letter = al.toLowerCase();
+  if (id==="shift"){ if(S) faceCls = lock?"fill-s":"ring-s"; }
+  else if (id==="alpha"){ if(A) faceCls = lock?"fill-a":"ring-a"; }
+  else if (S){
+    if (sh){ slCls = lock?"fill-s":"ring-s"; faceCls="dim"; } else faceCls="dim";
+    if (al) alCls="dimlg";
+    if (fl.slot) ulCls="dimlg";
+  } else if (A){
+    const hasLetter = !!al || !!fl.slot;
+    if (hasLetter){ faceCls="dim"; alCls = lock?"fill-a":"ring-a"; if(fl.slot) ulCls = lock?"fill-a":"ring-a"; }
+    if (sh) slCls="dimlg";
+    if (id==="d0") faceCls="dim"; // Alpha + 0 is dead
+  }
+  const f = (id==="shift"||id==="alpha") ? `<span class="${faceCls}">${face}</span>` : face;
+  const fc = (id==="shift"||id==="alpha") ? "" : faceCls;
+  const lt = letters && !user ? " lt" : "";
+  const ul = fl.slot ? `<span class="ul ${ulCls}">${fl.slot}</span>` : "";
+  const sl = sh ? `<span class="sl ${slCls}">${md(sh)}</span>` : "<span></span>";
+  const alH = lt ? `<span class="al ${alCls}">${letter}</span>` : "";
+  return `<div class="k ${cls}${lt}" style="grid-column:span ${span}" title="${id}"><div class="lg">${sl}${ul}</div><div class="f ${fc}">${md(f)}</div>${alH}</div>`;
+}
+function padHtml(st){
+  let h = "";
+  ROWS.forEach((row, r) => {
+    row.forEach((k) => {
+      if (k[0]==="skip") return;
+      if (k[0]==="pad"){ h += `<div class="circ"><b class="u">▲</b><b class="d">▼</b><b class="l">◀</b><b class="r">▶</b></div>`; return; }
+      h += keyHtml(k, st);
+    });
+  });
+  return h;
+}
+function barHtml(st){
+  const slot = {normal:"", cas:"", shift:'<span class="slot ring-s">⇧</span>', shiftlock:'<span class="slot fill-s">⇧</span>', alpha:'<span class="slot ring-a">α</span>', alphalock:'<span class="slot fill-a">α</span>'}[st] || "";
+  const cur = st==="cas" ? ["", " cur"] : [" cur", ""];
+  return `<div class="bar"><span class="tab">Apps<span class="mk">▾</span></span><span class="tab${cur[0]}">Home</span><span class="tab${cur[1]}">CAS</span>${slot || '<span class="slot"></span>'}<span class="chip">RAD<span class="mk">▾</span></span><span class="chip">STD<span class="mk">▾</span></span><span class="chip">12<span class="mk">▾</span></span><span class="menu">☰</span></div>`;
+}
+const only = new URLSearchParams(location.search).get("only"); // (a screenshot of some states: ?only=1,2)
+const out = STATES.filter((s, i) => !only || only.split(",").includes(String(i))).map((s) => `<section class="s-${s.id}"><h2>${s.t}</h2><p class="cap">${s.c}</p><div class="dev"><div class="entry"><div class="field">sin(30)·R<sub>1</sub></div></div>${barHtml(s.id)}<div class="pad">${padHtml(s.id)}</div></div></section>`).join("");
+document.getElementById("states").innerHTML = out;
+if (location.hash === "#dark" || location.hash === "#light") document.documentElement.dataset.theme = location.hash.slice(1);
+for (const b of document.querySelectorAll(".theme button")) b.addEventListener("click", () => {
+  if (b.dataset.t) document.documentElement.dataset.theme = b.dataset.t; else delete document.documentElement.dataset.theme;
+});
+</script>
+</body>
+</html>

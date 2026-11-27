@@ -270,3 +270,27 @@ describe("the zebra rows (R742)", () => {
         expect(contrast(t["focus"] as string, t[b] as string), `--focus on --${b}`).toBeGreaterThanOrEqual(3);
     });
 });
+
+// R729 (docs/05 3.10): the legends' states in every family, brightness, High contrast and Plain keys. Lit text (a ringed legend in
+// its layer's colour) at least 4.5:1 on every key, a filled one on its fill, a dimmed text at least 3:1; Enter's ring and fill are
+// --on-enter and --key-enter swapped, its dim a mix of the two (Keypad.svelte, 75 % --on-enter: the least that holds 3:1 in Solarized).
+/** `color-mix(in srgb, a p, b)`: the channels mixed as written (gamma-encoded). */
+const mix = (a: string, b: string, p: number): string =>
+  `#${[1, 3, 5].map((i) => Math.round(parseInt(a.slice(i, i + 2), 16) * p + parseInt(b.slice(i, i + 2), 16) * (1 - p)).toString(16).padStart(2, "0")).join("")}`;
+describe("the key legends' lit, filled and dimmed text (R729)", () => {
+  const all = allThemeBlocks().filter(([, t]) => t["key-shift"] !== undefined);
+  it("reads every theme block", () => expect(all.length).toBeGreaterThanOrEqual(12));
+  for (const [sel, t] of all)
+    it(`${sel}`, () => {
+      for (const bg of KEY_BG) {
+        for (const fg of ["key-text", "key-shift", "key-alpha"]) expect(contrast(t[fg] as string, t[bg] as string), `--${fg} on --${bg}`).toBeGreaterThanOrEqual(4.5);
+        expect(contrast(t["key-text-dead"] as string, t[bg] as string), `--key-text-dead on --${bg}`).toBeGreaterThanOrEqual(3);
+      }
+      expect(contrast(t["on-key-shift"] as string, t["key-shift"] as string), "--on-key-shift on its fill").toBeGreaterThanOrEqual(4.5);
+      expect(contrast(t["on-key-alpha"] as string, t["key-alpha"] as string), "--on-key-alpha on its fill").toBeGreaterThanOrEqual(4.5);
+      expect(contrast(t["key-num"] as string, t["key-text"] as string), "Plain keys' fill: --key-num on --key-text").toBeGreaterThanOrEqual(4.5);
+      const [oe, ke] = [t["on-enter"] as string, t["key-enter"] as string];
+      expect(contrast(oe, ke), "Enter's ring and fill").toBeGreaterThanOrEqual(4.5);
+      expect(contrast(mix(oe, ke, 0.75), ke), "Enter's dim").toBeGreaterThanOrEqual(3);
+    });
+});

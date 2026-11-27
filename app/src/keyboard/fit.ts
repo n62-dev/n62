@@ -52,6 +52,8 @@ export function fitLegends(pad: HTMLElement): void {
   // measure the text (as drawn: under a text zoom the computed size is the zoomed one)
   const natural = new Map<HTMLElement, number>();
   const cap = new Map<HTMLElement, number>();
+  /** The room a text does not get: its padding, less what a negative margin hangs into the key's side padding (R729). */
+  const spare = new Map<HTMLElement, number>();
   for (const it of items) {
     const cs = getComputedStyle(it.el);
     it.base = parseFloat(cs.fontSize);
@@ -61,8 +63,11 @@ export function fitLegends(pad: HTMLElement): void {
       const ratio = parseFloat(cs.lineHeight) / it.base;
       cap.set(it.el, (lineH.get(it.el) ?? 0) / (ratio > 0 ? ratio : 1.2));
     }
-    // an element is as wide as its text here (white-space: nowrap, a flex or grid item): scrollWidth is its content width
-    natural.set(it.el, it.el.scrollWidth);
+    // an element is as wide as its text here (white-space: nowrap, a flex or grid item): scrollWidth is its content width. R729: a
+    // legend's fixed padding (for its ring and fill) does not scale with the font: the text is measured, and given the room, without it
+    const pad = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+    natural.set(it.el, it.el.scrollWidth - pad);
+    spare.set(it.el, Math.min(0, parseFloat(cs.marginLeft) || 0) + pad);
   }
   const avail = new Map<HTMLElement, number>();
   for (const key of keys) {
@@ -79,7 +84,7 @@ export function fitLegends(pad: HTMLElement): void {
   // write
   for (const it of items) {
     const w = natural.get(it.el) ?? 0;
-    const room = avail.get(it.el) ?? 0;
+    const room = (avail.get(it.el) ?? 0) - (spare.get(it.el) ?? 0);
     const line = cap.get(it.el) ?? 0;
     let size = it.base;
     // scrollWidth is an integer (the text's true width rounded, up to half a pixel off): shrunk against the room less 1 px, the

@@ -31,7 +31,8 @@ test("Plain keys changes colour only: the legends keep their weight and style, a
   await tap(page, ["shift"]);
   const face = await style(page, '[data-key="x"] .main');
   expect([face.w, face.s]).toEqual(["400", "italic"]);
-  expect(face.c).toBe(text);
+  expect(face.c).toBe(await token(page, "--key-text-dead")); // R729: Shift armed dims the face; its lit legend y is ringed in the text's colour
+  expect((await style(page, '[data-key="x"] .shiftlegend')).c).toBe(text);
   await tap(page, ["alpha"]);
   await tap(page, ["alpha"]);
   expect((await style(page, '[data-key="x"] .main')).s).toBe("italic");
@@ -74,14 +75,14 @@ test("Plain keys: the ⚠ mark and error text keep their colour; a sheet number 
   expect(n.c).toBe(text);
 });
 
-test("High contrast: a one-shot Shift fills the key with --key-shift, a locked one adds a 3 px outline (R140)", async ({ page }) => {
+test("High contrast: a one-shot Shift rings the Shift key's face, a locked one fills it; the key keeps its outline (R729)", async ({ page }) => {
   await open(page);
   await set(page, "colour", "high");
   await tap(page, ["shift"]);
-  const press = await style(page, '[data-key="shift"]');
-  expect(press.o).toBe("none");
-  expect(await page.locator('[data-key="shift"]').evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(await token(page, "--key-shift"));
-  expect((await style(page, '[data-key="shift"] .main')).c).toBe(await token(page, "--on-key-shift"));
+  const face = page.locator('[data-key="shift"] .main');
+  const look = () => face.evaluate((el) => { const c = getComputedStyle(el); return { ring: c.boxShadow.includes("inset"), bg: c.backgroundColor, c: c.color }; });
+  expect((await style(page, '[data-key="shift"]')).o).toMatch(/^1(\.5)?px$/);
+  expect(await look()).toEqual({ ring: true, bg: "rgba(0, 0, 0, 0)", c: await token(page, "--key-shift") });
   await page.evaluate(() => window.n62.session.releaseModifiers()); // off (a second Shift tap would lock it, R726)
   const box = (await page.locator('[data-key="shift"]').boundingBox())!;
   const [x, y] = [box.x + box.width / 2, box.y + box.height / 2];
@@ -90,7 +91,8 @@ test("High contrast: a one-shot Shift fills the key with --key-shift, a locked o
   await page.mouse.move(x, y - 60, { steps: 6 });
   await page.mouse.up();
   await expect(page.locator('[data-key="shift"]')).toHaveAttribute("data-locked", "true");
-  expect(parseFloat((await style(page, '[data-key="shift"]')).o)).toBe(3);
+  expect((await style(page, '[data-key="shift"]')).o).toMatch(/^1(\.5)?px$/);
+  expect(await look()).toEqual({ ring: false, bg: await token(page, "--key-shift"), c: await token(page, "--on-key-shift") });
 });
 
 test("High contrast draws a 1.5 px outline round every key", async ({ page }) => {

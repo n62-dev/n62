@@ -36,20 +36,26 @@ test("the letter line draws the letter in the case Alpha types in the view: Home
   await expect(letter(page, "sin")).toHaveText("g");
   await expect(letter(page, "x")).toHaveText("d");
   await expect(letter(page, "d3")).toHaveText("#");
-  // Shift then Alpha in the CAS view: the capital, as now
+  // Shift then Alpha in the CAS view: the capital, as now (R729: on the letter line, the face stays the tap)
   await tap(page, ["shift", "alpha"]);
-  await expect(face(page, "sin")).toHaveText("G");
+  await expect(letter(page, "sin")).toHaveText("G");
+  await expect(face(page, "sin")).toHaveText("sin");
 });
 
 for (const how of ["armed", "locked"] as const)
-  test(`under Alpha ${how}, a key with no letter keeps the tap's colour; a letter key takes Alpha's`, async ({ page }) => {
+  test(`under Alpha ${how}, a key with no letter keeps the tap's colour; a letter key's face dims, its letter is lit`, async ({ page }) => {
     const text = await tokenColour(page, "--key-text");
     const alpha = await tokenColour(page, "--key-alpha");
+    const [dim, onAlpha] = [await tokenColour(page, "--key-text-dead"), await tokenColour(page, "--on-key-alpha")];
     expect(text).not.toBe(alpha);
     await tap(page, how === "armed" ? ["alpha"] : ["alpha", "alpha"]);
     expect(await page.evaluate(() => [window.n62.session.alpha, window.n62.session.alphaLock])).toEqual([true, how === "locked"]);
     for (const id of LETTERLESS) expect(await colourOf(page, id), id).toBe(text);
-    for (const id of LETTERED) expect(await colourOf(page, id), id).toBe(alpha);
+    // R729: the face dims; the letter is ringed in Alpha's colour (armed) or filled with it (locked)
+    for (const id of LETTERED) {
+      expect(await colourOf(page, id), id).toBe(dim);
+      expect(await letter(page, id).evaluate((e) => getComputedStyle(e).color), `${id}'s letter`).toBe(how === "armed" ? alpha : onAlpha);
+    }
     expect(await colourOf(page, "enter"), "Enter keeps its own colour").toBe(await tokenColour(page, "--on-enter"));
     expect(await page.locator(".pad .arrows").evaluate((e) => getComputedStyle(e).color), "the round pad's arrows keep Alpha's (R794f1)").toBe(alpha);
   });

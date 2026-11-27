@@ -109,7 +109,7 @@ for (const [width, height, key, nav] of [[412, 839, 43, 33], [360, 740, 43, 33],
     expect((await box(page, '[data-key="esc"]'))?.height).toBe(nav);
   });
 
-test("the states: the ring on the current tile, the busy line read, the lock underline, a or α in CAS, the update pill at the stage's top (R722)", async ({ page }) => {
+test("the states: the ring on the current tile, the busy line read, the lock's fill, a or α in CAS, the update pill at the stage's top (R722)", async ({ page }) => {
   await open(page, "engine=fake&delay=800");
   const tile = (id: string) => page.getByTestId(id).locator(".tile");
   await tap(page, ["d2", "add", "d3", "enter"]);
@@ -123,7 +123,9 @@ test("the states: the ring on the current tile, the busy line read, the lock und
   await hwOn(page); // R783: the badge with a hardware keyboard in use
   await expect(page.getByTestId("mod-alpha")).toHaveText("a");
   await expect(page.getByTestId("mod-alpha")).toHaveAttribute("data-lock", "true");
-  expect(await page.evaluate(() => getComputedStyle(document.querySelector('[data-testid="mod-alpha"]')!).boxShadow)).not.toBe("none");
+  // R729: a lock is a fill (no ring), armed a ring
+  const look = () => page.evaluate(() => { const c = getComputedStyle(document.querySelector('[data-testid="mod-alpha"]')!); return [c.boxShadow, c.backgroundColor]; });
+  expect(await look()).toEqual(["none", expect.not.stringMatching(/rgba\(0, 0, 0, 0\)/)]);
   await tap(page, ["alpha"]);
   await page.evaluate(async () => {
     const url = "/src/state/updateOffer.svelte.ts";

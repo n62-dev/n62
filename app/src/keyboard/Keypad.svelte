@@ -5,7 +5,7 @@
   import { FlickTracker, PAD_KEYS, REPEAT_KEYS, Repeat, Stepper, type Flick, type PadDir } from "./gestures.ts";
   import { fitLegends } from "./fit.ts";
   import { keyNames, loadKeyNames } from "./keyNamesLoader.svelte.ts";
-  import { actionFor, gridPlace, keyboard, labelFor, type Key, type Layer } from "./keyboard.ts";
+  import { actionFor, alphaLower, gridPlace, keyboard, labelFor, type Key, type Layer } from "./keyboard.ts";
   import { opensSheet } from "./opens.ts";
   import { typesVariable, varLayers } from "./variable.ts";
   import { createPressFlag } from "../input/pressFlag.ts";
@@ -63,9 +63,9 @@
     quiet: (key: Key, drawnDead: boolean) => boolean;
   } = $props();
 
-  // The face shows what a tap gives (the active layer). The legends show what the flicks give (P7 point 2): the shift
-  // function at the top left (flick up), the letter at the bottom left (flick down). A legend the face already shows
-  // is left out; the Shift layer's legend stays under the alpha lock, where a flick up still gives it (`=` in a name).
+  // R729 (docs/05 3.7): nothing on a key moves. The face is always the tap, the top left always the Shift layer (and the flick up),
+  // the bottom left the letter (and the flick down), in the case Alpha types in this view and state. The state lights what the next
+  // press does (CSS: a ring when armed, a fill when locked) and dims the rest; an empty corner is an empty layer.
   /** The keys as drawn and fired: the free keys with the user's slots. */
   /** The unit pad is up (R24b): a key that is one of its cells is the cell, in the same face and legends. */
   const keys = $derived(keyboard.keys.map((k) => sheetChunk.pad?.key(k, sheet) ?? userKeys.resolve(k)));
@@ -78,15 +78,21 @@
     const t = sheetOf(k)?.text;
     return t === " " ? "␣" : t;
   };
-  const face = (k: Key): string =>
-    typed(k) ?? legend(labelFor(k, shift, alpha, cas) || k.label.primary || "");
-  const hint = (k: Key): string => (shift && !alpha) || !k.label.shift ? "" : legend(k.label.shift);
+  const face = (k: Key): string => typed(k) ?? legend(k.label.primary || "");
+  /** What a press types in the current layer (the key pop, R162): the active layer's label, or the tap where it has none. */
+  const pressText = (k: Key): string => typed(k) ?? legend(labelFor(k, shift, alpha, cas) || k.label.primary || "");
+  /** K4 (owner, 2026-11-20): Shift's flick up is its lock (⇧), Alpha's up and down the two letter locks in the case each types here. */
+  const lockSign = (k: Key, up: boolean): string =>
+    k.id === "shift" ? (up ? t("flick.shiftLock") : "") : alphaLower(up, true, cas) ? t("flick.lowerLock") : t("flick.capsLock");
+  const hint = (k: Key): string => (isMod(k) ? lockSign(k, true) : k.label.shift ? legend(k.label.shift) : "");
   // (R820: while the face shows the key's letter, its letter line is empty: the letter is not drawn twice)
-  // (R728: the letter in the case Alpha and a flick down type in the view: lower case in CAS, R58)
-  const alphaHint = (k: Key): string => (alpha || !k.label.alpha || typed(k)?.toLowerCase() === k.label.alpha.toLowerCase() ? "" : labelFor(k, false, true, cas));
+  // (R728, R729: the letter in the case Alpha types in the view and state: lower case in CAS, R58, and under Shift + Alpha in Home)
+  const alphaHint = (k: Key): string =>
+    k.id === "alpha" ? lockSign(k, false) : !k.label.alpha || typed(k)?.toLowerCase() === k.label.alpha.toLowerCase() ? "" : labelFor(k, shift && alpha, true, cas);
+  const isMod = (k: Key): boolean => k.id === "shift" || k.id === "alpha";
   /** R728: no Alpha action (Esc, ⌫, `.` …; not Shift or Alpha): Alpha and a flick down are its tap, drawn in the tap's colour.
    *  Not the round pad's zones: their arrows keep Alpha's colour (R794f1). */
-  const fallsBack = (k: Key): boolean => !k.actions.alpha && k.id !== "shift" && k.id !== "alpha" && !isPadKey(k);
+  const fallsBack = (k: Key): boolean => !k.actions.alpha && !isMod(k) && !isPadKey(k);
   // R820: a letter typed into a query is upright (R142 is for a variable on the line): the data-v layers it would italicise are left out
   const varsOf = (k: Key): string | undefined => {
     const v = varLayers(k);
@@ -98,7 +104,10 @@
   /** Rows with a letter on some key reserve the letter line on every key, so the faces of a row stay level. The upper
    *  cluster has no letters, and no line for them (vertical space, docs/03 rule 9). */
   const letterRows = new Set(keyboard.keys.filter((k) => k.label.alpha).map((k) => k.row));
-  const locked = (k: Key): boolean => (k.id === "alpha" && alphaLock) || (k.id === "shift" && shiftLock);
+  // (a lower-case lock holds Shift on with it: the Shift key is filled too)
+  const locked = (k: Key): boolean => (k.id === "alpha" && alphaLock) || (k.id === "shift" && (shiftLock || (alphaLock && capsLock)));
+  /** The active layer is locked: its lit legends are filled, not ringed. */
+  const layerLocked = $derived(alpha ? alphaLock : shift && shiftLock);
 
   /** What a tap on the key does in the current layer. */
   const act = (k: Key) => actionFor(k, shift, alpha, false, cas);
@@ -123,10 +132,10 @@
 
   // Every face and legend is shrunk until it fits its key: never cut, never overlapping (U0, docs/05 3.7).
   $effect(() => {
-    // re-fit when the layer changes (the faces change with it) and when the pad's width does
-    void [shift, alpha, cas];
-    // R820: and when a sheet opens or closes, its code comes in or its query empties or fills (the faces change with them)
-    void [sheet?.kind, sheet?.empty, sheet?.filter, sheetChunk.keys];
+    // R729: the texts no longer change with Shift or Alpha: re-fit per view (the letters' case) and when the pad's width changes
+    void cas;
+    // R820: and when a sheet opens or closes, its code comes in, its query empties or fills, or (a sheet open) the layer changes (Find's `sin`: g, Shift sin)
+    void [sheet?.kind, sheet?.empty, sheet?.filter, sheetChunk.keys, sheet && shift, sheet && alpha];
     if (!padEl) return;
     const pad = padEl;
     fitLegends(pad);
@@ -179,7 +188,7 @@
 
   /** The key pop (R162): the pressed key's face above the finger, in the flick bubble's box and offset. One at a time, set in
    *  down(), gone with the key's press look (the later of the lift and 80 ms) or at once for a flick bubble or a cancel. */
-  let pop = $state<{ x: number; y: number; text: string; variable: boolean } | null>(null);
+  let pop = $state<{ x: number; y: number; text: string; layer: "shift" | "alpha" | undefined; variable: boolean } | null>(null);
   let popEl: HTMLElement | undefined;
   let popNode: HTMLDivElement | undefined = $state();
   function hidePop(): void {
@@ -188,10 +197,13 @@
   }
   function showPop(target: Key | "pad" | undefined, el: HTMLElement | undefined): void {
     // (a key that does nothing is never shown a pop: down() skips it, R777)
-    const text = pops && typeof target === "object" && el && !isPadKey(target) ? face(target) : "";
+    const text = pops && typeof target === "object" && el && !isPadKey(target) ? pressText(target) : "";
     if (!el || text === "") return hidePop();
     popEl = el;
-    pop = { x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop, text, variable: typed(target as Key) === undefined && typesVariable(act(target as Key)) };
+    const k = target as Key;
+    // R729: in the colour of the layer it types (none: the tap's; a letterless key under Alpha does its tap)
+    const layer = typed(k) !== undefined || isMod(k) ? undefined : alpha ? (fallsBack(k) ? undefined : "alpha") : shift ? "shift" : undefined;
+    pop = { x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop, text, layer, variable: typed(k) === undefined && typesVariable(act(k)) };
   }
   // the pop and the flick bubble stay inside the pad's width (a key at the edge; R905: one clamp), measured once drawn, before it is painted (+1: offsetWidth is rounded)
   const clampLeft = (node: HTMLElement | undefined, x = 0): void => {
@@ -203,23 +215,20 @@
 
   /** The bubble above a key while a flick is armed (P7 point 2): what the lift will fire, or ✕ for nothing. None while
    *  Key pop-ups is off (R163): the flick still fires. */
-  let bubble = $state<{ x: number; y: number; dir: Flick; text: string; none: boolean; variable: boolean; tap: boolean } | null>(null);
+  let bubble = $state<{ x: number; y: number; dir: Flick; text: string; none: boolean; variable: boolean; tap: boolean; lock?: { sign: "shift" | "alpha"; fill: boolean } } | null>(null);
   let bubbleOwner: number | undefined;
   let bubbleNode: HTMLDivElement | undefined = $state();
 
+  /** A lock flick on Shift or Alpha (R729): its sign, filled when the lift locks, plain when it ends that lock. */
+  function lockFlick(k: Key, dir: Flick): { sign: "shift" | "alpha"; fill: boolean } | undefined {
+    const p = k.actions.primary;
+    if (p?.kind !== "special" || (p.name !== "shift" && p.name !== "alpha") || (p.name === "shift" && dir === "down")) return undefined;
+    // (the lock state is the same in both views: up is the lower-case lock, which types capitals in CAS, R58)
+    return { sign: p.name, fill: p.name === "shift" ? !shiftLock : !(alphaLock && capsLock === (dir === "up")) };
+  }
   /** What a flick on this key fires, as the bubble shows it (empty text: nothing). Mirrors App.svelte's press(). */
   function flickText(k: Key, dir: Flick): string {
-    const p = k.actions.primary;
-    if (p?.kind === "special" && p.name === "shift") {
-      if (dir === "down") return "";
-      return shiftLock ? t("flick.unlock") : t("flick.shiftLock");
-    }
-    if (p?.kind === "special" && p.name === "alpha") {
-      const lower = dir === "up";
-      // the lock state is the same in both views (down: no shift); the CAS view types lower case there (R58)
-      const named = lower !== cas;
-      return alphaLock && capsLock === lower ? t("flick.unlock") : t(named ? "flick.lowerLock" : "flick.capsLock");
-    }
+    if (isMod(k)) return dir === "up" ? hint(k) : alphaHint(k);
     if (sheet) {
       // R820: what the flick types in the sheet (Find: a, the store sheet in Home: A), the key's own character up in Find
       const t = sheetOf(k, dir === "down" ? "alpha" : "shift")?.text;
@@ -242,7 +251,8 @@
     hidePop(); // (the flick bubble shows alone)
     // (the bubble's letter follows the same flag as the legend it shows; ✕ is none)
     const variable = !sheet && text !== "" && typesVariable(actionFor(g.key, st === "up", st === "down", false, cas));
-    bubble = { x: g.el.offsetLeft + g.el.offsetWidth / 2, y: g.el.offsetTop, dir: st, text: text || "✕", none: text === "", variable, tap: st === "down" && fallsBack(g.key) };
+    const lock = lockFlick(g.key, st);
+    bubble = { x: g.el.offsetLeft + g.el.offsetWidth / 2, y: g.el.offsetTop, dir: st, text: text || "✕", none: text === "", variable: variable && !lock, tap: st === "down" && fallsBack(g.key), ...(lock ? { lock } : {}) };
   }
   const gestures = new Map<number, Gesture>();
   /** The app goes away (home, app switcher, a lost pointerup): every gesture ends and nothing fires. */
@@ -399,6 +409,7 @@
   class="pad"
   class:shifted={shift}
   class:alphaed={alpha}
+  class:locked={layerLocked}
   style:grid-template-columns={`repeat(${keyboard.units}, 1fr)`}
   style:--pad-units={keyboard.units}
   style:--pad-span={padArea?.span ?? 0}
@@ -431,6 +442,7 @@
       data-dead={dead(key) ? "true" : undefined}
       data-fallback={fallsBack(key) ? "true" : undefined}
       data-zone={isPadKey(key) ? "true" : undefined}
+      data-mod={isMod(key) || undefined}
       data-letters={lettered ? "true" : undefined}
       data-user={key.user ? (userKeys.isEmpty(key) ? "empty" : "set") : undefined}
       data-lift={(key.user && userKeys.isEmpty(key) && hint(key) === "") || undefined}
@@ -438,13 +450,13 @@
       data-v={varsOf(key)}
     >
       <span class="shiftlegend" data-fit="legend" data-opens={opensSheet(key.actions.shift) || undefined}>{hint(key)}</span>
-      <span class="main" data-fit="face" data-opens={(typed(key) === undefined && opensSheet(act(key))) || undefined}>{face(key)}</span>
+      <span class="main" data-fit="face" data-opens={(typed(key) === undefined && opensSheet(actionFor(key, false, false, false, cas))) || undefined}>{face(key)}</span>
       {#if lettered}<span class="alphalegend" data-fit="legend">{alphaHint(key)}</span>{/if}
     </button>
   {/each}
   {#if padArea}<div class="hub" data-trackpad data-testid="pad-hub" style:grid-row={padArea.rows} style:grid-column={padArea.cols}></div>{/if}
   {#if pop}
-    <div class="bubble pop" data-testid="key-pop" data-var={pop.variable} style:left={`${pop.x}px`} style:top={`${pop.y}px`} bind:this={popNode} aria-hidden="true">{pop.text}</div>
+    <div class="bubble pop" data-testid="key-pop" data-var={pop.variable} data-layer={pop.layer} style:left={`${pop.x}px`} style:top={`${pop.y}px`} bind:this={popNode} aria-hidden="true">{pop.text}</div>
   {/if}
   {#if bubble}
     <div
@@ -454,6 +466,8 @@
       data-none={bubble.none ? "true" : undefined}
       data-tap={bubble.tap ? "true" : undefined}
       data-var={bubble.variable}
+      data-sign={bubble.lock?.sign}
+      data-fill={bubble.lock?.fill}
       style:left={`${bubble.x}px`}
       style:top={`${bubble.y}px`}
       bind:this={bubbleNode}
@@ -476,6 +490,12 @@
     -webkit-touch-callout: none;
     /* Key shadows off (R156): an empty shadow, so a rule that adds it to an inset edge stays valid */
     --key-drop: 0 0 transparent;
+    /* R729: the layer colours, set once for Enter and Plain keys; --dim is a text the next press does not type, a dead key's too */
+    --c-shift: var(--key-shift);
+    --c-alpha: var(--key-alpha);
+    --on-c-shift: var(--on-key-shift);
+    --on-c-alpha: var(--on-key-alpha);
+    --dim: var(--key-text-dead);
   }
   /* Key shadows (R156, Appearance): a solid line under each key and the round pad, in the row gap, drawn as a shadow so
      no key's box or touch area moves; an empty slot (outlined) and the pad's arrow zones have none */
@@ -504,9 +524,14 @@
   .key[data-letters="true"] {
     grid-template-rows: var(--legend-h) 1fr var(--legend-h);
   }
+  /* R729: a legend and the Shift and Alpha keys' faces keep one padding in every state, so a ring or a fill moves nothing; a legend
+     hangs it into the key's side padding, so its text stays where it was */
   .shiftlegend,
   .alphalegend {
     justify-self: start;
+    padding: 0 var(--sp-05);
+    margin-left: calc(-1 * var(--sp-05));
+    border-radius: var(--stroke-thick);
     height: var(--legend-h);
     line-height: var(--legend-h);
     font-size: var(--fs-legend);
@@ -525,9 +550,7 @@
   .bubble[data-var="true"],
   .key[data-v*="s"] .shiftlegend,
   .key[data-v*="a"] .alphalegend,
-  .pad:not(.shifted, .alphaed) .key[data-v*="p"] .main,
-  .shifted:not(.alphaed) .key[data-v*="s"] .main,
-  .alphaed .key[data-v*="a"] .main {
+  .key[data-v*="p"] .main {
     font-style: italic;
     font-family: KaTeX_Math, "STIX Two Text", "Times New Roman", "Times", serif;
     font-weight: 400;
@@ -744,77 +767,66 @@
     border-radius: 50%;
     background: color-mix(in srgb, var(--key-text) 32%, transparent);
   }
-  /* a key that does nothing in this layer (and only in this layer) is dimmed, still readable; so is a dead zone's arrow */
-  .key[data-dead="true"] .main,
-  .pad:has(.key[data-key="up"][data-dead="true"]) .arrows [data-arrow="up"],
-  .pad:has(.key[data-key="down"][data-dead="true"]) .arrows [data-arrow="down"],
-  .pad:has(.key[data-key="left"][data-dead="true"]) .arrows [data-arrow="left"],
-  .pad:has(.key[data-key="right"][data-dead="true"]) .arrows [data-arrow="right"] {
-    color: var(--key-text-dead);
-  }
+  /* R729 (docs/05 3.10): Enter sets the layer colours of .pad to --on-enter for both (Plain keys: theme/modes.css) */
   .key.enter {
+    --c-shift: var(--on-enter);
+    --c-alpha: var(--on-enter);
+    --on-c-shift: var(--key-enter);
+    --on-c-alpha: var(--key-enter);
+    --dim: color-mix(in srgb, var(--on-enter) 75%, var(--key-enter));
     background: var(--key-enter);
     color: var(--on-enter);
     font-size: var(--fs-body);
   }
-  .shiftlegend {
-    color: var(--key-shift);
+  .shiftlegend,
+  .key[data-key="shift"] .main {
+    color: var(--c-shift);
   }
-  .alphalegend {
-    color: var(--key-alpha);
+  .alphalegend,
+  .key[data-key="alpha"] .main {
+    color: var(--c-alpha);
   }
-  .shifted .main,
+  .key[data-mod] .main {
+    padding: var(--stroke) var(--sp-15);
+    border-radius: var(--radius-s);
+  }
   .shifted .arrows {
     color: var(--key-shift);
   }
-  .alphaed .main,
   .alphaed .arrows {
     color: var(--key-alpha);
   }
-  /* R728: a key with no letter does its tap under Alpha: the tap's colour; :where leaves Enter's and the dim to win (the round
-     pad's arrows keep Alpha's, R794f1) */
-  .alphaed :where(.key[data-fallback="true"]) .main {
-    color: var(--key-text);
+  /* the next press is lit, the rest dims: Shift lights the Shift legends, Alpha the letters (a key with no letter keeps its face:
+     Alpha there is its tap, R728); a key that does nothing in this layer is dimmed, still readable, and so is a dead zone's arrow */
+  .shifted:not(.alphaed) .key:not([data-mod]) .alphalegend,
+  .shifted:not(.alphaed) .key:not([data-mod], [data-zone]) .main,
+  .alphaed .key:not([data-mod]) .shiftlegend,
+  .alphaed .key:not([data-mod], [data-zone], [data-fallback="true"]) .main,
+  .key[data-dead="true"] :is(.main, .shiftlegend, .alphalegend),
+  .pad:has(.key[data-key="up"][data-dead="true"]) .arrows [data-arrow="up"],
+  .pad:has(.key[data-key="down"][data-dead="true"]) .arrows [data-arrow="down"],
+  .pad:has(.key[data-key="left"][data-dead="true"]) .arrows [data-arrow="left"],
+  .pad:has(.key[data-key="right"][data-dead="true"]) .arrows [data-arrow="right"] {
+    color: var(--dim);
   }
-  /* Enter keeps one colour in every layer: the coloured text would not read on its green */
-  .key.enter .main,
-  .key.enter .shiftlegend,
-  .key.enter .alphalegend {
-    color: var(--on-enter);
-  }
-  .shifted .key[data-dead="true"] .main,
-  .alphaed .key[data-dead="true"] .main {
-    color: var(--key-text-dead);
-  }
-  /* Shift and Alpha wear the other keys' colour (R140); only the label carries the layer colour. Armed, the key fills
-     with it (--on-shift / --on-alpha are black or white at 4.5:1); locked adds the 3 px outline round the fill. */
-  .key[data-key="shift"] .main {
-    color: var(--key-shift);
-  }
-  .key[data-key="alpha"] .main {
-    color: var(--key-alpha);
-  }
-  .key[data-key="shift"][aria-pressed="true"] {
-    background: var(--key-shift);
-    outline: none;
-  }
-  .key[data-key="alpha"][aria-pressed="true"] {
-    background: var(--key-alpha);
-    outline: none;
-  }
-  .key[data-key="shift"][aria-pressed="true"] .main {
-    color: var(--on-key-shift);
-  }
+  /* armed is a ring (inset, in the text's colour), locked a fill: on the lit legends and on the Shift and Alpha keys' faces */
+  .shifted:not(.alphaed) .key:not([data-mod], [data-dead="true"]) .shiftlegend:not(:empty),
+  .alphaed .key:not([data-mod], [data-dead="true"]) .alphalegend:not(:empty),
+  .key[data-key="shift"][aria-pressed="true"] .main,
   .key[data-key="alpha"][aria-pressed="true"] .main {
-    color: var(--on-key-alpha);
+    box-shadow: inset 0 0 0 var(--stroke-mid) currentColor;
   }
-  .key[data-key="shift"][data-locked="true"],
-  .key[data-key="alpha"][data-locked="true"] {
-    outline: var(--stroke-thick) solid var(--alpha);
-    outline-offset: calc(-1 * var(--stroke-thick)); /* R774: inside the key (it crossed the 4 px gap and left the screen); R729 replaces it with a fill */
+  .shifted.locked:not(.alphaed) .key:not([data-mod], [data-dead="true"]) .shiftlegend:not(:empty),
+  .key[data-key="shift"][data-locked="true"] .main {
+    box-shadow: none;
+    background: var(--c-shift);
+    color: var(--on-c-shift);
   }
-  .key[data-key="shift"][data-locked="true"] {
-    outline-color: var(--shift);
+  .alphaed.locked .key:not([data-mod], [data-dead="true"]) .alphalegend:not(:empty),
+  .key[data-key="alpha"][data-locked="true"] .main {
+    box-shadow: none;
+    background: var(--c-alpha);
+    color: var(--on-c-alpha);
   }
   /* the flick bubble (P7 point 2): above the key, in the colour of the layer it fires; ✕ dimmed when nothing fires */
   .bubble {
@@ -846,5 +858,24 @@
   .bubble[data-none="true"] {
     border-color: var(--text-dead);
     color: var(--text-dead);
+  }
+  /* R729: the pop in the colour of the layer it types; a lock flick's sign in its modifier's, filled when the lift locks, plain when it ends the lock */
+  .bubble.pop[data-layer="shift"],
+  .bubble[data-sign="shift"] {
+    border-color: var(--shift);
+    color: var(--shift);
+  }
+  .bubble.pop[data-layer="alpha"],
+  .bubble[data-sign="alpha"] {
+    border-color: var(--alpha);
+    color: var(--alpha);
+  }
+  .bubble[data-fill="true"] {
+    background: var(--shift);
+    color: var(--on-shift);
+  }
+  .bubble[data-sign="alpha"][data-fill="true"] {
+    background: var(--alpha);
+    color: var(--on-alpha);
   }
 </style>

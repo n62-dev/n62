@@ -3,7 +3,7 @@
 // the two switches on Home; R116, the entry line's highlights in every family's Dark and Light; R124, the mark styles;
 // R125, the digit-group separators.
 import type { Page } from "@playwright/test";
-import { sheetKey, tap } from "../test/helpers.ts";
+import { hwOn, sheetKey, tap } from "../test/helpers.ts";
 
 export interface LookShot {
   readonly id: string;
@@ -232,6 +232,30 @@ export function eiShots(): LookShot[] {
       await p.waitForTimeout(250);
     },
   }));
+}
+
+/** R729: the key legends in the five states and CAS (N62 at 412 wide; light and dark come with every shot), the keys with the bar, its
+ *  ⇧/α sign shown as with a hardware keyboard in use; Shift armed and locked again with Plain keys and with High contrast. */
+export function legendShots(): (LookShot & { viewport: { width: number; height: number } })[] {
+  const states: [string, string, string[]][] = [
+    ["rest", "at rest", []], ["shift", "Shift armed", ["shift"]], ["shift-lock", "Shift locked", ["shift", "shift"]],
+    ["alpha", "Alpha armed", ["alpha"]], ["alpha-lock", "Alpha locked", ["alpha", "alpha"]], ["cas", "CAS, at rest", ["@cas"]],
+  ];
+  const looks: [string, string, Record<string, unknown>][] = [["n62", "N62", {}], ["plain", "Plain keys", { plain: true }], ["high", "High contrast", { contrast: true }]];
+  return looks.flatMap(([id, look, patch]) =>
+    states.filter(([k]) => id === "n62" || k.startsWith("shift")).map(([k, t, keys]) => ({
+      id: `legends-${id}-${k}`,
+      group: "The key legends (R729): armed a ring, locked a fill, the rest dimmed",
+      title: `${look}, ${t}`,
+      viewport: { width: 412, height: 915 },
+      element: '[data-testid="keys"]',
+      setup: async (p: Page) => {
+        if (Object.keys(patch).length > 0) await setLook(p, patch);
+        await tap(p, keys);
+        await hwOn(p);
+      },
+    })),
+  );
 }
 
 /** R143: the ▾ on every legend that opens a menu, the keypad alone at both phone sizes (360 and 412 wide), tap layer and Shift
