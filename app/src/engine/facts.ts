@@ -119,10 +119,12 @@ export function storeFacts(own: NameFacts | null, lent: readonly NameFacts[], re
   return all.length ? mergedFacts([...(own ? [own] : []), ...all]) : own;
 }
 
-/** The shape of a numeric result (scalar, list, matrix), from its fields. */
+/** The shape of a numeric result (scalar, list, matrix), from its fields; a list of Giac's list type keeps its braces
+ *  (G381: a stored float list read back showed as a vector). */
 function shapeOfResult(r: HomeResult): Shape {
   if (!r.items) return { kind: "scalar" };
-  return r.shape ? { kind: "matrix", rows: r.shape[0], cols: r.shape[1] } : { kind: "list", n: r.items.length };
+  if (r.shape) return { kind: "matrix", rows: r.shape[0], cols: r.shape[1] };
+  return r.braces ? { kind: "list", n: r.items.length, braces: true } : { kind: "list", n: r.items.length };
 }
 
 /**
