@@ -279,4 +279,13 @@ describe("a constant subterm the double can size (G403)", () => {
     // ±Infinity, a size constantLog10 cannot tell (asinh of a value below the double's range), counts nothing
     expect(literalStart("evalf(asinh(10^-400))", 40, 1000, "typed")).toEqual({ at: 441, unchecked: false });
   });
+  it("reads no subterm past 200 brackets deep, counts the brackets by giacPrint's walk (strings skipped)", () => {
+    const deep = "(".repeat(3000) + "1/cosh(300)" + ")".repeat(3000);
+    // only the literal 300 counts (3 digits, so 3 + 12)
+    expect(at(`(1+${deep})^cosh(300)`)).toEqual({ at: 15, unchecked: false });
+    // brackets in a string are no nesting (G403 fix round 1: the hand-written loop counted them)
+    expect(at(`[(1+1/cosh(300))^cosh(300),"${"(".repeat(300)}"]`)).toEqual({ at: 142, unchecked: false });
+    // a string that does not close is read as too deep: no subterm counts
+    expect(at(`[(1+1/cosh(300))^cosh(300),"${"(".repeat(3)}`)).toEqual({ at: 15, unchecked: false });
+  });
 });

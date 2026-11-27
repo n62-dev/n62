@@ -8,7 +8,7 @@
 // general cure). The literals are read by giacPrint's number reader. Only erasable TypeScript syntax, so Node runs this
 // file directly.
 import type { PrecisionWarn } from "./format.ts";
-import { arithmeticOf, type Arith, callsOf, closing, topLevelArgs, integerLiteral, isNameChar, namesIn, negated, numbers, powersIn, withoutStrings, type Quoting } from "./giacPrint.ts";
+import { arithmeticOf, type Arith, callsOf, closing, topLevelArgs, integerLiteral, isNameChar, UNCLOSED, walk as bracketWalk, namesIn, negated, numbers, powersIn, withoutStrings, type Quoting } from "./giacPrint.ts";
 import { PERIODIC } from "./converge.ts";
 import { constantLog10 } from "./constDouble.ts";
 
@@ -88,15 +88,11 @@ function periodicPlaces(text: string, q: Quoting): [number, number][] {
  *  close: 140 ms at 1000, a stack overflow at 3000). */
 const MAX_NESTING = 200;
 
-/** The deepest bracket nesting of `text`, strings counted too (more, never less). */
-function nesting(text: string): number {
-  let depth = 0;
+/** The deepest bracket nesting of `text` outside strings, by giacPrint's one bracket walk; Infinity when a string does
+ *  not close (more, never less). */
+function nesting(text: string, q: Quoting): number {
   let max = 0;
-  for (const c of text) {
-    if (c === "(" || c === "[" || c === "{") max = Math.max(max, ++depth);
-    else if (c === ")" || c === "]" || c === "}") depth--;
-  }
-  return max;
+  return bracketWalk(text, 0, (_k, d) => void (max = Math.max(max, d)), q) === UNCLOSED ? Infinity : max;
 }
 
 /** G403: log10 |t| of every subterm t of `text` that holds a name or a call and that constantLog10 sizes (`exp(-100*pi)`,
@@ -118,7 +114,7 @@ function constantTerms(text: string, q: Quoting): { log10: number; periodic: boo
     if (Number.isFinite(log10)) out.push({ log10, periodic, whole: a === root });
     return named;
   };
-  if (nesting(text) > MAX_NESTING) return out;
+  if (nesting(text, q) > MAX_NESTING) return out;
   const whole = (root = arithmeticOf(text, q));
   if (whole) {
     walk(whole, false);
