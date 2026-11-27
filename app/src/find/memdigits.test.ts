@@ -40,13 +40,13 @@ describe("R800: Memory's digits highlight", () => {
     expect(sheet.level.current?.label).toBe("Clear all");
     expect(forget).not.toHaveBeenCalled();
   });
-  it("Enter on the highlighted name still deletes it", () => {
+  it("Enter on the highlighted name still deletes it", async () => {
     const { sheet, forget } = setup(true);
     sheet.pickNumber(3);
     sheet.pickNumber(1);
     expect(forget).not.toHaveBeenCalled();
     sheet.enter();
-    expect(forget).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => expect(forget).toHaveBeenCalledTimes(1)); // (R314: the entries are kept first, then the purge)
     expect(forget).toHaveBeenCalledWith("purge(B)", expect.anything());
   });
   it("a digit past the last row does nothing", () => {
