@@ -3,7 +3,8 @@
 // Hand, Right or Left. Left mirrors the keypad's columns (Enter, ⌫ and Esc to the left edge, the round pad's ◀ and ▶ zones still on
 // their own sides) and the bar's order (⌄ at the right end, ☰ at the left), open and folded; the entry line and the history stay.
 // Right is the default and today's layout. Expected values come from the rule: a mirrored box is the old one reflected about the
-// keypad's (or the bar's) vertical centre line. The fake engine, at 360 × 740.
+// keypad's (or the bar's) vertical centre line; the bar's track (Home, slot 2) and modes group turn as wholes and read as before.
+// The fake engine, at 360 × 740.
 import { expect, test, type Page } from "@playwright/test";
 import { open, sheet, tap } from "./helpers.ts";
 
@@ -29,6 +30,7 @@ const boxes = (page: Page): Promise<Boxes> =>
     put("bar", bar);
     for (const el of bar?.querySelectorAll("button[data-item], [data-testid='bar-modes'], [data-testid='mod-slot']") ?? [])
       put(`bar:${el.getAttribute("data-item") ?? el.getAttribute("data-testid")}`, el);
+    put("bar:track", bar?.querySelector("[role='tablist']") ?? null);
     put("entry", document.querySelector('[data-testid="entry"]'));
     put("history", document.querySelector(".stage"));
     return out;
@@ -37,6 +39,9 @@ const boxes = (page: Page): Promise<Boxes> =>
 /** The box reflected about the vertical line through `mid` (twice the centre's x). */
 const mirror = (b: Box, twiceMid: number): Box => ({ ...b, x: twiceMid - b.x - b.w });
 const near = (a: Box, b: Box): boolean => Math.abs(a.x - b.x) < 0.6 && Math.abs(a.y - b.y) < 0.6 && Math.abs(a.w - b.w) < 0.6 && Math.abs(a.h - b.h) < 0.6;
+
+/** The bar's two groups turn as wholes; inside each, its controls keep their order (Home before slot 2, `STD 12 ▾` before RAD). */
+const GROUP: Record<string, string> = { "bar:home": "bar:track", "bar:slot": "bar:track", "bar:mode": "bar:bar-modes", "bar:angle": "bar:bar-modes" };
 
 /** What does not hold of `left` as the mirror of `right` (none is the rule). */
 function mirrored(right: Boxes, left: Boxes): string[] {
@@ -52,7 +57,9 @@ function mirrored(right: Boxes, left: Boxes): string[] {
     }
     // the round pad's ◀ ▶ zones point where they point: they keep their side of the (centred) pad
     const stays = name === "entry" || name === "history" || name === "pad" || name === "bar" || name === "key:left" || name === "key:right";
-    const want = stays ? r : name.startsWith("bar:") ? mirror(r, 2 * bar.x + bar.w) : mirror(r, 2 * pad.x + pad.w);
+    const group = GROUP[name];
+    const [gr, gl] = [group ? right[group] : undefined, group ? left[group] : undefined];
+    const want = stays ? r : gr && gl ? { ...r, x: gl.x + (r.x - gr.x) } : name.startsWith("bar:") ? mirror(r, 2 * bar.x + bar.w) : mirror(r, 2 * pad.x + pad.w);
     if (!near(l, want)) bad.push(`${name}: at ${Math.round(l.x)}, want ${Math.round(want.x)}`);
   }
   return bad;
@@ -100,11 +107,12 @@ test("R781: Left mirrors the keys and the bar (Enter at the mirrored x, ⌄ at t
   expect(left["key:enter"]!.x).toBeLessThan(W / 2);
   expect(left["bar:fold"]!.x).toBeGreaterThan(left["bar:menu"]!.x);
   expect(left["bar:fold"]!.x + left["bar:fold"]!.w).toBeCloseTo(right["bar"]!.x + right["bar"]!.w, 0);
-  // a mirrored key still types itself, and the pad's ◀ still steps left
-  await tap(page, ["d7", "d8", "left", "d9"]);
-  expect(await page.evaluate(() => window.n62.entry.value)).toBe("798");
   await stepHand(page, "step-down");
   expect(await boxes(page)).toEqual(right);
+  // Left again: a mirrored key still types itself, and the pad's ◀ still steps left
+  await stepHand(page, "step-up");
+  await tap(page, ["d7", "d8", "left", "d9"]);
+  expect(await page.evaluate(() => window.n62.entry.value)).toBe("798");
 });
 
 test("R781: Left survives a reload, the first frame already mirrored", async ({ page }) => {

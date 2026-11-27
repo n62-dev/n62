@@ -195,15 +195,11 @@ describe("Settings › Appearance (R50e)", () => {
     const seen: string[] = [];
     session.onLook = (l) => void seen.push(l.hand);
     expect(s.level.items.map((x) => x.id).at(-1)).toBe("hand");
-    expect(byId(s, "hand")).toMatchObject({ label: "Hand", value: "Right" });
-    expect(byId(s, "hand")?.selected).toBeUndefined(); // a value, not a switch
-    byId(s, "hand")?.adjust?.(1);
-    expect(session.settings.look.hand).toBe("left");
-    expect(byId(s, "hand")?.value).toBe("Left");
-    byId(s, "hand")?.adjust?.(1);
-    expect(session.settings.look.hand).toBe("right");
-    byId(s, "hand")?.adjust?.(-1);
-    expect(byId(s, "hand")?.value).toBe("Left");
+    expect(byId(s, "hand")).toMatchObject({ label: "Hand", value: "Right", selected: undefined }); // a value, not a switch
+    for (const [by, want] of [[1, "Left"], [1, "Right"], [-1, "Left"]] as const) {
+      byId(s, "hand")?.adjust?.(by);
+      expect(byId(s, "hand")?.value).toBe(want);
+    }
     expect(seen).toEqual(["left", "right", "left"]);
     expect(s.path).toBe("Settings › Appearance");
   });
