@@ -201,7 +201,7 @@ describe("unit view builder (G16)", () => {
     expect(buildJob({ formula: "80*pasu1-20*pasu2", slots: [oC, oC], end: { tokens: [{ unit: "K" }] } }, sc)).toMatchObject({ kelvin: k, end: "(((1)*pasdimK^(1)))" });
     // an absolute end slot would read the difference as a temperature
     expect(job("80*pasu1-20*pasu2", [oC, oC], oC)).toEqual({ error: "temperature", unit: "°C" });
-    for (const f of ["80*pasu1+20*pasu2", "2*(80*pasu1-20*pasu2)", "(80*pasu1-20*pasu2)^2", "(80*pasu1-20*pasu2)/2", "80*pasu1-20*pasu1*pasu2", "80*pasu1*20-pasu2", "x*pasu1-20*pasu2", "80*pasu1-20*pasu2,1", "-(80*pasu1)-20*pasu2"])
+    for (const f of ["80*pasu1+20*pasu2", "80*pasu1-20*pasu1*pasu2", "80*pasu1*20-pasu2", "x*pasu1-20*pasu2", "80*pasu1-20*pasu2,1", "-(80*pasu1)-20*pasu2", "2*80*pasu1-20*pasu2", "80*pasu1-20/2*pasu2"])
       expect(job(f)).toEqual({ error: "temperature", unit: "°C" });
     expect(job("(80*pasu1-20*pasu2)+5*pasu3", [oC, oC, oC])).toEqual({ error: "temperature", unit: "°C" });
     expect(job("80*pasu1-20*pasu2", [oC, { tokens: [{ prefix: "k", unit: "oC" }] }])).toEqual({ error: "temperature", unit: "°C" });
@@ -212,6 +212,37 @@ describe("unit view builder (G16)", () => {
     // K − K and K − °R have no offset: differences as before
     expect(two("K", "K")).not.toHaveProperty("kelvin");
     expect(two("K", "oR")).not.toHaveProperty("error");
+  });
+  it("G385: a bracketed T1 − T2 of one scale takes part in arithmetic; an absolute temperature outside it stays refused", () => {
+    const [oC, oF, K] = ["oC", "oF", "K"].map((unit) => ({ tokens: [{ unit }] }));
+    const sc = factorTable([unit("oC", "1+5463/20", "K1", "°C"), unit("oF", "5/9+45967/180", "K1", "°F"), unit("K", "1", "K1"), unit("oR", "5/9", "K1", "°R")]);
+    const job = (formula: string, slots: UnitSlot[], end?: UnitSlot) => buildJob({ formula, slots, ...(end ? { end } : {}) }, sc);
+    const iv = "(((1)*pasdimK^(1)))";
+    const k = ["(((1)*(80)+(5463/20)))", "(((1)*(20)+(5463/20)))"];
+    expect(job("(80*pasu1-20*pasu2)+5*pasu3", [oC, oC, K])).toMatchObject({ expr: `(80*${iv}-20*${iv})+5*${iv}`, kelvin: k });
+    expect(job("2*(80*pasu1-20*pasu2)", [oC, oC])).toMatchObject({ expr: `2*(80*${iv}-20*${iv})`, kelvin: k });
+    expect(job("(80*pasu1-20*pasu2)^2", [oC, oC])).toMatchObject({ kelvin: k });
+    expect(job("((80*pasu1-20*pasu2))/2", [oC, oC])).toMatchObject({ kelvin: k });
+    expect(job("abs((80*pasu1-20*pasu2))", [oC, oC])).toMatchObject({ kelvin: k });
+    // two groups, each of one scale: both pairs of temperatures are checked against 0 K
+    expect(job("(80*pasu1-20*pasu2)-(50*pasu3-32*pasu4)", [oC, oC, oF, oF])).toMatchObject({ kelvin: [...k, "(((5/9)*(50)+(45967/180)))", "(((5/9)*(32)+(45967/180)))"] });
+    expect(job("(pasupm(80,0.5)*pasu1-pasupm(20,0.5)*pasu2)*2", [oC, oC])).toMatchObject({ kelvin: ["(((1)*((80))+(5463/20)))", "(((1)*((20))+(5463/20)))"], unc: { vars: [{ value: "80" }, { value: "20" }] } });
+    // a call's bracket is no group: sin(80 °C − 20 °C) is not read as an interval
+    expect(job("abs(80*pasu1-20*pasu2)", [oC, oC])).toEqual({ error: "temperature", unit: "°C" });
+    // refused as before: an absolute temperature outside a group, a sum, a product on a side, an absolute end slot
+    expect(job("(80*pasu1-20*pasu2)+5*pasu3", [oC, oC, oC])).toEqual({ error: "temperature", unit: "°C" });
+    expect(job("(80*pasu1+20*pasu2)*2", [oC, oC])).toEqual({ error: "temperature", unit: "°C" });
+    expect(job("(2*80*pasu1-20*pasu2)*2", [oC, oC])).toEqual({ error: "temperature", unit: "°C" });
+    expect(job("(80*pasu1-20*pasu2)*2", [oC, oC], oC)).toEqual({ error: "temperature", unit: "°C" });
+    // two scales in a group: G370's message
+    expect(job("(300*pasu1-20*pasu2)*2", [K, oC])).toEqual({ error: "scales", units: ["K", "°C"] });
+    expect(job("(80*pasu1-20*pasu2)*(80*pasu3-20*pasu4)", [oC, oC, oC, oF])).toEqual({ error: "scales", units: ["°C", "°F"] });
+    // no brackets in a longer formula: the refusal asks for them
+    expect(job("80*pasu1-20*pasu2+5*pasu3", [oC, oC, K])).toEqual({ error: "bracket" });
+    expect(job("5*pasu3+80*pasu1-20*pasu2", [oC, oC, K])).toEqual({ error: "bracket" });
+    expect(job("(80*pasu1-20*pasu2+5*pasu3)*2", [oC, oC, K])).toEqual({ error: "bracket" });
+    expect(job("80*pasu1-20*pasu2*2", [oC, oC])).toEqual({ error: "temperature", unit: "°C" });
+    expect(unitErrorMessage({ error: "bracket" })).toBe("Put the temperature difference in brackets: (T1 − T2)");
   });
   it("refuses a request that does not fit together", () => {
     const one = { tokens: [{ unit: "m" }] };
