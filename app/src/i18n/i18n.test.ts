@@ -49,6 +49,7 @@ const FAMILIES: readonly { prefix: string; suffixes: readonly string[] | "any"; 
   { prefix: "marks.setting.", suffixes: ["muted", "colour", "reason", "muted.spoken", "colour.spoken", "reason.spoken"], file: "views/modeSheet.ts" },
   { prefix: "groups.setting.", suffixes: ["thin", "apos", "comma", "thin.spoken", "apos.spoken", "comma.spoken"], file: "views/modeSheet.ts" }, // R125
   { prefix: "appearance.brightness.", suffixes: ["system", "light", "dark"], file: "views/modeSheet.ts" },
+  { prefix: "appearance.hand.", suffixes: ["right", "left"], file: "views/modeSheet.ts" }, // R781: Hand's value
   { prefix: "mark.", suffixes: ["exact", "approx", "warn"], file: "views/History.svelte" },
   { prefix: "fcn.", suffixes: ["min", "max", "flat"], file: "apps/function/app.svelte.ts" },
   // every CalcError code (calc/port.ts, engine/converge.ts Refusal), shown by errorText

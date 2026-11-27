@@ -74,6 +74,11 @@
     order: 1;
     margin-left: var(--sp-1);
   }
+  /* R781: Hand = Left mirrors the folded row, so the room is on the other side */
+  :global(:root[data-hand="left"] .bar.folded) .seg {
+    margin-left: 0;
+    margin-right: var(--sp-1);
+  }
   :global(.bar.folded) .seg::before {
     inset: calc((100% - var(--bar-h)) / 2 + var(--sp-05)) 0;
   }

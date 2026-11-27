@@ -25,12 +25,13 @@ vi.mock("./apply.ts", () => ({
   },
 }));
 
-const look = (family: Look["family"], brightness: Look["brightness"]): Look => ({ family, brightness, contrast: false, plain: false, shadow: true, pops: true, findFull: false });
+const look = (family: Look["family"], brightness: Look["brightness"]): Look => ({ family, brightness, contrast: false, plain: false, shadow: true, pops: true, findFull: false, hand: "right" });
 
+let attrs = new Map<string, string>();
 beforeEach(() => {
   calls.length = 0;
   hold = null;
-  const attrs = new Map<string, string>();
+  attrs = new Map<string, string>();
   const root = { setAttribute: (k: string, v: string) => void attrs.set(k, v), removeAttribute: (k: string) => void attrs.delete(k) };
   vi.stubGlobal("document", { documentElement: root, querySelector: () => null });
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => BG[`${attrs.get("data-family")}/${attrs.get("data-brightness")}`] ?? "" }));
@@ -60,5 +61,16 @@ describe("applyLook and the system bars (A266)", () => {
     go();
     await Promise.all([first, second]);
     expect(calls).toEqual([{ color: "#092726", light: false }]);
+  });
+});
+
+describe("Hand (R781)", () => {
+  it("Left sets data-hand=left on the root at once; Right takes it away and sets nothing", async () => {
+    const { applyLook } = await import("./lookApply.ts");
+    const done = applyLook({ ...look("n62", "dark"), hand: "left" });
+    expect(attrs.get("data-hand")).toBe("left"); // before the theme's file is in
+    await done;
+    await applyLook(look("n62", "dark"));
+    expect(attrs.has("data-hand")).toBe(false);
   });
 });

@@ -19,7 +19,7 @@ const show = (page: Page, look: Look): Promise<void> =>
   page.evaluate(async (l) => {
     const url = "/src/theme/lookApply.ts";
     const m = (await import(/* @vite-ignore */ url)) as typeof import("../src/theme/lookApply.ts");
-    await m.applyLook({ ...l, pops: true, findFull: false }); // (Key pop-ups, R163: not drawn by the look)
+    await m.applyLook({ ...l, pops: true, findFull: false, hand: "right" }); // (Key pop-ups, R163: not drawn by the look)
   }, look);
 
 interface Drawn {
@@ -75,7 +75,7 @@ test("Appearance: Key shadows is a switch after Plain keys with its line, on at 
   expect(await page.evaluate(() => window.n62.session.settings.look.shadow)).toBe(true);
   await tap(page, ["help", "d2"]);
   const ids = await sheet(page).getByRole("menuitem").evaluateAll((els) => els.map((e) => e.getAttribute("data-id")));
-  expect(ids).toEqual(["theme", "brightness", "contrast", "plain", "shadow", "pops", "findFull"]); // (Key pop-ups: R163)
+  expect(ids).toEqual(["theme", "brightness", "contrast", "plain", "shadow", "pops", "findFull", "hand"]); // (Key pop-ups: R163; Hand: R781)
   await expect(row(page, "shadow").locator(".label")).toHaveText("Key shadows");
   await expect(row(page, "shadow").getByTestId("row-hint")).toHaveText("A dark line under each key");
   await expect(row(page, "shadow")).toHaveAttribute("data-selected", "true");
