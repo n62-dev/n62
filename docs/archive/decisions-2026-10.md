@@ -97,6 +97,11 @@ History only: read it when a decision is questioned. What still binds is in [../
 - **G172, the double fallback per element stops at 32 elements** (`MAX_DOUBLE_ELEMENTS`; Opus pass 122); a longer list shows Giac's text. Archived, "Opus pass 123". Would change if: the per-element calls are batched.
 - **A101, the checked append (Opus pass 189):** a failed read, append or check is "cantAppend", nothing more written (`appendChecked`). Archived, "Opus pass 191". Would change if: G219 finds the read too slow.
 
+### Moved by Opus pass 253 (2026-11-27: decisions.md over 39 kB; built, the rules in code), as they stood
+- **G19 (2026-10-17): after a safe start, the next launch tries the stored definitions again.** Would change if: crashing definitions cost too many restarts in use.
+- **R87:** no ISC or UIUC text in `LICENSES/`: yaml is build-time only, Emscripten's runtime ships under MIT (THIRD_PARTY.md). Would change if: a shipped part needs another licence's text.
+- **G116, the sweep oracle:** on atanh's cut it takes Giac's side (+π/2·i for a real x > 1), and an argument on a cut within noise is a skip. Would change if: a case shows Giac off the textbook side.
+
 ### Shortened by Opus pass 216 (2026-11-17) to make room, as they stood
 - **G392's note (Opus pass 210):** "unit dropped: Home has no units" rides in the row and the work report, never in Copy as shown, which stays the value as drawn so Paste reads it back (R325); a chip row alike. Would change if: the owner wants the note in the copied text.
 - **G218, G219, G233, G234 (Opus pass 191):** a sync `.py` row name carries its process id (`_3_<id>`); the queue keeps 400 lines, a burst waits 2 s. Your unit is the id `@name`, for good. Would change if: G215 finds a sync `.py` that does not run.
