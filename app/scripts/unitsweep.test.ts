@@ -19,7 +19,7 @@ import { freshHost, root } from "./golden/lib.ts";
 import { requestOf } from "./unit-case.ts";
 import { drawingCheck, placeOf, readNumber, sigmaCheck, sigmaOracle, tripCheck, type DrawingIn } from "./unitsweep-checks.ts";
 import { generateUnitCases, poolsOf } from "./unitsweep-gen.ts";
-import { loadUnitKnown, rowOf, unitSweep } from "./unitsweep.ts";
+import { rowOf, unitSweep } from "./unitsweep.ts";
 
 const dec = (s: string): DecimalValue => decimalFromString(s)!;
 const ts = " ";
@@ -149,12 +149,10 @@ describe.skipIf(!giacAvailable() || !indexItems)("the unit sweep on the hunt's i
     expect(rowOf(r, "std", 12).text).toBe("0.00 ± ⚠0.64");
   });
 
-  it("twenty cases of the gate's seed fail only as the known file says (F490: σ below 1E-154)", async () => {
+  it("twenty cases of the gate's seed pass, the σ of 3.8E-178 among them (G807, F490: σ below 1E-154)", async () => {
     const cases = generateUnitCases(20261123, 20, poolsOf(indexItems!));
     const r = await unitSweep(cases, table, host);
-    const known = new Set(loadUnitKnown(root).map((k) => `${k.id} ${k.check}`));
-    expect(r.failures.filter((f) => !known.has(`${f.id} ${f.check}`))).toEqual([]);
-    expect(r.failures.map((f) => f.check).sort()).toEqual(["sigma1", "sigmawarn"]);
+    expect(r.failures).toEqual([]);
     expect(r.runs).toBeGreaterThan(60);
   });
 });
