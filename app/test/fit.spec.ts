@@ -3,7 +3,7 @@
 // viewport scrolls inside its box with its last row reachable. Where each sheet sits is sheetsview.spec.ts. The fake engine,
 // except for the Tmpl flow.
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, open, sheetKey, tap, tapHistory } from "./helpers.ts";
+import { entryValue, open, setFontScale, sheetKey, tap, tapHistory } from "./helpers.ts";
 
 // Not helpers.sheet: this one is every element with role menu, not the `menu` test id.
 const sheet = (page: Page) => page.locator('[role="menu"]');
@@ -308,6 +308,30 @@ for (const width of [360, 412])
       { id: "deselect", text: "Paste", cut: false },
     ]);
   });
+
+// R729 fix round 2: in Find a letter key's face is its letter at rest (`sin` reads g) and its own label with Shift armed (`sin`); the
+// keypad re-fits when the layer changes while a sheet is open, so under a text zoom of 2 no face is cut (docs/05 3.7: never cut)
+test("R729: Find open, Shift armed, at 360 px and font scale 2: every face lies inside its key", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await open(page);
+  await setFontScale(page, 2);
+  await tap(page, ["math"]);
+  await expect(page.locator('[data-key="sin"] [data-fit="face"]')).toHaveText("g");
+  await tap(page, ["shift"]);
+  await expect(page.locator('[data-key="sin"] [data-fit="face"]')).toHaveText("sin");
+  await page.waitForTimeout(100); // (the re-fit runs after the paint)
+  const cut = await page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>("[data-key]")].flatMap((key) => {
+      const el = key.querySelector<HTMLElement>('[data-fit="face"]');
+      if (!el || !el.textContent?.trim()) return [];
+      const k = key.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      const mark = el.dataset["opens"] ? 0.55 * parseFloat(getComputedStyle(el).fontSize) : 0; // (the ▾ hangs after the text)
+      // (fitLegends ellipses a text that does not fit at its floor: data-cut)
+      return r.left < k.left - 0.5 || r.right + mark > k.right + 0.5 || el.dataset["cut"] !== undefined ? [`${key.dataset["key"]}: ${el.textContent.trim()}`] : [];
+    }));
+  expect(cut).toEqual([]);
+});
 
 test("flow: a tap on a Tmpl cell closes the sheet, the template goes on the line with the cursor in its first box, and the next digit types into it", async ({ page }) => {
   await page.setViewportSize({ width: 412, height: 915 });

@@ -136,6 +136,8 @@
     void cas;
     // R820: and when a sheet opens or closes, its code comes in or its query empties or fills (the faces change with them)
     void [sheet?.kind, sheet?.empty, sheet?.filter, sheetChunk.keys];
+    // while a sheet is open the faces still follow the layer (sheetFace gets { shift, alpha }: in Find `sin` is `g` at rest, `sin` under Shift)
+    if (sheet) void [shift, alpha];
     if (!padEl) return;
     const pad = padEl;
     fitLegends(pad);
