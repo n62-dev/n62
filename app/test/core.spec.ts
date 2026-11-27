@@ -58,7 +58,7 @@ test.describe("core list", () => {
   test.describe("the clipboard", () => {
     // one worker, in order (a known case's expected failure counts as a pass, so it skips nothing after it)
     test.describe.configure({ mode: "serial" });
-    useClipboardLock(); // and the lock shared with copy.spec, appcopy.spec and rows.spec
+    useClipboardLock(); // P23: the core list's own net reads Chromium's real clipboard, shared by every worker (A281f1)
     for (const c of cases) if (usesClipboard(c)) caseTest(c);
   });
 });

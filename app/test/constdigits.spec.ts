@@ -4,12 +4,11 @@
 // chips (find/finder.ts putOnLine, as a pick puts them). Expected values are derived: G·5.972ᴇ24 = 3.98589196ᴇ14
 // with σ = 1.5ᴇ-15·5.972ᴇ24 = 8.958ᴇ9, so five digits hold (host.test.ts G26); μ₀·ε₀·c² = 1 exactly, σ 0 (G81).
 import { expect, test, type Page } from "@playwright/test";
-import { COPY, lastResult, open, tap, tapTwice, useClipboardLock } from "./helpers.ts";
+import { COPY, lastResult, open, tap, tapTwice } from "./helpers.ts";
 import type * as Finder from "../src/find/finder.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 test.describe.configure({ mode: "serial" });
-useClipboardLock();
 
 const done = (page: Page, n: number) => expect(page.locator('[data-status="done"]')).toHaveCount(n);
 const lastMark = (page: Page) => page.getByTestId("mark").last();

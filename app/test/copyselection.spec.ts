@@ -4,10 +4,9 @@
 // (entryText of the selection's LaTeX).
 import { expect, test, type Page } from "@playwright/test";
 import { finger } from "./core-lib.ts";
-import { KEYCOPY, entryValue, flick, open, setClipboard, tap, useClipboardLock } from "./helpers.ts";
+import { KEYCOPY, entryValue, flick, open, setClipboard, tap } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
-useClipboardLock();
 
 test.beforeEach(async ({ page }) => {
   await open(page, "");

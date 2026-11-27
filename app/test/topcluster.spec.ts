@@ -3,7 +3,7 @@
 // table, by touch and by keys; the place name and its hit area; the free keys U1–U6. The editing wing's own jobs are in
 // editwing.spec.ts. Fake engine.
 import { expect, test, type Page } from "@playwright/test";
-import { PASTE, entryValue, flick, open, recordVibrations, setClipboard, sheet, sheetKey, tap, touch, useClipboardLock, vibrations } from "./helpers.ts";
+import { PASTE, entryValue, flick, open, recordVibrations, setClipboard, sheet, sheetKey, tap, touch, vibrations } from "./helpers.ts";
 
 const place = (page: Page) => page.getByTestId("place");
 const view = (page: Page) => page.evaluate(() => window.n62.session.view);
@@ -117,7 +117,6 @@ test("R725: Shift + Vars is Chars (R723 had reserved it): the legend Chars, live
 
 test.describe("R278, R830: Shift + Deselect (Paste) is how a number comes in from another app", () => {
   test.use({ permissions: ["clipboard-read", "clipboard-write"] });
-  useClipboardLock();
   test("Shift + Deselect puts the clipboard's number on the line", async ({ page }) => {
     await setClipboard(page, "42");
     await tap(page, PASTE);

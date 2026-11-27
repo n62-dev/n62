@@ -3,11 +3,10 @@
 // the comma (R57 had done Home, CAS, Copy and Paste). Expected values are the oracle's (mpmath 30 digits, 12 shown):
 // sqrt(2) = 1.41421356237, lambertw(5) = 1.32672466524, sin(1) = 0.841470984808; sin(0.1) = 0.0998334166468.
 import { expect, test, type Page } from "@playwright/test";
-import { menuItem, open, tap, useClipboardLock } from "./helpers.ts";
+import { menuItem, open, tap } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 test.describe.configure({ mode: "serial" });
-useClipboardLock();
 
 test.beforeEach(async ({ page }) => {
   await open(page, "");

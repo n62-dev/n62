@@ -5,7 +5,7 @@
 // picked by touch (a tap on a chip) and by keys (▼ ◀ ▶ Enter, Esc leaves). A pick writes the unit into the end slot and
 // evaluates again.
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { flick, open, tap, tapTwice, useClipboardLock } from "./helpers.ts";
+import { flick, open, tap, tapTwice } from "./helpers.ts";
 
 const up = (page: Page): Promise<unknown> =>
   page.waitForFunction(() => window.n62.unitView !== undefined && document.activeElement === window.n62.unitView.element && document.querySelector('[data-pad="unit"]') !== null);
@@ -377,7 +377,6 @@ test.describe("the unit result view (R62)", () => {
 test.describe("t10 with the decimal comma (R120)", () => {
   test.use({ permissions: ["clipboard-read", "clipboard-write"] });
   test.describe.configure({ mode: "serial" });
-  useClipboardLock(); // first hook, so the lock is held before the page opens
   test.beforeEach(async ({ page }) => {
     await open(page, "");
     await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });

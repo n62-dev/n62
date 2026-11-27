@@ -7,13 +7,9 @@
 // sequences on the real engine; the expected values are derived (9 + 1 = 10, 12 ÷ 4 = 3).
 import { expect, test, type Page } from "@playwright/test";
 import { finger } from "./core-lib.ts";
-import { entryValue, flick, lastResult, open, PASTE, recordVibrations, setClipboard, tap, useClipboardLock, vibrations } from "./helpers.ts";
+import { entryValue, flick, lastResult, open, PASTE, recordVibrations, setClipboard, tap, vibrations } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
-// The system clipboard is one for the whole browser: these tests run one after another.
-test.describe.configure({ mode: "serial" });
-
-useClipboardLock();
 
 test.beforeEach(async ({ page }) => {
   await recordVibrations(page);

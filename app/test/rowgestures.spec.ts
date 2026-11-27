@@ -6,12 +6,10 @@
 // row's bar keeps Store ▶ and Copy ›. Values are derived (2+3 = 5).
 import { expect, test, type Page } from "@playwright/test";
 import { finger, STILL_MS } from "./core-lib.ts";
-import { entryValue, flick, open, setClipboard, tap, touch, useClipboardLock } from "./helpers.ts";
+import { entryValue, flick, open, setClipboard, tap, touch } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 test.describe.configure({ mode: "serial" });
-
-useClipboardLock(); // first hook: the lock is held before the page opens (copy.spec, rows.spec, the core list)
 
 const clipboard = (page: Page): Promise<string> => page.evaluate(() => navigator.clipboard.readText());
 const rows = (page: Page) => page.locator("article.item[data-status]");

@@ -2,12 +2,10 @@
 // R11: the actions of a history row (Home and CAS), from keys and from touch. One list of four on ☰ (S2 rules M1, M2; R830: Store, Copy and Paste left it), acting on the picked row, else the last result (Delete: the last row); the picked row's
 // buttons are Store ▶ and Copy › (R276: a hold copies, a swipe deletes, rowgestures.spec.ts); ◀ on a pick recalls it. Expected values are derived: 1/3 and 2/3 as 12 shown digits.
 import { expect, test, type Page } from "@playwright/test";
-import { COPY, entryValue, open, tap, useClipboardLock } from "./helpers.ts";
+import { COPY, entryValue, open, tap } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 test.describe.configure({ mode: "serial" });
-
-useClipboardLock(); // R74f1: first hook, so the lock is held before the page opens
 
 test.beforeEach(async ({ page }) => {
   await open(page, "");

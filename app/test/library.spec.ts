@@ -6,10 +6,9 @@
 import { fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, lastResult, open, savePicker, savedText, tap, useClipboardLock } from "./helpers.ts";
+import { entryValue, lastResult, open, savePicker, savedText, tap } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
-useClipboardLock();
 
 const BEAMS = fileURLToPath(new URL("../../tools/probes/library/beams.txt", import.meta.url));
 const menu = (page: Page) => page.getByTestId("menu");

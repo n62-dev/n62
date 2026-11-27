@@ -4,11 +4,9 @@
 // line under it gives the view's reason (G41's words), and Copy as shown writes the ⚠. The real engine. Expected
 // values: the view's own (its headline and why line), read on the same run.
 import { expect, test, type Page } from "@playwright/test";
-import { flick, lastResult, open, PASTE, tap, useClipboardLock } from "./helpers.ts";
+import { flick, lastResult, open, PASTE, tap } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
-test.describe.configure({ mode: "serial" });
-useClipboardLock(); // R74f1: first hook, so the lock is held before the page opens
 
 const done = (page: Page) => page.locator('[data-status="done"]');
 const clipboard = (page: Page): Promise<string> => page.evaluate(() => navigator.clipboard.readText());
