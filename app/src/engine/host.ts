@@ -51,9 +51,9 @@ import { SOLVE_HARD_TIMEOUT_S, solveRequest, unknownsOf } from "./solve.ts";
 import { analyze, table } from "./analysis.ts";
 import { UNIT_DEFINITIONS, unitEval, withNames } from "../units/evaluate.ts";
 import { constUncDigits, inexactConstsIn, withConstValues, type ConstTable } from "./constUnc.ts";
-import { CHIP_PREFIX, EQ_DIFF, EQ_INEXACT_FLAG, EQ_VERDICT } from "./ourNames.ts";
+import { CHIP_PREFIX, CONST_PREFIX, EQ_DIFF, EQ_INEXACT_FLAG, EQ_VERDICT } from "./ourNames.ts";
 import { chipCommand, chipNameFacts, chipSigma, chipsIn, literalChip, withChipValues, type ChipFactsTable } from "./chipFacts.ts";
-import { nameSigma, nameSigmaInputs, namesChanged, unitNamesOf, unitOfStore, withNameFacts } from "./nameSigma.ts";
+import { nameSigma, nameSigmaInputs, namesChanged, sigmaThrough, unitNamesOf, unitOfStore, withNameFacts, withSigmaLost } from "./nameSigma.ts";
 import type { Quantity, UnitError, UnitJob } from "../units/types.ts";
 import { contextDiff, hostContext, isFlagName, namesFlag, namesUnreadFlag } from "./flags.ts";
 import { contextOf, gated, type GatedGiac } from "./ctxGate.ts";
@@ -859,8 +859,9 @@ export class EngineHost implements FactsHost {
     const used = this.usesOf(input); // G212: before the input runs (it may store to them), as cas()
     const reads = this.valuesOf(used); // G213f1
     const unitNames = this.unitNamesOf(input); // G392: before the run too (it may store to them)
+    const through = this.unitNamesOf(input, true); // G550: the σ names it reaches only through a body
     const cleared = this.clearing(input, () => this.useHomeMode(s));
-    const out = cleared ? this.homeRun(cleared.answer, s, false) : this.homeTabled(input, s, consts, chips, reads);
+    const out = cleared ? this.homeRun(cleared.answer, s, false) : this.homeTabled(input, s, consts, chips, reads, through);
     if (out.result.ok) out.result.reads = reads;
     if (used.length && out.result.ok) out.result.uses = used;
     if (unitNames.length && out.result.ok) out.result.unitNames = unitNames;
@@ -871,9 +872,9 @@ export class EngineHost implements FactsHost {
     return post.reset ? { ...out, result: { ...out.result, settingReset: true } } : out;
   }
 
-  private homeTabled(input: string, s: HomeSettings, consts?: ConstTable, chips?: ChipFactsTable, reads: readonly StoredRead[] = []): { result: HomeResult; defs: DefChange[] } {
+  private homeTabled(input: string, s: HomeSettings, consts?: ConstTable, chips?: ChipFactsTable, reads: readonly StoredRead[] = [], through: readonly string[] = []): { result: HomeResult; defs: DefChange[] } {
     const sigNamed = nameSigmaInputs(reads, this.byName); // G371: the stored names with σ the input reads, σ and value before the run
-    if (!consts && !chips && !sigNamed.length) return this.homeRun(input, s, false);
+    if (!consts && !chips && !sigNamed.length && !through.length) return this.homeRun(input, s, false);
     const form = this.formFor(input);
     const asg = form.assignment;
     const stateful = form.stores;
@@ -900,11 +901,17 @@ export class EngineHost implements FactsHost {
       // first); the store's own target is read before it is set, unless its right side stores (a program call)
       const changed = namesChanged(out.defs);
       const ownTarget = asg && !this.storesIn(asg.rhs) ? asg.name : undefined;
-      const sig = nameSigma(chipSig.body, sigNamed.filter((v) => !changed.has(v.stored) || v.stored === ownTarget)), inputs = [...chipSig.inputs, ...sig.inputs];
+      const sig = nameSigma(chipSig.body, sigNamed.filter((v) => !changed.has(v.stored) || v.stored === ownTarget), through.filter((n) => !changed.has(n))), inputs = [...chipSig.inputs, ...sig.inputs];
       // A setting the input changed was put back after its run: it is not run again (G67).
-      if ((!consts && !inputs.length) || (stateful && !asg) || this.post?.flagsChanged) return out;
+      if ((!consts && !inputs.length && !sig.through.length) || (stateful && !asg) || this.post?.flagsChanged) return out;
       const n = constUncDigits(this.giac, sig.body, consts ?? {}, out.result, Math.trunc(out.result.digits ?? s.digits), inputs, (m) => this.stored.has(m) || this.skipped.has(m) || this.byName.has(m) || this.pending.has(m) || m === asg?.name || m === form.defined?.name);
-      if (n === undefined) return out;
+      // G550: σ inputs whose σ is not carried make the row ⚠ (nameSigma.ts withSigmaLost), never a bare value
+      const lost = n && "lost" in n ? [...inexactConstsIn(sig.body, consts ?? {}).map((id) => CONST_PREFIX + id), ...chipSig.inputs.map((v) => v.key ?? v.name), ...sigNamed.filter((v) => sig.inputs.includes(v.input)).map((v) => v.stored)] : out.result.ok ? sig.through : [];
+      if (lost.length || !n || "lost" in n) {
+        const o = withSigmaLost(out, lost, asg?.name); // a name it stores is ⚠ when read, in this host's log too
+        this.record(o.defs.filter((c) => lost.length > 0 && "set" in c && c.set.name === asg?.name));
+        return o;
+      }
       const { uncTerms, ...unc } = n; // G274: the terms ride on the result, never in its facts
       return { result: { ...out.result, facts: { ...out.result.facts, ...unc }, ...(uncTerms ? { uncTerms } : {}) }, defs: this.nameFacts(out.defs, asg?.name, unc, undefined) }; // G371: the store keeps σ
     } finally {
@@ -993,9 +1000,10 @@ export class EngineHost implements FactsHost {
 
   /** G392: the stored variables with a unit `input` reaches (nameSigma.ts unitNamesOf): from the names its tree reads
    *  (a store's: its stored side; as usesOf), through the names each stored value or body holds (Giac's table, G65), or
-   *  for a function restore() has not given to Giac yet (G83) the names its definition's tree reads. Before the run. */
-  private unitNamesOf(input: string): string[] {
-    if (![...this.byName.values()].some((e) => e.unit) || !wordsOf(input).some((w) => this.byName.has(w))) return [];
+   *  for a function restore() has not given to Giac yet (G83) the names its definition's tree reads. Before the run.
+   *  G550, `sigma`: the variables with σ it reaches through a body instead (nameSigma.ts sigmaThrough). */
+  private unitNamesOf(input: string, sigma = false): string[] {
+    if (![...this.byName.values()].some((e) => (sigma ? e.kind === "var" && e.facts?.uncSigma : e.unit)) || !wordsOf(input).some((w) => this.byName.has(w))) return [];
     const tree = this.treeOf(input);
     const set = assignmentIn(input, tree) ? [] : tree.top;
     const namesOf = (n: string): readonly string[] => {
@@ -1004,7 +1012,7 @@ export class EngineHost implements FactsHost {
       const p = this.pending.get(n);
       return p ? this.bridge.parse(p.cmds[0]!).reads : [];
     };
-    return unitNamesOf(tree.reads.filter((n) => !set.includes(n)), this.byName, namesOf);
+    return (sigma ? sigmaThrough : unitNamesOf)(tree.reads.filter((n) => !set.includes(n)), this.byName, namesOf);
   }
 
   /** G213f1: usesOf's names with Giac's stored text of each and whether it is exact (no facts kept: DefEntry.facts). */
