@@ -105,7 +105,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| B11 | [G381](packages/G381.md) a float list stays a list: review-only (`--no-worker`; pass 253) | gorge, Opus | `p1/gorge-storedlist` | G403f2 |
+| B11 | G381 a float list stays a list: review-only (`--no-worker`; pass 253) | gorge, Opus | `p1/gorge-storedlist` | G403f2 |
 | B13 | [G550](packages/G550.md) a Home row whose σ cannot be carried says so | gorge, Opus | `p1/gorge-sigmalost` | – |
 | B14 | [G400](packages/G400.md) Export › CSV and LaTeX carry a Home row's σ | gorge, Opus | `p1/gorge-exportsigma` | – |
 | B15 | [G640](packages/G640.md) Ans frozen in history: the tests | gorge, Opus | `p1/gorge-anstests` | – |
