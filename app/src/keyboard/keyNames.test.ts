@@ -3,7 +3,8 @@
 // aria-label and aria-description, never the glyphs "sin⁻¹" or "ᴇ"). English only.
 import { describe, expect, it } from "vitest";
 import { enKeyNames } from "../i18n/enKeyNames.ts";
-import { keyboard, type Key, type Layer } from "./keyboard.ts";
+import { UnitPad } from "../units/pad.ts";
+import { keyboard, withDecimalMark, type Key, type Layer } from "./keyboard.ts";
 import { hasLayer, keyLabels, layerName } from "./keyNames.ts";
 
 const LETTER = /^[A-Z]$/;
@@ -63,13 +64,27 @@ describe("key names (R41)", () => {
     expect(keyLabels(sin, false, false, true).description).toBe("Shift: arc sine. Alpha: g");
   });
 
-  it("a key whose face the app changed (a user key, the decimal comma) is named by its own face", () => {
-    const dot = keyboard.byId.get("dot") as Key;
-    const comma: Key = { ...dot, label: { ...dot.label, primary: "," } };
-    expect(keyLabels(comma, false, false, false)).toEqual({ label: ",", description: "Shift: Equals" });
+  it("a key whose face the app changed (a user key, the decimal comma) is named by its own face, in words where it has no letter", () => {
+    // R709: the decimal comma's two faces, "," and ";", are said in words
+    expect(keyLabels(withDecimalMark(keyboard.byId.get("dot") as Key), false, false, false)).toEqual({ label: "Decimal comma", description: "Shift: Equals" });
+    expect(keyLabels(withDecimalMark(keyboard.byId.get("comma") as Key), false, false, false).label).toBe("Semicolon");
     const u1 = keyboard.byId.get("u1") as Key;
     expect(keyLabels(u1, false, false, false)).toEqual({ label: "Free key 1, empty: tap to set it", description: "" });
     const set: Key = { ...u1, label: { primary: "kN" }, actions: { primary: { kind: "type", text: "kN" } } };
     expect(keyLabels(set, false, false, false)).toEqual({ label: "kN", description: "" });
+  });
+
+  it("R709: the unit pad's operator and control cells take the main pad's names, ° is the degree sign, a unit its symbol", () => {
+    const pad = new UnitPad();
+    const cell = (id: string): Key => pad.key(keyboard.byId.get(id) as Key, null) as Key;
+    expect(keyLabels(cell("div"), false, false, false)).toEqual({ label: "Divide", description: "Shift: x⁻¹" });
+    expect(keyLabels(cell("mul"), false, false, false).label).toBe("Multiply");
+    expect(keyLabels(cell("bksp"), false, false, false).label).toBe("Backspace");
+    expect(keyLabels(cell("frac"), false, false, false)).toEqual({ label: "Degree sign", description: "Shift: rad" });
+    expect(keyLabels(cell("d9"), false, false, false)).toEqual({ label: "m", description: "Shift: ft. Alpha: in" });
+    expect(keyLabels(cell("paren"), false, true, false).label).toBe("Ton of refrigeration, TR");
+    // an empty user cell ("+"): the free key's own name
+    const empty = new UnitPad({}).key(keyboard.byId.get("u1") as Key, null) as Key;
+    expect(keyLabels(empty, false, false, false).label).toBe("Free key 1, empty: tap to set it");
   });
 });
