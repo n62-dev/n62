@@ -5,6 +5,7 @@
 // σ = 1.5ᴇ-15 · 5.972ᴇ24 = 8.958ᴇ9).
 import { describe, expect, it } from "vitest";
 import { decimalFromString, toText, type FormatOptions } from "../engine/format.ts";
+import { quantityText } from "../clipboard/pasteUnit.ts";
 import { sigmaAlone, sigmaDrawn, withSigma } from "./sigmaForm.ts";
 
 const dec = (s: string) => {
@@ -102,6 +103,43 @@ describe("sigmaDrawn at σ: a value that rounds to zero above the units is the s
   ] as [string, string, FormatOptions, string][])("%s ± %s at %o → %s", (v, s, o, want) => {
     const r = sigmaDrawn(dec(v), dec(s), o, null, true);
     expect(r && `${toText(r.value)} ± ${toText(r.sigma)}`).toBe(want);
+  });
+});
+
+describe("sigmaDrawn at σ: a zero value never draws σ plain past 12 digits (R935, F491)", () => {
+  // G800's unit sweep: (0.00146689 ± 0.005 kmol/µF)³ = 3.1564044E18 ± 2.2239E20 (GUM first and second order: σ² = (3x²σx)² +
+  // 36x²σx⁴, ×10²⁷) read 0 ± 220000000000000000000 at σ's 10¹⁹; σ takes its own E form (sigmaAlone), SCI, ENG and PFX the
+  // zero value in σ's exponent (PFX has no prefix for 10¹⁸: ENG's form)
+  it.each([
+    [STD(8), "0 ± 2.2E20"],
+    [{ format: "SCI", digits: 8 }, "0E20 ± 2.2E20"],
+    [{ format: "ENG", digits: 8 }, "0E18 ± 220E18"],
+    [{ format: "PFX", digits: 8 }, "0E18 ± 220E18"],
+  ] as [FormatOptions, string][])("%o → %s, and its Copy pastes back to 0 and σ", (o, want) => {
+    const r = sigmaDrawn(dec("3.1564044e18"), dec("2.2239e20"), o, null, true);
+    const text = r && `${toText(r.value)} ± ${toText(r.sigma)}`;
+    expect(text).toBe(want);
+    const q = quantityText(`${text} m`);
+    expect(q && Number(q.value)).toBe(0);
+    expect(q && Number(q.sigma)).toBe(2.2e20);
+    expect(q?.unit).toBe("m");
+  });
+  it.each([
+    // controls: σ up to 12 digits stays plain in the value's form (11 digits; 12 digits), a σ below the units as before
+    ["3", "12000000000", STD(), "0 ± 12000000000"],
+    ["3", "120000000000", STD(), "0 ± 120000000000"],
+    ["3", "120000000000", { format: "SCI", digits: 12 }, "0E0 ± 120000000000"],
+    ["0.003", "0.10", STD(), "0.00 ± 0.10"],
+    // 13 digits: past the bound
+    ["3", "1200000000000", STD(), "0 ± 1.2E12"],
+    ["3", "1200000000000", { format: "PFX", digits: 12 }, `0${ts}T ± 1.2${ts}T`],
+  ] as [string, string, FormatOptions, string][])("%s ± %s at %o → %s", (v, s, o, want) => {
+    const r = sigmaDrawn(dec(v), dec(s), o, null, true);
+    expect(r && `${toText(r.value)} ± ${toText(r.sigma)}`).toBe(want);
+  });
+  it("an exact zero value draws the same way in the row (not cut at σ)", () => {
+    expect(row("0", "2.2239e20", STD())).toBe("0 ± 2.2E20");
+    expect(row("0", "2.2239e20", { format: "ENG", digits: 12 })).toBe("0E18 ± 220E18");
   });
 });
 
