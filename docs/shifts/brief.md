@@ -100,11 +100,6 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| B11 | G381 a float list stays a list: review-only (`--no-worker`; pass 253) | gorge, Opus | `p1/gorge-storedlist` | G403f2 |
-| B13 | [G550](packages/G550.md) a Home row whose σ cannot be carried says so | gorge, Opus | `p1/gorge-sigmalost` | – |
-| B14 | G400 Export › CSV and LaTeX carry a Home row's σ | gorge, Opus | `p1/gorge-exportsigma` | – |
-| B15 | G640 Ans frozen in history: the tests | gorge, Opus | `p1/gorge-anstests` | – |
-| B16 | [G642](packages/G642.md) a row keeps its Ans snapshot | gorge, Opus | `p1/gorge-anssnapshot` | G640 |
 | B17 | [G365](packages/G365.md) Function reads a cell's kind | gorge, Opus | `p1/gorge-cellkind` | – |
 | B18 | [G315](packages/G315.md) the one import cycle goes | gorge, Opus | `p1/gorge-namesmodule` | – |
 | B19 | [G314](packages/G314.md) EngineHost split in modules | gorge, Opus | `p1/gorge-hostsplit` | – |
