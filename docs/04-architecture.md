@@ -84,7 +84,7 @@ Twenty-one paths (#1–#21) showed a wrong or unmarked number; each became a reg
 **The mark.** Before every numeric result in Home and CAS, small and muted, in the result's colour:
 - **`=`** when all of these hold: the engine says the value is an exact rational (exact path, Giac returned `p/q`); the text shown in the current format is exactly `p/q`; no input was inexact (a constant with a CODATA uncertainty, or a result chip whose value is not exact, 2.8). Examples: `1/4` → `= 0.25`; `0.1+0.2` → `= 0.3`; `1e300*1e300` → `= 1E600`; `1/4` in FIX 1 → `≈ 0.3`.
 - **`≈`** for every other number, provided every digit shown is confirmed: `1/3`, `sqrt(2)`, `2^200` in STD, the float fallbacks, constants with an uncertainty.
-- **`⚠ n`** when fewer than `digits` digits are confirmed: the result is shown with the `n` confirmed digits and the mark says so. An uncarried σ is `⚠` (`why.sigmaLost`). Solve and analysis keep their existing ⚠ for a failed residual check.
+- **`⚠ n`** when fewer than `digits` digits are confirmed: the result is shown with the `n` confirmed digits and the mark says so. Solve and analysis keep their existing ⚠ for a failed residual check.
 - No mark for non-numbers (symbolic results), **unless they hold a float**: then `⚠` without a count, since nobody checked its digits (2.3 #17; principle 3: "flagged"). A per-float check that could earn `≈` waits until `⚠` proves noisy in daily use. A list or matrix of numbers gets one mark, the weakest of its elements; our formatter formats each element.
 
 Num tables and the Solve and analysis results show only `⚠` (a mark per cell would be clutter; the view header says "rounded to n digits").
