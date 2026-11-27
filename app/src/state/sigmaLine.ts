@@ -45,11 +45,11 @@ export function sigmaLine(facts: ValueFacts | undefined, mode: FmtMode, comma = 
   return a === null || b === null ? null : uncText("unc.sigma", { s: a, u: b });
 }
 
-/** The σ line a tap on a row shows (Session.sigma): none unless Settings › Numbers › Uncertainty says `sigma`; drawn in
+/** The σ line a tap on a row shows (Session.sigma): none unless Settings › Numbers › Uncertainty says `sigma` or `round`; drawn in
  *  the row's notation and the decimal mark. Only a finished row has facts. */
 export function sigmaOf(
   item: { facts?: ValueFacts; fmt?: FmtMode; form?: FormStep },
   s: { uncertainty: string; format: NumberFormat; decimalMark: string },
 ): string | null {
-  return s.uncertainty === "sigma" ? sigmaLine(item.facts, modeOf(item, s) ?? s.format, s.decimalMark === "comma") : null;
+  return s.uncertainty !== "muted" ? sigmaLine(item.facts, modeOf(item, s) ?? s.format, s.decimalMark === "comma") : null;
 }

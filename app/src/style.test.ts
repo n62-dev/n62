@@ -253,3 +253,20 @@ describe("entry highlights (R116)", () => {
       expect(apart, `caret hue ${ch.toFixed(0)}°, box hue ${bh.toFixed(0)}°`).toBeLessThanOrEqual(HUE_NEAR);
     });
 });
+
+// R742: every second history row (History.svelte data-alt) is --row-alt, a step from --bg toward --text; the rows' ink and
+// marks keep their floor on it, and the picked row's --focus edge and start bar stand 3:1 on every ground it meets.
+describe("the zebra rows (R742)", () => {
+  for (const [sel, t, hc] of allThemeBlocks())
+    it(`${sel}: --row-alt 1.08 to 1.15:1 from --bg, the ink on it at least ${hc ? 7 : 4.5}:1, --focus 3:1 on --bg, --row-alt and --pick`, () => {
+      const alt = t["row-alt"];
+      expect(alt, "--row-alt").toBeDefined();
+      const r = contrast(t["bg"] as string, alt as string);
+      expect(r, "--bg : --row-alt").toBeGreaterThanOrEqual(1.08);
+      expect(r, "--bg : --row-alt").toBeLessThanOrEqual(1.15);
+      for (const f of ["text", "muted", "approx", "warn", "error"])
+        expect(contrast(t[f] as string, alt as string), `--${f} on --row-alt`).toBeGreaterThanOrEqual(hc ? 7 : 4.5);
+      for (const b of ["bg", "row-alt", "pick"])
+        expect(contrast(t["focus"] as string, t[b] as string), `--focus on --${b}`).toBeGreaterThanOrEqual(3);
+    });
+});

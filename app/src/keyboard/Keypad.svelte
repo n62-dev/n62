@@ -82,7 +82,11 @@
     typed(k) ?? legend(labelFor(k, shift, alpha, cas) || k.label.primary || "");
   const hint = (k: Key): string => (shift && !alpha) || !k.label.shift ? "" : legend(k.label.shift);
   // (R820: while the face shows the key's letter, its letter line is empty: the letter is not drawn twice)
-  const alphaHint = (k: Key): string => (alpha || !k.label.alpha || typed(k)?.toLowerCase() === k.label.alpha.toLowerCase() ? "" : k.label.alpha);
+  // (R728: the letter in the case Alpha and a flick down type in the view: lower case in CAS, R58)
+  const alphaHint = (k: Key): string => (alpha || !k.label.alpha || typed(k)?.toLowerCase() === k.label.alpha.toLowerCase() ? "" : labelFor(k, false, true, cas));
+  /** R728: no Alpha action (Esc, ⌫, `.` …; not Shift or Alpha): Alpha and a flick down are its tap, drawn in the tap's colour.
+   *  Not the round pad's zones: their arrows keep Alpha's colour (R794f1). */
+  const fallsBack = (k: Key): boolean => !k.actions.alpha && k.id !== "shift" && k.id !== "alpha" && !isPadKey(k);
   // R820: a letter typed into a query is upright (R142 is for a variable on the line): the data-v layers it would italicise are left out
   const varsOf = (k: Key): string | undefined => {
     const v = varLayers(k);
@@ -199,7 +203,7 @@
 
   /** The bubble above a key while a flick is armed (P7 point 2): what the lift will fire, or ✕ for nothing. None while
    *  Key pop-ups is off (R163): the flick still fires. */
-  let bubble = $state<{ x: number; y: number; dir: Flick; text: string; none: boolean; variable: boolean } | null>(null);
+  let bubble = $state<{ x: number; y: number; dir: Flick; text: string; none: boolean; variable: boolean; tap: boolean } | null>(null);
   let bubbleOwner: number | undefined;
   let bubbleNode: HTMLDivElement | undefined = $state();
 
@@ -238,7 +242,7 @@
     hidePop(); // (the flick bubble shows alone)
     // (the bubble's letter follows the same flag as the legend it shows; ✕ is none)
     const variable = !sheet && text !== "" && typesVariable(actionFor(g.key, st === "up", st === "down", false, cas));
-    bubble = { x: g.el.offsetLeft + g.el.offsetWidth / 2, y: g.el.offsetTop, dir: st, text: text || "✕", none: text === "", variable };
+    bubble = { x: g.el.offsetLeft + g.el.offsetWidth / 2, y: g.el.offsetTop, dir: st, text: text || "✕", none: text === "", variable, tap: st === "down" && fallsBack(g.key) };
   }
   const gestures = new Map<number, Gesture>();
   /** The app goes away (home, app switcher, a lost pointerup): every gesture ends and nothing fires. */
@@ -425,6 +429,7 @@
       style:grid-row={key.row + 1}
       style:grid-column={`${place.start} / span ${place.span}`}
       data-dead={dead(key) ? "true" : undefined}
+      data-fallback={fallsBack(key) ? "true" : undefined}
       data-zone={isPadKey(key) ? "true" : undefined}
       data-letters={lettered ? "true" : undefined}
       data-user={key.user ? (userKeys.isEmpty(key) ? "empty" : "set") : undefined}
@@ -447,6 +452,7 @@
       data-testid="flick-bubble"
       data-dir={bubble.dir}
       data-none={bubble.none ? "true" : undefined}
+      data-tap={bubble.tap ? "true" : undefined}
       data-var={bubble.variable}
       style:left={`${bubble.x}px`}
       style:top={`${bubble.y}px`}
@@ -765,6 +771,11 @@
   .alphaed .arrows {
     color: var(--key-alpha);
   }
+  /* R728: a key with no letter does its tap under Alpha: the tap's colour; :where leaves Enter's and the dim to win (the round
+     pad's arrows keep Alpha's, R794f1) */
+  .alphaed :where(.key[data-fallback="true"]) .main {
+    color: var(--key-text);
+  }
   /* Enter keeps one colour in every layer: the coloured text would not read on its green */
   .key.enter .main,
   .key.enter .shiftlegend,
@@ -822,14 +833,15 @@
     white-space: nowrap;
     pointer-events: none;
   }
-  /* the key pop (R162): the same box in the key's own text colour; no fade, no motion */
-  .bubble.pop {
-    border-color: var(--key-text);
-    color: var(--key-text);
-  }
   .bubble[data-dir="down"] {
     border-color: var(--alpha);
     color: var(--alpha);
+  }
+  /* the key pop (R162): the same box in the key's own text colour; no fade, no motion. R728: so is a flick down that is the tap */
+  .bubble.pop,
+  .bubble[data-tap="true"] {
+    border-color: var(--key-text);
+    color: var(--key-text);
   }
   .bubble[data-none="true"] {
     border-color: var(--text-dead);

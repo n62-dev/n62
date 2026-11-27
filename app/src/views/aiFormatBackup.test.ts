@@ -16,6 +16,8 @@ import { DATA_VERSION, idbKv } from "../state/storage.ts";
 import { defaultLook } from "../theme/look.ts";
 import { CELL_KEYS, CELL_LEGS, UnitCells } from "../units/userCells.svelte.ts";
 import { aiFormat } from "./libraryJobs.ts";
+import backupSource from "../state/backup.ts?raw";
+import sessionSource from "../state/session.svelte.ts?raw";
 
 const format = aiFormat();
 /** Part 2's text: from its heading to the end. */
@@ -166,6 +168,11 @@ describe("the format's backup part: every rule it states is the code's (R126)", 
     // every word any setting takes, so a value the code accepts and the text leaves out shows
     const words = new Set<string>(["maybe", "", "rad", "deg", "std", "sci", "eng", "pfx", "textbook", "line", "point", "comma", "sigma", "muted", "colour", "reason", "thin", "apos", "system", "light", "dark", "n62", "bw", "solarized"]);
     for (const m of s.matchAll(/"([a-z][a-z0-9]*)"/g)) words.add(m[1] as string);
+    // R884: and every word the validators and the settings' types write, so a new value the code accepts (`round`)
+    // shows here even when nobody adds it to the list above or to the text
+    for (const src of [backupSource, sessionSource]) for (const m of src.matchAll(/"([a-z][a-z0-9]*)"/g)) words.add(m[1] as string);
+    // a value the check keeps for an older file but the text leaves out on purpose, each with its reason
+    const UNLISTED: Record<string, readonly string[]> = { "mode.entry": ["rpn"] }; // R253: kept, no key reads it yet (R343)
     const ok = (group: string, field: string, v: unknown): boolean => {
       if (group === "look") return SETTING_RULES["look"]?.({ ...defaultLook(), [field]: v }) === true;
       if (group === "vibration") return SETTING_RULES["haptics"]?.({ [field]: v }) === true;
@@ -184,7 +191,7 @@ describe("the format's backup part: every rule it states is the code's (R126)", 
         const listed = [...f.matchAll(/"([a-z][a-z0-9]*)"/g)].map((m) => m[1] as string);
         const range = /from (\d+) to (\d+)/.exec(f);
         if (listed.length > 0) {
-          const accepted = [...words].filter((w) => ok(group, field, w));
+          const accepted = [...words].filter((w) => ok(group, field, w) && !UNLISTED[`${group}.${field}`]?.includes(w));
           expect(accepted.sort(), `${group}.${field}`).toEqual([...listed].sort());
         } else if (range) {
           const [lo, hi] = [Number(range[1]), Number(range[2])];

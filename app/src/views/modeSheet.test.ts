@@ -274,7 +274,7 @@ describe("Settings, a level of the sheet (R49)", () => {
     for (const id of ["std", "eng", "fix"]) s.activate(at(s, id)); // all off: back to the default cycle
     expect(session.settings.fmtCycle).toEqual(["std", "sci", "eng"]);
   });
-  it("Uncertainty (R40): Muted digits, σ on tap by default; ◀ ▶ or a tap step it to Muted digits and back, and the sheet stays", () => {
+  it("Uncertainty (R40, R884): Muted digits, σ on tap by default; ◀ ▶ or a tap step it to Muted digits, Rounded to σ and back, and the sheet stays", () => {
     const s = settings(3);
     s.level.highlight = at(s, "uncertainty");
     expect(byId(s, "uncertainty")?.value).toBe("Muted digits, σ on tap");
@@ -282,7 +282,12 @@ describe("Settings, a level of the sheet (R49)", () => {
     expect(session.settings.uncertainty).toBe("muted");
     expect(byId(s, "uncertainty")?.value).toBe("Muted digits");
     expect(s.activate(at(s, "uncertainty"))).toEqual({ kind: "stay" });
+    expect(session.settings.uncertainty).toBe("round");
+    expect(byId(s, "uncertainty")?.value).toBe("Rounded to σ, σ on tap");
+    s.right();
     expect(session.settings.uncertainty).toBe("sigma");
+    s.left();
+    expect(session.settings.uncertainty).toBe("round");
   });
   it("Marks (R124): three buttons, Muted, ⚠ coloured and ⚠ + reason (the default); ◀ ▶ step them and the sheet stays; Numbers keeps at most seven rows", () => {
     const s = settings(3);

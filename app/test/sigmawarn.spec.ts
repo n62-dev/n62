@@ -4,7 +4,7 @@
 // line under it gives the view's reason (G41's words), and Copy as shown writes the ⚠. The real engine. Expected
 // values: the view's own (its headline and why line), read on the same run.
 import { expect, test, type Page } from "@playwright/test";
-import { flick, lastResult, open, tap } from "./helpers.ts";
+import { flick, lastResult, open, PASTE, tap } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 
@@ -77,6 +77,28 @@ test.describe("a unit row keeps σ's ⚠ and its reason (R886)", () => {
     await expect(reasonLine(page)).toContainText(v.why);
     await copyShown(page);
     await expect.poll(() => clipboard(page)).toMatch(new RegExp(` ± ${v.sigma}$`));
+  });
+
+  // R886f1: Paste reads the ⚠ text back (R325's round trip, docs/04 2.6): one result chip, σ in the unit, the ⚠ not kept.
+  // (ln of a value with a unit is refused by the view, so the warning here is the power's: (2 ± 0.1)^10 in m, a slot m¹⁰)
+  test("(2 ± 0.1)^10 in m: Copy as shown writes ± ⚠σ m¹⁰, Paste on an empty line gives the result chip", async ({ page }) => {
+    await inUnits(page, "(2\\pm0.1)^{10}", true);
+    const v = await viewWarn(page);
+    await leave(page, 1);
+    await copyShown(page);
+    await expect.poll(() => clipboard(page)).toMatch(new RegExp(` ± ${v.sigma} m¹⁰$`));
+    await page.evaluate(() => window.n62.entry.clear());
+    await tap(page, PASTE);
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const table = window.n62.entry.chips;
+          const keys = Object.keys(table).filter((k) => k.startsWith("res:"));
+          const c = keys.length === 1 ? table[keys[0] as string] : undefined;
+          return c && { unc: c.unc, unit: c.unit?.text, exact: c.exact };
+        }),
+      )
+      .toEqual({ unc: v.sigma.slice(1), unit: "m¹⁰", exact: false });
   });
 
   test("control: a σ without a warning has no ⚠ and no reason line", async ({ page }) => {

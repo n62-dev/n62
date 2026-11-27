@@ -53,3 +53,8 @@ Moved here as they stood (links adjusted to this folder): decided entries of Opu
 ## Moved 2026-11-26 (Opus pass 249: decisions.md over 39 kB; rule in rules section 10)
 
 - **The declutter (owner, 2026-11-05 evening): history lives in git.** Rule: rules section 10. Archived. Would change if: a deleted file is needed back twice a month.
+
+## Moved 2026-11-27 (Opus pass 250: decisions.md over 39 kB; built, the rules in code and docs/05 3.10)
+
+- **Owner answers of 2026-10-25 and 2026-11-02 to 11-08 (pipeline):** built; a 1507 ms CAS-last cold start does not hold v0.1.0. Archived.
+- **R153–R155:** the generator's moves stand. Archived. Would change if: the owner's look after R24d.

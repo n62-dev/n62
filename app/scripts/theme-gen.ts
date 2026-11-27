@@ -312,6 +312,36 @@ function withSel(t: Palette, hc: boolean): Palette {
   throw new Error(`theme-gen: no --sel for pick ${get(t, "pick")} on panel ${get(t, "panel")}`);
 }
 
+/** R742: the zebra history rows. --row-alt stands at least this far from --bg (the first step that does). */
+export const ZEBRA = 1.08;
+const ROW_ALT_STEP = 0.005;
+/**
+ * R742: --row-alt, the ground of every second history row (History.svelte data-alt): the first ROW_ALT_STEP share from --bg
+ * toward --text at which it stands ZEBRA from --bg. Then text, muted and the marks are held at their floor (7:1 in High
+ * contrast) on it as on --bg and --pick, and --focus (the picked row's edge and start bar) at 3:1 on --bg, --panel, --row-alt
+ * and --pick; each moves its lightness only, as base() does.
+ */
+function withRowAlt(t: Palette, hc: boolean): Palette {
+  const o: Palette = { ...t };
+  const T = hc ? 7 : 4.5;
+  const sd = lightInk(t);
+  const kd = lightKeyInk(t);
+  const bg = get(o, "bg");
+  for (let i = 1; i * ROW_ALT_STEP <= 0.5; i++) {
+    const c = mix(bg, get(o, "text"), i * ROW_ALT_STEP);
+    if (cr(c, bg) >= ZEBRA) {
+      o["row-alt"] = c;
+      break;
+    }
+  }
+  if (o["row-alt"] === undefined) throw new Error(`theme-gen: no --row-alt for ${bg}`);
+  legend(o, o, "text", [...SCREEN, "row-alt"], KEYS, T, sd, kd);
+  legend(o, o, "muted", ["bg", "panel", "pick", "row-alt"], ["key-num"], T, sd, kd);
+  for (const r of ["approx", "warn", "error"]) o[r] = ensure(get(o, r), getAll(o, ["bg", "pick", "row-alt"]), T, sd);
+  o["focus"] = ensure(get(o, "focus"), getAll(o, ["bg", "panel", "row-alt", "pick"]), 3, sd);
+  return o;
+}
+
 /** The label on an --error ground (Cancel and the like): the family's --bg in dark, white in light. Set last, from the final --bg. */
 function withOnError(t: Palette, dark: boolean): Palette {
   return { ...t, "on-error": dark ? get(t, "bg") : "#ffffff" };
@@ -575,7 +605,7 @@ export function theme(c: Combo): { t: Palette; fixes: [string, string, string][]
   if (!c.high && KEY_FILL_LOOKS.includes(`${c.family} ${c.brightness}`)) o = withKeyFills(o);
   if (!c.plain) o = withLayersApart(o, c.high);
   o = withEnter(o, c);
-  return { t: withKeyDisc(withMarkFaint(withKeyEdge(withRing(withOnLayer(withOnError(withSel(withPfx(withPick(o, c.high), c.high, c.plain), c.high), dark)), c.high), dark)), c, ctl), fixes };
+  return { t: withKeyDisc(withMarkFaint(withKeyEdge(withRing(withOnLayer(withOnError(withRowAlt(withSel(withPfx(withPick(o, c.high), c.high, c.plain), c.high), c.high), dark)), c.high), dark)), c, ctl), fixes };
 }
 
 // --- the audit: every pair the app draws (docs/archive/shifts/2026-10-18-themes-report.md section 2) ---
@@ -605,6 +635,11 @@ export function checks(t: Palette, c: Combo): Check[] {
   add("Screen", "text on the status line", "text", "panel", T);
   add("Screen", "text on a chip", "text", "chip-bg", T);
   add("Screen", "focus ring on screen (non-text)", "focus", "bg", 3);
+  // R742: every second history row is --row-alt; the picked row's edge and start bar are --focus
+  add("Screen", "a zebra row apart from the screen (non-text)", "row-alt", "bg", ZEBRA);
+  for (const [f, l] of [["text", "text"], ["muted", "input line (muted)"], ["error", "error text"], ["approx", "≈ mark"], ["warn", "⚠ mark"]] as const)
+    add("Screen", `${l} on a zebra row`, f, "row-alt", T);
+  for (const b of ["row-alt", "pick", "panel"]) add("Screen", `the picked row's edge on --${b} (non-text)`, "focus", b, 3);
   // R116: the entry line (App.svelte maps MathLive's highlights): the caret is --alpha, the box of the bracket that
   // holds the cursor and the selection are --pick, the box with --text on it, the selection --sel with --on-sel (R274)
   add("Entry", "caret on the entry line", "alpha", "panel", T);

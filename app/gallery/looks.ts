@@ -335,3 +335,18 @@ export function logoShots(): LookShot[] {
     })),
   ]);
 }
+
+/** R742: the zebra rows in each family (light and dark come with every shot): four rows, every second one --row-alt, the second
+ *  (a zebra row) picked with ▲ ▲ ▲: --pick, its --focus edge inside it and the bar at its start. */
+export function zebraShots(someHistory: (p: Page) => Promise<void>): LookShot[] {
+  return FAMILIES.map((family) => ({
+    id: `zebra-${family}`,
+    group: "Zebra rows and the picked row (R742)",
+    title: `${name(family)}: rows 1 and 3 on --row-alt, row 1 picked`,
+    setup: async (p: Page) => {
+      await someHistory(p);
+      await setLook(p, { family, brightness: "system" });
+      await tap(p, ["up", "up", "up"]);
+    },
+  }));
+}
