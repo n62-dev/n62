@@ -45,7 +45,34 @@ stale_why() {
 case "$cmd" in
   acquire)
     res="${2:?resource}" owner="${3:?owner}" wait="${4:-0}" start=$SECONDS
-    while ! mkdir "$LOCKS/$res" 2>/dev/null; do
+    # A257: waiters take a lock in arrival order. A waiter writes a marker .waiting-<res>.<pid> holding its arrival time (ns since the
+    # epoch) and its pid's start time (a marker of the old format is empty: its file's mtime is its arrival time) and tries mkdir only
+    # when no live marker of the resource is older than its own (equal times: the lower pid first); a try with no wait (wait 0) writes
+    # no marker and only takes a lock nobody waits for. A marker is stale by A64's rule (pid gone, or another start time): any waiter removes it.
+    POLL="${N62_LOCK_POLL:-5}" wmark="" mykey=""
+    mark_key() {  # <marker>: its arrival time in ns
+      local k t; k="$(head -n1 "$1" 2>/dev/null || true)"
+      if [[ ! "$k" =~ ^[0-9]+$ ]]; then t="$(stat -c %.9Y "$1" 2>/dev/null || true)"; k="${t/./}"; fi
+      [[ "$k" =~ ^[0-9]+$ ]] && echo "$k" || echo 0
+    }
+    mark_stale() {  # <marker> <pid>: succeeds when the waiter is gone
+      local ms now; kill -0 "$2" 2>/dev/null || return 0
+      ms="$(sed -n 2p "$1" 2>/dev/null || true)"; now="$(pid_start "$2")"
+      [[ -n "$ms" && -n "$now" && "$ms" != "$now" ]]
+    }
+    my_turn() {  # no live waiter of $res is ahead of this one
+      local m s k
+      for m in "$LOCKS"/.waiting-"$res".*; do
+        [[ -e "$m" && "$m" != "$wmark" ]] || continue
+        s="${m##*/.waiting-"$res".}"; [[ "$s" =~ ^[0-9]+$ ]] || continue
+        if mark_stale "$m" "$s"; then rm -f "$m"; continue; fi
+        [[ -n "$wmark" ]] || return 1
+        k="$(mark_key "$m")"
+        if (( 10#$k < 10#$mykey || (10#$k == 10#$mykey && s < $$) )); then return 1; fi
+      done
+      return 0
+    }
+    until my_turn && mkdir "$LOCKS/$res" 2>/dev/null; do
       # A35: a lock whose recorded holder is gone on this host is broken; one without a pid (old format, or a caller that did not
       # opt in with N62_LOCK_PID) only by hand. A64: the holder is gone when its pid is, when the pid now has another start time
       # (reused), or when the lock was taken in an earlier boot. Breakers take a guard, re-read the pid and the start time inside it
@@ -66,9 +93,13 @@ case "$cmd" in
         echo "busy: $res held by $(cat "$LOCKS/$res/owner" 2>/dev/null || echo '?')" >&2
         exit 1
       fi
-      # A58: a waiter leaves a marker (its pid) while it polls, so a `slice` that just released the lock knows to hand it over
-      if [[ -z "${wmark:-}" ]]; then wmark="$LOCKS/.waiting-$res.$$"; : > "$wmark"; trap 'rm -f "$wmark"' EXIT; fi
-      sleep 5
+      # A58: a waiter leaves a marker while it polls, so a `slice` that just released the lock knows to hand it over (A257: the marker is its place in the queue)
+      if [[ -z "$wmark" ]]; then
+        wmark="$LOCKS/.waiting-$res.$$"; mykey="$(date +%s%N)"
+        trap 'rm -f "$wmark" "$LOCKS/.wtmp-$res.$$"' EXIT; trap 'exit 143' TERM HUP INT
+        printf '%s\n%s\n' "$mykey" "$(pid_start $$)" > "$LOCKS/.wtmp-$res.$$" && mv "$LOCKS/.wtmp-$res.$$" "$wmark"
+      fi
+      sleep "$POLL" & wait $! || true
     done
     [[ -z "${wmark:-}" ]] || { rm -f "$wmark"; wmark=""; }
     printf '%s\n' "$owner" > "$LOCKS/$res/owner"
