@@ -240,17 +240,18 @@ function rowInput(i: CopySource): { input: string; unitRow: boolean } {
   return u && typeof u.input === "string" && typeof u.text === "string" ? { input: u.input, unitRow: true } : { input: i.latex, unitRow: false };
 }
 
-/** σ of a row drawn as Home's (no unit row): the facts' σ (G400), never a unit row's σ without its unit. */
+/** σ of a row drawn as Home's (no unit row) in the row's notation, as LaTeX draws the result: the facts' σ (G400), never a
+ *  unit row's σ without its unit. */
 const homeSigma = (i: CopySource, ctx: DisplayContext, comma: boolean): string | null => rowSigma({ facts: i.facts }, modeOf(i, ctx) ?? ctx.format, comma);
 
 /** The session as text: one line per finished entry, `input mark result` with the full value and its ` ± σ` (a unit row's
- *  through copyFull, else the facts', G400); an error line shows the message. */
+ *  through copyFull, else the facts' in the value's `E` notation, G400); an error line shows the message. */
 export function sessionText(items: readonly CopySource[], o: TextOptions, ctx: DisplayContext): string {
   const lines: string[] = [];
   for (const i of items) {
     if (i.status === "done") {
       const { input, unitRow } = rowInput(i);
-      const sigma = unitRow ? null : homeSigma(i, ctx, !!o.decimalComma);
+      const sigma = unitRow ? null : rowSigma({ facts: i.facts }, "sci", !!o.decimalComma); // the value's notation (E), not the row's
       const result = ((unitRow ? copyFull(i, o) : undefined) ?? valueFull(i, o) ?? i.text) + (sigma === null ? "" : ` ± ${sigma}`);
       lines.push(`${entryText(input, o)} ${markText(copyMark(i, ctx))} ${result}`);
     } else if (i.status === "error") lines.push(`${entryText(i.latex, o)} → ${i.text}`);
@@ -275,14 +276,15 @@ const str = (x: unknown): string => (typeof x === "string" ? x : "");
 /**
  * G232: the history as CSV (a preview in v0.1.0). The header `input,value,mark,unit,sigma`, then one row per finished
  * entry: the entry as text, the full value (every confirmed digit, as Copy writes it) alone, the mark glyph, a unit row's
- * unit, and σ (rowSigma: a unit row's, else a Home row's σ line, G400). An error row has its message in `value` and no mark. No comment line (it breaks a spreadsheet's import).
+ * unit, and σ (rowSigma: a unit row's, else a Home row's σ in `E` notation as the value, G400). An error row has its
+ * message in `value` and no mark. No comment line (it breaks a spreadsheet's import).
  * "" when there is no row to write. Quoting, separator (`;` with the decimal comma) and CRLF are tableCsv's.
  */
 export function sessionCsv(items: readonly CopySource[], o: TextOptions, ctx: DisplayContext): string {
   const rows = exported(items).map((i): string[] => {
     if (i.status === "error") return [entryText(i.latex, o), i.text, "", "", ""];
     const { input } = rowInput(i);
-    const sigma = rowSigma(i, modeOf(i, ctx) ?? ctx.format, !!o.decimalComma) ?? "";
+    const sigma = rowSigma(i, "sci", !!o.decimalComma) ?? ""; // as the value column: E, never a PFX prefix (a number cell)
     return [entryText(input, o), valueFull({ ...i, units: undefined }, o) ?? i.text, rowMark(i, ctx).mark, str(i.units?.unit), sigma];
   });
   return rows.length ? tableCsv(["input", "value", "mark", "unit", "sigma"], rows, o) : "";

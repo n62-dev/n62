@@ -400,6 +400,10 @@ describe("sessionCsv / sessionLatex (G232)", () => {
     expect(sessionCsv([twoG, unit, root], { decimalComma: true }, c)).toBe(
       ["input;value;mark;unit;sigma", "2× G;1,33486E-10;≈;;3,0E-15", "12.34±0.05 m×3.2±0.1 m;39,488;≈;m²;1,2", "sqrt(2);1,4142;⚠;;"].join("\r\n") + "\r\n",
     );
+    // fix round 2: a PFX (or ENG) row's σ in the value's notation (E), never the σ line's prefix: the cell reads as a number
+    expect(sessionCsv([{ ...twoG, fmt: "pfx" }, { ...twoG, fmt: "eng" }], {}, CTX)).toBe(
+      ["input,value,mark,unit,sigma", "2× G,1.33486E-10,≈,,3.0E-15", "2× G,1.33486E-10,≈,,3.0E-15"].join("\r\n") + "\r\n",
+    );
   });
   it("G400: LaTeX's line ends \\pm σ after a Home row's result, in the row's notation; unit, plain and error rows unchanged", () => {
     expect(sessionLatex([twoG, unit, half, bad], {}, CTX, "0.1.0").split("\n").slice(1, 5)).toEqual([
@@ -420,6 +424,8 @@ describe("sessionCsv / sessionLatex (G232)", () => {
   it("G400: Share session adds a Home row's ± σ after the value, as a unit row's", () => {
     expect(sessionText([twoG, half], {}, CTX)).toBe("2× G ≈ 1.33486E-10 ± 3.0E-15\n1/2 = 0.5");
     expect(sessionText([twoG], { decimalComma: true }, { ...CTX, decimalComma: true })).toBe("2× G ≈ 1,33486E-10 ± 3,0E-15");
+    // fix round 2: a PFX row's σ in the value's notation, not `3.0 f` after an E value
+    expect(sessionText([{ ...twoG, fmt: "pfx" }], {}, CTX)).toBe("2× G ≈ 1.33486E-10 ± 3.0E-15");
   });
   it("G232f1: no KaTeX-only macro reaches the file (htmlStyle, class): the unit row's unit, PFX, the muted digits, a rare pair", () => {
     const bare = /\\(?:htmlStyle|class|const|res|unit|pfx)(?![A-Za-z])/;
