@@ -7,6 +7,7 @@ import type { CopySource } from "./text.ts";
 import { copyExact } from "./exact.ts";
 import { entryText, macroCalls } from "./plaintext.ts";
 import { tc } from "./strings.ts";
+import { CHIP_PREFIX, CONST_PREFIX } from "../engine/ourNames.ts";
 
 const SUP = "⁰¹²³⁴⁵⁶⁷⁸⁹";
 const sup = (n: number): string => `${n < 0 ? "⁻" : ""}${[...String(Math.abs(n))].map((d) => SUP[+d]).join("")}`;
@@ -40,6 +41,19 @@ function constantsUsed(item: CopySource): string[] {
 
 const list = (names: readonly string[]): string => names.join(", ");
 
+/** G550: the words for why.sigmaLost: a stored name as it is, a constant (`pasc_<id>`) by the symbol its chip shows (its id
+ *  when the entry holds none), an earlier result's chip (`pasr_<k>`) unnamed; "σ of W not carried through this input". */
+function sigmaLostText(item: CopySource, lost: readonly string[]): string {
+  const symbols = new Map(macroCalls(item.latex, "const", 2).map((m) => [m.args[0] ?? "", entryText(m.args[1] ?? "")]));
+  const names: string[] = [];
+  for (const n of lost) {
+    const id = n.startsWith(CONST_PREFIX) ? n.slice(CONST_PREFIX.length) : undefined;
+    const shown = id !== undefined ? (symbols.get(id) ?? id) : n.startsWith(CHIP_PREFIX) ? undefined : n;
+    if (shown !== undefined && !names.includes(shown)) names.push(shown);
+  }
+  return `${names.length ? `${tc("why.sigmaOf")} ${list(names)}` : tc("why.sigma")} ${tc("why.sigmaNotCarried")}`;
+}
+
 /**
  * The line for `item` whose mark is `mark` (null: none). `digits` is the digits setting. The user's stored names behind an
  * `≈` are the engine's (why.rounded, R36f1: the names that lent inexact facts when the row ran), never read from the
@@ -71,6 +85,7 @@ export function whyLine(item: CopySource, mark: MarkInfo | null, digits: number)
   if (why?.existsUnchecked) parts.push(tc("why.existsUnchecked"));
   if (why?.unaudited?.length) parts.push(`${list(why.unaudited)} ${tc(why.unaudited.length > 1 ? "why.areNotChecked" : "why.isNotChecked")}`);
   if (why?.inherited?.length) parts.push(`${tc("why.uses")} ${list(why.inherited)}, ${tc("why.itselfUncertain")}`);
+  if (why?.sigmaLost?.length) parts.push(sigmaLostText(item, why.sigmaLost));
   if (!parts.length) parts.push(tc(mark.warn ? "why.notChecked" : "why.notConfirmed"));
   return `⚠ ${parts.join(" · ")}`;
 }
