@@ -29,13 +29,13 @@ import { loadSheetView } from "../views/sheetView.svelte.ts";
 import { guardTaps } from "../input/tapGuard.ts";
 import { alternatives, readTargets, writeTarget } from "./alternatives.ts";
 import { storeChip } from "./chip.ts";
-import { constUnits } from "./build.ts";
+import { constUnits, slotText } from "./build.ts";
 import { factorTable } from "./factors.ts";
 import { userUnitCells } from "./padCells.ts";
 import { UnitPad, padUnitList } from "./pad.ts";
 import { unitPad, watchSheet } from "./padView.svelte.ts";
 import { slotCatalogue } from "./slot.ts";
-import { makePanel } from "./panel.ts";
+import { makePanel, type PanelCopy } from "./panel.ts";
 import { ownUnits } from "./ownUnits.ts";
 import { unitCells } from "./userCells.svelte.ts";
 import { putRow, rowSlots, unitRow, type RowIn } from "./row.ts";
@@ -259,7 +259,30 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem, unit?: FindItem)
       c.entry.clear();
       c.withClip((x) => void (x.storeRow(item) || c.dead()));
     };
-    const panel = makePanel(() => made, () => session.settings.marks, { run: store, said: () => (said && made?.shown === said.on ? said.text : undefined) });
+    /** R797: a hold on the result, and the Copy key (Shift + Select) in the view: what a hold on its Home row copies
+     *  (clipboard/actions.svelte.ts holdCopy); no result shown, or its row deleted: the dead press. */
+    const copyResult = (): void => {
+      const item = current?.view === view ? resultRow() : undefined;
+      if (!item) return c.dead();
+      c.withClip((x) => void x.holdCopy(item, "result", ""));
+    };
+    /** R797: a slot's unit as the app writes it (slotText: `km/h`, `kg·m/s²`, what Copy writes and Paste reads, R325);
+     *  none for an empty slot or one that is not complete (a prefix or √ armed alone, a ÷ with nothing after it). */
+    const unitOf = (id: string | undefined): string | undefined => {
+      const m = id === undefined ? undefined : view.model(id);
+      if (!m || m.empty || !m.check().ok || !m.slot.tokens.length) return undefined;
+      return slotText(m.slot, table) || undefined;
+    };
+    /** R797: a hold in the panel copies, named in the notice: the reading the active slot's unit, a slot's box that slot's
+     *  (found as a tap finds it, R801; the active slot stays), a message its text, the result its Home row's string. */
+    const copy = (w: PanelCopy): void => {
+      if (current?.view !== view) return;
+      if (w.on === "result") return copyResult();
+      const text = w.on === "message" ? w.text : unitOf(w.on === "reading" ? view.activeId : slotAt(mf, view.ids, w.x, w.y));
+      if (!text) return c.dead();
+      c.withClip((x) => void x.copyText(text));
+    };
+    const panel = makePanel(() => made, () => session.settings.marks, { run: store, said: () => (said && made?.shown === said.on ? said.text : undefined) }, copy);
     const cat = slotCatalogue(index.items);
     const table = factorTable(index.items);
     const view = new UnitView(cat, line, parseChips, host, seed);
@@ -297,10 +320,10 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem, unit?: FindItem)
     const keep = (): void => element.focus({ preventScroll: true });
     /** R801: a tap on the screen while the view is up (no sheet over it): on a slot's box it makes that slot the active one
      *  (refused as ◀ ▶ is, view.goTo); wherever it lands the focus comes back to the view, so the next hardware key goes
-     *  to the view. A hold stays R797's: it gives no click. R918: outside the view's box (the entry's) a tap is the dead
+     *  to the view. A hold copies (R797, `copy`) and makes no slot active. R918: outside the view's box (the entry's) a tap is the dead
      *  press (input/tapGuard.ts, shared with a name prompt, R921f1): no pick, no row bar, nothing on the lent line. */
-    const unguard = guardTaps(entryEl, () => c.dead(), () => current?.view === view && c.shell.sheet === null, (ev, refused) => {
-      if (!refused && ev.composedPath().includes(mf)) {
+    const unguard = guardTaps(entryEl, () => c.dead(), () => current?.view === view && c.shell.sheet === null, (ev, refused, wasHeld) => {
+      if (!refused && !wasHeld && ev.composedPath().includes(mf)) {
         const id = slotAt(mf, view.ids, ev.clientX, ev.clientY);
         if (id !== undefined) view.goTo(id);
       }
@@ -347,6 +370,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem, unit?: FindItem)
         if (!view.escape()) close();
       }
       else if (a?.kind === "insert" && a.latex === STORE_ARROW) store();
+      else if (a?.kind === "special" && a.name === "copy") copyResult(); // R797: Shift + Select, as a hold on the result
       else if (a?.kind === "special" && a.name === "menu") {
         // R862: the view's tools and Constants over it (a second ☰, Esc or Back closes the sheet: sheetKeys.ts, watchSheet)
         void unitFind().then((m) => current?.view === view && c2.shell.sheet === null && m.showUnitMenu(c2.shell, index, tools(), constant), () => c2.dead());

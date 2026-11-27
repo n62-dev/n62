@@ -3,10 +3,11 @@
 // field, made by units/open.ts), a refusal or the result as Calc.units() returns it (R62: the value line, σ, the note and
 // the alternatives row, units/result.ts), and last one row: the reading of the active slot in words, then → Check (R349:
 // the end slot on and off; R790: directly above the keys, so what is above it never moves it; R852: the reading beside it;
-// R853: ← and → before it step one slot).
+// R853: ← and → before it step one slot). R797: a hold on the formula, the reading, a message or the result copies (`copy`).
 // Plain DOM over the view's state (a change calls `draw`).
 // Loaded with the unit view.
 import "./panel.css";
+import { longpress } from "../apps/longpress.ts";
 import { unitText, type UnitMessageKey } from "../i18n/enUnits.ts";
 import type { UnitShown } from "./result.ts";
 import type { UnitView } from "./view.ts";
@@ -60,9 +61,31 @@ function tapped(b: HTMLElement, run: () => void): HTMLElement {
   return b;
 }
 
+/** R797: what a hold in the panel asks to copy: the active slot's unit (the reading), the slot whose box is at the point
+ *  (the formula), a message's text, or the result's Home row. */
+export type PanelCopy = { on: "reading" } | { on: "slot"; x: number; y: number } | { on: "message"; text: string } | { on: "result" };
+
+/** R797: a hold (apps/longpress.ts, 500 ms) on `node` asks `copy` for `what` at the point it went down; a hold begun on a
+ *  button (Store ▶) copies nothing, since the button acts on its own lift. */
+function held(node: HTMLElement, copy: ((w: PanelCopy) => void) | undefined, what: (x: number, y: number) => PanelCopy): HTMLElement {
+  if (!copy) return node;
+  let x = 0;
+  let y = 0;
+  let onButton = false;
+  node.addEventListener("pointerdown", (e) => {
+    x = e.clientX;
+    y = e.clientY;
+    onButton = e.target instanceof Element && e.target.closest("button") !== null;
+  }); // (before longpress's own listener: it reads these when its timer fires)
+  longpress(node, () => {
+    if (!onButton) copy(what(x, y));
+  });
+  return node;
+}
+
 /** The value line, σ's lines, the note and the alternatives row of a result (`docs/mockups/unit-result.html` at `b1c44ee4`). */
-function resultRows(s: UnitShown, v: UnitView, fit: (row: HTMLElement) => void, store?: () => void): HTMLElement[] {
-  const r = el("div", "result", "unit-result");
+function resultRows(s: UnitShown, v: UnitView, fit: (row: HTMLElement) => void, store?: () => void, copy?: (w: PanelCopy) => void): HTMLElement[] {
+  const r = held(el("div", "result", "unit-result"), copy, () => ({ on: "result" }));
   r.dataset["text"] = s.display;
   r.dataset["unit"] = s.unit;
   const mark = el("span", "mark", "unit-mark", s.markText);
@@ -124,11 +147,12 @@ export interface Panel {
   draw(): void;
 }
 
-/** The panel for `view`, not yet on the page. `marks` (R124): Settings › Numbers › Marks, which panel.css follows. */
-export function makePanel(view: () => UnitView | undefined, marks: () => MarkStyle = () => "reason", store?: PanelStore): Panel {
+/** The panel for `view`, not yet on the page. `marks` (R124): Settings › Numbers › Marks, which panel.css follows. `copy`
+ *  (R797): what a hold asks for, run by units/open.ts. */
+export function makePanel(view: () => UnitView | undefined, marks: () => MarkStyle = () => "reason", store?: PanelStore, copy?: (w: PanelCopy) => void): Panel {
   const element = el("div", "unitview", "unit-view");
   element.tabIndex = -1;
-  const formula = el("div", "formula");
+  const formula = held(el("div", "formula"), copy, (x, y) => ({ on: "slot", x, y }));
   // R349: → Check puts the end slot on (active, empty), ✕ Check takes it off; hidden where it cannot go (no number slot)
   const check = tapped(el("button", "check", "unit-check"), () => view()?.setChecking(!view()?.checking));
   // R853: ← and → step one whole slot, as a tap on it (R801); dim and dead at the ends (the focus comes back to the view
@@ -140,7 +164,7 @@ export function makePanel(view: () => UnitView | undefined, marks: () => MarkSty
   };
   const prev = step(-1, "unit-prev", "units.step.prev", "units.step.prevLabel");
   const next = step(1, "unit-next", "units.step.next", "units.step.nextLabel");
-  const reading = el("div", "reading", "unit-reading");
+  const reading = held(el("div", "reading", "unit-reading"), copy, () => ({ on: "reading" }));
   const below = el("div", "below");
   const said = el("div", "said", "unit-store-note");
   said.setAttribute("role", "alert");
@@ -202,11 +226,11 @@ export function makePanel(view: () => UnitView | undefined, marks: () => MarkSty
     built = s;
     const out: HTMLElement[] = [];
     if (s.kind === "message") {
-      const m = el("div", "message", "unit-message", s.text);
+      const m = held(el("div", "message", "unit-message", s.text), copy, () => ({ on: "message", text: s.text }));
       m.setAttribute("role", "alert");
       out.push(m);
     } else if (s.kind === "working") out.push(el("div", "working", "unit-working", unitText("units.view.working")));
-    else if (s.kind === "result") out.push(...resultRows(s, v, fitRow, store?.run));
+    else if (s.kind === "result") out.push(...resultRows(s, v, fitRow, store?.run, copy));
     below.replaceChildren(...out);
   };
   // a new width changes how many chips fit (the first callback is the size at the start: the draws measure it themselves)

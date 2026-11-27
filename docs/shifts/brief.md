@@ -62,7 +62,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 |---|---|---|---|---|
 | 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Sonnet | `p1/ron-keepline` | – |
 | 905 | R796 Alpha + mol is cd in the unit view (K2) | ron, Sonnet | `p1/ron-candela` | – |
-| 906 | [R797](packages/R797.md) a hold copies in the unit view (U7) | ron, Opus | `p1/ron-unitholdcopy` | R790 |
+| 906 | R797 a hold copies in the unit view (U7) | ron, Opus | `p1/ron-unitholdcopy` | R790 |
 | 906r | [R511](packages/R511.md) matrixsize's menu tests stop flaking ("2 adds a column", "1 × 1"; owner 2026-11-27: before the tag) | ron, Sonnet | `p1/ron-matrixflake` | – |
 | 906a | [R895](packages/R895.md) Paste in units says why | ron, Sonnet | `p1/ron-unitpaste` | R797 |
 | 907 | [R806](packages/R806.md) a unit slot gets a caret: model (C1) | ron, Sonnet | `p1/ron-unitcaret` | R801 |

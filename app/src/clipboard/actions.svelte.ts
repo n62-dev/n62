@@ -220,6 +220,12 @@ export class ClipActions {
     const text = entryText(latex, this.opts);
     return this.copyRaw(text, text ? this.named(text) : undefined, true);
   }
+  /** R797: a text as it stands (a unit view's slot as slotText writes it, a message), named in the notice as a hold's
+   *  copy is; counted as one. */
+  copyText(text: string): Promise<boolean> {
+    this.ops.acted?.("copy");
+    return this.copyRaw(text, this.named(text), true);
+  }
   /** What a hold on the row's input copies: its plain text, the units in it (R63); the row's own, not Home's recall. */
   private inputLatex(item: HistoryItem): string {
     return drawnInput(item, (i) => this.session.input(i));
