@@ -20,27 +20,117 @@ const FUNCTIONS: Readonly<Record<string, (x: number) => number>> = {
 
 /** The double value of `a` (arithmeticOf's tree) when it is a constant expression (above), else NaN; out of the double's
  *  range it is 0 or ±Infinity (constantLog10 reads past it). */
-export function constantDouble(a: Arith): number {
+export function constantDouble(a: Arith, memo: Sizes = new Map()): number {
+  return cheap(a) ? doubleOf(a, memo) : (memo.get(a) ?? memoise(a, memo)).double;
+}
+/** G403: constantDouble and constantLog10 of each node, once (literalPrec.ts reads every node of a tree, and passes one
+ *  map for the tree). G403f1: a Map of the caller's, no module WeakMap, as a WeakMap entry cost the garbage collector
+ *  about 1.5 µs (a sum of 30000 sin(1) took 434 ms), and no entry for a node of leaves alone (cheap). */
+export type Sizes = Map<Arith, { double: number; log10: number }>;
+
+/** The operands of `a` (arithmeticOf's tree), left first. */
+function operands(a: Arith): Arith[] {
+  return a.op === "num" || a.op === "name" ? [] : a.op === "call" ? [a.arg] : a.op === "neg" ? [a.a] : [a.a, a.b];
+}
+
+/** `a` is a number or a name (no operand). */
+const leaf = (a: Arith): boolean => a.op === "num" || a.op === "name";
+
+/** `a` is a leaf or a node whose operands are leaves (`sin(1)`, `-2`, `pi*2`): read again each time, with no memo entry. */
+const cheap = (a: Arith): boolean =>
+  a.op === "num" || a.op === "name" || (a.op === "call" ? leaf(a.arg) : a.op === "neg" ? leaf(a.a) : leaf(a.a) && leaf(a.b));
+
+/** `a`'s operand `o` is read at no deep cost: cheap, or memoised. */
+const ready = (o: Arith, memo: Sizes): boolean => cheap(o) || memo.has(o);
+
+/** constantDouble and constantLog10 of `a`, not cheap, whose operands are ready. */
+function memoOne(a: Arith, memo: Sizes): { double: number; log10: number } {
+  // log10Of reads constantDouble of the node itself
+  const m = { double: doubleOf(a, memo), log10: NaN };
+  memo.set(a, m);
+  m.log10 = log10Of(a, memo);
+  return m;
+}
+
+/** G403f1 (round 3 audit, Opus pass 251): constantDouble and constantLog10 of every node of `a` (not cheap) not yet
+ *  memoised, each node's operands before the node (an explicit stack in post-order), so doubleOf and log10Of read only
+ *  ready operands and never recurse deep: a sum of 10000 ones is a left-chained tree 10000 nodes deep, and a stack
+ *  overflow. */
+function memoise(a: Arith, memo: Sizes): { double: number; log10: number } {
+  // the operands ready (a caller that reads in post-order, literalPrec.ts): no stack
+  if (a.op === "call" ? ready(a.arg, memo) : a.op === "neg" ? ready(a.a, memo) : a.op !== "num" && a.op !== "name" && ready(a.a, memo) && ready(a.b, memo)) return memoOne(a, memo);
+  // the nodes, and beside each whether its operands are ready
+  const nodes: Arith[] = [a];
+  const read: boolean[] = [false];
+  while (nodes.length > 0) {
+    const t = nodes.pop()!;
+    if (read.pop()) {
+      memoOne(t, memo);
+      continue;
+    }
+    nodes.push(t);
+    read.push(true);
+    const ops = operands(t);
+    for (let k = ops.length - 1; k >= 0; k--) {
+      if (ready(ops[k]!, memo)) continue;
+      nodes.push(ops[k]!);
+      read.push(false);
+    }
+  }
+  return memo.get(a)!;
+}
+
+function doubleOf(a: Arith, memo: Sizes): number {
   switch (a.op) {
     case "num":
       return Number(a.text);
     case "name":
       return Object.hasOwn(CONSTANTS, a.name) ? CONSTANTS[a.name]! : NaN;
     case "call":
-      return Object.hasOwn(FUNCTIONS, a.name) ? FUNCTIONS[a.name]!(constantDouble(a.arg)) : NaN;
+      return Object.hasOwn(FUNCTIONS, a.name) ? FUNCTIONS[a.name]!(constantDouble(a.arg, memo)) : NaN;
     case "neg":
-      return -constantDouble(a.a);
+      return -constantDouble(a.a, memo);
     case "+":
-      return constantDouble(a.a) + constantDouble(a.b);
+      return constantDouble(a.a, memo) + constantDouble(a.b, memo);
     case "-":
-      return constantDouble(a.a) - constantDouble(a.b);
+      return constantDouble(a.a, memo) - constantDouble(a.b, memo);
     case "*":
-      return constantDouble(a.a) * constantDouble(a.b);
+      return constantDouble(a.a, memo) * constantDouble(a.b, memo);
     case "/":
-      return constantDouble(a.a) / constantDouble(a.b);
+      return constantDouble(a.a, memo) / constantDouble(a.b, memo);
     case "^":
-      return Math.pow(constantDouble(a.a), constantDouble(a.b));
+      return Math.pow(constantDouble(a.a, memo), constantDouble(a.b, memo));
   }
+}
+
+/** The logarithms rule (b) of constantLog10 reads (`log` is ln). */
+const LOGS: ReadonlySet<string> = new Set(["ln", "log", "log10"]);
+
+/** `a` is the integer literal 1. */
+const isOne = (a: Arith): boolean => a.op === "num" && a.text === "1";
+
+/** G403: u of `1+u`, `u+1` or `1-u` when u holds more than numbers, else null. */
+function besideOne(a: Arith): Arith | null {
+  const u = a.op === "+" ? (isOne(a.a) ? a.b : isOne(a.b) ? a.a : null) : a.op === "-" && isOne(a.a) ? a.b : null;
+  return u && !ofLiterals(u) ? u : null;
+}
+
+/** G403 fix round 2: the term 1-erf(x) of a sum Giac prints flat, `s+1-erf(x)` (its tree is (s+1)-erf(x), no node 1-erf(x))
+ *  or `s-1+erf(x)` (s minus it), as a node of its own for constantLog10's rule (c); null for any other node. */
+export function flatErfc(a: Arith): Arith | null {
+  if ((a.op !== "-" && a.op !== "+") || a.b.op !== "call" || a.b.name !== "erf") return null;
+  const s = a.a;
+  return s.op === (a.op === "-" ? "+" : "-") && isOne(s.b) ? { op: "-", a: s.b, b: a.b } : null;
+}
+
+/** `a` holds numbers alone (no name, no call); G403f1: by an explicit stack, as a sum of 10000 literals is 10000 deep. */
+function ofLiterals(a: Arith): boolean {
+  const stack = [a];
+  for (let t = stack.pop(); t; t = stack.pop()) {
+    if (t.op === "name" || t.op === "call") return false;
+    stack.push(...operands(t));
+  }
+  return true;
 }
 
 /** Below this log10 a double is no longer normal: a sum that is 0 in double has operands this small (an underflow), not a
@@ -54,46 +144,65 @@ const TINY_LOG10 = -300;
  * operands that underflow is bounded by the larger. `(sin(1)^5000)^-2` is 750, where the double of its base is 0. Any
  * other value the double cannot hold counts as Infinity (a start past the cap: ⚠, never ≈). A value 0 in double where
  * its operands are normal (`(1-1)`, `sin(0)`, `ln(1)`) is no magnitude (NaN, as 0^n), and so is a value that is not
- * constant or not real: a tiny term the double rounds away (`ln(1+sin(1)^5000)`) is S20's (intervals).
+ * constant or not real. G403: three values the double cannot hold are read by their asymptotes: cosh and sinh past
+ * its range, ln(1 ± u) and log10(1 ± u) where 1 ± u rounds to 1 (`ln(1+sin(1)^5000)` is about u, 1E-374.8), and
+ * erfc(x) for x > 5, typed or as Giac prints it (`1-erf(x)`): exp(-x²)/(x·√π), 1E-63.9 for erfc(12).
  */
-export function constantLog10(a: Arith): number {
+export function constantLog10(a: Arith, memo: Sizes = new Map()): number {
+  return cheap(a) ? log10Of(a, memo) : (memo.get(a) ?? memoise(a, memo)).log10;
+}
+
+function log10Of(a: Arith, memo: Sizes): number {
   // first, as 1^Infinity is NaN in double
   const e = a.op === "^" ? integerLiteral(a.b) : null;
   if (a.op === "^" && e) {
-    const l = constantLog10(a.a);
+    const l = constantLog10(a.a, memo);
     return Number.isNaN(l) ? NaN : e.n === 0 || l === 0 ? 0 : e.n * l;
   }
-  const d = constantDouble(a);
+  // G403 (c): erfc has no double here; its relative error at x = 5 is 2 % (0.008 in log10)
+  const erfcOf = a.op === "call" && a.name === "erfc" ? a.arg : a.op === "-" && isOne(a.a) && a.b.op === "call" && a.b.name === "erf" ? a.b.arg : null;
+  const xc = erfcOf ? constantDouble(erfcOf, memo) : NaN;
+  if (xc > 5) return -xc * xc * Math.LOG10E - Math.log10(xc * Math.sqrt(Math.PI));
+  const d = constantDouble(a, memo);
   if (Number.isNaN(d)) return NaN;
   const inRange = Number.isFinite(d) && d !== 0;
   switch (a.op) {
     case "neg":
-      return constantLog10(a.a);
+      return constantLog10(a.a, memo);
     case "*":
-      return inRange ? Math.log10(Math.abs(d)) : constantLog10(a.a) + constantLog10(a.b);
+      return inRange ? Math.log10(Math.abs(d)) : constantLog10(a.a, memo) + constantLog10(a.b, memo);
     case "/":
-      return inRange ? Math.log10(Math.abs(d)) : constantLog10(a.a) - constantLog10(a.b);
+      return inRange ? Math.log10(Math.abs(d)) : constantLog10(a.a, memo) - constantLog10(a.b, memo);
     case "^": {
-      const l = constantLog10(a.a);
+      const l = constantLog10(a.a, memo);
       if (inRange) return Math.log10(Math.abs(d));
-      const x = constantDouble(a.b);
+      const x = constantDouble(a.b, memo);
       return Number.isNaN(l) ? NaN : Number.isFinite(l) && Number.isFinite(x) ? x * l : d === 0 ? -Infinity : Infinity;
     }
     case "+":
     case "-": {
       if (inRange) return Math.log10(Math.abs(d));
-      const m = Math.max(constantLog10(a.a), constantLog10(a.b));
+      const m = Math.max(constantLog10(a.a, memo), constantLog10(a.b, memo));
       return d === 0 ? (m < TINY_LOG10 ? m : NaN) : m + Math.LOG10E * Math.LN2;
     }
     case "call": {
       if (inRange) return Math.log10(Math.abs(d));
-      const x = constantDouble(a.arg);
+      const x = constantDouble(a.arg, memo);
       if (Number.isNaN(x)) return NaN;
       if (a.name === "exp") return x * Math.LOG10E;
-      // an argument in the double's range: 0 is a zero of it (ln(1), sin(0)), no magnitude; else an overflow (cosh(1000))
+      // G403 (a): cosh(1000) is e^1000/2 to the double's last digit, 1E434.0; only an overflow (fix round 2: sinh(0) is
+      // a zero, no magnitude), and sinh of an argument the double rounds to 0 is that argument (sinh x ≈ x)
+      if ((a.name === "cosh" || a.name === "sinh") && Number.isFinite(x) && !Number.isFinite(d)) return Math.abs(x) * Math.LOG10E - Math.log10(2);
+      if (a.name === "sinh" && d === 0) return constantLog10(a.arg, memo);
+      // G403 (b): ln(1 + u) is u to its first digits, log10(1 + u) is u/ln(10); a u of literals alone counts by its
+      // literals (G141; g186-exp-sqrt-acosh-1e-300-12 prints ln(1/10^600+1)^2, which 1200 digits would send past the cap)
+      const u = d === 0 && LOGS.has(a.name) ? besideOne(a.arg) : null;
+      const lu = u ? constantLog10(u, memo) : NaN;
+      if (lu < -15) return a.name === "log10" ? lu - Math.log10(Math.LN10) : lu;
+      // an argument in the double's range: 0 is a zero of it (ln(1), sin(0)), no magnitude; else an overflow
       if (Number.isFinite(x) && x !== 0) return d === 0 ? NaN : Infinity;
       // the argument itself is past the range
-      const l = constantLog10(a.arg);
+      const l = constantLog10(a.arg, memo);
       if (Number.isNaN(l)) return NaN;
       if (a.name === "sqrt") return l / 2;
       if (a.name === "abs") return l;

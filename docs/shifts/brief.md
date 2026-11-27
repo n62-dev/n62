@@ -105,7 +105,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| B9 | [G403](packages/G403.md) a tiny constant raises the check's start | gorge, Opus | `p1/gorge-tinyconst` | – |
+| B9 | G403 a tiny constant raises the check's start | gorge, Opus | `p1/gorge-tinyconst` | – |
 | B9a | [G791](packages/G791.md) hamdist: signed reads, opposite signs refused | gorge, Opus | `p1/gorge-hamdistsigned` | – |
 | B11 | [G381](packages/G381.md) a float list stays a list | gorge, Opus | `p1/gorge-storedlist` | – |
 | B12 | [G382](packages/G382.md) a decimal inside a string is never rounded | gorge, Opus | `p1/gorge-stringdigits` | – |
