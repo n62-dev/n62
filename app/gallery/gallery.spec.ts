@@ -305,7 +305,8 @@ const shots: Shot[] = [
   // R284: the engine-failed note (the wasm did not load): why, and Reload
   { id: "engine-failed", group: "Home", title: "Engine failed: the note says why and offers Reload", setup: (p) => p.evaluate(() => { window.n62.session.engineFailure = "load"; window.n62.session.engineState = "failed"; }) },
   { id: "layer-shift", group: "Keypad layers", title: "Shift layer", setup: (p) => tap(p, ["shift"]) },
-  { id: "layer-alpha", group: "Keypad layers", title: "Alpha layer", setup: (p) => tap(p, ["alpha"]) },
+  { id: "layer-alpha", group: "Keypad layers", title: "Alpha layer (a key with no letter keeps the tap's colour, R728)", setup: (p) => tap(p, ["alpha"]) },
+  { id: "layer-cas", group: "Keypad layers", title: "CAS keypad: the letter line in lower case (R728)", setup: (p) => tap(p, ["@cas"]) },
   { id: "layer-alpha-lock", group: "Keypad layers", title: "Alpha lock (capitals)", setup: (p) => tap(p, ["alpha", "alpha"]) },
   { id: "layer-lower-lock", group: "Keypad layers", title: "Lower-case lock", setup: (p) => tap(p, ["shift", "alpha", "alpha"]) },
   { id: "layer-alpha-cas", group: "Keypad layers", title: "Alpha layer in CAS (lower case)", setup: (p) => tap(p, ["@cas", "alpha"]) },
