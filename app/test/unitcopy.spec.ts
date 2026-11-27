@@ -148,14 +148,10 @@ for (const [w, h] of [[412, 915], [360, 740]] as const) {
         await expect.poll(() => clipboard(page)).toBe("A prefix needs a unit after it");
       });
 
-      test("the panel takes no text selection and no callout", async ({ page }) => {
+      // (-webkit-touch-callout is set too, for iOS; Chromium does not compute it)
+      test("the panel takes no text selection", async ({ page }) => {
         await unitsKey(page);
-        const style = await page.getByTestId("unit-view").evaluate((e) => {
-          const s = getComputedStyle(e);
-          return [s.userSelect, s.getPropertyValue("-webkit-touch-callout")];
-        });
-        expect(style[0]).toBe("none");
-        expect(style[1]).toBe("none");
+        expect(await page.getByTestId("unit-view").evaluate((e) => getComputedStyle(e).userSelect)).toBe("none");
       });
     });
 
