@@ -77,7 +77,9 @@ describe("key names (R41)", () => {
   it("R709: the unit pad's operator and control cells take the main pad's names, ° is the degree sign, a unit its symbol", () => {
     const pad = new UnitPad();
     const cell = (id: string): Key => pad.key(keyboard.byId.get(id) as Key, null) as Key;
-    expect(keyLabels(cell("div"), false, false, false)).toEqual({ label: "Divide", description: "Shift: x⁻¹" });
+    expect(keyLabels(cell("div"), false, false, false)).toEqual({ label: "Divide", description: "Shift: x⁻¹" }); // (R864: no marker read out)
+    expect(keyLabels(cell("sq"), false, false, false)).toEqual({ label: "x²", description: "Shift: √x" });
+    expect(keyLabels(cell("pow"), false, false, false)).toEqual({ label: "x³", description: "Shift: x⁴" });
     expect(keyLabels(cell("mul"), false, false, false).label).toBe("Multiply");
     expect(keyLabels(cell("bksp"), false, false, false).label).toBe("Backspace");
     expect(keyLabels(cell("frac"), false, false, false)).toEqual({ label: "Degree sign", description: "Shift: rad" });

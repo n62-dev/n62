@@ -381,3 +381,42 @@ test("R145: CAS's ☰ and the ☰ on a picked row have the ⚙ and no Settings r
   await page.evaluate(() => window.n62.shell.showMenu("Row", [{ id: "a", label: "A" }])); // as a long press does
   await expect(page.getByTestId("sheet-gear")).toHaveCount(0);
 });
+
+// R864: the letter of a template in the variable face (and the Alpha key's corners a and A) moves nothing at 360 px: no face or
+// legend is cut, and each is drawn within 5 % of its fitted size on phase-1 e68856b6, before the change (font size in px, as drawn)
+const R864_PX: Record<string, number> = {
+  "sq/main": 17,
+  "pow/main": 17,
+  "pow/shiftlegend": 11,
+  "neg/shiftlegend": 11,
+  "div/shiftlegend": 11,
+  "ln/shiftlegend": 11,
+  "log/shiftlegend": 11,
+  "frac/main": 17,
+  "alpha/shiftlegend": 11,
+  "alpha/alphalegend": 11,
+  "alpha/main": 16,
+};
+test("R864: the template legends and the Alpha key's corners at 360 px: none cut, within 5 % of their size before", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await open(page);
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(150);
+  const got = await page.evaluate((ids) =>
+    ids.map((id) => {
+      const [key, part] = id.split("/");
+      const k = document.querySelector<HTMLElement>(`.pad [data-key="${key}"]`);
+      const el = k?.querySelector<HTMLElement>(`.${part}`);
+      if (!k || !el) return { id, px: 0, cut: true };
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const r = range.getBoundingClientRect();
+      const b = k.getBoundingClientRect();
+      const cut = r.left < b.left - 0.5 || r.right > b.right + 0.5 || el.dataset["cut"] !== undefined;
+      return { id, px: Math.round(parseFloat(getComputedStyle(el).fontSize) * 10) / 10, cut };
+    }), Object.keys(R864_PX));
+  for (const g of got) {
+    expect(g.cut, `${g.id} cut`).toBe(false);
+    expect(Math.abs(g.px / (R864_PX[g.id] ?? 1) - 1), `${g.id}: ${g.px} px, was ${R864_PX[g.id]} px`).toBeLessThanOrEqual(0.05);
+  }
+});

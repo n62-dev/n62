@@ -4,7 +4,8 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { parse } from "yaml";
 import { actionFor, loadKeyboard, labelFor } from "./keyboard.ts";
-import { typesVariable } from "./variable.ts";
+import { plain } from "./keyNames.ts";
+import { parts, typesVariable, varLayers } from "./variable.ts";
 
 const kb = loadKeyboard(parse(readFileSync(new URL("../../../spec/keyboard.yaml", import.meta.url), "utf8")));
 
@@ -47,5 +48,29 @@ describe("the spec's legends", () => {
       expect(a).toEqual({ kind: "type", text: t });
       expect(typesVariable(a)).toBe(false);
     }
+  });
+});
+
+describe("R864: a template's letter", () => {
+  it("is the run between a backtick pair, a modifier letter there its letter raised; the rest is upright text", () => {
+    expect(parts("`x`²")).toEqual([{ t: "" }, { t: "x", v: true, r: false }, { t: "²" }]);
+    expect(parts("`x``ʸ`").filter((p) => p.v)).toEqual([{ t: "x", v: true, r: false }, { t: "y", v: true, r: true }]);
+    expect(parts("10`ˣ`")).toEqual([{ t: "10" }, { t: "x", v: true, r: true }, { t: "" }]);
+    expect(parts("`ⁿ`√").filter((p) => p.v)).toEqual([{ t: "n", v: true, r: true }]);
+    expect(parts("a b/c")).toEqual([{ t: "a b/c" }]);
+  });
+  it("is never read in a user's own legend", () => {
+    expect(parts("`x`²", false)).toEqual([{ t: "`x`²" }]);
+  });
+  it("marks exactly the operand letters of the spec's templates, and plain gives the label as it read before", () => {
+    const marked = kb.keys.flatMap((k) => Object.values(k.label).filter((l) => l.includes("`")).map((l) => [k.id, plain(l)]));
+    expect(Object.fromEntries(marked.map(([id, l]) => [`${id} ${l}`, true]))).toEqual(
+      Object.fromEntries(["pow xʸ", "pow ⁿ√", "ln eˣ", "log 10ˣ", "sq x²", "neg |x|", "div x⁻¹"].map((n) => [n, true])),
+    );
+    expect(kb.byId.get("frac")?.label.primary).toBe("a b/c");
+  });
+  it("the Alpha key's corners are letter layers, its face is not", () => {
+    expect(varLayers(kb.byId.get("alpha") as never)).toBe("sa");
+    expect(varLayers(kb.byId.get("shift") as never)).toBeUndefined();
   });
 });
