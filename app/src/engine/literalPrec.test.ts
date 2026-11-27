@@ -295,3 +295,35 @@ describe("a constant subterm the double can size (G403)", () => {
     expect(literalStart("(1+erfc(50))^cosh(2508)", 12, 1000, "typed")).toEqual({ at: 12, unchecked: true });
   });
 });
+
+// G403f1 (round 3 audit, Opus pass 251): a left-chained sum or product has no bracket, so MAX_NESTING never bounded its
+// depth, and constantTerms' recursive walk threw RangeError at 10000 terms. The starts are phase-1's own (a8e6aa46, before
+// G403), which read no tree of the whole text: a 1-digit literal at P = 12 starts at 13, pi alone counts nothing.
+describe("a long chain of terms (G403f1)", () => {
+  const chain = (term: string, op: string, n: number): string => Array<string>(n).fill(term).join(op);
+  const cases: [string, string, string, { at: number; unchecked: boolean }][] = [
+    ["a sum of ones", "1", "+", { at: 13, unchecked: false }],
+    ["a sum of sin(1)", "sin(1)", "+", { at: 13, unchecked: false }],
+    ["a product of pi", "pi", "*", { at: 12, unchecked: false }],
+  ];
+  for (const n of [10000, 30000])
+    for (const [name, term, op, start] of cases)
+      it(`${name}, ${n} terms: phase-1's start, no throw, under 200 ms`, () => {
+        const text = chain(term, op, n);
+        // the best of three calls, each a whole reading (no cache outlives a call), as other runs' checks share the host
+        const ms = [0, 1, 2].map(() => {
+          const t0 = performance.now();
+          expect(literalStart(text, 12, 4000, "typed")).toEqual(start);
+          return performance.now() - t0;
+        });
+        expect(Math.min(...ms)).toBeLessThan(200);
+      });
+  it("reads a deep tree with no recursion of constDouble.ts either (a power's base, a product beside a sum)", () => {
+    expect(() => literalStart(`(${chain("1", "+", 10000)})^2`, 12, 4000, "typed")).not.toThrow();
+    expect(literalStart(`(${chain("1", "+", 10000)})*pi`, 12, 4000, "typed")).toEqual({ at: 13, unchecked: false });
+  });
+  it("gives ⚠ where arithmeticOf itself overflows (10000 signs in a row), no throw", () => {
+    expect(literalStart(`${"-".repeat(10000)}sin(1)`, 12, 4000, "typed")).toEqual({ at: 12, unchecked: true });
+    expect(literalStart(`1${"+-".repeat(10000)}1`, 12, 4000, "typed")).toEqual({ at: 12, unchecked: true });
+  });
+});

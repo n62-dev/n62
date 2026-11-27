@@ -10,7 +10,7 @@
 import type { PrecisionWarn } from "./format.ts";
 import { arithmeticOf, type Arith, callsOf, closing, topLevelArgs, integerLiteral, isNameChar, UNCLOSED, walk as bracketWalk, namesIn, negated, numbers, powersIn, withoutStrings, type Quoting } from "./giacPrint.ts";
 import { PERIODIC } from "./converge.ts";
-import { constantLog10, flatErfc } from "./constDouble.ts";
+import { constantLog10, flatErfc, type Sizes } from "./constDouble.ts";
 
 /** A literal with more digits than P minus this raises where the agreement check starts (G141): at P it would leave
  *  fewer than this many digits after its cancellation. */
@@ -95,35 +95,87 @@ function nesting(text: string, q: Quoting): number {
   return bracketWalk(text, 0, (_k, d) => void (max = Math.max(max, d)), q) === UNCLOSED ? Infinity : max;
 }
 
-/** G403: log10 |t| of every subterm t of `text` that holds a name or a call and that constantLog10 sizes (`exp(-100*pi)`,
- *  `1/cosh(1000)`, `1-erf(12)`, `ln(1+sin(1)^5000)^2`), and whether it stands in a place read modulo a period (the
- *  argument of a PERIODIC call or the exponent of a negative base, as periodicPlaces). One walk of arithmeticOf's tree of
+/** G403: the subterms t of `text` that hold a name or a call and that constantLog10 sizes (`exp(-100*pi)`, `1/cosh(1000)`,
+ *  `1-erf(12)`, `ln(1+sin(1)^5000)^2`): the largest digit count ⌈|log10 t|⌉ of those in a place read modulo a period
+ *  (`periodic`: the argument of a PERIODIC call or the exponent of a negative base, as periodicPlaces) and of the others
+ *  (`other`), 0 for none, and whether one that is not the whole text is tiny (below 1E-LITERAL_MARGIN; G403f1: these
+ *  three, not a list of every subterm, 60000 for a sum of 30000 sin(1)). One walk of arithmeticOf's tree of
  *  the whole text, or, when it is no arithmetic (a list, a call of several arguments), of each argument or element that is.
  *  `deep`: past MAX_NESTING no subterm is read, so none is known small (fix round 2: literalStart gives ⚠). */
-function constantTerms(text: string, q: Quoting): { terms: { log10: number; periodic: boolean; whole: boolean }[]; deep: boolean } {
-  const out: { log10: number; periodic: boolean; whole: boolean }[] = [];
+function constantTerms(text: string, q: Quoting): { periodic: number; other: number; tiny: boolean; deep: boolean } {
+  const out = { periodic: 0, other: 0, tiny: false, deep: false };
   let root: Arith | null = null;
-  // whether `a` holds a name or a call (numbers alone are the literal rules' own)
-  const walk = (a: Arith, periodic: boolean): boolean => {
-    if (a.op === "num") return false;
-    let named = true;
-    if (a.op === "call") walk(a.arg, periodic || PERIODIC.has(a.name));
-    else if (a.op === "neg") named = walk(a.a, periodic);
-    else if (a.op !== "name") named = [walk(a.a, periodic), walk(a.b, periodic || (a.op === "^" && a.a.op === "neg"))].includes(true);
-    // ±Infinity is constantLog10's "of unknown size" (asinh(10^-400)): no count
-    const log10 = named ? constantLog10(a) : NaN;
-    if (Number.isFinite(log10)) out.push({ log10, periodic, whole: a === root });
-    // fix round 2: Giac prints 1+erfc(50) as 1+1-erf(50), whose tree holds no node 1-erf(50)
-    const erfc = flatErfc(a);
-    const le = erfc ? constantLog10(erfc) : NaN;
-    if (Number.isFinite(le)) out.push({ log10: le, periodic, whole: false });
-    return named;
+  // ±Infinity is constantLog10's "of unknown size" (asinh(10^-400)): no count
+  const note = (log10: number, periodic: boolean, whole: boolean): void => {
+    if (!Number.isFinite(log10)) return;
+    const d = Math.ceil(Math.abs(log10));
+    if (periodic) out.periodic = Math.max(out.periodic, d);
+    else out.other = Math.max(out.other, d);
+    if (!whole && log10 < -LITERAL_MARGIN) out.tiny = true;
   };
-  if (nesting(text, q) > MAX_NESTING) return { terms: out, deep: true };
-  const whole = (root = arithmeticOf(text, q));
-  if (whole) {
+  // G403f1: each node's size once, its operands' read from here (a caller's Map, constDouble.ts)
+  const sizes: Sizes = new Map();
+  // each node of `top`, its operands before it (G403f1: an explicit stack in post-order, as a left-chained sum or product
+  // of 10000 terms is 10000 nodes deep with no bracket, past MAX_NESTING's reach); `named`: whether the node holds a name
+  // or a call (numbers alone are the literal rules' own)
+  const walk = (top: Arith, inPeriodic: boolean): void => {
+    // the nodes to read, beside each its periodic flag and whether its operands were read; `named` holds the flag of
+    // each node read whose parent is not read yet, the right operand's last
+    const nodes: Arith[] = [top];
+    const flags: boolean[] = [inPeriodic];
+    const read: boolean[] = [false];
+    const named: boolean[] = [];
+    const enter = (a: Arith, periodic: boolean): void => void (nodes.push(a), flags.push(periodic), read.push(false));
+    while (nodes.length > 0) {
+      const a = nodes.pop()!;
+      const periodic = flags.pop()!;
+      if (a.op === "num") {
+        read.pop();
+        named.push(false);
+        continue;
+      }
+      if (!read.pop()) {
+        nodes.push(a);
+        flags.push(periodic);
+        read.push(true);
+        // the right operand entered first, so the left is read first
+        if (a.op === "call") enter(a.arg, periodic || PERIODIC.has(a.name));
+        else if (a.op === "neg") enter(a.a, periodic);
+        else if (a.op !== "name") {
+          enter(a.b, periodic || (a.op === "^" && a.a.op === "neg"));
+          enter(a.a, periodic);
+        }
+        continue;
+      }
+      let isNamed = true;
+      if (a.op === "call") named.pop();
+      else if (a.op === "neg") isNamed = named.pop()!;
+      else if (a.op !== "name") {
+        const right = named.pop()!;
+        isNamed = named.pop()! || right;
+      }
+      named.push(isNamed);
+      if (isNamed) note(constantLog10(a, sizes), periodic, a === root);
+      // fix round 2: Giac prints 1+erfc(50) as 1+1-erf(50), whose tree holds no node 1-erf(50)
+      const erfc = flatErfc(a);
+      if (erfc) note(constantLog10(erfc, sizes), periodic, false);
+    }
+  };
+  // G403f1: arithmeticOf's own recursion (a bracket or a power chain past the stack) reads as too deep, never a throw
+  const arith = (s: string): Arith | null | "deep" => {
+    try {
+      return arithmeticOf(s, q);
+    } catch (e) {
+      if (e instanceof RangeError) return "deep";
+      throw e;
+    }
+  };
+  if (nesting(text, q) > MAX_NESTING) return { ...out, deep: true };
+  const whole = arith(text);
+  if (whole === "deep") return { ...out, deep: true };
+  if ((root = whole)) {
     walk(whole, false);
-    return { terms: out, deep: false };
+    return out;
   }
   // each argument or element of a bracket, outermost first, that no part read before holds; the brackets by giacPrint's
   // one walk (G105, as decisionArgs), strings skipped
@@ -137,7 +189,8 @@ function constantTerms(text: string, q: Quoting): { terms: { log10: number; peri
     if (close < 0) continue;
     let from = k + 1;
     for (const part of topLevelArgs(text.slice(k + 1, close), q)) {
-      const a = arithmeticOf(text.slice(from, from + part.length), q);
+      const a = arith(text.slice(from, from + part.length));
+      if (a === "deep") return { ...out, deep: true };
       if (a) {
         walk(a, places.some(([p, r]) => from >= p && from < r));
         covered = Math.max(covered, from + part.length);
@@ -145,7 +198,7 @@ function constantTerms(text: string, q: Quoting): { terms: { log10: number; peri
       from += part.length + 1;
     }
   }
-  return { terms: out, deep: false };
+  return out;
 }
 
 /** literalDigits, and the same count without the powers of a constant or exp (constantPower) that stand outside every place read
@@ -179,9 +232,9 @@ function literalCounts(text: string, q: Quoting): { digits: number; withoutHuge:
   // outside such a place only beside a tiny constant, the term a sum rounds away (`1/cosh(1000)` in `1+1/cosh(1000)`):
   // alone a huge or tiny value is right at every level (`exp(200000000*1/2)`, g58-sqrt-exp-2e8-12; `(1/2)^(1073741000+sqrt(2))`)
   const decided = total;
-  const { terms, deep } = constantTerms(text, q);
-  const tiny = terms.some((t) => !t.whole && t.log10 < -LITERAL_MARGIN);
-  for (const t of terms) if (tiny || t.periodic) count(Math.ceil(Math.abs(t.log10)), !t.periodic);
+  const { periodic, other, tiny, deep } = constantTerms(text, q);
+  count(periodic);
+  if (tiny) count(other, true);
   return { digits: total, withoutHuge, decided: Math.max(decided, withoutHuge), tiny, deep };
 }
 
