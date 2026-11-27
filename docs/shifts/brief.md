@@ -56,43 +56,43 @@ Start from the phase-1 worktree: `setsid nohup scripts/night.sh [--lane A|B] [--
 Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh --lane A` and `--lane B`, from the phase-1 worktree; lane A runs ron's UI rows, lane B gorge's maths fixes, wrong answers first; an After may name the other lane's row. The order is [release-0.1.0.md](../release-0.1.0.md)'s freeze row: before the tag only what the layout lock pins. The tag has no date (owner, 2026-11-21): it follows the last UI row and S57. On Max (owner, 2026-11-21) each row runs on the model its row names; `.coord/model-cap` holding `sonnet` caps every worker and pass to Sonnet again (A262); `--audit-model auto` as always.
 
 ### Lane A queue (ron's UI before the tag; owner, 2026-11-17 and 2026-11-21)
-**Released before the tag (owner, 2026-11-21: all UI work first, no time pressure):** henri takes this table's rows in order; a row with an owner condition in its text or After column waits for it. S57 now follows R849. The rest of the freeze row's list and the lanes' other rows still open at the stop (R585, R576, R315, R339, R338, R340, R316, R890, R317, R267, R268, G372 to G374, R363 to R366, G617, G387, A73f2, A161, A162) wait in their package files.
+**Released before the tag (owner, 2026-11-21: all UI work first, no time pressure; ron rows on Sonnet to Wed 12-02 07:00 for usage, owner 2026-11-27):** henri takes this table's rows in order; a row with an owner condition in its text or After column waits for it. S57 now follows R849. The rest of the freeze row's list and the lanes' other rows still open at the stop (R585, R576, R315, R339, R338, R340, R316, R890, R317, R267, R268, G372 to G374, R363 to R366, G617, G387, A73f2, A161, A162) wait in their package files.
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Opus | `p1/ron-keepline` | – |
-| 905 | R796 Alpha + mol is cd in the unit view (K2) | ron, Opus | `p1/ron-candela` | – |
+| 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Sonnet | `p1/ron-keepline` | – |
+| 905 | R796 Alpha + mol is cd in the unit view (K2) | ron, Sonnet | `p1/ron-candela` | – |
 | 906 | [R797](packages/R797.md) a hold copies in the unit view (U7) | ron, Opus | `p1/ron-unitholdcopy` | R790 |
-| 906a | [R895](packages/R895.md) Paste in units says why | ron, Opus | `p1/ron-unitpaste` | R797 |
-| 907 | [R806](packages/R806.md) a unit slot gets a caret: model (C1) | ron, Opus | `p1/ron-unitcaret` | R801 |
-| 908 | [R807](packages/R807.md) the slot draws its caret and its marks (C2) | ron, Opus | `p1/ron-unitcaretdraw` | R806 |
-| 909 | [R808](packages/R808.md) the caret moves; ⌫ and the powers act at it (C3) | ron, Opus | `p1/ron-unitcaretmove` | R807 |
-| 909a | [R896](packages/R896.md) Clear and Undo in the unit view | ron, Opus | `p1/ron-unitundo` | R808 |
-| 910 | [R314](packages/R314.md) Memory delete has Undo | ron, Opus | `p1/ron-memoryundo` | – |
-| 911 | [R813](packages/R813.md) Memory: a swipe left deletes, with Undo (C6) | ron, Opus | `p1/ron-memswipe` | R314 |
-| 912 | [R814](packages/R814.md) Memory: Shift + ⌫ deletes (C6) | ron, Opus | `p1/ron-memdelkey` | R813 |
-| 913 | [R815](packages/R815.md) Memory copies the full value (C6) | ron, Opus | `p1/ron-memcopy` | R814 |
-| 914 | [R816](packages/R816.md) Memory: Paste asks, then replaces a value (C6) | ron, Opus | `p1/ron-mempaste` | R815 |
-| 915 | [R818](packages/R818.md) Vars and Memory rows say what a name holds (C7) | ron, Opus | `p1/ron-namekinds` | – |
-| 916 | [R819](packages/R819.md) filter chips in Vars and Memory (C7) | ron, Opus | `p1/ron-namechips` | R818 |
-| 916a | [R875](packages/R875.md) a sheet title's earlier crumbs are buttons back | ron, Opus | `p1/ron-crumbs` | R856, R819, R927 |
-| 916b | [R876](packages/R876.md) setting rows 1: list rows, button rows | ron, Opus | `p1/ron-gotorows` | R875, R927 |
-| 916b1 | [R909](packages/R909.md) setting labels never cut | ron, Opus | `p1/ron-labelwhole` | R876, R884 |
-| 916c | [R877](packages/R877.md) setting rows 2: switches, muted read-only rows | ron, Opus | `p1/ron-switchrows` | R876 |
-| 916d | [R878](packages/R878.md) setting rows 3: an opening row ends in › | ron, Opus | `p1/ron-openmark` | R877 |
-| 916e | [R879](packages/R879.md) ☰ in Home and CAS is the History menu | ron, Opus | `p1/ron-historymenu` | R875 |
-| 916f | [R880](packages/R880.md) the gear in ☰'s title row becomes "Settings ›" | ron, Opus | `p1/ron-settingsword` | R879 |
-| 919 | [R821](packages/R821.md) user keys: two layers, a switch for Alpha | ron, Opus | `p1/ron-userkeyalpha` | R729 |
-| 920 | [R822](packages/R822.md) Store: a tap types Alpha's case | ron, Opus | `p1/ron-storecase` | R820 |
-| 921 | [R834](packages/R834.md) a faint ✕ on each history row deletes it (H1b) | ron, Opus | `p1/ron-rowx` | R832, R742 |
-| 921a | [R859](packages/R859.md) rows take a tap across the line | ron, Opus | `p1/ron-rowbands` | R858, R742, R834 |
-| 924 | [R836](packages/R836.md) a row shows the value Ans had | ron, Opus | `p1/ron-ansvalue` | G642 |
-| 926 | [R840](packages/R840.md) pop-ups get an accent edge (P1) | ron, Opus | `p1/ron-sheetedge` | R770, R872 |
-| 926a | [R910](packages/R910.md) theme floors; henri adds `--no-merge` (owner's gallery look) | ron, Opus | `p1/ron-themefloors` | R874, R742, R840 |
-| 926b | [R911](packages/R911.md) HC never lowers contrast | ron, Opus | `p1/ron-hcfloor` | R910 |
-| 929 | [R847](packages/R847.md) Find for a user-key slot (Y1) | ron, Opus | `p1/ron-slotfind` | R811, R821 |
-| 930 | [R848](packages/R848.md) an empty user key opens its slot sheet (Y1) | ron, Opus | `p1/ron-keysheet` | R705, R811, R821, R847 |
-| 931 | [R849](packages/R849.md) Settings › Your keys in one window (owner, 2026-11-22) | ron, Opus | `p1/ron-yourkeyswindow` | R848 |
+| 906a | [R895](packages/R895.md) Paste in units says why | ron, Sonnet | `p1/ron-unitpaste` | R797 |
+| 907 | [R806](packages/R806.md) a unit slot gets a caret: model (C1) | ron, Sonnet | `p1/ron-unitcaret` | R801 |
+| 908 | [R807](packages/R807.md) the slot draws its caret and its marks (C2) | ron, Sonnet | `p1/ron-unitcaretdraw` | R806 |
+| 909 | [R808](packages/R808.md) the caret moves; ⌫ and the powers act at it (C3) | ron, Sonnet | `p1/ron-unitcaretmove` | R807 |
+| 909a | [R896](packages/R896.md) Clear and Undo in the unit view | ron, Sonnet | `p1/ron-unitundo` | R808 |
+| 910 | [R314](packages/R314.md) Memory delete has Undo | ron, Sonnet | `p1/ron-memoryundo` | – |
+| 911 | [R813](packages/R813.md) Memory: a swipe left deletes, with Undo (C6) | ron, Sonnet | `p1/ron-memswipe` | R314 |
+| 912 | [R814](packages/R814.md) Memory: Shift + ⌫ deletes (C6) | ron, Sonnet | `p1/ron-memdelkey` | R813 |
+| 913 | [R815](packages/R815.md) Memory copies the full value (C6) | ron, Sonnet | `p1/ron-memcopy` | R814 |
+| 914 | [R816](packages/R816.md) Memory: Paste asks, then replaces a value (C6) | ron, Sonnet | `p1/ron-mempaste` | R815 |
+| 915 | [R818](packages/R818.md) Vars and Memory rows say what a name holds (C7) | ron, Sonnet | `p1/ron-namekinds` | – |
+| 916 | [R819](packages/R819.md) filter chips in Vars and Memory (C7) | ron, Sonnet | `p1/ron-namechips` | R818 |
+| 916a | [R875](packages/R875.md) a sheet title's earlier crumbs are buttons back | ron, Sonnet | `p1/ron-crumbs` | R856, R819, R927 |
+| 916b | [R876](packages/R876.md) setting rows 1: list rows, button rows | ron, Sonnet | `p1/ron-gotorows` | R875, R927 |
+| 916b1 | [R909](packages/R909.md) setting labels never cut | ron, Sonnet | `p1/ron-labelwhole` | R876, R884 |
+| 916c | [R877](packages/R877.md) setting rows 2: switches, muted read-only rows | ron, Sonnet | `p1/ron-switchrows` | R876 |
+| 916d | [R878](packages/R878.md) setting rows 3: an opening row ends in › | ron, Sonnet | `p1/ron-openmark` | R877 |
+| 916e | [R879](packages/R879.md) ☰ in Home and CAS is the History menu | ron, Sonnet | `p1/ron-historymenu` | R875 |
+| 916f | [R880](packages/R880.md) the gear in ☰'s title row becomes "Settings ›" | ron, Sonnet | `p1/ron-settingsword` | R879 |
+| 919 | [R821](packages/R821.md) user keys: two layers, a switch for Alpha | ron, Sonnet | `p1/ron-userkeyalpha` | R729 |
+| 920 | [R822](packages/R822.md) Store: a tap types Alpha's case | ron, Sonnet | `p1/ron-storecase` | R820 |
+| 921 | [R834](packages/R834.md) a faint ✕ on each history row deletes it (H1b) | ron, Sonnet | `p1/ron-rowx` | R832, R742 |
+| 921a | [R859](packages/R859.md) rows take a tap across the line | ron, Sonnet | `p1/ron-rowbands` | R858, R742, R834 |
+| 924 | [R836](packages/R836.md) a row shows the value Ans had | ron, Sonnet | `p1/ron-ansvalue` | G642 |
+| 926 | [R840](packages/R840.md) pop-ups get an accent edge (P1) | ron, Sonnet | `p1/ron-sheetedge` | R770, R872 |
+| 926a | [R910](packages/R910.md) theme floors; henri adds `--no-merge` (owner's gallery look) | ron, Sonnet | `p1/ron-themefloors` | R874, R742, R840 |
+| 926b | [R911](packages/R911.md) HC never lowers contrast | ron, Sonnet | `p1/ron-hcfloor` | R910 |
+| 929 | [R847](packages/R847.md) Find for a user-key slot (Y1) | ron, Sonnet | `p1/ron-slotfind` | R811, R821 |
+| 930 | [R848](packages/R848.md) an empty user key opens its slot sheet (Y1) | ron, Sonnet | `p1/ron-keysheet` | R705, R811, R821, R847 |
+| 931 | [R849](packages/R849.md) Settings › Your keys in one window (owner, 2026-11-22) | ron, Sonnet | `p1/ron-yourkeyswindow` | R848 |
 | 885b | [S57](packages/S57.md) everyday-maths hunt on the new layout (rows R760–R769, G760–G769) | sandra, Opus | `p1/sandra-hunt-maths` | R849, R843 |
 
 ### Lane B queue (owner, 2026-11-22: gorge's maths fixes, wrong answers first; then G797–G800, the tag's bar)
