@@ -136,3 +136,47 @@ describe.skipIf(!giacAvailable())("stored names lend their facts (real Giac)", (
     expect(seen(next.home("f(pb)", defaultHomeSettings).result)).toEqual({ display: "0.576724807757", reliableDigits: 12, warn: "unaudited" });
   });
 });
+
+describe.skipIf(!giacAvailable())("G381 (F208): a stored value read back keeps its kind (real Giac)", () => {
+  /** What Home shows of a result: its brackets and text, its copy text's head, and its mark's facts. */
+  const shown = (r: HomeResult) => ({ display: r.display, braces: r.braces, head: /^(list\[|\[)/.exec(r.full ?? r.exact ?? "")?.[1], approximate: r.approximate, warn: r.facts.warn });
+  /** The result of `stored` after `def` ran, and of `typed` on a fresh host. */
+  const pair = async (def: string, stored: string, typed: string): Promise<[ReturnType<typeof shown>, ReturnType<typeof shown>]> => {
+    const a = await nodeHost();
+    a.home(def, defaultHomeSettings);
+    const b = await nodeHost();
+    return [shown(a.home(stored, defaultHomeSettings).result), shown(b.home(typed, defaultHomeSettings).result)];
+  };
+  const J = "list[evalf(1/3),evalf(2/3)]";
+
+  it.each([
+    ["J", J],
+    ["J*J", `${J}*${J}`],
+    ["stats1(J)", `stats1(${J})`],
+  ])("a stored float list: %s shows as the list typed in its place", async (stored, typed) => {
+    const [s, t] = await pair(`J:=${J}`, stored, typed);
+    expect(t.braces).toBe(true);
+    expect(s).toEqual(t);
+  });
+
+  it.each([
+    ["V:=[evalf(1/3),1]", "V", "[evalf(1/3),1]"],
+    ["V:=[evalf(1/3),1]", "V*2", "[evalf(1/3),1]*2"],
+    ["L:=list[1,2]", "L*L", "list[1,2]*list[1,2]"],
+    ["S:=set[evalf(1/3),2]", "S", "set[evalf(1/3),2]"],
+    ["M:=[[evalf(1/3),1],[2,3]]", "M*2", "[[evalf(1/3),1],[2,3]]*2"],
+  ])("control: after %s, %s shows as typed", async (def, stored, typed) => {
+    const [s, t] = await pair(def, stored, typed);
+    expect(s).toEqual(t);
+  });
+
+  it("the facts of each read are those of the read alone (digits, warn, why)", async () => {
+    const h = await nodeHost();
+    h.home(`J:=${J}`, defaultHomeSettings);
+    const facts = (t: string) => h.home(t, defaultHomeSettings).result.facts;
+    // the facts phase-1 gave these reads before G381 (only the brackets change)
+    expect(facts("J")).toEqual({ exact: false, reliableDigits: 39, why: { rounded: ["J"] } });
+    expect(facts("J*J")).toEqual({ exact: false, reliableDigits: 37, why: { rounded: ["J"] } });
+    expect(facts("stats1(J)")).toEqual({ exact: false, reliableDigits: 38, why: { rounded: ["J"] } });
+  });
+});
