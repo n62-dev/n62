@@ -12,6 +12,7 @@
   import Grouped from "../Grouped.svelte";
   import { plotHook } from "./plotHook.ts";
   import { curveColors, DEFAULT_X, type FunctionApp, type PlotWindow } from "./app.svelte.ts";
+  import { plotInk } from "./plotInk.svelte.ts";
 
   let { app }: { app: FunctionApp } = $props();
 
@@ -23,6 +24,9 @@
   let board: Board | undefined;
   let JXG: JXGModule | undefined;
   let markEls: { remove(): void }[] = [];
+  // R710: the axes', ticks' and trace dot's colours as literal values (a canvas cannot resolve var(--…), plotInk.svelte.ts);
+  // JSXGraph reads them through functions at each draw, the look effect below reads them again and redraws.
+  let ink = plotInk();
 
   // D7 (desktop, CPU 4x slower): canvas 6.4 ms vs SVG 10.2 ms; plain sampling while moving, adaptive (clean poles) at rest.
   type Curve = { setAttribute(a: Record<string, unknown>): unknown };
@@ -31,6 +35,12 @@
   let moving = false;
   function setAdaptive(on: boolean): void {
     for (const c of curves) c.setAttribute({ doAdvancedPlot: on });
+  }
+
+  /** An axis's colours, read at each draw (the label is the tick numbers). */
+  function axisInk(): Record<string, unknown> {
+    const axis = (): string => ink.axis;
+    return { strokeColor: axis, ticks: { strokeColor: (): string => ink.tick, label: { strokeColor: axis } } };
   }
 
   function defaultWindow(): PlotWindow {
@@ -109,10 +119,7 @@
         resize: { enabled: false, throttle: 0 }, // (resized, R928)
         pan: { enabled: true, needTwoFingers: false },
         zoom: { enabled: true, wheel: true, needShift: false, pinchHorizontal: true, pinchVertical: true, pinchSensitivity: 7, factorX: 1.15, factorY: 1.15 },
-        defaultAxes: {
-          x: { strokeColor: "var(--muted)", ticks: { strokeColor: "var(--line)", label: { strokeColor: "var(--muted)" } } },
-          y: { strokeColor: "var(--muted)", ticks: { strokeColor: "var(--line)", label: { strokeColor: "var(--muted)" } } },
-        },
+        defaultAxes: { x: axisInk(), y: axisInk() },
       } as Parameters<JXGModule["JSXGraph"]["initBoard"]>[1]);
       board = b;
       b.suspendUpdate();
@@ -142,7 +149,7 @@
             return Number.isFinite(y) ? y : NaN;
           },
         ],
-        { name: "", size: 4, fixed: true, highlight: false, strokeColor: "var(--text)", fillColor: "var(--text)", visible: () => app.trace.on && app.active.length > 0 },
+        { name: "", size: 4, fixed: true, highlight: false, strokeColor: (): string => ink.trace, fillColor: (): string => ink.trace, visible: () => app.trace.on && app.active.length > 0 },
       );
       b.unsuspendUpdate();
       b.on("boundingbox", windowChanged);
@@ -183,9 +190,10 @@
     if (app.syncAngle() && ready) board?.update();
   });
 
-  // The brightness changed: the curves take the other list.
+  // The brightness changed: the curves take the other list. The look changed (R710): the axes, ticks and trace dot take its tokens.
   $effect(() => {
     void curveColors();
+    ink = plotInk();
     if (ready) board?.update();
   });
 
