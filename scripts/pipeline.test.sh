@@ -2426,5 +2426,64 @@ out="$(lrrun --id L5 --branch p1/lr-l5)"; rc=$?
 [[ ! -e "$(lrmark L5 p1/lr-l5)" ]] || fail "A258 (e): a NOT MERGED run left its marker"
 git -C "$lr/.claude/worktrees/phase-1" checkout -q tracked
 
+# A256: --sync: a sync run (a clone's SYNC<k>, the merge-back) is audited by its conflict resolutions and its own commits, not by all of main
+sy="$tmp/sy"; mkdir -p "$sy/bin" "$sy/tools" "$sy/docs/shifts" "$sy/app/node_modules/x"; git init -q -b main "$sy"
+cp "$sb/tools/devlock.sh" "$sy/tools/"; cp "$sb/bin/npm" "$sy/bin/"; : > "$sy/docs/shifts/brief.md"
+cat > "$sy/bin/claude" <<'STUB'
+#!/bin/sh
+case "$*" in
+  *"--agent sofia"*) cat > "$SY_IN"; . "$JOUT"; jout "$*" APPROVED;;
+  *) . "$JOUT"; jout "$*" done;;
+esac
+STUB
+chmod +x "$sy/bin/claude"
+syc() { git -C "$sy" -c user.name=t -c user.email=t@t commit -q "$@"; }
+seq 1 12 > "$sy/f"; echo keep > "$sy/app/keep"; printf '.claude/\n.tasks/\n.coord/\naudit.stdin\nout.txt\n' > "$sy/.gitignore"; git -C "$sy" add -A; syc -m base
+rl() { sed "$2s/.*/$3/" "$1" > "$1.n"; mv "$1.n" "$1"; }  # <file> <line> <text>: replace one line
+# the clone's phase-1 changes line 2; "mainside" (main's phase-1, to be synced in) changes it another way, line 11 apart, and adds a file
+git -C "$sy" checkout -q -b phase-1; rl "$sy/f" 2 CLONESIDE; git -C "$sy" add -A; syc -m "clone: change"
+git -C "$sy" checkout -q -b mainside main; rl "$sy/f" 2 MAINSIDE; rl "$sy/f" 11 MAINLINE11; echo MAINONLYFILE > "$sy/main-only.txt"; git -C "$sy" add -A; syc -m "main: change"
+# the sync branch: phase-1 plus main's merged in (conflict on line 2, resolved by hand), then a fix round's commit
+git -C "$sy" checkout -q -b p1/sy1 phase-1; git -C "$sy" merge -q mainside >/dev/null 2>&1; seq 1 12 | sed '2s/.*/RESOLVED/;11s/.*/MAINLINE11/' > "$sy/f"
+git -C "$sy" add f; syc -q -m "Merge mainside into p1/sy1"
+echo fixround > "$sy/fix.txt"; git -C "$sy" add fix.txt; syc -m "fix: round"
+git -C "$sy" checkout -q main
+syrun() { (cd "$sy" && PATH="$sy/bin:$PATH" GIAC_OUT="$sy/engine" SY_IN="$sy/audit.stdin" "$@"); }
+sy_in() { rm -f "$sy/audit.stdin"; local o; o="$(syrun "$script" ron "sync task" --id "$1" --branch "$2" --no-worker --checks none --no-merge "${@:3}" 2>&1)"; rc=$?; echo "$o" > "$sy/out.txt"; }
+sy_in SY1 p1/sy1 --sync
+[[ $rc -eq 0 && -s "$sy/audit.stdin" ]] || fail "A256: a --sync run did not reach the audit (rc $rc): $(tail -n 3 "$sy/out.txt")"
+syin="$(cat "$sy/audit.stdin" 2>/dev/null)"
+grep -q 'RESOLVED' <<<"$syin" && grep -q 'CLONESIDE' <<<"$syin" && grep -q 'MAINSIDE' <<<"$syin" || fail "A256: the sync input lacks the merge's remerge-diff (the resolution against both sides)"
+grep -q 'MAINLINE11' <<<"$syin" && fail "A256: the sync input holds lines main changed without a conflict (not only the conflicted hunks)"
+grep -q 'fix.txt' <<<"$syin" && grep -q 'fixround' <<<"$syin" || fail "A256: the sync input lacks the run's own non-merge commit in full"
+grep -q 'MAINONLYFILE' <<<"$syin" && fail "A256: the sync input holds main's own change in full, not only in the stat"
+grep -q 'main-only.txt *| *1 +' <<<"$syin" && grep -q 'audited where it was made' <<<"$syin" || fail "A256: the sync input has no stat with the 'audited where it was made' heading"
+grep -q 'judge the resolutions and the run.s own commits; the stat lists what was audited elsewhere' <<<"$syin" || fail "A256: the sync criteria lack the one line"
+a="$(grep -n 'remerge' <<<"$syin" | head -n1 | cut -d: -f1)"; b="$(grep -n 'fixround' <<<"$syin" | head -n1 | cut -d: -f1)"; c="$(grep -n 'audited where it was made' <<<"$syin" | head -n1 | cut -d: -f1)"
+[[ -n "$a" && -n "$b" && -n "$c" && "$a" -lt "$b" && "$b" -lt "$c" ]] || fail "A256: the sync input is not in the order resolutions, own commits, stat ($a $b $c)"
+# the other direction (the merge-back): the branch is main's side, the clone's branch is merged in; the id is not SYNC<k>
+git -C "$sy" checkout -q -b clone main; rl "$sy/f" 2 NEXTSIDE; git -C "$sy" add -A; syc -m "next: change"; echo nextonly > "$sy/next-only.txt"; git -C "$sy" add -A; syc -m "next: file"
+git -C "$sy" checkout -q -b p1/nb1 phase-1; git -C "$sy" merge -q clone >/dev/null 2>&1; seq 1 12 | sed '2s/.*/BACKRESOLVED/' > "$sy/f"; git -C "$sy" add f; syc -q -m "Merge clone"
+echo revert >> "$sy/f"; syc -q -am "revert: next's factory change"; git -C "$sy" checkout -q main
+sy_in NEXT1 p1/nb1 --sync
+syin="$(cat "$sy/audit.stdin" 2>/dev/null)"
+grep -q 'BACKRESOLVED' <<<"$syin" && grep -q 'NEXTSIDE' <<<"$syin" && grep -q "revert: next's factory change\|+revert" <<<"$syin" && grep -q 'next-only.txt *| *1 +' <<<"$syin" && ! grep -q '^+nextonly' <<<"$syin" || fail "A256: the other direction (NEXT1) is not audited by its resolution, its own commits and a stat"
+# a clean merge: the one line
+git -C "$sy" checkout -q -b clean-side main; echo cleanfile > "$sy/clean.txt"; git -C "$sy" add -A; syc -m "clean side"
+git -C "$sy" checkout -q -b p1/sy3 phase-1; git -C "$sy" merge -q --no-ff -m "Merge clean-side" clean-side >/dev/null 2>&1; git -C "$sy" checkout -q main
+sy_in SY3 p1/sy3 --sync
+grep -q 'no conflicts: the merge resolved nothing by hand' "$sy/audit.stdin" || fail "A256: a clean merge does not give 'no conflicts: the merge resolved nothing by hand'"
+# a plain run's input is unchanged: the diff section is `git diff -U5 phase-1...<sha>` and nothing of the sync
+git -C "$sy" checkout -q -b p1/sy4 phase-1; echo plain > "$sy/plain.txt"; git -C "$sy" add -A; syc -m plain; git -C "$sy" checkout -q main
+sy_in SY4 p1/sy4
+psha="$(git -C "$sy" rev-parse p1/sy4)"; want="$(git -C "$sy" diff -U5 "phase-1...$psha")"
+grep -q "^## Diff (git diff -U5 phase-1...$psha, the HEAD of p1/sy4, $(wc -l <<<"$want") lines)" "$sy/audit.stdin" && [[ "$(awk '/^## Diff /{p=1;next} /^## Behaviour changes/{p=0} p' "$sy/audit.stdin" | sed '/./,$!d' | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}')" == "$want" ]] || fail "A256: a plain run's diff section changed"
+grep -q 'audited where it was made\|resolutions' "$sy/audit.stdin" && fail "A256: a plain run's input mentions the sync sections"
+# --sync on a branch with no merge commit since phase-1 is refused at the start
+git -C "$sy" checkout -q -b p1/sy5 phase-1; echo p > "$sy/p5.txt"; git -C "$sy" add -A; syc -m p5; git -C "$sy" checkout -q main
+sy_in SY5 p1/sy5 --sync
+[[ $rc -eq 2 ]] && grep -q '^RESULT -: NOT STARTED (--sync: .*no merge commit' "$sy/out.txt" && [[ ! -s "$sy/audit.stdin" ]] || fail "A256: --sync with no merge commit is not refused at the start (rc $rc): $(tail -n 2 "$sy/out.txt")"
+grep -q -- '--sync' <<<"$("$script" 2>&1 | head -n 1; sed -n 1,40p "$script")" || fail "A256: the usage lines do not document --sync"
+
 [[ $fails -eq 0 ]] || { echo "pipeline.test.sh: $fails failure(s) in $count packages" >&2; exit 1; }
 echo "pipeline.test.sh: ok ($count packages)"

@@ -66,9 +66,9 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 892a | [R864](packages/R864.md) the letter in a template key is italic | ron, Opus | `p1/ron-templateitalic` | R728, R729 |
 | 892b | [R865](packages/R865.md) Find stands out: a lens and a foot bar | ron, Opus | `p1/ron-findlook` | R861, R729, R864 |
 | 893 | [R701](packages/R701.md) the folder plugin (F380) | annabell, Sonnet | `p1/annabell-folderproxy` | – |
-| 894 | [R710](packages/R710.md) Plot draws its axes (F385) | ron, Opus | `p1/ron-plotaxes` | – |
-| 895 | [R709](packages/R709.md) every control has a spoken name (F384) | ron, Opus | `p1/ron-spokennames` | – |
-| 896 | [A256](packages/A256.md) a sync run is audited | annabell, Sonnet | `p1/annabell-syncaudit` | – |
+| 894 | R710 Plot draws its axes (F385) | ron, Opus | `p1/ron-plotaxes` | – |
+| 895 | R709 every control has a spoken name (F384) | ron, Opus | `p1/ron-spokennames` | – |
+| 896 | A256 a sync run is audited | annabell, Sonnet | `p1/annabell-syncaudit` | – |
 | 897 | [A257](packages/A257.md) host-cpu goes to the oldest waiter first | annabell, Sonnet | `p1/annabell-fairlock` | A256 |
 | 898 | [R781](packages/R781.md) a left-hand layout setting (owner, 2026-11-20) | ron, Opus | `p1/ron-lefthand` | R729 |
 | 905 | [R796](packages/R796.md) Alpha + mol is cd in the unit view (K2) | ron, Opus | `p1/ron-candela` | – |
@@ -109,14 +109,12 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| B5j2 | [A277f1](packages/A277f1.md) golden is planned for what it spawns (sofia, 2026-11-26) | annabell, Opus | `p1/annabell-goldenspawn` | – |
-| B5k | [A281f1](packages/A281f1.md) A281's clipboard per test made to pass: reload-proof store, core on the real clipboard, timing tests shielded (owner, 2026-11-26: asap; Opus, not Fable) | annabell, Opus | `p1/annabell-pageclip` | – |
-| B6i | G800 a unit sweep | gorge, Opus | `p1/gorge-unitsweep` | R885 |
 | B9 | G403 a tiny constant raises the check's start | gorge, Opus | `p1/gorge-tinyconst` | – |
 | B9a | [G791](packages/G791.md) hamdist: signed reads, opposite signs refused | gorge, Opus | `p1/gorge-hamdistsigned` | – |
-| B10 | [G385](packages/G385.md) a bracketed ΔT in arithmetic | gorge, Opus | `p1/gorge-tempdiffarith` | – |
 | B11 | [G381](packages/G381.md) a float list stays a list | gorge, Opus | `p1/gorge-storedlist` | – |
 | B12 | [G382](packages/G382.md) a decimal inside a string is never rounded | gorge, Opus | `p1/gorge-stringdigits` | – |
+| B12a | [G807](packages/G807.md) a tiny σ keeps its second order, no false ⚠ (F490, pass 251) | gorge, Opus | `p1/gorge-tinysigma` | – |
+| B12b | [R935](packages/R935.md) a value rounding to 0 at σ draws no 21-digit σ (F491, pass 251) | ron, Opus | `p1/ron-zerosigma` | – |
 | B13 | [G550](packages/G550.md) a Home row whose σ cannot be carried says so | gorge, Opus | `p1/gorge-sigmalost` | – |
 | B14 | [G400](packages/G400.md) Export › CSV and LaTeX carry a Home row's σ | gorge, Opus | `p1/gorge-exportsigma` | – |
 | B15 | [G640](packages/G640.md) Ans frozen in history: the tests | gorge, Opus | `p1/gorge-anstests` | – |

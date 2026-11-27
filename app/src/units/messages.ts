@@ -9,32 +9,29 @@ import type { UncWhy, UnitError, UnitNote } from "./types.ts";
 
 export function unitErrorMessage(e: UnitError): string {
   switch (e.error) {
+    // the refusals without a value: their key is the error's
+    case "power":
+    case "temperature":
+    case "bracket":
+    case "level":
+    case "belowzero":
+    case "function":
+    case "divzero":
+    case "uncpower":
+    case "sigma":
+    case "store":
+    case "engine":
+      return unitText(`units.${e.error}`);
     case "dimension":
       return unitText("units.mismatch", { dims: e.dims.map(dimensionText).join(unitText("units.mismatchSep")) });
     case "cycle":
       return unitText(e.unit === "rpm" ? "units.cycle.rpm" : "units.cycle.rev", { unit: e.unit });
-    case "power":
-      return unitText("units.power");
-    case "temperature":
-      return unitText("units.temperature");
     case "scales":
       return unitText("units.scales", { a: e.units[0], b: e.units[1] });
     case "logarithmic":
       return unitText("units.logarithmic", { unit: e.unit });
     case "nofactor":
       return unitText("units.nofactor", { unit: e.unit });
-    case "level":
-      return unitText("units.level");
-    case "belowzero":
-      return unitText("units.belowzero");
-    case "function":
-      return unitText("units.function");
-    case "divzero":
-      return unitText("units.divzero");
-    case "uncpower":
-      return unitText("units.uncpower");
-    case "sigma":
-      return unitText("units.sigma");
     case "sigmadim":
       return unitText("units.sigmadim", { dims: e.dims.map(dimensionText).join(unitText("units.mismatchSep")) });
     case "minus":
@@ -45,12 +42,8 @@ export function unitErrorMessage(e: UnitError): string {
       // Home's words (en.ts holds enEngine): the start chunk's table, so enEngine is no chunk of its own (G319 fix 1);
       // G618's words are in no app table (the start chunk's pin), so they come from their own module
       return e.code === "sumUnchecked" ? SUM_UNCHECKED : t(`error.${e.code}`);
-    case "store":
-      return unitText("units.store");
     case "own":
       return unitText("units.own.gone", { name: e.name });
-    case "engine":
-      return unitText("units.engine");
   }
 }
 

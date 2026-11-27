@@ -58,3 +58,9 @@ Moved here as they stood (links adjusted to this folder): decided entries of Opu
 
 - **Owner answers of 2026-10-25 and 2026-11-02 to 11-08 (pipeline):** built; a 1507 ms CAS-last cold start does not hold v0.1.0. Archived.
 - **R153–R155:** the generator's moves stand. Archived. Would change if: the owner's look after R24d.
+
+## Moved 2026-11-27 (Opus pass 251: decisions.md over 39 kB; built, their sections in decisions-2026-10.md "Shortened 2026-11-12, evening")
+
+- **Built, archived ("2026-11-12, evening"):** A73f1; R140–R150, R53; R95, R100, R94, R110; S12 (R66–R68, G45); R34, R43, R7, A4a points 3 and 4.
+- **Built, archived ("2026-11-12, evening"):** G78f1, G68, G84, G70, G71, G67, G65; A20 (G82); A12 and A62 (G83); A16 after G53; F50, F51 (G78); G33 and R56; A4a point 1 (G52); G20 (G28).
+- **Built, archived ("2026-11-12, evening"):** G81, R24d, R24b and R24c, G37, G15 and G25, the units menu ([spec/units-menu.yaml](../../spec/units-menu.yaml)).
