@@ -12,7 +12,7 @@ import { decimalFromString, decimalToString, isZero, roundSignificant, type Deci
 import { toExactLiterals } from "./exactLiterals.ts";
 import type { HomeResult } from "./homeEval.ts";
 import type { Giac } from "./numeric.ts";
-import { mapNames, names, splitList } from "./giacPrint.ts";
+import { isTimeout, mapNames, names, splitList } from "./giacPrint.ts";
 import { basisGiac, basisOf, correlated, isZeroText, LEAF_PREFIX } from "./constBasis.ts";
 import type { UncTerm, ValueFacts } from "./types.ts";
 import { CONST_PREFIX } from "./ourNames.ts";
@@ -221,8 +221,8 @@ function scaledTerm(t: UncTerm, v: DecimalValue): UncTerm {
   return { key: t.key, t: decimalToString(timesAbs(timesAbs(decimalFromString(t.t)!, v), v)), uy: decimalToString(uy) };
 }
 
-/** σ of the shares `parts` evaluated with σ at `p` digits and G274's terms at `q`: null when Giac gives no decimal (or
- *  an error), undefined when one of our names has no free name. */
+/** σ of the shares `parts` evaluated with σ at `p` digits and G274's terms at `q` (none when they are not decimals): null
+ *  when Giac gives no decimal σ (or an error), undefined when it timed out or one of our names has no free name. */
 function sigmaAt(giac: Giac, parts: { inputs: SigmaInput[]; shares: string[] }, p: number, q: number, taken: (name: string) => boolean): { sigma: DecimalValue; terms?: UncTerm[] } | null | undefined {
   const { inputs, shares } = parts;
   // G274: two or more inputs: one call gives σ from the exact sum (as one input's) and each share's t and uy, the
@@ -239,13 +239,15 @@ function sigmaAt(giac: Giac, parts: { inputs: SigmaInput[]; shares: string[] }, 
   }, "typed");
   if (stuck) return undefined;
   const out = giac.eval(many ? expr : `evalf(${expr},${p})`);
+  // a time-out is not tried again (each try would wait for Home's clock): σ is lost
+  if (isTimeout(out)) return undefined;
   if (out.startsWith("GIAC_ERROR")) return null;
   const list = many ? splitList(out) : [out];
   const sigma = list?.length === 2 || !many ? decimalFromString(list![0]!) : null;
   if (!sigma) return null;
   if (!many) return { sigma };
   const terms = termsOf(inputs, list![1]!);
-  return terms ? { sigma, terms } : null;
+  return terms ? { sigma, terms } : { sigma };
 }
 
 /** G274: `[[t, uy], …]` as Giac printed it, one pair per input, each a decimal, as terms keyed by the input's key; undefined
