@@ -52,8 +52,10 @@ export function quantityText(clip: string, o: TextOptions = {}): QuantityText | 
   const s = pasteText(clip);
   const m = s === null ? null : /^(\S+)(?:\s*±\s*(\S+))?\s+(\S+)$/.exec(s);
   if (!m) return null;
-  const [, v = "", sg, unit = ""] = m;
-  if (!/^(?:1\/|[^\d+\-±.,(){}[\]])/.test(unit)) return null;
+  const [, v = "", sg0, unit = ""] = m;
+  if (!/^(?:1\/|[^\d+\-±.,(){}[\]⚠])/.test(unit)) return null;
+  // R886f1: a unit row's Copy text writes σ's warning as `± ⚠0.64`; the one sign right after ± is taken off, no other
+  const sg = sg0?.startsWith("⚠") ? sg0.slice(1) : sg0;
   const comma = o.decimalComma === true;
   const re = realPattern(comma ? "," : String.raw`\.`);
   const value = parseReal(v, re);
