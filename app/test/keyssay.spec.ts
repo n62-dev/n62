@@ -51,7 +51,7 @@ for (const how of ["armed", "locked"] as const)
     for (const id of LETTERLESS) expect(await colourOf(page, id), id).toBe(text);
     for (const id of LETTERED) expect(await colourOf(page, id), id).toBe(alpha);
     expect(await colourOf(page, "enter"), "Enter keeps its own colour").toBe(await tokenColour(page, "--on-enter"));
-    expect(await page.locator(".pad .arrows").evaluate((e) => getComputedStyle(e).color), "the round pad's arrows").toBe(text);
+    expect(await page.locator(".pad .arrows").evaluate((e) => getComputedStyle(e).color), "the round pad's arrows keep Alpha's (R794f1)").toBe(alpha);
   });
 
 test("a flick down on a key with no letter shows its tap in the key pop's colour; on sin the letter in Alpha's", async ({ page }) => {

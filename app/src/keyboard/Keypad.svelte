@@ -84,8 +84,9 @@
   // (R820: while the face shows the key's letter, its letter line is empty: the letter is not drawn twice)
   // (R728: the letter in the case Alpha and a flick down type in the view: lower case in CAS, R58)
   const alphaHint = (k: Key): string => (alpha || !k.label.alpha || typed(k)?.toLowerCase() === k.label.alpha.toLowerCase() ? "" : labelFor(k, false, true, cas));
-  /** R728: no Alpha action (Esc, ⌫, `.` …; not Shift or Alpha): Alpha and a flick down are its tap, drawn in the tap's colour. */
-  const fallsBack = (k: Key): boolean => !k.actions.alpha && k.id !== "shift" && k.id !== "alpha";
+  /** R728: no Alpha action (Esc, ⌫, `.` …; not Shift or Alpha): Alpha and a flick down are its tap, drawn in the tap's colour.
+   *  Not the round pad's zones: their arrows keep Alpha's colour (R794f1). */
+  const fallsBack = (k: Key): boolean => !k.actions.alpha && k.id !== "shift" && k.id !== "alpha" && !isPadKey(k);
   // R820: a letter typed into a query is upright (R142 is for a variable on the line): the data-v layers it would italicise are left out
   const varsOf = (k: Key): string | undefined => {
     const v = varLayers(k);
@@ -766,12 +767,13 @@
   .shifted .arrows {
     color: var(--key-shift);
   }
-  .alphaed .main {
+  .alphaed .main,
+  .alphaed .arrows {
     color: var(--key-alpha);
   }
-  /* R728: a key with no letter does its tap under Alpha: the tap's colour (the arrows too); :where leaves Enter's and the dim to win */
-  .alphaed :where(.key[data-fallback="true"]) .main,
-  .alphaed .arrows {
+  /* R728: a key with no letter does its tap under Alpha: the tap's colour; :where leaves Enter's and the dim to win (the round
+     pad's arrows keep Alpha's, R794f1) */
+  .alphaed :where(.key[data-fallback="true"]) .main {
     color: var(--key-text);
   }
   /* Enter keeps one colour in every layer: the coloured text would not read on its green */
