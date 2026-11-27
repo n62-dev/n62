@@ -2,7 +2,7 @@
 // G798: casback's laws that need no oracle. The judge of a law on made-up sides (no engine), the law builders, and the hunt's hand
 // cases through Home on the real engine: G790's product and G793's lcm (right since patches 0064 and 0065: red on an engine before them,
 // key 4361f213c1035daa), G622's inverse, linsolve and rank (right since patch 0068: red on phase-1 0da1ddc6, key 0badb9dd3cbfb5e2) and
-// G791's hamdist (a known row naming its package).
+// G791's hamdist (right since patch 0072: red on phase-1 cd8f646b, key baa2cc397540c685).
 import { beforeAll, describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -153,14 +153,11 @@ describe.skipIf(!giacAvailable())("the hunt's hand cases through Home (G798, rea
     for (const l of integerLaws(2n ** 63n + 1n, 2n ** 70n).filter((x) => x.law === "lcm" || x.law === "gcd")) expect(run(l).status, l.id).toBe("ok");
   });
 
-  it("G791: hamdist(a,b) = hamdist(−a−1,−b−1) fails for 0 and 2^40 (hamdist(-1,-2^40-1) is 4294967295 with =)", () => {
-    const l = pick(integerLaws(0n, 2n ** 40n), "hamdist");
-    const v = run(l);
-    expect(v.status).toBe("wrong");
-    expect(v.detail).toContain("4.294967295E9");
-    const inSet = pick(integerLaws(0n, 2n ** 31n - 1n), "hamdist");
-    expect(run(inSet).status).toBe("wrong");
-    expect(packageOf(inSet)).toBe("G791");
+  it("G791: hamdist(a,b) = hamdist(−a−1,−b−1) holds for 0 and 2^40 and the set's 2^31−1 (red before patch 0072: hamdist(-1,-2^40-1) was 4294967295 with =), no known row", () => {
+    for (const l of [pick(integerLaws(0n, 2n ** 40n), "hamdist"), pick(integerLaws(0n, 2n ** 31n - 1n), "hamdist"), pick(integerLaws(2n ** 70n, 12n), "hamdist")]) {
+      expect(run(l).status, l.id).toBe("ok");
+      expect(packageOf(l)).toBeUndefined();
+    }
   });
 
   it("a = b·iquo(a,b) + irem(a,b) for every sign pair", () => {

@@ -280,8 +280,8 @@ describe("size-check", () => {
     expect(checkSplits(fakeDist(atStart, { ...files, "assets/sheet.js": 1000 }))[0]).toContain("loaded at start");
   });
 
-  it("pins the start chunk at 61,250 B gzip with hashed names held fixed, under the budget of 63 kB (R729: phase-1 holds 61,027 B, the branch 61,239 B; the earlier pins are in size-check.ts)", () => {
-    expect(START_PIN_GZIP).toBe(61_250);
+  it("pins the start chunk at 61,260 B gzip with hashed names held fixed, under the budget of 63 kB (R729: phase-1 holds 61,036 B, the branch 61,255 B; the earlier pins are in size-check.ts)", () => {
+    expect(START_PIN_GZIP).toBe(61_260);
     const { manifest } = base(0);
     const at = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 60_570 }, "assets/mathlive.js": 1000 }));
     expect(at.failures).toEqual([]); // inside the budget of 63 kB ...

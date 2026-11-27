@@ -101,7 +101,8 @@ export const en = {
   "status.fold": "Fold the keys",
   "status.angle.rad": "Angle: radians",
   "status.angle.deg": "Angle: degrees",
-  "status.format": "Number format and digits: {format}, {digits} digits. Tap to open Mode.",
+  /** R709: the `STD 12 ▾` chip, read in words (the walk heard "STD" and "12"); a tap opens Mode on Format. */
+  "status.format": "Number format: {format}. Significant digits: {digits}. Tap to choose.",
   "status.modOff": "{mod} on. Double-tap to turn it off",
   "status.busy": "Working",
 } as const;

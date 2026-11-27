@@ -664,6 +664,9 @@ export const PATCHED_IDS = new Map([
   ["g802-home-inv-exp-approx-entry-scaled-00-40", "0069-vector-mpfr-arith-recursion.patch"],
   // G804: Zeta of a complex argument right at 40 digits (patch 0070 sizes Eta's series by the precision; ⚠ rows before it, not exported)
   ["g140-zeta-half+i-over-2^300-30", "0070-vector-entry-mpfr-precision.patch"], ["g140-zeta-half+i-plus-pi-30", "0070-vector-entry-mpfr-precision.patch"],
+  // G791 (F476): misc.cc giac_hamdist read a negative _INT_ beside a _ZINT as 2^32+v; the g791-keep-* rows pass on stock and stay in
+  // the check file; the refusals of opposite signs are written lines below
+  ...["hamdist-neg1-neg2^40", "hamdist-neg2^40-neg1", "hamdist-neg3-neg2^70", "hamdist-neg1-neg2^31"].map((k) => [`g791-${k}`, "0072-hamdist-signed-opposite-signs.patch"]),
 ]);
 // G122: Giac's exact answer is right (patch 0014), but pc()'s evalf of it at Digits 40 cancels the digits of a large k*pi
 // (asin(cos(30!)) = -pi/2+30!-k*pi with k of 32 digits keeps about 7, -pi/2+10^50-k*pi none); Home raises the precision
@@ -686,6 +689,7 @@ export const CANCELS_IDS = new Set([
   "prec-zero-cancel", "g358-ln-1-tanh50-30", "g358-keep-tanh100-minus-1", "g363-pow-euler-gamma-800", // G358: 1-tanh(50), 1-tanh(100) are 0 at Digits 40 (Home climbs to the level where they are finite); G363: 1+euler_gamma^800 (1E-191 added) is 1 there (Home starts past 191 digits)
   "g126-asinh-neg-1e-20-30",
   ...["approx-ln-1-tanh50", "ln-1-tanh800", "inv-1-tanh800", "inv-1-tanh1000", "keep-inv-1-tanh300"].map((k) => `g404-${k}`), // G404: as G358's, 0 at Digits 40 (Home climbs, to 980 digits)
+  ...["exp-100pi", "cosh-300", "erfc-12", "exp-exp-7", "cosh-1000", "ln-sin1-5000-sq"].flatMap((k) => [`g403-pow-${k}`, `g403-pow-${k}-30`]), "g403-ln-exp-100pi", "g403-keep-pow-cosh-100", // G403: a tiny constant (1E-43 to 1E-750) beside 1 is rounded away at Digits 40, so 1 or 0 there (Home starts past its digits)
   ...["acos-sqrt-neg2-1e-330-minus-2", "acos-sqrt-neg2-1e-400-minus-2", "asin-sqrt-neg2-1e-330-minus-2", "asin-minus-sqrt-neg2-1e-330-minus-2", "asin-sqrt-neg2-1e-330-plus-2"].map((k) => `g325f1-${k}`), ...["evalf-asin", "evalf-acos", "evalf-acosh", "approx-acos"].map((k) => `g325f2-${k}-sqrt-neg2-1e-${k === "approx-acos" ? "400" : "330"}-minus-2`), // G325f1, G325f2 (evalf of the call): nested roots past MAX_EVAL_DIGITS (Home: from the argument's float)
   ...["ASIN-sqrt-neg2-1e-330-minus-2", "ACOS-sqrt-neg2-1e-330-minus-2", "evalf-ACOSH-sqrt-neg2-1e-330-minus-2", "evalf-arccosh-sqrt-neg2-1e-330-minus-2"].map((k) => `g360-${k}`), // G360: as G325f1's, spelt ASIN, ACOS, ACOSH, arccosh
 ]);
@@ -1147,6 +1151,13 @@ export function build(cases) {
     ["half-after-power", "2^100:; ", "convert(129,2,1/2)"],
   ]) {
     patched.push("// patch 0067-convert-subtype-integer.patch", `// g803-convert-129-2-${k}-refused (derived: no integer subtype; Parisse, 2026-11-24: "it should probably error")`, `Digits:=40:; ${pre}pasr:=0:; try { ${input}; } catch (err) { pasr:=1; }:; pc("g803-convert-129-2-${k}-refused",'pasr',1,1/10^30);`);
+    nPatched++;
+  }
+  // Patch 0072 (G791, F476), written lines: hamdist of two integers of opposite signs gave a count (mpz_hamdist's largest bit count,
+  // 31 low bits of a small pair, a negative _INT_ read as 2^32+v); now refused (pasr 1). The golden g791-*-refused rows are refusals,
+  // which the export leaves out.
+  for (const [k, input] of [["neg1-2^40", "hamdist(-1,2^40)"], ["2^40-neg1", "hamdist(2^40,-1)"], ["neg2^40-2^40", "hamdist(-2^40,2^40)"], ["neg1-2", "hamdist(-1,2)"], ["3-neg5", "hamdist(3,-5)"], ["0-neg2^31", "hamdist(0,-2^31)"]]) {
+    patched.push("// patch 0072-hamdist-signed-opposite-signs.patch", `// g791-hamdist-${k}-refused (derived: integers of opposite signs differ in infinitely many bits, two's complement)`, `Digits:=40:; pasr:=0:; try { ${input}; } catch (err) { pasr:=1; }:; pc("g791-hamdist-${k}-refused",'pasr',1,1/10^30);`);
     nPatched++;
   }
   for (const [id, input, value] of [

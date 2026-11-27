@@ -260,6 +260,18 @@ Digits:=40:; pc("g551-bitand-neg1-neg2^31",'(bitand(-1,-2147483648))',-214748364
 // patch 0062-bitops-signed-small-integer.patch
 // g551-bitand-neg1-2^70 (home.yaml, derived)
 Digits:=40:; pc("g551-bitand-neg1-2^70",'(bitand(-1,2^70))',(118059162072*10^10),5*10^9);
+// patch 0072-hamdist-signed-opposite-signs.patch
+// g791-hamdist-neg1-neg2^40 (home.yaml, derived)
+Digits:=40:; pc("g791-hamdist-neg1-neg2^40",'(hamdist(-1,-2^40))',40,5/10^11);
+// patch 0072-hamdist-signed-opposite-signs.patch
+// g791-hamdist-neg2^40-neg1 (home.yaml, derived)
+Digits:=40:; pc("g791-hamdist-neg2^40-neg1",'(hamdist(-2^40,-1))',40,5/10^11);
+// patch 0072-hamdist-signed-opposite-signs.patch
+// g791-hamdist-neg3-neg2^70 (home.yaml, derived)
+Digits:=40:; pc("g791-hamdist-neg3-neg2^70",'(hamdist(-3,-2^70))',69,5/10^11);
+// patch 0072-hamdist-signed-opposite-signs.patch
+// g791-hamdist-neg1-neg2^31 (home.yaml, derived)
+Digits:=40:; pc("g791-hamdist-neg1-neg2^31",'(hamdist(-1,-2147483648))',31,5/10^11);
 // patch 0051-limit-ipart-as-trunc.patch
 // g360-limit-iPart-1-left (home.yaml, derived)
 Digits:=40:; pc("g360-limit-iPart-1-left",'(limit(iPart(x),x,1,-1))',0,1/10^30);
@@ -1847,6 +1859,24 @@ Digits:=40:; pasr:=0:; try { convert(129,2,g803x); } catch (err) { pasr:=1; }:; 
 // patch 0067-convert-subtype-integer.patch
 // g803-convert-129-2-half-after-power-refused (derived: no integer subtype; Parisse, 2026-11-24: "it should probably error")
 Digits:=40:; 2^100:; pasr:=0:; try { convert(129,2,1/2); } catch (err) { pasr:=1; }:; pc("g803-convert-129-2-half-after-power-refused",'pasr',1,1/10^30);
+// patch 0072-hamdist-signed-opposite-signs.patch
+// g791-hamdist-neg1-2^40-refused (derived: integers of opposite signs differ in infinitely many bits, two's complement)
+Digits:=40:; pasr:=0:; try { hamdist(-1,2^40); } catch (err) { pasr:=1; }:; pc("g791-hamdist-neg1-2^40-refused",'pasr',1,1/10^30);
+// patch 0072-hamdist-signed-opposite-signs.patch
+// g791-hamdist-2^40-neg1-refused (derived: integers of opposite signs differ in infinitely many bits, two's complement)
+Digits:=40:; pasr:=0:; try { hamdist(2^40,-1); } catch (err) { pasr:=1; }:; pc("g791-hamdist-2^40-neg1-refused",'pasr',1,1/10^30);
+// patch 0072-hamdist-signed-opposite-signs.patch
+// g791-hamdist-neg2^40-2^40-refused (derived: integers of opposite signs differ in infinitely many bits, two's complement)
+Digits:=40:; pasr:=0:; try { hamdist(-2^40,2^40); } catch (err) { pasr:=1; }:; pc("g791-hamdist-neg2^40-2^40-refused",'pasr',1,1/10^30);
+// patch 0072-hamdist-signed-opposite-signs.patch
+// g791-hamdist-neg1-2-refused (derived: integers of opposite signs differ in infinitely many bits, two's complement)
+Digits:=40:; pasr:=0:; try { hamdist(-1,2); } catch (err) { pasr:=1; }:; pc("g791-hamdist-neg1-2-refused",'pasr',1,1/10^30);
+// patch 0072-hamdist-signed-opposite-signs.patch
+// g791-hamdist-3-neg5-refused (derived: integers of opposite signs differ in infinitely many bits, two's complement)
+Digits:=40:; pasr:=0:; try { hamdist(3,-5); } catch (err) { pasr:=1; }:; pc("g791-hamdist-3-neg5-refused",'pasr',1,1/10^30);
+// patch 0072-hamdist-signed-opposite-signs.patch
+// g791-hamdist-0-neg2^31-refused (derived: integers of opposite signs differ in infinitely many bits, two's complement)
+Digits:=40:; pasr:=0:; try { hamdist(0,-2^31); } catch (err) { pasr:=1; }:; pc("g791-hamdist-0-neg2^31-refused",'pasr',1,1/10^30);
 // patch 0019-atan-exact-cut.patch
 // g135-deg-atan-2i (DEG, oracle)
 angle_radian:=0:; Digits:=40:; pc("g135-deg-atan-2i",'atan(2*i)',90+(3147292373094538001977241539068588825237/10^38)*i,1/10^35);

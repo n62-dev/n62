@@ -1,35 +1,4 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # G64: the failures the CAS check-back (app/scripts/casback.ts, seed 20261024) finds today. id = the question, check = its kind, package = the open backlog id.
-# G798: the laws (check: law; id = "<law> d<digits>: <left LaTeX>"), the hand matrices and 6 of the seed's law matrices, then the integer set:
-# G791 hamdist of two negatives, one beside a big one (hamdist(-1,-2^31) is 4294967295 with =).
-known:
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(0,2147483647\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(0,2147483649\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(0,9223372036854775807\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(0,9223372036854775809\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(0,1180591620717411303424\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(7,2147483647\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(7,2147483649\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(7,9223372036854775807\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(7,9223372036854775809\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(7,1180591620717411303424\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(12,2147483647\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(12,2147483649\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(12,9223372036854775807\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(12,9223372036854775809\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(12,1180591620717411303424\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(2147483647,0\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(2147483647,7\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(2147483647,12\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(2147483649,0\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(2147483649,7\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(2147483649,12\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(9223372036854775807,0\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(9223372036854775807,7\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(9223372036854775807,12\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(9223372036854775809,0\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(9223372036854775809,7\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(9223372036854775809,12\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(1180591620717411303424,0\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(1180591620717411303424,7\\right)", check: law, package: G791 }
-  - { id: "hamdist d30: \\operatorname{hamdist}\\left(1180591620717411303424,12\\right)", check: law, package: G791 }
+# G798: the laws (check: law; id = "<law> d<digits>: <left LaTeX>"), the hand matrices and 6 of the seed's law matrices and the integer set; none fails today.
+known: []

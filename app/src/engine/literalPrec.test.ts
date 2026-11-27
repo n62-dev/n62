@@ -32,8 +32,12 @@ describe("literalDigits", () => {
   });
   it("reads no other name, no non-literal exponent and no call of another name (G307)", () => {
     expect(literalDigits("api^200+e^200+x^200", "typed")).toBe(3);
-    expect(literalDigits("myexp(200)+exp(200*x)+exp(x+200)+exp(200.5)", "typed")).toBe(3);
-    expect(literalDigits("pi^(200*x)+pi^200.5+pi^2e3", "typed")).toBe(3);
+    expect(literalDigits("myexp(200)+exp(200*x)+exp(x+200)", "typed")).toBe(3);
+    expect(literalDigits("pi^(200*x)", "typed")).toBe(3);
+    // G403: alone they count nothing; beside a tiny constant they are sized by their double (200.5·log10 e, 200.5·log10 pi)
+    expect(literalDigits("exp(200.5)+pi^200.5", "typed")).toBe(0);
+    expect(literalDigits("(1+exp(-200.5))^exp(200.5)", "typed")).toBe(88);
+    expect(literalDigits("(1+pi^-200.5)^pi^200.5", "typed")).toBe(100);
     expect(literalDigits(`"exp(200)"+"pi^200"+1`, "typed")).toBe(1);
   });
 });
@@ -157,8 +161,11 @@ describe("a power of a constant base (G363)", () => {
     expect(literalDigits("(1+i)^5000+ln(-2)^5000+asin(2)^5000+(1-1)^5000+0^5000", "typed")).toBe(4);
     // a base 0 in exact maths that the double rounds (cos(pi/2) is 6.1E-17) counts too many digits: a later start or ⚠, never ≈
     expect(literalDigits("cos(pi/2)^5", "typed")).toBe(82); // ⌈5·16.21⌉
-    expect(literalDigits("sin(1)^(5000*x)+sin(1)^5000.5", "typed")).toBe(4);
-    // a right-associative exponent is no literal; its own power (5000² = 25000000) counts as one
+    expect(literalDigits("sin(1)^(5000*x)", "typed")).toBe(4);
+    // G403: a constant exponent that is no integer literal, sized by its double beside a tiny constant
+    expect(literalDigits("sin(1)^5000.5", "typed")).toBe(1);
+    expect(literalDigits("(1+sin(1)^5000.5)^(1/sin(1)^5000.5)", "typed")).toBe(375);
+    // a right-associative exponent is no literal; its own power (5000² = 25000000) counts as one (alone, G403 too)
     expect(literalDigits("sin(1)^(5000)^2", "typed")).toBe(8);
     expect(literalDigits(`"sin(1)^5000"+1`, "typed")).toBe(1);
     // a base of exactly 1 is no magnitude; an integer base stays a power of two integer literals (G141)
@@ -231,5 +238,96 @@ describe("uncheckedPastCap (G141f2)", () => {
   it("leaves an exact element and a no-digit one as they are", () => {
     expect(uncheckedPastCap(f(true, null))).toEqual(f(true, null));
     expect(uncheckedPastCap(f(false, 0))).toEqual(f(false, 0));
+  });
+});
+
+// G403: the digit counts are ⌈|log10|⌉ of the oracle's magnitudes (mpmath): exp(100*pi) 136.44, cosh(300) 129.99,
+// erfc(12) -63.87, exp(exp(7)) 476.26, cosh(1000) 433.99, ln(1+sin(1)^5000)^2 -749.61
+describe("a constant subterm the double can size (G403)", () => {
+  const at = (t: string, P = 12): { at: number; unchecked: boolean } => literalStart(t, P, 1000, "printed");
+  it("starts the agreement check past a tiny or huge constant reached without an integer literal exponent", () => {
+    expect(at("(1+exp(-100*pi))^(exp(100*pi))")).toEqual({ at: 149, unchecked: false });
+    expect(at("(1+1/cosh(300))^(cosh(300))")).toEqual({ at: 142, unchecked: false });
+    expect(at("(1+1-erf(12))^(1/(1-erf(12)))")).toEqual({ at: 76, unchecked: false });
+    expect(literalStart("(1+erfc(12))^(1/erfc(12))", 12, 1000, "typed")).toEqual({ at: 76, unchecked: false });
+    expect(at("(1+exp(-exp(7)))^(exp(exp(7)))")).toEqual({ at: 489, unchecked: false });
+    expect(at("(1+1/cosh(1000))^(cosh(1000))")).toEqual({ at: 446, unchecked: false });
+    expect(at("(1+ln(1+sin(1)^5000)^2)^(ln(1+sin(1)^5000)^-2)")).toEqual({ at: 762, unchecked: false });
+    expect(at("(1+ln(1+sin(1)^5000)^2)^(ln(1+sin(1)^5000)^-2)", 30)).toEqual({ at: 780, unchecked: false });
+    expect(at("ln(1+exp(-100*pi))*exp(100*pi)")).toEqual({ at: 149, unchecked: false });
+  });
+  it("keeps the start of the controls (as on phase-1)", () => {
+    expect(at("(1+exp(-300))^(exp(300))")).toEqual({ at: 143, unchecked: false });
+    expect(at("exp(1)^2")).toEqual({ at: 13, unchecked: false });
+    expect(at("cosh(2)+1")).toEqual({ at: 13, unchecked: false });
+    expect(at("2^100")).toEqual({ at: 43, unchecked: false });
+    expect(at("exp(10000000)")).toEqual({ at: 20, unchecked: false });
+  });
+  it("reads a text that is no arithmetic part by part, a place read modulo a period, and a constant alone", () => {
+    expect(at("[(1+1/cosh(300))^cosh(300),2]")).toEqual({ at: 142, unchecked: false });
+    expect(at("sin(exp(100*pi))")).toEqual({ at: 149, unchecked: false });
+    // exp(exp(8)) has 1295 digits (exp(8)·log10 e = 1294.6): alone it rounds nothing away (G307f1; its exp(8) counts 4,
+    // G307, as on phase-1), in sin it is the argument, and with a small value beside it past the cap: ⚠
+    expect(at("exp(exp(8))")).toEqual({ at: 16, unchecked: false });
+    expect(at("exp(200000000*1/2)")).toEqual({ at: 21, unchecked: false });
+    expect(at("(1/2)^(1073741000+sqrt(2))")).toEqual({ at: 22, unchecked: false });
+    expect(at("sin(exp(exp(8)))")).toEqual({ at: 12, unchecked: true });
+    expect(at("(1+exp(-exp(8)))^(exp(exp(8)))")).toEqual({ at: 12, unchecked: true });
+    // a decision reads it only in a place read modulo a period (sqrt(exp(2e8)) is decided, g58-sqrt-exp-2e8-12)
+    expect(literalPastCap("exp(exp(8))", 12, 1000, "printed")).toBe(false);
+    expect(literalPastCap("sin(exp(exp(8)))", 12, 1000, "printed")).toBe(true);
+    // ±Infinity, a size constantLog10 cannot tell (asinh of a value below the double's range), counts nothing
+    expect(literalStart("evalf(asinh(10^-400))", 40, 1000, "typed")).toEqual({ at: 441, unchecked: false });
+  });
+  it("reads no subterm past 200 brackets deep, counts the brackets by giacPrint's walk (strings skipped)", () => {
+    const deep = "(".repeat(3000) + "1/cosh(300)" + ")".repeat(3000);
+    // fix round 2: a text too deep to read may hold a tiny subterm, so ⚠ (this one is e, it showed a false ≈ 1)
+    expect(at(`(1+${deep})^cosh(300)`)).toEqual({ at: 12, unchecked: true });
+    // brackets in a string are no nesting (G403 fix round 1: the hand-written loop counted them)
+    expect(at(`[(1+1/cosh(300))^cosh(300),"${"(".repeat(300)}"]`)).toEqual({ at: 142, unchecked: false });
+    // a string that does not close is read as too deep: ⚠
+    expect(at(`[(1+1/cosh(300))^cosh(300),"${"(".repeat(3)}`)).toEqual({ at: 12, unchecked: true });
+  });
+  it("gives ⚠ for a tiny subterm past the cap in a text with no slash or minus (Giac's 1-erf(x), fix round 2)", () => {
+    // erfc(50) is 1E-1088.9 (rule (c)), cosh(2508) 1E1088.9 (rule (a)): the value is exp(erfc(50)·cosh(2508)), far from 1,
+    // and both counts pass the cap; formsSmall sees no slash, ^- or inv in Giac's print, which showed a false ≈ 1
+    expect(at("(1+1-erf(50))^cosh(2508)")).toEqual({ at: 12, unchecked: true });
+    expect(literalStart("(1+erfc(50))^cosh(2508)", 12, 1000, "typed")).toEqual({ at: 12, unchecked: true });
+  });
+});
+
+// G403f1 (round 3 audit, Opus pass 251): a left-chained sum or product has no bracket, so MAX_NESTING never bounded its
+// depth, and constantTerms' recursive walk threw RangeError at 10000 terms. The starts are phase-1's own (a8e6aa46, before
+// G403), which read no tree of the whole text: a 1-digit literal at P = 12 starts at 13, pi alone counts nothing.
+describe("a long chain of terms (G403f1)", () => {
+  const chain = (term: string, op: string, n: number): string => Array<string>(n).fill(term).join(op);
+  const cases: [string, string, string, { at: number; unchecked: boolean }][] = [
+    ["a sum of ones", "1", "+", { at: 13, unchecked: false }],
+    ["a sum of sin(1)", "sin(1)", "+", { at: 13, unchecked: false }],
+    ["a product of pi", "pi", "*", { at: 12, unchecked: false }],
+  ];
+  for (const n of [10000, 30000])
+    for (const [name, term, op, start] of cases)
+      it(`${name}, ${n} terms: phase-1's start, no throw, under 200 ms`, () => {
+        const text = chain(term, op, n);
+        expect(literalStart(text, 12, 4000, "typed")).toEqual(start);
+        // the time this thread runs (its CPU time), the best of three whole readings (no cache outlives a call): the
+        // suite's other files and other runs' checks share the host, and one call's wall clock tripled under them (a sum
+        // of 30000 sin(1): 70 ms alone, 205 to 275 ms in the suite)
+        const ms = [0, 1, 2].map(() => {
+          const t0 = process.threadCpuUsage();
+          literalStart(text, 12, 4000, "typed");
+          const t = process.threadCpuUsage(t0);
+          return (t.user + t.system) / 1000;
+        });
+        expect(Math.min(...ms)).toBeLessThan(200);
+      });
+  it("reads a deep tree with no recursion of constDouble.ts either (a power's base, a product beside a sum)", () => {
+    expect(() => literalStart(`(${chain("1", "+", 10000)})^2`, 12, 4000, "typed")).not.toThrow();
+    expect(literalStart(`(${chain("1", "+", 10000)})*pi`, 12, 4000, "typed")).toEqual({ at: 13, unchecked: false });
+  });
+  it("gives ⚠ where arithmeticOf itself overflows (10000 signs in a row), no throw", () => {
+    expect(literalStart(`${"-".repeat(10000)}sin(1)`, 12, 4000, "typed")).toEqual({ at: 12, unchecked: true });
+    expect(literalStart(`1${"+-".repeat(10000)}1`, 12, 4000, "typed")).toEqual({ at: 12, unchecked: true });
   });
 });
