@@ -294,3 +294,16 @@ describe("the key legends' lit, filled and dimmed text (R729)", () => {
       expect(contrast(mix(oe, ke, 0.75), ke), "Enter's dim").toBeGreaterThanOrEqual(3);
     });
 });
+
+// R865 (docs/05 3.10): the Find key's lens and foot bar are drawn in --ring on its --key-fn ground (Plain keys: --key-text, held above),
+// at least 3:1 (WCAG 1.4.11, a control told apart) in every family, brightness, High contrast and Plain keys; drawn dead, in
+// --key-text-dead, still there (1.5:1)
+describe("the Find key's lens and bar (R865)", () => {
+  const all = allThemeBlocks();
+  it("reads the 24 theme combinations", () => expect(all).toHaveLength(24));
+  for (const [sel, t] of all)
+    it(`${sel}: --ring on --key-fn at least 3:1, --key-text-dead on it at least 1.5:1`, () => {
+      expect(contrast(t["ring"] as string, t["key-fn"] as string), "--ring on --key-fn").toBeGreaterThanOrEqual(3);
+      expect(contrast(t["key-text-dead"] as string, t["key-fn"] as string), "--key-text-dead on --key-fn").toBeGreaterThanOrEqual(1.5);
+    });
+});
