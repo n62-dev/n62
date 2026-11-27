@@ -16,6 +16,9 @@
 #       --checks LIST       auto (default), none, or a comma list of docs,trust,typecheck,size,redfirst,vitest,golden,e2e,shell (auto
 #                           runs them in that order, A83, and the pre-flight before each queue entry; a list runs no pre-flight)
 #       --no-merge          stop after the audit; print the merge command instead
+#       --sync              A256: a sync or merge-back run (a clone's SYNC<k>, the merge-back of n62-next): the audit reads the merge
+#                           commits' conflict resolutions (--remerge-diff), the run's own commits in full and a stat of the rest,
+#                           which was audited where it was made; refused at the start on a branch with no merge commit since phase-1
 #       --dry-run           print the bundle and the commands; start no agent, make no worktree
 #   scripts/pipeline.sh pass <n> "<IDs with merge commits or unmerged branches>" ["<open questions>"] [--dry-run]
 #                           an Opus pass by sofia (brief section 0c "Opus pass"); n when it is free, else the next
@@ -506,12 +509,12 @@ fi
 [[ $# -ge 2 ]] || die "usage: pipeline.sh <ron|gorge|annabell|sandra> \"<ID or task>\" [options]"
 agent="$1"; task="$2"; shift 2
 case "$agent" in ron|gorge|annabell|sandra) ;; *) die "unknown agent $agent";; esac
-branch=""; id=""; pkg_drop=""; model="sonnet"; effort="high"; audit_model="auto"; checks="auto"; merge=1; dry=0; nowork=0
+branch=""; id=""; pkg_drop=""; model="sonnet"; effort="high"; audit_model="auto"; checks="auto"; merge=1; dry=0; nowork=0; sync=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --branch) branch="$2"; shift 2;; --id) id="$2"; shift 2;; --model) model="$2"; shift 2;;
     --effort) effort="$2"; shift 2;; --audit-model) audit_model="$2"; shift 2;; --checks) checks="$2"; shift 2;;
-    --no-merge) merge=0; shift;; --no-worker) nowork=1; shift;; --dry-run) dry=1; shift;; *) die "unknown option $1";;
+    --no-merge) merge=0; shift;; --no-worker) nowork=1; shift;; --sync) sync=1; shift;; --dry-run) dry=1; shift;; *) die "unknown option $1";;
   esac
 done
 
@@ -565,6 +568,9 @@ cleanup() {
 trap cleanup EXIT
 if [[ $dry -eq 0 ]]; then
   if [[ $nowork -eq 1 ]]; then git show-ref --verify --quiet "refs/heads/$branch" || die "--no-worker: branch $branch does not exist"; fi
+  if [[ $sync -eq 1 ]] && git show-ref --verify --quiet "refs/heads/$branch" && [[ -z "$(git log --first-parent --merges -n1 --format=%h "phase-1..$branch")" ]]; then
+    die "--sync: branch $branch has no merge commit since phase-1 (a sync with nothing merged is a mistake)"  # A256
+  fi
   tools/devlock.sh acquire "$branch_lock" "pipeline-$$" 0 >/dev/null 2>&1 \
     || die "branch $branch is in use by another run ($(cat "$coord/locks/$branch_lock/owner" 2>/dev/null || echo '?'), pid $(cat "$coord/locks/$branch_lock/pid" 2>/dev/null || echo '?'))"
   branch_locked=1
@@ -1095,8 +1101,14 @@ audit_pid=""
 audit_start() {
   local took=0
   audited="$(git -C "$wt" rev-parse HEAD)"; runlog "audit $rounds reads $audited"
-  git -C "$wt" diff -U5 "phase-1...$audited" > "$run/audit-$rounds.diff"
-  { cat "$run/criteria.md"; echo; echo "## Diff (git diff -U5 phase-1...$audited, the HEAD of $branch, $(wc -l < "$run/audit-$rounds.diff") lines)"; cat "$run/audit-$rounds.diff"; } > "$run/audit-$rounds.in"
+  if [[ $sync -eq 1 ]]; then  # A256: the resolutions, the run's own commits, a stat of the rest (audited where it was made)
+    sync_diff "$wt" "$audited" > "$run/audit-$rounds.diff"
+    { cat "$run/criteria.md"; echo "- Sync run (--sync): judge the resolutions and the run's own commits; the stat lists what was audited elsewhere."; echo
+      echo "## Sync diff (the merge commits' conflict resolutions, then the run's own commits, then a stat; $branch at $audited, $(wc -l < "$run/audit-$rounds.diff") lines)"; cat "$run/audit-$rounds.diff"; } > "$run/audit-$rounds.in"
+  else
+    git -C "$wt" diff -U5 "phase-1...$audited" > "$run/audit-$rounds.diff"
+    { cat "$run/criteria.md"; echo; echo "## Diff (git diff -U5 phase-1...$audited, the HEAD of $branch, $(wc -l < "$run/audit-$rounds.diff") lines)"; cat "$run/audit-$rounds.diff"; } > "$run/audit-$rounds.in"
+  fi
   if changed | behaviour_selected; then  # A18: once per audit round, 20-minute cap
     [[ $host_cpu_held -eq 1 ]] || { host_cpu_take "pipeline-$n" "pipeline #$n $id:" || die "host-cpu lock busy for 7200 s"; took=1; }
     b_p1="${N62_P1_ENGINE:-$GIAC_OUT}"; [[ $engine_managed -eq 0 ]] || b_p1="$engine_root/key-$p1key"  # A53: phase-1's engine for A
@@ -1104,6 +1116,7 @@ audit_start() {
     [[ $took -eq 0 ]] || host_cpu_drop
   else { echo; echo "## Behaviour changes"; echo "none (the diff touches no engine, input or units code)"; } >> "$run/audit-$rounds.in"; fi
   audit_prompt="AUDIT pipeline run $n, package $id, branch $branch. On stdin: the acceptance criteria, then the diff against phase-1 (the checks run meanwhile; judge the diff). Judge the diff against the criteria and docs/rules-core.md only; read other files only to check a claim in the diff. Look for: a criterion not met; expected values without a trustworthy source; a new parser token without its round-trip case; a fixed bug without a regression test; files outside the task's scope; keys that move; missing SPDX lines; a dependency missing from THIRD_PARTY.md. After the diff, the section Behaviour changes lists inputs whose result differs from phase-1: call each change wanted (named in the criteria Done when) or not; a change not wanted is a FIX finding. Reply with the single word APPROVED on the first line, or FIX on the first line followed by at most five findings, each with file:line, the concrete failure and the fix. Nothing else."
+  [[ $sync -eq 0 ]] || audit_prompt+=" This is a sync run (--sync): instead of the whole diff the input holds the merge commits' conflict resolutions (the remerge-diff: only the hunks resolved by hand), the run's own commits in full and a stat of the rest, which was audited where it was made; judge the resolutions and the run's own commits."
   agent_start "audit-$n-$rounds" "$run/audit-$rounds.log" sofia "$(resolve_audit_model)" high "$run/audit-$rounds.in" "$audit_prompt" "${audit_tools[@]}"
   audit_pid="$agent_pid"; runlog "audit $rounds started beside the long checks"
 }
