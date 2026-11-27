@@ -21,11 +21,11 @@ const FUNCTIONS: Readonly<Record<string, (x: number) => number>> = {
 /** The double value of `a` (arithmeticOf's tree) when it is a constant expression (above), else NaN; out of the double's
  *  range it is 0 or ±Infinity (constantLog10 reads past it). */
 export function constantDouble(a: Arith, memo: Sizes = new Map()): number {
-  return (memo.get(a) ?? memoise(a, memo)).double;
+  return cheap(a) ? doubleOf(a, memo) : (memo.get(a) ?? memoise(a, memo)).double;
 }
 /** G403: constantDouble and constantLog10 of each node, once (literalPrec.ts reads every node of a tree, and passes one
  *  map for the tree). G403f1: a Map of the caller's, no module WeakMap, as a WeakMap entry cost the garbage collector
- *  about 1.5 µs (a sum of 30000 sin(1) took 434 ms). */
+ *  about 1.5 µs (a sum of 30000 sin(1) took 434 ms), and no entry for a node of leaves alone (cheap). */
 export type Sizes = Map<Arith, { double: number; log10: number }>;
 
 /** The operands of `a` (arithmeticOf's tree), left first. */
@@ -33,7 +33,17 @@ function operands(a: Arith): Arith[] {
   return a.op === "num" || a.op === "name" ? [] : a.op === "call" ? [a.arg] : a.op === "neg" ? [a.a] : [a.a, a.b];
 }
 
-/** constantDouble and constantLog10 of `a`, whose operands are memoised. */
+/** `a` is a number or a name (no operand). */
+const leaf = (a: Arith): boolean => a.op === "num" || a.op === "name";
+
+/** `a` is a leaf or a node whose operands are leaves (`sin(1)`, `-2`, `pi*2`): read again each time, with no memo entry. */
+const cheap = (a: Arith): boolean =>
+  a.op === "num" || a.op === "name" || (a.op === "call" ? leaf(a.arg) : a.op === "neg" ? leaf(a.a) : leaf(a.a) && leaf(a.b));
+
+/** `a`'s operand `o` is read at no deep cost: cheap, or memoised. */
+const ready = (o: Arith, memo: Sizes): boolean => cheap(o) || memo.has(o);
+
+/** constantDouble and constantLog10 of `a`, not cheap, whose operands are ready. */
 function memoOne(a: Arith, memo: Sizes): { double: number; log10: number } {
   // log10Of reads constantDouble of the node itself
   const m = { double: doubleOf(a, memo), log10: NaN };
@@ -42,15 +52,14 @@ function memoOne(a: Arith, memo: Sizes): { double: number; log10: number } {
   return m;
 }
 
-/** G403f1 (round 3 audit, Opus pass 251): constantDouble and constantLog10 of every node of `a` not yet memoised, each
- *  node's operands before the node (an explicit stack in post-order), so doubleOf and log10Of read only memoised operands
- *  and never recurse deep: a sum of 10000 ones is a left-chained tree 10000 nodes deep, and a stack overflow. */
+/** G403f1 (round 3 audit, Opus pass 251): constantDouble and constantLog10 of every node of `a` (not cheap) not yet
+ *  memoised, each node's operands before the node (an explicit stack in post-order), so doubleOf and log10Of read only
+ *  ready operands and never recurse deep: a sum of 10000 ones is a left-chained tree 10000 nodes deep, and a stack
+ *  overflow. */
 function memoise(a: Arith, memo: Sizes): { double: number; log10: number } {
-  // the operands memoised already or leaves (a caller that reads in post-order, literalPrec.ts): no stack
-  const ready = (o: Arith): boolean => memo.has(o) || ((o.op === "num" || o.op === "name") && memoOne(o, memo) !== null);
-  const leaf = a.op === "num" || a.op === "name";
-  if (leaf || (a.op === "call" ? ready(a.arg) : a.op === "neg" ? ready(a.a) : ready(a.a) && ready(a.b))) return memoOne(a, memo);
-  // the nodes, and beside each whether its operands are memoised
+  // the operands ready (a caller that reads in post-order, literalPrec.ts): no stack
+  if (a.op === "call" ? ready(a.arg, memo) : a.op === "neg" ? ready(a.a, memo) : a.op !== "num" && a.op !== "name" && ready(a.a, memo) && ready(a.b, memo)) return memoOne(a, memo);
+  // the nodes, and beside each whether its operands are ready
   const nodes: Arith[] = [a];
   const read: boolean[] = [false];
   while (nodes.length > 0) {
@@ -63,7 +72,7 @@ function memoise(a: Arith, memo: Sizes): { double: number; log10: number } {
     read.push(true);
     const ops = operands(t);
     for (let k = ops.length - 1; k >= 0; k--) {
-      if (memo.has(ops[k]!)) continue;
+      if (ready(ops[k]!, memo)) continue;
       nodes.push(ops[k]!);
       read.push(false);
     }
@@ -140,7 +149,7 @@ const TINY_LOG10 = -300;
  * erfc(x) for x > 5, typed or as Giac prints it (`1-erf(x)`): exp(-x²)/(x·√π), 1E-63.9 for erfc(12).
  */
 export function constantLog10(a: Arith, memo: Sizes = new Map()): number {
-  return (memo.get(a) ?? memoise(a, memo)).log10;
+  return cheap(a) ? log10Of(a, memo) : (memo.get(a) ?? memoise(a, memo)).log10;
 }
 
 function log10Of(a: Arith, memo: Sizes): number {

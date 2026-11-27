@@ -310,11 +310,15 @@ describe("a long chain of terms (G403f1)", () => {
     for (const [name, term, op, start] of cases)
       it(`${name}, ${n} terms: phase-1's start, no throw, under 200 ms`, () => {
         const text = chain(term, op, n);
-        // the best of three calls, each a whole reading (no cache outlives a call), as other runs' checks share the host
+        expect(literalStart(text, 12, 4000, "typed")).toEqual(start);
+        // the time this thread runs (its CPU time), the best of three whole readings (no cache outlives a call): the
+        // suite's other files and other runs' checks share the host, and one call's wall clock tripled under them (a sum
+        // of 30000 sin(1): 70 ms alone, 205 to 275 ms in the suite)
         const ms = [0, 1, 2].map(() => {
-          const t0 = performance.now();
-          expect(literalStart(text, 12, 4000, "typed")).toEqual(start);
-          return performance.now() - t0;
+          const t0 = process.threadCpuUsage();
+          literalStart(text, 12, 4000, "typed");
+          const t = process.threadCpuUsage(t0);
+          return (t.user + t.system) / 1000;
         });
         expect(Math.min(...ms)).toBeLessThan(200);
       });

@@ -101,7 +101,8 @@ function nesting(text: string, q: Quoting): number {
  *  (`other`), 0 for none, and whether one that is not the whole text is tiny (below 1E-LITERAL_MARGIN; G403f1: these
  *  three, not a list of every subterm, 60000 for a sum of 30000 sin(1)). One walk of arithmeticOf's tree of
  *  the whole text, or, when it is no arithmetic (a list, a call of several arguments), of each argument or element that is.
- *  `deep`: past MAX_NESTING no subterm is read, so none is known small (fix round 2: literalStart gives ⚠). */
+ *  `deep`: past MAX_NESTING no subterm is read, so none is known small (fix round 2: literalStart gives ⚠), nor where
+ *  arithmeticOf's own recursion runs past the stack (G403f1: 10000 signs in a row, `1+-+-…1`). */
 function constantTerms(text: string, q: Quoting): { periodic: number; other: number; tiny: boolean; deep: boolean } {
   const out = { periodic: 0, other: 0, tiny: false, deep: false };
   let root: Arith | null = null;
