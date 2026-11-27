@@ -133,7 +133,7 @@ Cost: one `evalf` more (about 1 ms, desktop) per irrational or float result.
 
 **Names as typed** (G784): the stand-ins e_, i_, beta_ … are copied as their letters (`2*i`, `β*2`) in every copy, Share and the CSV; Copy as Python keeps Giac's names.
 
-**Hold on a history row** (R276, docs/05 3.5): on its input, the entry's plain text as Share session writes it (`sqrt(2)+3`); on its result, Copy's text.
+**Hold on a history row** (R276, docs/05 3.5): on its input, the entry's plain text as Share session writes it (`sqrt(2)+3`); on its result, Copy's text; the unit view's: docs/05 3.7 (R797).
 
 **Paste** (Shift + Deselect; any system paste): the clipboard is read as one number (`-1.5`, `1,5` with decimal comma, `1.5e-3` or `E`, `i` parts) or a list as Copy writes it (`{1,16}`, `{1,5;2,25}`; with decimal comma `{1,5}`, 1,5 or 1 and 5, is refused), or a unit row's Copy text as its chip, σ and unit (R325); a number enters as the keyboard's own LaTeX (`1.5\emark-3`, drawn `1.5ᴇ-3`), so the parser sees only what our keys produce. Anything else, or a unit Find lacks, is refused (`clipboard/strings.ts`). A result copied from N62 pastes back as the same value (P5; with decimal comma not a list of one decimal); a copied name does not (G784, decisions.md): the text a Copy, Copy as shown, Copy exact or a hold last wrote from a row with a name (`2*i` from the name i) is kept across a relaunch, cleared by the next copy without one, and refused by Paste as a name, not a number (G784f1), never read as the constant i; a product of names is refused.
 **Session line, Copy as Python, mechanics** (G210, G213, G214, G216, G217): `state/sessionLine.ts`, `clipboard/python.ts`; as they stood: [archive](archive/04-built-2026-11.md) section 7.
@@ -430,7 +430,7 @@ The types live in the code; this is the map. Views see `Calc` (`app/src/calc/por
 | MathLive chunk (after the keypad) | ≤ 830 kB raw | 807.74 kB | size test |
 | Find UI chunk | ≤ 30 kB raw | 8.04 kB raw: the chunk that holds `src/find/finder.ts` (dynamic entry or shared chunk); a build without it fails | size test |
 | Find index asset | ≤ 400 kB raw, ≤ 100 kB gzip | 325.7 / 67.1 kB | size test |
-| Unit view chunks | ≤ 42.7 kB raw (entries); pin 82.86 kB with shared (`UNIT_VIEW_PIN_RAW`) | 42.48; 82.81 kB | size test |
+| Unit view chunks | ≤ 43.4 kB raw (entries); pin 83.75 kB with shared (`UNIT_VIEW_PIN_RAW`) | 43.36; 83.70 kB | size test |
 | Precache total | ≤ 18 MB | 12.4 MB | size test |
 | Keyboard usable / engine ready (Tab One) | < 1 s / < 1.5 s, with the `defs` replay | Home 790 / 1330 ms, CAS last 795 / 1507 ms (A73f2); with 200 definitions 1489 ms | device runs |
 | Enter → result p95 (Tab One) | < 150 ms at 12 digits; at 30 digits ≤ 1.3 × the 12-digit p95 | RAD 147.9 ms at 12, 152.6 at 30 | device runs |

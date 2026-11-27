@@ -11,9 +11,9 @@ import { LONG_PRESS_MS } from "../apps/longpress.ts";
 export const THROUGH = '[data-testid="undo-note"], .history .cancel, [data-testid="engine-reload"], [data-testid="update-note"]';
 
 /** Guard the screen's taps while `up()` holds: outside `own` (and THROUGH) a click is swallowed in the capture phase and `dead`
- *  pulses (not after a hold). `then` runs after every tap on the screen while up, `refused` true for a swallowed one. Returns
- *  the guard's removal. */
-export function guardTaps(own: Element, dead: () => void, up: () => boolean, then?: (ev: MouseEvent, refused: boolean) => void): () => void {
+ *  pulses (not after a hold). `then` runs after every tap on the screen while up, `refused` true for a swallowed one, `held`
+ *  true for the click that ends a hold (R797: the hold copied). Returns the guard's removal. */
+export function guardTaps(own: Element, dead: () => void, up: () => boolean, then?: (ev: MouseEvent, refused: boolean, held: boolean) => void): () => void {
   /** When the last press on the page went down (a click that long after it ends a hold, which copied). */
   let downAt = 0;
   const down = (ev: PointerEvent): void => void (downAt = ev.timeStamp);
@@ -21,12 +21,13 @@ export function guardTaps(own: Element, dead: () => void, up: () => boolean, the
     if (!up()) return;
     if (!(ev.target instanceof Element) || !ev.target.closest(".screen")) return; // (the pads and bars keep their own paths)
     const refused = !own.contains(ev.target) && !ev.target.closest(THROUGH);
+    const held = ev.timeStamp - downAt >= LONG_PRESS_MS;
     if (refused) {
       ev.stopImmediatePropagation();
       ev.preventDefault();
-      if (ev.timeStamp - downAt < LONG_PRESS_MS) dead();
+      if (!held) dead();
     }
-    then?.(ev, refused);
+    then?.(ev, refused, held);
   };
   document.addEventListener("pointerdown", down, { capture: true });
   document.addEventListener("click", tapped, { capture: true });

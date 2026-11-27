@@ -4,6 +4,8 @@
 /* R852: no height is kept for what is not shown (no bottom padding, no gap for an empty `.below`, no min-height on the reading) */
 .unitview { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; outline: none; }
 .unitview .below:empty { display: none; }
+/* R797: a hold copies (units/panel.ts), so the system's word selection and its callout never start (as History's rows) */
+.unitview { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .unitview .why, .unitview .note, .unitview .working { color: var(--muted); font-size: 14px; min-height: 1.2em; }
 /* R852: the last row, the reading (it wraps upward) then → Check, bottoms aligned */
 .unitview .last { display: flex; align-items: flex-end; gap: 6px; }
