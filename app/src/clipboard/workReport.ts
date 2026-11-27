@@ -13,10 +13,10 @@ import { t } from "../i18n/index.ts";
 import { typedName } from "../render/home.ts";
 import { commaResult, modeOf } from "../state/displayMode.ts";
 import type { HistoryItem, Settings } from "../state/session.svelte.ts";
-import { sigmaText } from "../state/sigmaLine.ts";
 import { DEFAULT_WORD, type WordSetting } from "../state/wordSetting.ts";
 import type { SaveResult } from "./files.ts";
 import { entryText } from "./plaintext.ts";
+import { rowSigma } from "./rowSigma.ts";
 import { tc } from "./strings.ts";
 import { withoutMark } from "./text.ts";
 import { whyLine } from "./whyLine.ts";
@@ -53,14 +53,13 @@ const line = (s: string): string => s.replace(/\s*[\r\n]+\s*/g, " ").trim();
 
 /** A unit row's fields, read back unchecked (state/session.svelte.ts UnitRow): strings only. `input` is the request as
  *  drawn (LaTeX, units/row.ts). */
-function unitOf(item: HistoryItem): { input?: string; unit?: string; sigma?: string } {
-  const u = item.units as { input?: unknown; unit?: unknown; unc?: { text?: unknown } } | undefined;
+function unitOf(item: HistoryItem): { input?: string; unit?: string } {
+  const u = item.units as { input?: unknown; unit?: unknown } | undefined;
   if (!u) return {};
   const str = (x: unknown): string | undefined => (typeof x === "string" && x !== "" ? x : undefined);
   const input = str(u.input);
   const unit = str(u.unit);
-  const sigma = str(u.unc?.text);
-  return { ...(input ? { input } : {}), ...(unit ? { unit } : {}), ...(sigma ? { sigma } : {}) };
+  return { ...(input ? { input } : {}), ...(unit ? { unit } : {}) };
 }
 
 /** A row's input as the history draws it (History.svelte drawnInput: a unit row's request, R100's comma rule), as text. */
@@ -69,14 +68,12 @@ function inputOf(item: HistoryItem, look: ReportLook): string {
   return entryText(look.input(u ? { ...item, latex: u } : item), look.decimalComma ? { decimalComma: true } : {});
 }
 
-/** σ of a row as `± σ unit`: a unit row's (the unit view's σ), else the σ a constant's uncertainty leaves (R40). The
- *  exponent as the Value line writes it (`E`, Copy's text), not the σ line's `ᴇ`: one notation in the file. */
+/** σ of a row as `± σ unit`: rowSigma, the reader the CSV and LaTeX exports share (G400): a unit row's, else the σ a
+ *  constant's uncertainty leaves (R40), with `E` as the Value line writes it. */
 function sigmaOf(item: HistoryItem, look: ReportLook): string | null {
   const u = unitOf(item);
-  const comma = look.decimalComma;
-  const unit = u.unit ? ` ${u.unit}` : "";
-  const s = u.sigma ? (comma ? commaResult(u.sigma, false) : u.sigma) : sigmaText(item.facts, modeOf(item, look.settings) ?? look.settings.format, comma);
-  return s === null ? null : `± ${s.replace(/ᴇ/g, "E")}${unit}`;
+  const s = rowSigma(item, modeOf(item, look.settings) ?? look.settings.format, look.decimalComma);
+  return s === null ? null : `± ${s}${u.unit ? ` ${u.unit}` : ""}`;
 }
 
 /** The notes the history draws under a row (History.svelte), as words. */
