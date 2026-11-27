@@ -34,6 +34,7 @@
   --key-pfx: #1e2829;
   --sel: #4f7a7a;
   --on-sel: #ffffff;
+  --row-alt: #0d0d0d;
   --on-error: #000000;
   --on-shift: #000000;
   --on-alpha: #000000;
@@ -78,6 +79,7 @@
   --key-pfx: #2e3031;
   --sel: #727272;
   --on-sel: #ffffff;
+  --row-alt: #0d0d0d;
   --on-error: #000000;
   --on-shift: #000000;
   --on-alpha: #000000;
@@ -122,6 +124,7 @@
   --key-pfx: #08090a;
   --sel: #6d9e9e;
   --on-sel: #000000;
+  --row-alt: #0d0d0d;
   --on-error: #000000;
   --on-shift: #000000;
   --on-alpha: #000000;
@@ -166,6 +169,7 @@
   --key-pfx: #080909;
   --sel: #959595;
   --on-sel: #000000;
+  --row-alt: #0d0d0d;
   --on-error: #000000;
   --on-shift: #000000;
   --on-alpha: #000000;
@@ -210,6 +214,7 @@
   --key-pfx: #cfe2e2;
   --sel: #497d79;
   --on-sel: #ffffff;
+  --row-alt: #ebeded;
   --on-error: #ffffff;
   --on-shift: #ffffff;
   --on-alpha: #ffffff;
@@ -254,6 +259,7 @@
   --key-pfx: #ced0d0;
   --sel: #6e7575;
   --on-sel: #ffffff;
+  --row-alt: #ebeded;
   --on-error: #ffffff;
   --on-shift: #ffffff;
   --on-alpha: #ffffff;
@@ -298,6 +304,7 @@
   --key-pfx: #f1f7f7;
   --sel: #385f5f;
   --on-sel: #ffffff;
+  --row-alt: #f2f3f3;
   --on-error: #ffffff;
   --on-shift: #ffffff;
   --on-alpha: #ffffff;
@@ -342,6 +349,7 @@
   --key-pfx: #fdfefe;
   --sel: #535a5a;
   --on-sel: #ffffff;
+  --row-alt: #f2f3f3;
   --on-error: #ffffff;
   --on-shift: #ffffff;
   --on-alpha: #ffffff;
