@@ -24,7 +24,7 @@ import { loadUnitKnown, rowOf, unitSweep } from "./unitsweep.ts";
 const dec = (s: string): DecimalValue => decimalFromString(s)!;
 const ts = " ";
 const checks = (d: Partial<DrawingIn> & Pick<DrawingIn, "row" | "head">): string[] =>
-  drawingCheck({ value: dec("1"), sigma: dec("0.1"), reliable: null, unit: "m", copy: d.row, viewWarn: false, ...d }).map((f) => f.check);
+  drawingCheck({ value: dec("1"), sigma: dec("0.1"), reliable: null, unit: "m", copy: d.row, viewWarn: false, digits: 12, ...d }).map((f) => f.check);
 
 describe("the drawing check (G800)", () => {
   it("h3 #4: a row cut above σ fails (phase-1 drew 1234567890.12 ± 0.00010 m); to σ's digit it passes", () => {
@@ -59,6 +59,13 @@ describe("the drawing check (G800)", () => {
     expect(checks({ value: dec("3"), sigma: dec("111.8"), row: "3 ± 110 m", head: "0 ± 110" })).toEqual([]);
     // and a wrong digit is still a failure
     expect(checks({ value: dec("-0.000338"), sigma: dec("0.00027"), unit: "", row: "-330E-6 ± 270E-6", head: "-340E-6 ± 270E-6" })).toEqual(["value"]);
+  });
+
+  it("F491: a σ drawn plain with more than 12 digits fails (0 ± 120000000000000000000); in the value's exponent it passes", () => {
+    const at = { value: dec("3000000000000000000"), sigma: dec("120000000000000000000") };
+    expect(checks({ ...at, row: "3E18 ± 120E18 m", head: "0 ± 120000000000000000000" })).toEqual(["long"]);
+    expect(checks({ ...at, row: "3E18 ± 120E18 m", head: "0E18 ± 120E18" })).toEqual([]);
+    expect(checks({ value: dec("3"), sigma: dec("120"), row: "3 ± 120 m", head: "0 ± 120" })).toEqual([]);
   });
 
   it("reads the forms the screen draws", () => {
@@ -123,7 +130,7 @@ describe.skipIf(!giacAvailable() || !indexItems)("the unit sweep on the hunt's i
     const r = q(input, digits);
     const row = rowOf(r, format, digits);
     const h = shownOf(r, { format: format.toUpperCase() as "STD", digits }) as UnitShown;
-    return drawingCheck({ value: r.value.value!.re, sigma: r.unc!.value.value!.re, reliable: r.value.facts.reliableDigits ?? null, row: row.text, unit: r.unit, copy: row.copy, head: h.text, viewWarn: h.warn }).map((f) => `${f.check}: ${f.detail}`);
+    return drawingCheck({ value: r.value.value!.re, sigma: r.unc!.value.value!.re, reliable: r.value.facts.reliableDigits ?? null, row: row.text, unit: r.unit, copy: row.copy, head: h.text, viewWarn: h.warn, digits }).map((f) => `${f.check}: ${f.detail}`);
   };
 
   it.each([

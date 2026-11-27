@@ -16,7 +16,7 @@
 //     each failure not in the known file is a FINDING line, and the last line `UNITSWEEP NIGHTLY: <f> failures (<new> not in the
 //     known files); <r> runs of <c> cases (seed <s>), <t> s`, which `scripts/pipeline.sh nightly` logs (NIGHTLY_TOOLS, A273)
 // Known failures: tests/golden/unitsweep-known.yaml (id = "<case>" for trip and sigma, "<FORMAT> <case>" for a drawing; <case> is
-// "<digits> <input>[ -> <end slot>]"; check = copy|row|head|cut|value|sigma|form|same|warn|trip|tripsigma|sigma1|sigmawarn|refused,
+// "<digits> <input>[ -> <end slot>]"; check = copy|row|head|cut|value|sigma|form|long|same|warn|trip|tripsigma|sigma1|sigmawarn|refused,
 // package = the open backlog id): the gate's exact list; --nightly reads it too.
 // Environment: GIAC_OUT as for the golden gate; the Find index (npm run index; FIND_INDEX_JSON another file).
 import { existsSync, readFileSync } from "node:fs";
@@ -79,7 +79,7 @@ export async function unitSweep(cases: readonly UnitCase[], table: FactorTable, 
       const row = rowOf(q, f, digits);
       const h = headOf(q, f, digits);
       runs++;
-      fail(`${f.toUpperCase()} ${id}`, drawingCheck({ value: v.re, sigma: sv, reliable: q.value.facts.reliableDigits ?? null, row: row.text, unit: q.unit, copy: row.copy, head: h.text, viewWarn: h.warn }));
+      fail(`${f.toUpperCase()} ${id}`, drawingCheck({ value: v.re, sigma: sv, reliable: q.value.facts.reliableDigits ?? null, row: row.text, unit: q.unit, copy: row.copy, head: h.text, viewWarn: h.warn, digits }));
     }
   };
   for (const c of cases) {

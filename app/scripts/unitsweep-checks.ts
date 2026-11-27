@@ -5,7 +5,8 @@
 //   drawingCheck: Home's unit row, the unit view's headline and Copy as shown draw value and σ by the one rule (docs/04 2.6, R885):
 //     the row never cut above σ's last digit (unless the value is not confirmed that far), σ at 2 significant digits in the
 //     value's form (its prefix or exponent; an exponent 0 may be left off σ), the digits read back are the value's and σ's
-//     own, the headline is the row cut at σ with the same σ, Copy as shown is the row, and a σ ⚠ in the view is in the row.
+//     own, the headline is the row cut at σ with the same σ, Copy as shown is the row, and a σ ⚠ in the view is in the row; a σ is
+//     never drawn plain with more than 12 digits (no digits setting draws a number so).
 //   tripCheck: a value converted to another unit and back reads the same at the digits shown; σ is scaled like the value.
 //   sigmaOracle / sigmaCheck: σ of a product, quotient or power of independent inputs against the GUM (first order plus G41's
 //     second-order term, units.yaml's header), and its ⚠: "the interval reaches a singular point" where an input's x ± 2σ
@@ -80,6 +81,9 @@ function same(a: { int: bigint; last: number }, b: { int: bigint; last: number }
   return a.int * 10n ** BigInt(a.last - m) === b.int * 10n ** BigInt(b.last - m);
 }
 
+/** The most digits a number is drawn plain with at any digits setting (HomeSettings.digits is at most 12). */
+const LONG = 12;
+
 const show = (r: Read): string => `${r.int}E${r.last}`;
 
 /** The place `v` was rounded at to read as `r`: r's last digit's, or, for a mantissa with no decimals that ends in zeros, the place
@@ -106,6 +110,8 @@ export interface DrawingIn {
   /** The unit view's headline (UnitShown.text) and its σ ⚠ (UnitShown.warn). */
   head: string;
   viewWarn: boolean;
+  /** The digits setting the drawing used. */
+  digits: number;
 }
 
 /** One drawing of a value with σ: the failures (none when the row, the headline and Copy follow the rule). */
@@ -132,6 +138,10 @@ export function drawingCheck(d: DrawingIn): Failure[] {
       out.push({ check: "value", detail: `the ${name} ${JSON.stringify(text)} reads ${show(r.value)}, the value rounded there is ${roundAt(d.value, r.value.last)}E${r.value.last}` });
     if (!same(r.sigma, { int: s2, last: k })) out.push({ check: "sigma", detail: `the ${name} ${JSON.stringify(text)} reads σ ${show(r.sigma)}, σ at 2 digits is ${s2}E${k}` });
     const vf = r.value.form, sf = r.sigma.form;
+    // σ (2 significant digits) drawn plain with more than 12 digits, past what any digits setting draws plain: zeros padded on
+    // (sigmaAlone writes 9.0E9, not 9000000000; R885's rule draws a σ in a plain value's form, 3 ± 120, so a σ up to 12 digits passes)
+    const width = sigmaPlace(d.sigma) + 2;
+    if (sf === "" && width > LONG) out.push({ check: "long", detail: `the ${name} ${JSON.stringify(text)} draws σ plain with ${width} digits (digits setting ${d.digits})` });
     if (!limited && !zero && vf !== sf && !(vf === "E0" && sf === "")) out.push({ check: "form", detail: `the ${name} ${JSON.stringify(text)} draws σ in another form than the value (${vf || "plain"} against ${sf || "plain"})` });
   };
   if (row) one("row", row, d.row);

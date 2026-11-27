@@ -3,7 +3,7 @@
 // Vitest's and Playwright's JSON reporters.
 import { describe, expect, it } from "vitest";
 import {
-  formatLine, retryable, coreCount, regeneratesIndex, selectsGolden, playwrightFailedSpecs, playwrightFailures, summarizeDocs, summarizeGolden, summarizePlaywright, summarizeCasBack, summarizePyDiff, summarizeSeqSweep, summarizeSize, summarizeSweep, summarizeViewSweep, summarizeFindCensus, summarizeTypecheck, summarizeVitest, vitestFailures,
+  formatLine, retryable, coreCount, regeneratesIndex, selectsGolden, playwrightFailedSpecs, playwrightFailures, summarizeDocs, summarizeGolden, summarizePlaywright, summarizeCasBack, summarizePyDiff, summarizeSeqSweep, summarizeSize, summarizeSweep, summarizeViewSweep, summarizeUnitSweep, summarizeFindCensus, summarizeTypecheck, summarizeVitest, vitestFailures,
 } from "./gate-summary.ts";
 
 const vitestOk = {
@@ -171,6 +171,16 @@ describe("summarizeFindCensus", () => {
   });
   it("fails without its last line", () => {
     expect(summarizeFindCensus("Error: no Find index", 1)).toEqual({ ok: false, detail: "exit 1: Error: no Find index" });
+  });
+});
+
+describe("summarizeUnitSweep (G800)", () => {
+  it("reads the passed line and names the new rows of a failed one", () => {
+    const ok = "  unitsweep known (F490) 4 x [sigma1]: d\nUNITSWEEP PASSED: 1200 runs of 200 cases (seed 20261123), 1.8 s; 2 known failures, 0 new, 0 now passing";
+    expect(summarizeUnitSweep(ok, 0)).toEqual({ ok: true, detail: "200 cases, 1200 runs, 2 known failures, 1.8 s" });
+    const bad = summarizeUnitSweep("  unitsweep NEW PFX 12 pasupm(4.7,0.1)*{k:m} [form]: σ in plain units\nUNITSWEEP FAILED: 1200 runs of 200 cases (seed 20261123), 1.8 s; 2 known failures, 1 new, 0 now passing", 1);
+    expect(bad.ok).toBe(false);
+    expect(bad.detail).toMatch(/^1 to look at: NEW PFX 12 pasupm\(4\.7,0\.1\)\*\{k:m\} \[form\]/);
   });
 });
 

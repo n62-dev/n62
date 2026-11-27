@@ -2,8 +2,15 @@
 # G800: the failures the unit sweep (app/scripts/unitsweep.ts, seed 20261123, 200 cases) finds today. id = "<digits> <input>[ -> <end slot>]"
 # (a drawing's id starts with its format, STD, SCI, ENG or PFX), check = the check (unitsweep-checks.ts), package = the package or
 # finding whose fix removes the row. The stage passes when its failures are exactly these; remove a row when its fix lands.
+# The gate's rows are the open findings F490 and F491 (docs/decisions.md "Needs the user", G800).
 # F490: a σ under about 1E-154 (here 3.8E-178, Planck units) gets σ's ⚠ "first order does not hold here" and loses its second-order
 # part: the share of the second order in σ² (evaluate.ts, ORDER2_SHARE) is worked out where σ² is under a double's range.
 known:
   - { id: "4 (pasupm(-0.64739,0.00026)*{planck_unit / Y:S})^(3)", check: "sigma1", package: F490 }
   - { id: "4 (pasupm(-0.64739,0.00026)*{planck_unit / Y:S})^(3)", check: "sigmawarn", package: F490 }
+  # F491: a value that rounds to 0 at σ's place draws its σ plain from the units place (R885f1's zero form), so a large σ comes out with
+  # 21 digits, in SCI and ENG too: (0.00146689 ± 0.005 kmol/µF)³ = 3.16E18 ± 2.2E20 reads 0 ± 220000000000000000000 (the row 3.1564044E18 ± ⚠220E18).
+  - { id: "STD 8 (pasupm(0.00146689,0.005)*{kmol / uF})^(3)", check: "long", package: F491 }
+  - { id: "SCI 8 (pasupm(0.00146689,0.005)*{kmol / uF})^(3)", check: "long", package: F491 }
+  - { id: "ENG 8 (pasupm(0.00146689,0.005)*{kmol / uF})^(3)", check: "long", package: F491 }
+  - { id: "PFX 8 (pasupm(0.00146689,0.005)*{kmol / uF})^(3)", check: "long", package: F491 }
