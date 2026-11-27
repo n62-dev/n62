@@ -319,6 +319,9 @@ export interface PrecisionWhy {
    *  inexact constant or chip) and that are not in `inherited`: why an `≈` result is rounded ("uses B, itself rounded").
    *  A name stored exact (Home's 1/3) lends no facts, so it is never one. */
   rounded?: string[];
+  /** G550: the σ inputs (a stored name, `pasc_<id>`, `pasr_<k>`) whose σ the result does not carry: no derivative at the
+   *  point, not one real number, or a name read only through a call. Never dropped in silence: ⚠ (docs/04 2.4). */
+  sigmaLost?: string[];
 }
 
 /** The engine's facts about one result with its value (ValueFacts, so the formatter does not depend on HomeResult). */
@@ -412,6 +415,12 @@ function weakest(a: MarkInfo, b: MarkInfo): MarkInfo {
  * `warn` for an un-audited or unchecked float; `≈` otherwise. A list or matrix gets its weakest element's mark.
  */
 export function markOf(f: PrecisionFacts, o: FormatOptions): MarkInfo | null {
+  const m = markOfValue(f, o);
+  // G550: a σ input whose σ is not carried (why.sigmaLost) is ⚠ on any row with a mark, never = or a bare ≈
+  return m && f.why?.sigmaLost?.length && m.mark !== "⚠" ? { mark: "⚠" } : m;
+}
+
+function markOfValue(f: PrecisionFacts, o: FormatOptions): MarkInfo | null {
   if (f.items) {
     if (f.items.length === 0) return null;
     let m: MarkInfo | null = null;

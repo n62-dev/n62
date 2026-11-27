@@ -120,14 +120,16 @@ function sigmaInputs(table: ConstTable, ids: readonly string[]): { keep: Set<str
 
 /** The first-order σ of `body` as its inputs and, for each, the Giac text of `∂f/∂xᵢ · σᵢ` (decimals as exact rationals):
  *  over the constants themselves, or over their leaves where they share one (G81). `ids` are `body`'s (inexactConstsIn).
- *  `extra` (R61): more independent inputs whose names `body` holds (a chip's σ). */
-function sigmaParts(body: string, table: ConstTable, ids: readonly string[], extra: readonly SigmaInput[]): { inputs: SigmaInput[]; shares: string[] } {
+ *  `extra` (R61): more independent inputs whose names `body` holds (a chip's σ). `relative` (G550): `∂ln f/∂xᵢ · σᵢ`
+ *  instead, after `normal` (σᵢ over f: Psi·Gamma/Gamma is Psi, which a double evaluates where Gamma overflows it). */
+function sigmaParts(body: string, table: ConstTable, ids: readonly string[], extra: readonly SigmaInput[], relative = false): { inputs: SigmaInput[]; shares: string[] } {
   const { keep, inputs: own } = sigmaInputs(table, ids);
   const inputs = [...own, ...extra];
   if (!inputs.length) return { inputs, shares: [] };
   const f = toExactLiterals(withConstValues(body, table, keep, "names"));
   const at = `[${inputs.map((v) => `${v.name}=(${toExactLiterals(v.value)})`).join(",")}]`;
-  return { inputs, shares: inputs.map((v) => `(subst(diff(${f},${v.name}),${at})*(${toExactLiterals(v.unc)}))`) };
+  const d = (v: SigmaInput): string => (relative ? `normal(diff(ln(${f}),${v.name}))` : `diff(${f},${v.name})`);
+  return { inputs, shares: inputs.map((v) => `(subst(${d(v)},${at})*(${toExactLiterals(v.unc)}))`) };
 }
 
 /** The Giac text of the first-order σ of `body` over the inexact constants `ids` (see sigmaParts). */
@@ -155,15 +157,34 @@ export function freeName(name: string, taken: (n: string) => boolean, used: Read
   return undefined;
 }
 
+/** What constUncDigits found: σ with the digits it leaves (and G274's terms), or (G550) `lost`: σ inputs went in and σ
+ *  could not be carried (no derivative, not one real number, no free name), which the row says (why.sigmaLost). */
+export type SigmaOutcome = { uncDigits: number; uncSigma: string; uncTerms?: UncTerm[] } | { lost: true };
+
+/** G550: the digits of σ's second try: Giac evaluates at 14 digits or fewer in doubles (numeric.ts DOUBLE_DIGITS, not
+ *  imported: units/row.ts reads this module in the unit view's chunk). */
+const DOUBLE_DIGITS = 14;
+
+/** G550: |a·b| of two decimals, exactly (the relative σ times the value, which no double holds past 1E308). */
+function timesAbs(a: DecimalValue, b: DecimalValue): DecimalValue {
+  if (isZero(a) || isZero(b)) return { ...a, digits: "" };
+  const e = a.exp + 1 - a.digits.length + (b.exp + 1 - b.digits.length);
+  return decimalFromString(`${BigInt(a.digits) * BigInt(b.digits)}e${e}`)!;
+}
+
 /**
  * The `uncDigits` of a Home result computed from `body` (the input with its constants as names), with σ itself as
  * `uncSigma` (R40: the σ line): absent when no inexact constant of `table` is in it (nor an `extra` input, R61), when
- * the result is not one real number, when σ is zero, or when σ cannot be computed (a function Giac cannot
- * differentiate, the budget ran out, no free name for one of ours).
+ * the result is no number (a symbolic value, an error), or when σ is zero. G550: `lost` when σ inputs went in and σ
+ * cannot be carried: the result is a list or not real, Giac cannot differentiate a function at the point (max, a call
+ * left unevaluated), the budget ran out, or no free name for one of ours. σ is evaluated at 20 digits; when that is no
+ * decimal (Giac leaves Psi of a multiprecision float unevaluated) the same text once more at double precision (σ shows
+ * two digits), and then its relative form (sigmaParts) times |value|, for a value past the double's range (W!). No
+ * text is read for which function failed (P20): any result that is not a decimal falls back.
  * `taken` (R40, family 9; P20): whether a name holds a user's value, from the host's own lists (the state read, the
  * definitions log, the input's own store), never from Giac's text. A user's variable named as one of our leaves or
  * constants (`pasl_fine_structure:=5`) would be read for it inside diff, so each such name is renamed to a free one
- * (freeName); when none is free, no digit is muted rather than a wrong one.
+ * (freeName); when none is free, σ is lost rather than a wrong one.
  */
 export function constUncDigits(
   giac: Giac,
@@ -173,14 +194,41 @@ export function constUncDigits(
   digits: number,
   extra: readonly SigmaInput[] = [],
   taken: (name: string) => boolean = () => false,
-): { uncDigits: number; uncSigma: string; uncTerms?: UncTerm[] } | undefined {
+): SigmaOutcome | undefined {
   const ids = inexactConstsIn(body, table);
-  if ((!ids.length && !extra.length) || !r.ok || !r.value || r.items || !isZero(r.value.im)) return undefined;
-  const { inputs, shares } = sigmaParts(body, table, ids, extra);
-  // G274: two or more inputs: one call gives σ from the exact sum (20 digits, as one input's) and each share's t and uy
-  // (30 digits), the shares evaluated once; one input says nothing a σ does not
+  if ((!ids.length && !extra.length) || !r.ok || (!r.value && !r.items)) return undefined;
+  if (!r.value || r.items || !isZero(r.value.im)) return { lost: true };
+  const value = r.value.re;
+  let got: { sigma: DecimalValue; terms?: UncTerm[] } | null | undefined;
+  const tries: [boolean, number, number][] = [[false, 20, 30], [false, DOUBLE_DIGITS, DOUBLE_DIGITS], ...(isZero(value) ? [] : [[true, DOUBLE_DIGITS, DOUBLE_DIGITS] as [boolean, number, number]])];
+  for (const [relative, p, q] of tries) {
+    got = sigmaAt(giac, sigmaParts(body, table, ids, extra, relative), p, q, taken);
+    if (got === undefined) return { lost: true };
+    if (!got) continue;
+    if (relative) got = { sigma: timesAbs(got.sigma, value), ...(got.terms ? { terms: got.terms.map((t) => scaledTerm(t, value)) } : {}) };
+    break;
+  }
+  if (!got) return { lost: true };
+  const n = uncDigitsOf(value, got.sigma, digits);
+  if (n === null) return undefined;
+  const out = { uncDigits: n, uncSigma: decimalToString(got.sigma) };
+  return got.terms ? { ...out, uncTerms: got.terms } : out;
+}
+
+/** G550: a relative term (t and uy over f², |f|) times the value: t·v², uy·|v|. */
+function scaledTerm(t: UncTerm, v: DecimalValue): UncTerm {
+  const uy = timesAbs(decimalFromString(t.uy)!, v);
+  return { key: t.key, t: decimalToString(timesAbs(timesAbs(decimalFromString(t.t)!, v), v)), uy: decimalToString(uy) };
+}
+
+/** σ of the shares `parts` evaluated with σ at `p` digits and G274's terms at `q`: null when Giac gives no decimal (or
+ *  an error), undefined when one of our names has no free name. */
+function sigmaAt(giac: Giac, parts: { inputs: SigmaInput[]; shares: string[] }, p: number, q: number, taken: (name: string) => boolean): { sigma: DecimalValue; terms?: UncTerm[] } | null | undefined {
+  const { inputs, shares } = parts;
+  // G274: two or more inputs: one call gives σ from the exact sum (as one input's) and each share's t and uy, the
+  // shares evaluated once; one input says nothing a σ does not
   const many = shares.length > 1;
-  const raw = !shares.length ? "0" : many ? `(pasL_->[evalf(sqrt(add(map(pasL_,pasx_->pasx_^2))),20),map(pasL_,pasx_->[evalf(pasx_^2,30),evalf(abs(pasx_),30)])])([${shares.join(",")}])` : `sqrt(${shares[0]}^2)`;
+  const raw = !shares.length ? "0" : many ? `(pasL_->[evalf(sqrt(add(map(pasL_,pasx_->pasx_^2))),${p}),map(pasL_,pasx_->[evalf(pasx_^2,${q}),evalf(abs(pasx_),${q})])])([${shares.join(",")}])` : `sqrt(${shares[0]}^2)`;
   const used = new Set([...names(raw, "typed")].map((n) => n.name));
   let stuck = false;
   const expr = mapNames(raw, ({ name }) => {
@@ -190,16 +238,14 @@ export function constUncDigits(
     return m ?? name;
   }, "typed");
   if (stuck) return undefined;
-  const out = giac.eval(many ? expr : `evalf(${expr},20)`);
-  if (out.startsWith("GIAC_ERROR")) return undefined;
-  const parts = many ? splitList(out) : [out];
-  const sigma = parts?.length === 2 || !many ? decimalFromString(parts![0]!) : null;
-  if (!sigma) return undefined;
-  const n = uncDigitsOf(r.value.re, sigma, digits);
-  if (n === null) return undefined;
-  const got = { uncDigits: n, uncSigma: decimalToString(sigma) };
-  const terms = many ? termsOf(inputs, parts![1]!) : undefined;
-  return terms ? { ...got, uncTerms: terms } : got;
+  const out = giac.eval(many ? expr : `evalf(${expr},${p})`);
+  if (out.startsWith("GIAC_ERROR")) return null;
+  const list = many ? splitList(out) : [out];
+  const sigma = list?.length === 2 || !many ? decimalFromString(list![0]!) : null;
+  if (!sigma) return null;
+  if (!many) return { sigma };
+  const terms = termsOf(inputs, list![1]!);
+  return terms ? { sigma, terms } : null;
 }
 
 /** G274: `[[t, uy], …]` as Giac printed it, one pair per input, each a decimal, as terms keyed by the input's key; undefined
