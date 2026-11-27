@@ -31,7 +31,7 @@ import { idbKv, type Kv } from "./storage.ts";
 import { Taps } from "./tapsFront.svelte.ts";
 import type { UseCounter, UseKey } from "./uses.svelte.ts";
 import { commaInput } from "../entry/commaInput.ts";
-import { chipOf, FULL_LIMIT, HISTORY_LIMIT, rowUid, withUnit } from "./results.ts";
+import { chipOf, HISTORY_LIMIT, rowUid, withUnit } from "./results.ts";
 import { itemsOr, prefetchItems } from "./itemLoad.ts";
 import { targetRow } from "./pickRows.ts";
 import { onTidy } from "./tidyLoad.ts";
@@ -106,7 +106,7 @@ export type ItemStatus = "pending" | "done" | "error" | "cancelled" | "note";
 /** G642: what Ans was when a row read it, frozen with the row (owner, 2026-11-20, H3): the chip Ans resolved to at Enter,
  *  the source row's result LaTeX as the screen drew it then (`shown`, in its format and digits) and that row's uid
  *  (`from`, G211). Never in the chip table: a recall resolves Ans again. A row stored before G642 has only `value` and
- *  `exact` (drawn with the word Ans, R836); `shown` is absent when over FULL_LIMIT. */
+ *  `exact` (drawn with the word Ans, R836); the store drops a `shown` over FULL_LIMIT (storedItem.ts). */
 export interface AnsSnapshot extends Chip {
   shown?: string;
   from?: string;
@@ -474,7 +474,9 @@ export class Session {
       approximate: false,
       ...(Object.keys(kept).length ? { chips: kept } : {}),
       ...(typedIn ? { typedIn } : {}), // R265 (the caller passes it only when it differs from the mode on show)
-      ...(usesAns && ans && src ? { ans: this.ansSnapshot(ans, src) } : {}), // G213f1, G642: not in `chips` (a recall resolves Ans again)
+      // G213f1, G642: not in `chips` (a recall resolves Ans again); the source row's result as the screen draws it now (the
+      // store drops a `shown` over FULL_LIMIT, storedItem.ts) and its uid
+      ...(usesAns && ans && src ? { ans: { ...ans, shown: this.display(src, true).latex, from: src.uid } } : {}),
       ...(dropped ? { unitDropped: true as const } : {}), // R902
       startedAt: performance.now(),
     });
@@ -500,12 +502,6 @@ export class Session {
    *  unit row's is R61's, kept with the row and read back unchecked, so checked here as a stored chip is. */
   chipFor(item: HistoryItem): Chip | undefined {
     return item.units ? validChips({ "res:0": item.units.chip })?.["res:0"] : chipOf(item);
-  }
-  /** G642: the snapshot a row that reads Ans keeps: the chip, the source row's result as drawn now (grouped, as on the
-   *  screen) and its uid. */
-  private ansSnapshot(chip: Chip, src: HistoryItem): AnsSnapshot {
-    const shown = this.display(src, true).latex;
-    return { ...chip, ...(shown.length <= FULL_LIMIT ? { shown } : {}), ...(src.uid ? { from: src.uid } : {}) };
   }
   /** A fresh row id (units/row.ts adds a unit row to Home's list). */
   newId(): number {
