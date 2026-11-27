@@ -54,7 +54,9 @@ for (const [brightness, contrast, keys] of LOOKS)
   test(`the legends that open a sheet carry ▾, no typing legend does: N62 ${brightness}, ${keys} keys, ${contrast} contrast`, async ({ page }) => {
     await open(page);
     await look(page, brightness, contrast, keys);
-    for (const shift of [false, true]) {
+    // (R728: the CAS view too, where the letter line draws lower case; no letter carries the mark there either)
+    for (const [cas, shift] of [[false, false], [false, true], [true, false], [true, true]] as const) {
+      if (cas) await tap(page, ["@cas"]);
       await setShift(page, shift);
       const marked: string[] = [];
       for (const s of await legends(page)) {
@@ -62,7 +64,7 @@ for (const [brightness, contrast, keys] of LOOKS)
         const k = spec.find((x) => x.id === s.key);
         const want =
           s.part === "alphalegend" ? false : s.part === "shiftlegend" ? k?.label?.shift !== undefined && opens(k.shift) : opens(shift ? k?.shift : k?.primary);
-        const where = `${shift ? "Shift" : "tap"}: ${s.key} ${s.part} "${s.text}"`;
+        const where = `${cas ? "CAS " : ""}${shift ? "Shift" : "tap"}: ${s.key} ${s.part} "${s.text}"`;
         expect(s.opens === "true", where).toBe(want);
         if (want) {
           marked.push(`${s.key}/${s.part}`);
@@ -71,7 +73,7 @@ for (const [brightness, contrast, keys] of LOOKS)
         } else expect(["none", "normal"], where).toContain(s.after);
       }
       // the tap layer: Vars, Math, Tmpl; Help and its Shift legend Settings (r0c4, R723), the Shift legends: Memory (Math), ≤≠, α∞, Base (Shift + −), Matrix (Shift + 4, R187), σ (Shift + 1, the uncertainty sheet, R327), Chars (Shift + Vars, R725), Store (Shift + ᴇ, R912), Cycle (Shift + Fmt, R871); Copy and Paste (Shift + Select and Shift + Deselect, R723) open no sheet; Shift armed: those as faces
-      expect(marked.sort(), shift ? "Shift armed" : "tap").toEqual(
+      expect(marked.sort(), `${cas ? "CAS, " : ""}${shift ? "Shift armed" : "tap"}`).toEqual(
         shift
           ? ["d1/main", "d4/main", "d6/main", "d9/main", "emark/main", "fmt/main", "help/main", "math/main", "sub/main", "vars/main"]
           : ["d1/shiftlegend", "d4/shiftlegend", "d6/shiftlegend", "d9/shiftlegend", "emark/shiftlegend", "fmt/shiftlegend", "help/main", "help/shiftlegend", "math/main", "math/shiftlegend", "sub/shiftlegend", "tmpl/main", "vars/main", "vars/shiftlegend"],

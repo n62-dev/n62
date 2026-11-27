@@ -72,6 +72,7 @@ const STATES: [string, boolean, boolean, boolean][] = [
   ["Shift armed", true, false, false],
   ["Alpha armed", false, true, false],
   ["Shift + Alpha (lower case)", true, true, false],
+  ["CAS view, tap (the letter line in lower case, R728)", false, false, true],
   ["CAS view, Alpha (lower case)", false, true, true],
   ["CAS view, Shift + Alpha (capitals)", true, true, true],
 ];
@@ -83,8 +84,7 @@ for (const keys of ["colour", "plain"])
     expect(mathit, "MathLive's variable face").not.toBe("");
     await set(page, keys);
     for (const [name, shift, alpha, cas] of STATES) {
-      if (cas) await tap(page, ["@cas"]);
-      else await page.evaluate(() => void window.n62.shell);
+      if (cas) await tap(page, ["@cas"]); // (once: the helper does nothing while CAS is the view)
       await page.evaluate(([s, a]) => {
         window.n62.session.shift = s as boolean;
         window.n62.session.alpha = a as boolean;
