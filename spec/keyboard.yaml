@@ -72,7 +72,8 @@
 #     press-slide-lift is a flick. While armed, a bubble above the key shows what the lift fires (✕ = nothing) and a
 #     haptic tick marks the threshold; sliding back within 12 px of the touch point cancels (nothing fires). A
 #     sideways slip or a long hold is still a tap. No left/right flicks; the trackpad and `bksp` have none.
-#     Legends: the shift layer at the top left of the key, the letter at the bottom left.
+#     Legends (R729): the face is always the tap; the shift layer at the top left, the letter at the bottom left in the case
+#     Alpha types in the view and state; Shift shows ⇧ and Alpha a and A there (their lock flicks); an empty corner is an empty layer.
 #     Lock flicks: up on `shift` = shift lock; down on `alpha` = capitals lock, up on `alpha` = lower-case lock; the
 #     same flick again, or a tap on that key, unlocks. A tap on Shift or Alpha arms it for one key, a second tap locks it, a
 #     third ends it (R726; while Alpha is on, Shift's second tap flips the case again); a tap on the bar's ⇧/α sign ends any.

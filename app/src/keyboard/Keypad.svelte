@@ -86,7 +86,7 @@
     k.id === "shift" ? (up ? t("flick.shiftLock") : "") : alphaLower(up, true, cas) ? t("flick.lowerLock") : t("flick.capsLock");
   const hint = (k: Key): string => (isMod(k) ? lockSign(k, true) : k.label.shift ? legend(k.label.shift) : "");
   // (R820: while the face shows the key's letter, its letter line is empty: the letter is not drawn twice)
-  // (R728, R729: the letter in the case Alpha types in the view and state: lower case in CAS, R58, and under Shift in Home)
+  // (R728, R729: the letter in the case Alpha types in the view and state: lower case in CAS, R58, and under Shift + Alpha in Home)
   const alphaHint = (k: Key): string =>
     k.id === "alpha" ? lockSign(k, false) : !k.label.alpha || typed(k)?.toLowerCase() === k.label.alpha.toLowerCase() ? "" : labelFor(k, shift && alpha, true, cas);
   const isMod = (k: Key): boolean => k.id === "shift" || k.id === "alpha";
@@ -490,6 +490,12 @@
     -webkit-touch-callout: none;
     /* Key shadows off (R156): an empty shadow, so a rule that adds it to an inset edge stays valid */
     --key-drop: 0 0 transparent;
+    /* R729: the layer colours, set once for Enter and Plain keys; --dim is a text the next press does not type, a dead key's too */
+    --c-shift: var(--key-shift);
+    --c-alpha: var(--key-alpha);
+    --on-c-shift: var(--on-key-shift);
+    --on-c-alpha: var(--on-key-alpha);
+    --dim: var(--key-text-dead);
   }
   /* Key shadows (R156, Appearance): a solid line under each key and the round pad, in the row gap, drawn as a shadow so
      no key's box or touch area moves; an empty slot (outlined) and the pad's arrow zones have none */
@@ -761,15 +767,7 @@
     border-radius: 50%;
     background: color-mix(in srgb, var(--key-text) 32%, transparent);
   }
-  /* R729 (docs/05 3.10): the layer colours as variables, so Enter (--on-enter for both) and Plain keys (theme/modes.css) set them
-     once; --dim is a text the next press does not type, a dead key's too */
-  .pad {
-    --c-shift: var(--key-shift);
-    --c-alpha: var(--key-alpha);
-    --on-c-shift: var(--on-key-shift);
-    --on-c-alpha: var(--on-key-alpha);
-    --dim: var(--key-text-dead);
-  }
+  /* R729 (docs/05 3.10): Enter sets the layer colours of .pad to --on-enter for both (Plain keys: theme/modes.css) */
   .key.enter {
     --c-shift: var(--on-enter);
     --c-alpha: var(--on-enter);

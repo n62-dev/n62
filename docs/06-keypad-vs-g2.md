@@ -84,7 +84,7 @@ The owner's rule: "the layout should stay the same from start of release". From 
 - **History rows at the tag:** a tap on the input or the result lights that part, elsewhere picks the row; a second tap on the input recalls, on the result inserts, elsewhere drops the pick; a hold copies; a swipe left deletes. A swipe right is reserved: it does nothing, and the row-feature rule (point 3 below) never fills it.
 
 **A reserved cell** is blank on purpose, so that filling it later is not a move:
-1. It has no legend in that layer, and the key is drawn dimmed in that layer only.
+1. It has no legend in that layer, and the key is drawn dimmed in that layer only. The legends are drawn by one rule (R729): an empty corner is an empty layer; a reserved cell has none. (Look only, not in the layout lock.)
 2. A press does nothing but count: the dead key's double pulse (docs/05 3.7), no key pop, ✕ in the flick bubble, and one count under the key's id and layer (R127). The counts show whether people reach for the cell.
 3. The key's id is stable and names what the key does. An id is never reused for another function: `help` left row 0, col 4 together with Help (R278) and came back with it (R723), and `menu` retired with the ☰ key.
 4. TalkBack reads no such layer.
