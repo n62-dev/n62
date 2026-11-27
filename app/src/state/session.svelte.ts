@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The calculator session: current view, modifier keys, settings and the history of both views.
 // Plain logic on Svelte 5 runes; the engine comes in through the Calc port.
-import type { AngleUnit, Calc, CalcSettings, ConstTable, LoggedDef, NumberFormat, UserName } from "../calc/port.ts";
+import type { AngleUnit, Calc, CalcSettings, ConstTable, NumberFormat, UserName } from "../calc/port.ts";
 import { ANS_KEY, pruneChips, validChips, type Chip, type ChipTable } from "../input/chips.ts";
 import { parseFailText } from "../input/errors.ts";
 import { loadEntry } from "../input/parser.ts";
@@ -261,9 +261,6 @@ export class Session {
   engineFailure = $state<"load" | "memory" | "crash">();
   /** The user's variables and functions, the stored ones included (Vars, Find's live items; docs/04 3.4, 6.2). */
   userNames = $state<UserName[]>([]);
-  /** R314: what Memory's last delete or Clear all took out of the definitions log (find/names.svelte.ts), one level, in
-   *  memory only (a relaunch or a backup never holds it); the next Enter drops it, as it drops Clear history's Undo. */
-  memoryUndo = $state.raw<readonly LoggedDef[] | null>(null);
 
   private nextId = 1;
   /** The engine port; Memory's purge (find/names.svelte.ts forget) runs through it too. */
@@ -443,7 +440,6 @@ export class Session {
   submit(latex: string, giacOverride?: string, chips: ChipTable = {}, typedIn?: AngleUnit): Promise<void> | undefined {
     if (latex.trim() === "" || this.busy || this.engineState === "failed") return undefined; // (R284: nothing would answer)
     const view = this.view;
-    this.memoryUndo = null; // R314
     if (this.undoCopy) {
       this.setCopy(view, null); // R98: a new input drops this view's Undo of Clear and Delete (R119: the other view's stays),
       this.saveHistory(); // in the store too at once (a relaunch before a long job ends must not bring it back)

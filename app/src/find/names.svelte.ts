@@ -4,9 +4,10 @@
 // Math, Memory, lists the same and deletes one (Enter) or all (the last row, Enter twice). In Find's lazy chunk. No
 // index is needed: the live items go through rank.ts's search over an empty index.
 import type { MenuItem } from "../apps/types.ts";
-import type { LoggedDef, UserName } from "../engine/defs.ts";
+import type { UserName } from "../engine/defs.ts";
 import type { EntryController } from "../entry/controller.ts";
 import { findText as t } from "../i18n/enFind.ts";
+import { memoryText } from "../i18n/enMemory.ts";
 import { decimalFromString, ZERO_VALUE } from "../engine/format.ts";
 import { LETTER_NAMES } from "../engine/standIns.ts";
 import { homeResultToLatex, typedName } from "../render/home.ts";
@@ -17,6 +18,7 @@ import { OWN_PREFIX } from "../units/factors.ts";
 import type { UnitDef } from "../units/ownRecord.ts";
 import { Sheet } from "../views/sheet.svelte.ts";
 import type { FindIndex } from "./finder.ts";
+import { entriesOf, restoreDefs, type LoggedDef } from "./undoDefs.ts";
 import { functionInsert, prepare, search } from "./rank.ts";
 import type { FindItem } from "./types.ts";
 
@@ -36,7 +38,17 @@ function insertOf(n: UserName): string {
 
 /** Memory (R4b): purge these names from the engine and its definitions log. The list drops them at once, then reads
  *  the log again (a purge that failed brings a name back). R314: first their log entries are kept as the session's
- *  Undo copy (`memoryUndo`, one level: a later delete replaces it). Here, not in Session, since G785 (the start chunk's room). */
+ *  Undo copy (`copy`, one level: a later delete replaces it). Here, not in Session, since G785 (the start chunk's room). */
+/** R314: what the last delete or Clear all took out of the definitions log, one level, in memory only (a relaunch or a backup
+ *  never holds it). It is dropped by the next Enter on the line, as Clear history's Undo is: an input newer than the copy's
+ *  `seen` row. A module's, not Session's, so the start chunk holds none of it. */
+let copy = $state.raw<{ session: Session; rows: readonly LoggedDef[]; seen: number } | null>(null);
+const newest = (s: Session): number => Math.max(0, ...[...s.home, ...s.cas].filter((i) => i.status !== "note").map((i) => i.id));
+/** The Undo copy of `session` while it holds: nothing was entered since it was taken. */
+export function undoCopy(session: Session): readonly LoggedDef[] | null {
+  return copy && copy.session === session && newest(session) <= copy.seen ? copy.rows : null;
+}
+
 export function forget(session: Session, names: readonly string[]): Promise<void> {
   if (names.length === 0) return Promise.resolve();
   const gone = new Set(names);
@@ -49,7 +61,7 @@ let deleting: Promise<void> = Promise.resolve();
 async function take(session: Session, names: readonly string[]): Promise<void> {
   let rows: LoggedDef[] = [];
   try {
-    rows = await session.calc.entriesOf(names);
+    rows = await entriesOf(session.calc.engine, names);
   } catch {
     /* no copy: the delete goes on */
   }
@@ -61,20 +73,20 @@ async function take(session: Session, names: readonly string[]): Promise<void> {
   await session.refreshNames();
   const live = new Set(session.userNames.map((u) => u.name));
   const kept = rows.filter((r) => !live.has(r.entry.name)); // a purge that failed took nothing
-  if (kept.length) session.memoryUndo = kept;
+  if (kept.length) copy = { session, rows: kept, seen: newest(session) };
 }
 
 /** R314: Memory's Undo: the entries of the last delete go back (the engine stores them again, the log takes them at their
  *  old places) unless the name was defined since; the copy is dropped either way. `taken`: names left as they are. */
 export async function undoForget(session: Session): Promise<{ back: string[]; taken: string[] }> {
-  const rows = session.memoryUndo;
+  const rows = undoCopy(session);
   if (!rows) return { back: [], taken: [] };
-  session.memoryUndo = null;
+  copy = null;
   let back: string[] = [];
   try {
-    back = await session.calc.restoreDefs(rows);
+    back = await restoreDefs(session.calc.engine, rows);
   } catch {
-    session.memoryUndo = rows; // cancelled or the engine restarted: the copy stays for another try
+    copy = { session, rows, seen: newest(session) }; // cancelled or the engine restarted: the copy stays for another try
     return { back: [], taken: [] };
   }
   await session.refreshNames();
@@ -235,10 +247,10 @@ export function showNames(shell: { sheet: Sheet | null }, entry: EntryController
     },
   };
   /** R314: the row under the names after a delete: Undo, with what it brings back; after an Undo that found a name taken,
-   *  the note saying so (a tap clears it). The copy is the session's, so the next Enter on the line drops it. */
+   *  the note saying so (a tap clears it). The next Enter on the line drops the copy (undoCopy). */
   const undoRow = (): MenuItem[] => {
-    const copy = session.memoryUndo;
-    const label = ui.note || (copy ? (copy.length === 1 ? t("memory.undo1", { name: typedName(copy[0]!.entry.name) }) : t("memory.undoN", { n: String(copy.length) })) : "");
+    const rows = undoCopy(session);
+    const label = ui.note || (rows ? (rows.length === 1 ? memoryText("memory.undo1", { name: typedName(rows[0]!.entry.name) }) : memoryText("memory.undoN", { n: String(rows.length) })) : "");
     if (!label) return [];
     return [
       {
@@ -247,7 +259,7 @@ export function showNames(shell: { sheet: Sheet | null }, entry: EntryController
         keep: true,
         run: () => {
           if (ui.note) ui.note = "";
-          else void undoForget(session).then((r) => ((ui.note = r.taken.length ? t("memory.taken", { names: r.taken.map(typedName).join(", ") }) : ""), settle()));
+          else void undoForget(session).then((r) => ((ui.note = r.taken.length ? memoryText("memory.taken", { names: r.taken.map(typedName).join(", ") }) : ""), settle()));
           settle();
         },
       },

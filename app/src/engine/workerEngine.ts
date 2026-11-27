@@ -2,7 +2,7 @@
 // MathEngine backed by giac.worker.ts. State that must survive a Cancel or a relaunch (variable and function
 // definitions) is logged here, outside the worker, stored, and replayed into a fresh worker (D2; docs/04 section 6.2).
 import type { Request, Response } from "./protocol.ts";
-import { applyDefChanges, putBackDefs, type DefChange, type DefEntry, type LoggedDef } from "./defs.ts";
+import { applyDefChanges, type DefChange, type DefEntry } from "./defs.ts";
 import {
   EngineCancelled,
   EngineCrashError,
@@ -180,24 +180,14 @@ export class WorkerEngine implements MathEngine {
   }
 
   /** Applies what a call defined to the log, and stores it. Public for code that loads later and posts its own
-   *  requests (R59, calc/library.ts), so nothing of it is in the start chunk. `placed`: entries this puts back (R314). */
-  keep(changes: readonly DefChange[], placed?: readonly LoggedDef[]): void {
+   *  requests (R59, calc/library.ts), so nothing of it is in the start chunk. */
+  keep(changes: readonly DefChange[]): void {
     if (!changes.length) return;
     this.log = applyDefChanges(this.log, changes);
-    if (placed) this.log = putBackDefs(this.log, placed); // R314: Undo's entries at their old places
     // a purge reaches the entries a safe start left out too, or stored() would bring the name back (G19)
     const purges = changes.filter((c) => "purge" in c);
     if (this.skipped.length && purges.length) this.skipped = applyDefChanges(this.skipped, purges);
     if (this.storeOk && this.store) this.lastWrite = Promise.resolve(this.store.save(this.stored())).then(() => {}, () => {});
-  }
-
-  /** R314: entries Memory took out come back (its Undo): the engine replays them (the `define` request of the stored
-   *  log), and the log takes them in at their old places. */
-  async reinstate(rows: readonly LoggedDef[]): Promise<void> {
-    if (!rows.length) return;
-    const r = await this.call({ type: "define", defs: rows.map((x) => x.entry) });
-    if (r.type !== "defined") return;
-    this.keep([...rows.map((x) => ({ set: x.entry })), ...r.defs], rows);
   }
 
   /** Resolves once the last write of the definitions log has finished, whether it succeeded or not (A123: a core-case

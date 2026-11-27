@@ -10,7 +10,7 @@ import type { Request, Response } from "../engine/protocol.ts";
 import { WorkerEngine, type WorkerLike } from "../engine/workerEngine.ts";
 import { fakeKv } from "../state/fakeKv.ts";
 import { Session } from "../state/session.svelte.ts";
-import { forget, undoForget } from "./names.svelte.ts";
+import { forget, undoCopy, undoForget } from "./names.svelte.ts";
 
 class InProcessWorker implements WorkerLike {
   onmessage: ((ev: { data: Response }) => void) | null = null;
@@ -51,12 +51,12 @@ describe.skipIf(!giacAvailable())("R314: Memory's one-level Undo (real Giac)", (
     await forget(s, ["b"]);
     expect(names(s)).toEqual(["a", "c"]);
     expect(await log()).toEqual(["a", "c"]);
-    expect(s.memoryUndo?.map((r) => r.entry.name)).toEqual(["b"]);
+    expect(undoCopy(s)?.map((r) => r.entry.name)).toEqual(["b"]);
     expect(await undoForget(s)).toEqual({ back: ["b"], taken: [] });
     expect(names(s)).toEqual(["a", "b", "c"]);
     expect(await log()).toEqual(["a", "b", "c"]); // b between a and c again, not at the end
     expect(await read("b")).toBe("7");
-    expect(s.memoryUndo).toBeNull();
+    expect(undoCopy(s)).toBeNull();
   });
 
   it("Clear all, Undo: every name is back", { timeout: 60_000 }, async () => {
@@ -81,9 +81,9 @@ describe.skipIf(!giacAvailable())("R314: Memory's one-level Undo (real Giac)", (
   it("control: the next Enter drops the copy", { timeout: 60_000 }, async () => {
     const { s } = await stored();
     await forget(s, ["a"]);
-    expect(s.memoryUndo).not.toBeNull();
+    expect(undoCopy(s)).not.toBeNull();
     await s.submit("1+1", "1+1");
-    expect(s.memoryUndo).toBeNull();
+    expect(undoCopy(s)).toBeNull();
     expect(await undoForget(s)).toEqual({ back: [], taken: [] });
     expect(names(s)).toEqual(["b", "c"]);
   });
@@ -104,6 +104,6 @@ describe.skipIf(!giacAvailable())("R314: Memory's one-level Undo (real Giac)", (
     await s.refreshNames();
     expect(await undoForget(s)).toEqual({ back: [], taken: ["a"] });
     expect(await read("a")).toBe("11");
-    expect(s.memoryUndo).toBeNull();
+    expect(undoCopy(s)).toBeNull();
   });
 });

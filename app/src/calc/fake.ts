@@ -13,7 +13,6 @@ import {
   type TableRequest,
   type Quantity,
   type UnitError,
-  type LoggedDef,
   type UserName,
 } from "./port.ts";
 
@@ -75,12 +74,6 @@ export class FakeCalc implements Calc {
   }
   /** The fake engine keeps no definitions. */
   names(): Promise<UserName[]> {
-    return Promise.resolve([]);
-  }
-  entriesOf(): Promise<LoggedDef[]> {
-    return Promise.resolve([]);
-  }
-  restoreDefs(): Promise<string[]> {
     return Promise.resolve([]);
   }
   cancel(): Promise<void> {
