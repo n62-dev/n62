@@ -281,11 +281,17 @@ describe("a constant subterm the double can size (G403)", () => {
   });
   it("reads no subterm past 200 brackets deep, counts the brackets by giacPrint's walk (strings skipped)", () => {
     const deep = "(".repeat(3000) + "1/cosh(300)" + ")".repeat(3000);
-    // only the literal 300 counts (3 digits, so 3 + 12)
-    expect(at(`(1+${deep})^cosh(300)`)).toEqual({ at: 15, unchecked: false });
+    // fix round 2: a text too deep to read may hold a tiny subterm, so ⚠ (this one is e, it showed a false ≈ 1)
+    expect(at(`(1+${deep})^cosh(300)`)).toEqual({ at: 12, unchecked: true });
     // brackets in a string are no nesting (G403 fix round 1: the hand-written loop counted them)
     expect(at(`[(1+1/cosh(300))^cosh(300),"${"(".repeat(300)}"]`)).toEqual({ at: 142, unchecked: false });
-    // a string that does not close is read as too deep: no subterm counts
-    expect(at(`[(1+1/cosh(300))^cosh(300),"${"(".repeat(3)}`)).toEqual({ at: 15, unchecked: false });
+    // a string that does not close is read as too deep: ⚠
+    expect(at(`[(1+1/cosh(300))^cosh(300),"${"(".repeat(3)}`)).toEqual({ at: 12, unchecked: true });
+  });
+  it("gives ⚠ for a tiny subterm past the cap in a text with no slash or minus (Giac's 1-erf(x), fix round 2)", () => {
+    // erfc(50) is 1E-1088.9 (rule (c)), cosh(2508) 1E1088.9 (rule (a)): the value is exp(erfc(50)·cosh(2508)), far from 1,
+    // and both counts pass the cap; formsSmall sees no slash, ^- or inv in Giac's print, which showed a false ≈ 1
+    expect(at("(1+1-erf(50))^cosh(2508)")).toEqual({ at: 12, unchecked: true });
+    expect(literalStart("(1+erfc(50))^cosh(2508)", 12, 1000, "typed")).toEqual({ at: 12, unchecked: true });
   });
 });

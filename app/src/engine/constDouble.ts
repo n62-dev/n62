@@ -64,6 +64,14 @@ function besideOne(a: Arith): Arith | null {
   return u && !ofLiterals(u) ? u : null;
 }
 
+/** G403 fix round 2: the term 1-erf(x) of a sum Giac prints flat, `s+1-erf(x)` (its tree is (s+1)-erf(x), no node 1-erf(x))
+ *  or `s-1+erf(x)` (s minus it), as a node of its own for constantLog10's rule (c); null for any other node. */
+export function flatErfc(a: Arith): Arith | null {
+  if ((a.op !== "-" && a.op !== "+") || a.b.op !== "call" || a.b.name !== "erf") return null;
+  const s = a.a;
+  return s.op === (a.op === "-" ? "+" : "-") && isOne(s.b) ? { op: "-", a: s.b, b: a.b } : null;
+}
+
 /** `a` holds numbers alone (no name, no call). */
 function ofLiterals(a: Arith): boolean {
   switch (a.op) {
@@ -138,8 +146,10 @@ function log10Of(a: Arith): number {
       const x = constantDouble(a.arg);
       if (Number.isNaN(x)) return NaN;
       if (a.name === "exp") return x * Math.LOG10E;
-      // G403 (a): cosh(1000) is e^1000/2 to the double's last digit, 1E434.0
-      if ((a.name === "cosh" || a.name === "sinh") && Number.isFinite(x)) return Math.abs(x) * Math.LOG10E - Math.log10(2);
+      // G403 (a): cosh(1000) is e^1000/2 to the double's last digit, 1E434.0; only an overflow (fix round 2: sinh(0) is
+      // a zero, no magnitude), and sinh of an argument the double rounds to 0 is that argument (sinh x ≈ x)
+      if ((a.name === "cosh" || a.name === "sinh") && Number.isFinite(x) && !Number.isFinite(d)) return Math.abs(x) * Math.LOG10E - Math.log10(2);
+      if (a.name === "sinh" && d === 0) return constantLog10(a.arg);
       // G403 (b): ln(1 + u) is u to its first digits, log10(1 + u) is u/ln(10); a u of literals alone counts by its
       // literals (G141; g186-exp-sqrt-acosh-1e-300-12 prints ln(1/10^600+1)^2, which 1200 digits would send past the cap)
       const u = d === 0 && LOGS.has(a.name) ? besideOne(a.arg) : null;

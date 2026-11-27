@@ -10,7 +10,7 @@
 import type { PrecisionWarn } from "./format.ts";
 import { arithmeticOf, type Arith, callsOf, closing, topLevelArgs, integerLiteral, isNameChar, UNCLOSED, walk as bracketWalk, namesIn, negated, numbers, powersIn, withoutStrings, type Quoting } from "./giacPrint.ts";
 import { PERIODIC } from "./converge.ts";
-import { constantLog10 } from "./constDouble.ts";
+import { constantLog10, flatErfc } from "./constDouble.ts";
 
 /** A literal with more digits than P minus this raises where the agreement check starts (G141): at P it would leave
  *  fewer than this many digits after its cancellation. */
@@ -89,7 +89,7 @@ function periodicPlaces(text: string, q: Quoting): [number, number][] {
 const MAX_NESTING = 200;
 
 /** The deepest bracket nesting of `text` outside strings, by giacPrint's one bracket walk; Infinity when a string does
- *  not close (more, never less). */
+ *  not close (read as too deep: ⚠, literalStart). */
 function nesting(text: string, q: Quoting): number {
   let max = 0;
   return bracketWalk(text, 0, (_k, d) => void (max = Math.max(max, d)), q) === UNCLOSED ? Infinity : max;
@@ -98,8 +98,9 @@ function nesting(text: string, q: Quoting): number {
 /** G403: log10 |t| of every subterm t of `text` that holds a name or a call and that constantLog10 sizes (`exp(-100*pi)`,
  *  `1/cosh(1000)`, `1-erf(12)`, `ln(1+sin(1)^5000)^2`), and whether it stands in a place read modulo a period (the
  *  argument of a PERIODIC call or the exponent of a negative base, as periodicPlaces). One walk of arithmeticOf's tree of
- *  the whole text, or, when it is no arithmetic (a list, a call of several arguments), of each argument or element that is. */
-function constantTerms(text: string, q: Quoting): { log10: number; periodic: boolean; whole: boolean }[] {
+ *  the whole text, or, when it is no arithmetic (a list, a call of several arguments), of each argument or element that is.
+ *  `deep`: past MAX_NESTING no subterm is read, so none is known small (fix round 2: literalStart gives ⚠). */
+function constantTerms(text: string, q: Quoting): { terms: { log10: number; periodic: boolean; whole: boolean }[]; deep: boolean } {
   const out: { log10: number; periodic: boolean; whole: boolean }[] = [];
   let root: Arith | null = null;
   // whether `a` holds a name or a call (numbers alone are the literal rules' own)
@@ -112,24 +113,30 @@ function constantTerms(text: string, q: Quoting): { log10: number; periodic: boo
     // ±Infinity is constantLog10's "of unknown size" (asinh(10^-400)): no count
     const log10 = named ? constantLog10(a) : NaN;
     if (Number.isFinite(log10)) out.push({ log10, periodic, whole: a === root });
+    // fix round 2: Giac prints 1+erfc(50) as 1+1-erf(50), whose tree holds no node 1-erf(50)
+    const erfc = flatErfc(a);
+    const le = erfc ? constantLog10(erfc) : NaN;
+    if (Number.isFinite(le)) out.push({ log10: le, periodic, whole: false });
     return named;
   };
-  if (nesting(text, q) > MAX_NESTING) return out;
+  if (nesting(text, q) > MAX_NESTING) return { terms: out, deep: true };
   const whole = (root = arithmeticOf(text, q));
   if (whole) {
     walk(whole, false);
-    return out;
+    return { terms: out, deep: false };
   }
-  // each argument or element of a bracket, outermost first, that no part read before holds
-  const t = withoutStrings(text, (x) => " ".repeat(x.length), q);
+  // each argument or element of a bracket, outermost first, that no part read before holds; the brackets by giacPrint's
+  // one walk (G105, as decisionArgs), strings skipped
+  const opens: number[] = [];
+  bracketWalk(text, 0, (k, _d, ch) => void ("([{".includes(ch) && opens.push(k)), q);
   const places = periodicPlaces(text, q);
   let covered = -1;
-  for (let k = 0; k < t.length; k++) {
-    if (k < covered || !"([{".includes(t.charAt(k))) continue;
-    const close = closing(t, k, "typed");
+  for (const k of opens) {
+    if (k < covered) continue;
+    const close = closing(text, k, q);
     if (close < 0) continue;
     let from = k + 1;
-    for (const part of topLevelArgs(t.slice(k + 1, close), "typed")) {
+    for (const part of topLevelArgs(text.slice(k + 1, close), q)) {
       const a = arithmeticOf(text.slice(from, from + part.length), q);
       if (a) {
         walk(a, places.some(([p, r]) => from >= p && from < r));
@@ -138,12 +145,12 @@ function constantTerms(text: string, q: Quoting): { log10: number; periodic: boo
       from += part.length + 1;
     }
   }
-  return out;
+  return { terms: out, deep: false };
 }
 
 /** literalDigits, and the same count without the powers of a constant or exp (constantPower) that stand outside every place read
  *  modulo a period (periodicPlaces, G348). */
-function literalCounts(text: string, q: Quoting): { digits: number; withoutHuge: number; decided: number } {
+function literalCounts(text: string, q: Quoting): { digits: number; withoutHuge: number; decided: number; tiny: boolean; deep: boolean } {
   const ints = [...numbers(text, q)].filter((n) => n.exp === undefined && !n.mant.includes("."));
   let total = 0;
   let withoutHuge = 0;
@@ -172,10 +179,10 @@ function literalCounts(text: string, q: Quoting): { digits: number; withoutHuge:
   // outside such a place only beside a tiny constant, the term a sum rounds away (`1/cosh(1000)` in `1+1/cosh(1000)`):
   // alone a huge or tiny value is right at every level (`exp(200000000*1/2)`, g58-sqrt-exp-2e8-12; `(1/2)^(1073741000+sqrt(2))`)
   const decided = total;
-  const terms = constantTerms(text, q);
+  const { terms, deep } = constantTerms(text, q);
   const tiny = terms.some((t) => !t.whole && t.log10 < -LITERAL_MARGIN);
   for (const t of terms) if (tiny || t.periodic) count(Math.ceil(Math.abs(t.log10)), !t.periodic);
-  return { digits: total, withoutHuge, decided: Math.max(decided, withoutHuge) };
+  return { digits: total, withoutHuge, decided: Math.max(decided, withoutHuge), tiny, deep };
 }
 
 /**
@@ -217,10 +224,13 @@ export function literalDigits(text: string, q: Quoting): number {
  * decision taken on it reads literalPastCap, which counts it.
  */
 export function literalStart(text: string, P: number, cap: number, q: Quoting): { at: number; unchecked: boolean } {
-  const { digits, withoutHuge } = literalCounts(text, q);
+  const { digits, withoutHuge, tiny, deep } = literalCounts(text, q);
   const start = (n: number): { at: number; unchecked: false } | null =>
     n + LITERAL_MARGIN <= P ? { at: P, unchecked: false } : n + P + LEVELS_ABOVE <= cap ? { at: n + P, unchecked: false } : null;
-  return start(digits) ?? (formsSmall(text, q) ? null : start(withoutHuge)) ?? { at: P, unchecked: true };
+  // G403 fix round 2: a tiny subterm forms a small value with no slash or minus (Giac's 1-erf(50)), and a text too deep
+  // to read may hold one
+  if (deep) return { at: P, unchecked: true };
+  return start(digits) ?? (tiny || formsSmall(text, q) ? null : start(withoutHuge)) ?? { at: P, unchecked: true };
 }
 
 /**

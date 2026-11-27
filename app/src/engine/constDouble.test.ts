@@ -2,7 +2,7 @@
 // G363: the value and the magnitude of a constant expression (constDouble.ts), read by giacPrint's arithmeticOf; values
 // from Math, magnitudes by hand (5000*log10(sin(1)) = -374.80).
 import { describe, expect, it } from "vitest";
-import { constantDouble, constantLog10 } from "./constDouble.ts";
+import { constantDouble, constantLog10, flatErfc } from "./constDouble.ts";
 import { arithmeticOf } from "./giacPrint.ts";
 
 const tree = (t: string): NonNullable<ReturnType<typeof arithmeticOf>> => {
@@ -80,6 +80,10 @@ describe("constantLog10 past the double by an asymptote (G403)", () => {
     expect(l("1/cosh(1000)")).toBeCloseTo(-433.993451907588, 9);
     // in the double's range as before (mpmath: 129.987314575312)
     expect(l("cosh(300)")).toBeCloseTo(129.987314575312, 9);
+    // fix round 2: only an overflow. sinh(0) is a zero (no magnitude), and sinh of an argument the double rounds to 0 is
+    // that argument (mpmath: log10 sinh(sin(1)^5000) = -374.804272802478; it read -0.301, sizing sinh(…)^-5000 at 1505)
+    expect(l("sinh(0)")).toBeNaN();
+    expect(l("sinh(sin(1)^5000)")).toBeCloseTo(-374.804272802478, 9);
   });
   it("(b) reads ln(1 ± u) and log10(1 ± u) as u where 1 ± u rounds to 1 in double", () => {
     // mpmath: log10 ln(1+sin(1)^5000) = -374.804272802478, log10 log10(1+sin(1)^5000) = -375.166488491177
@@ -98,6 +102,11 @@ describe("constantLog10 past the double by an asymptote (G403)", () => {
     expect(l("erfc(12)")).toBeCloseTo(-63.8676566722511, 2);
     expect(l("1-erf(12)")).toBeCloseTo(-63.8676566722511, 2);
     expect(l("erfc(6)")).toBeCloseTo(-16.6671630464354, 1);
+    // fix round 2: a sum Giac prints flat, (1+1)-erf(50) in its tree, holds the term 1-erf(50) (flatErfc)
+    const flat = (t: string): number => constantLog10(flatErfc(arithmeticOf(t, "printed")!)!);
+    expect(flat("1+1-erf(12)")).toBeCloseTo(-63.8676566722511, 2);
+    expect(flat("pi-1+erf(12)")).toBeCloseTo(-63.8676566722511, 2);
+    expect(flatErfc(arithmeticOf("2-erf(12)", "printed")!)).toBeNull();
     expect(l("erfc(12)^2")).toBeCloseTo(2 * -63.8676566722511, 2);
     // x ≤ 5 or not constant: no double here, as before
     for (const t of ["erfc(4)", "1-erf(5)", "erfc(x)", "2-erf(12)"]) expect(l(t), t).toBeNaN();
