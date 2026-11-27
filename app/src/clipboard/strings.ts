@@ -25,6 +25,7 @@ const clip = {
   "clip.copiedTable": "Copied the table as CSV",
   "clip.nothing": "Nothing to copy",
   "clip.noDigit": "No digit confirmed",
+  "unit.pasteRefused": "Paste: leave the unit view to change the number", // R895
   "clip.noExact": "No exact form",
   "clip.noResult": "No result yet",
   "clip.notNumber": "Paste: not a number",
