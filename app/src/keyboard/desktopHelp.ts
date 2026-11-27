@@ -17,7 +17,7 @@ function pressed(target: DeskTarget): string {
   if (!key) return target.key;
   if (key.user) return `${t("keys.user")} ${key.id.toUpperCase()}${target.layer === "shift" ? `, ${t("keys.shift")}` : ""}`;
   const label = key.label[target.layer] ?? key.label.primary ?? key.id;
-  return legend(WORD[label] ?? label);
+  return legend(WORD[label] ?? label).replaceAll("`", ""); // (R864: without the backticks that mark a template's letter, keyNames.ts plain)
 }
 
 /** The help text: the intro, then a line per key and layer that has a desktop key of its own. */

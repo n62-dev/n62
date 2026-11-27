@@ -57,7 +57,10 @@
 # Letters: Alpha types the capital in the alpha layer, Shift + Alpha its lower case (as on the reference); in the CAS
 # view the case is swapped (R58): Alpha alone is lower case, Shift + Alpha the capital. The letter line (bottom left)
 # draws the letter in the case Alpha and a flick down type in the view: lower case in CAS (R728).
-# `label` entries starting with "$" are i18n keys (app/src/i18n), anything else is shown as is.
+# `label` entries starting with "$" are i18n keys (app/src/i18n), anything else is shown as is, except a backtick pair (R864): the
+# letter between them stands for the template's operand, a variable, drawn in the variable face as R142's letters ("`x`²", "|`x`|"); a
+# modifier letter there (ʸ ˣ ⁿ: "`x``ʸ`", "e`ˣ`") is drawn as its letter, raised (keyboard/variable.ts parts). Spoken names and the
+# desktop keys' list read the label without the backticks; a user key's own label is never parsed. a b/c has none: no operand letter.
 #
 # Gestures (docs/decisions.md P7, P11; app/src/keyboard/gestures.ts and Keypad.svelte; tests app/test/gestures.spec.ts
 # and app/test/flicks.spec.ts):
@@ -167,7 +170,7 @@ keys:
     row: 4
     col: 0
     cls: fn
-    label: { primary: "xʸ", shift: "ⁿ√", alpha: F }
+    label: { primary: "`x``ʸ`", shift: "`ⁿ`√", alpha: F }
     primary:
       insert: "#@^{#?}"
       sample: ["3^{2}", "3^2"]
@@ -206,7 +209,7 @@ keys:
     row: 4
     col: 4
     cls: fn
-    label: { primary: ln, shift: "eˣ", alpha: J }
+    label: { primary: ln, shift: "e`ˣ`", alpha: J }
     primary: { insert: "\\ln\\left(#0\\right)", sample: ["\\ln\\left(2\\right)", "ln(2)"] }
     shift: { insert: "\\exponentialE^{#0}", sample: ["\\exponentialE^{2}", "exp(2)"] }
     alpha: { type: J }
@@ -215,7 +218,7 @@ keys:
     row: 4
     col: 5
     cls: fn
-    label: { primary: log, shift: "10ˣ", alpha: K }
+    label: { primary: log, shift: "10`ˣ`", alpha: K }
     primary: { insert: "\\log\\left(#0\\right)", sample: ["\\log\\left(100\\right)", "log10(100)"] }
     shift: { insert: "10^{#0}", sample: ["10^{2}", "10^2"] }
     alpha: { type: K }
@@ -226,7 +229,7 @@ keys:
     row: 5
     col: 0
     cls: fn
-    label: { primary: "x²", shift: "√", alpha: L }
+    label: { primary: "`x`²", shift: "√", alpha: L }
     primary:
       insert: "#@^{2}"
       sample: ["3^{2}", "3^2"]
@@ -241,7 +244,7 @@ keys:
     row: 5
     col: 1
     cls: fn
-    label: { primary: "(−)", shift: "|x|", alpha: M }
+    label: { primary: "(−)", shift: "|`x`|", alpha: M }
     primary: { type: "-" }
     shift: { insert: "\\left|#0\\right|", sample: ["\\left|-3\\right|", "abs(-3)"] }
     alpha: { type: M }
@@ -306,7 +309,7 @@ keys:
     row: 6
     col: 4
     cls: op
-    label: { primary: "÷", shift: "x⁻¹", alpha: T }
+    label: { primary: "÷", shift: "`x`⁻¹", alpha: T }
     primary:
       insert: "\\frac{#@}{#?}"
       sample: ["\\frac{5}{5}", "5/5"]

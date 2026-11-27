@@ -1366,3 +1366,4 @@ cases:
   - { id: "g620-keep-limit-inv", input: "limit(1/x,x,0)", expect: "infinity", source: "derived", note: "control: Giac's unsigned infinity for the two sides -infinity and +infinity (backlog F198), unchanged" }
   - { id: "g620-keep-limit-tan-pi/2", input: "limit(tan(x),x,pi/2)", expect: "infinity", source: "derived", note: "control: +infinity from the left, -infinity from the right, Giac's unsigned infinity as before" }
   - { id: "g620-keep-limit-sin-inv", input: "limit(sin(1/x),x,0)", expect: "No limit", source: "derived", note: "control: sin(1/x) has no limit at 0, refused as before (bounded_function)" }
+  - { id: "g382-string-digits-kept", input: "list[x,\"0.1234567890123456789\",evalf(1/3)]", expect: "{x,\"0.1234567890123456789\",0.333333333333}", source: "derived", note: "G382 (F206): a string's digits are text, never rounded to the display digits (it showed \"0.123456789012\"); the float beside it rounds as before, 1/3 to 12 digits" }

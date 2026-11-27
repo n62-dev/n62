@@ -140,6 +140,14 @@
     justify-content: flex-start;
     font: inherit;
   }
+  /* R781: Hand = Left mirrors the row (StatusLine.svelte mirrors its margins): ⌃ at the right end, its icon where ⌄'s is */
+  :global(:root[data-hand="left"]) .folded {
+    flex-direction: row-reverse;
+  }
+  :global(:root[data-hand="left"]) .unfold {
+    padding: 0 calc((var(--bar-h) - var(--icon-w)) / 2) 0 0;
+    justify-content: flex-end;
+  }
   /* the row's order (views/StatusLine.svelte places the tabs 1, the slot and the modes 3 and ☰ 5; `beforeMenu` puts the row buttons'
      slot just before ☰, so the page order is the row's but for the free stretch, which no focus reaches) */
   .unfold {

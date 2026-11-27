@@ -63,10 +63,10 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 |---|---|---|---|---|
 | 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Opus | `p1/ron-keepline` | – |
 | 892 | R729 key legends: armed ring, locked fill (K4); pass 252: review-only (`--no-worker`) of the kept branch at 6365316c | ron, Opus | `p1/ron-keylegends` | R723, R726, R728 |
-| 892a | [R864](packages/R864.md) the letter in a template key is italic | ron, Opus | `p1/ron-templateitalic` | R728, R729 |
-| 892b | [R865](packages/R865.md) Find stands out: a lens and a foot bar | ron, Opus | `p1/ron-findlook` | R861, R729, R864 |
-| 897 | [A257](packages/A257.md) host-cpu goes to the oldest waiter first | annabell, Sonnet | `p1/annabell-fairlock` | A256 |
-| 898 | [R781](packages/R781.md) a left-hand layout setting (owner, 2026-11-20) | ron, Opus | `p1/ron-lefthand` | R729 |
+| 892a | R864 the letter in a template key is italic | ron, Opus | `p1/ron-templateitalic` | R728, R729 |
+| 892b | R865 Find stands out: a lens and a foot bar | ron, Opus | `p1/ron-findlook` | R861, R729, R864 |
+| 897 | A257 host-cpu goes to the oldest waiter first | annabell, Sonnet | `p1/annabell-fairlock` | A256 |
+| 898 | R781 a left-hand layout setting (owner, 2026-11-20) | ron, Opus | `p1/ron-lefthand` | R729 |
 | 905 | [R796](packages/R796.md) Alpha + mol is cd in the unit view (K2) | ron, Opus | `p1/ron-candela` | – |
 | 906 | [R797](packages/R797.md) a hold copies in the unit view (U7) | ron, Opus | `p1/ron-unitholdcopy` | R790 |
 | 906a | [R895](packages/R895.md) Paste in units says why | ron, Opus | `p1/ron-unitpaste` | R797 |
@@ -105,12 +105,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| B9 | G403 a tiny constant raises the check's start | gorge, Opus | `p1/gorge-tinyconst` | – |
-| B9a | G791 hamdist: signed reads, opposite signs refused | gorge, Opus | `p1/gorge-hamdistsigned` | – |
-| B11 | G381 a float list stays a list | gorge, Opus | `p1/gorge-storedlist` | – |
-| B12 | [G382](packages/G382.md) a decimal inside a string is never rounded | gorge, Opus | `p1/gorge-stringdigits` | – |
-| B12a | [G807](packages/G807.md) a tiny σ keeps its second order, no false ⚠ (F490, pass 251) | gorge, Opus | `p1/gorge-tinysigma` | – |
-| B12b | [R935](packages/R935.md) a value rounding to 0 at σ draws no 21-digit σ (F491, pass 251) | ron, Opus | `p1/ron-zerosigma` | – |
+| B11 | [G381](packages/G381.md) a float list stays a list: review-only (`--no-worker`; pass 253) | gorge, Opus | `p1/gorge-storedlist` | G403f2 |
 | B13 | [G550](packages/G550.md) a Home row whose σ cannot be carried says so | gorge, Opus | `p1/gorge-sigmalost` | – |
 | B14 | [G400](packages/G400.md) Export › CSV and LaTeX carry a Home row's σ | gorge, Opus | `p1/gorge-exportsigma` | – |
 | B15 | [G640](packages/G640.md) Ans frozen in history: the tests | gorge, Opus | `p1/gorge-anstests` | – |

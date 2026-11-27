@@ -185,7 +185,7 @@ test("every unit and prefix face has one size before fitting, in all three layer
   expect(gal, "gal_US whole in its key").toBe(true);
 });
 
-// R803: the power keys read x², √x, x³, x⁴, ÷ and x⁻¹ (upright, as the main keypad's x²), whole at both phone widths
+// R803: the power keys read x², √x, x³, x⁴, ÷ and x⁻¹ (the legend upright, as the main keypad's x²; its x italic, R864: the test below), whole at both phone widths
 for (const [w, h] of [[412, 915], [360, 740]] as const)
   test(`the power cells read x², x³, x⁴, x⁻¹ and √x, whole and upright at ${w} × ${h}`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
@@ -431,3 +431,44 @@ test("the prefix legends end in a slot line too, scaled to the legend; no unit l
   );
   expect(units).toEqual([]);
 });
+
+// R864: in the unit view (5, then Shift + Tmpl) the x of x³, x⁴, x², √x and x⁻¹ is italic in the entry line's variable face (MathLive's
+// .ML__mathit), weight 400, as on the main keypad; the digits, √ and ⁻¹ stay upright, and the legend itself is upright
+for (const [w, h] of [[412, 915], [360, 740]] as const)
+  test(`the unit view's power cells draw their x italic and the rest upright at ${w} × ${h}`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
+    await open(page);
+    await tap(page, ["alpha", "vars"]); // A on the line: the variable face as the entry line draws it
+    const mathit = await page.evaluate(() => {
+      const el = document.querySelector("math-field")?.shadowRoot?.querySelector(".ML__mathit");
+      return el ? (getComputedStyle(el).fontFamily.split(",")[0] ?? "").trim().replace(/["']/g, "") : "";
+    });
+    expect(mathit).not.toBe("");
+    await page.evaluate(() => window.n62.entry.clear());
+    await tap(page, ["d5", "shift", "tmpl"]);
+    await page.waitForFunction(() => window.n62.unitView !== undefined && document.querySelector('[data-pad="op"]') !== null);
+    const want: Record<string, [string, string]> = { "pow/main": ["x", "³"], "pow/shiftlegend": ["x", "⁴"], "sq/main": ["x", "²"], "sq/shiftlegend": ["x", "√"], "div/shiftlegend": ["x", "⁻¹"] };
+    for (const state of [[], ["shift"]]) {
+      await tap(page, state);
+      const seen = await page.evaluate((ids) =>
+        ids.map((id) => {
+          const [key, part] = id.split("/");
+          const el = document.querySelector<HTMLElement>(`.pad [data-key="${key}"] .${part}`);
+          if (!el) return { id, italic: [] as string[], fam: [] as string[], weight: [] as string[], rest: "", style: "" };
+          const kids = [...el.querySelectorAll<HTMLElement>("*")].filter((e) => getComputedStyle(e).fontStyle === "italic");
+          let rest = "";
+          for (const n of el.childNodes) if (!(n instanceof HTMLElement && kids.includes(n))) rest += n.textContent ?? "";
+          return { id, italic: kids.map((e) => e.textContent ?? ""), fam: kids.map((e) => getComputedStyle(e).fontFamily), weight: kids.map((e) => getComputedStyle(e).fontWeight), rest, style: getComputedStyle(el).fontStyle };
+        }), Object.keys(want));
+      for (const s of seen) {
+        const at = `${state.join("+") || "plain"}: ${s.id}`;
+        const [letter, rest] = want[s.id] as [string, string];
+        expect(s.style, `${at}: the legend upright`).toBe("normal");
+        expect(s.italic, `${at}: the italic letter`).toEqual([letter]);
+        expect(s.rest, `${at}: the upright rest`).toBe(rest);
+        expect((s.fam[0] ?? "").split(",")[0]?.trim().replace(/["']/g, ""), `${at}: the variable face`).toBe(mathit);
+        expect(s.weight, at).toEqual(["400"]);
+      }
+      if (state.length) await page.evaluate(() => window.n62.session.releaseModifiers());
+    }
+  });

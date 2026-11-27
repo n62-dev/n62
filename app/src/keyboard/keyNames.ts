@@ -11,6 +11,10 @@ export { noFling } from "./noFling.ts";
 
 const LAYERS = ["primary", "shift", "alpha"] as const;
 
+/** A spec label without the backticks that mark a template's letter (R864, keyboard/variable.ts parts), as text: a spoken name, the
+ *  desktop keys' list. Here, in a lazy chunk, not in variable.ts: the start chunk carries none of it. */
+export const plain = (s: string): string => s.replaceAll("`", "");
+
 /** The key has this layer: a tap is always a layer; Shift and Alpha only where they do something. */
 export function hasLayer(key: Key, layer: Layer): boolean {
   const a = key.actions[layer];
@@ -45,7 +49,11 @@ function spoken(key: Key, layer: Layer, face: string): string | undefined {
  */
 export function layerName(key: Key, layer: Layer, cas: boolean, shift = false): string | undefined {
   if (!hasLayer(key, layer)) return undefined;
-  const face = (): string => legend(labelFor(key, layer === "shift" || (shift && layer === "alpha"), layer === "alpha", cas) || key.label.primary || "");
+  // (R864: a spec or unit-pad label without its backticks; a user's own label as typed)
+  const face = (): string => {
+    const f = legend(labelFor(key, layer === "shift" || (shift && layer === "alpha"), layer === "alpha", cas) || key.label.primary || "");
+    return key.user || key.pad === "user" ? f : plain(f);
+  };
   if (!specLayer(key, layer)) {
     const f = face();
     return spoken(key, layer, f) ?? (f || named(key.id) || undefined);

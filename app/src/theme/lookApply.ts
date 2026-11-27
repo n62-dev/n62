@@ -6,7 +6,7 @@ import { applyTheme, type Theme } from "./apply.ts";
 import { isLightBg, setBars } from "./bars.ts";
 import type { Look } from "./look.ts";
 
-/** The localStorage key of the mirror the inline script reads: `{ family, brightness, contrast, plain, shadow, bg }` (bg: the
+/** The localStorage key of the mirror the inline script reads: `{ family, brightness, contrast, plain, shadow, hand, bg }` (bg: the
  *  screen colour, for `<meta name="theme-color">`). IndexedDB stays the source. */
 export const LOOK_KEY = "n62.look";
 
@@ -39,11 +39,14 @@ function mirroredBg(): string {
   }
 }
 
-/** Key shadows (R156): `data-shadow="on"` on the root, as index.html sets it. Needs no file, so it is set at once (the
+/** Key shadows (R156) and Hand (R781): `data-shadow="on"` and `data-hand="left"` on the root, as index.html sets them. Needs no file, so it is set at once (the
  *  calls run in order, so the last one's value stays); the line's rule and its --key-edge are in the start CSS. */
 function shadow(look: Look, root: HTMLElement): void {
   if (look.shadow) root.setAttribute("data-shadow", "on");
   else root.removeAttribute("data-shadow");
+  // Hand (R781): `data-hand="left"` mirrors the keypad and the bar (Keypad.svelte, StatusLine.svelte, Fold.svelte); Right sets nothing
+  if (look.hand === "left") root.setAttribute("data-hand", "left");
+  else root.removeAttribute("data-hand");
 }
 
 async function put(look: Look): Promise<void> {

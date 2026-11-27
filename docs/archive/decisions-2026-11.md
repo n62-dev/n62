@@ -64,3 +64,8 @@ Moved here as they stood (links adjusted to this folder): decided entries of Opu
 - **Built, archived ("2026-11-12, evening"):** A73f1; R140–R150, R53; R95, R100, R94, R110; S12 (R66–R68, G45); R34, R43, R7, A4a points 3 and 4.
 - **Built, archived ("2026-11-12, evening"):** G78f1, G68, G84, G70, G71, G67, G65; A20 (G82); A12 and A62 (G83); A16 after G53; F50, F51 (G78); G33 and R56; A4a point 1 (G52); G20 (G28).
 - **Built, archived ("2026-11-12, evening"):** G81, R24d, R24b and R24c, G37, G15 and G25, the units menu ([spec/units-menu.yaml](../../spec/units-menu.yaml)).
+
+## Moved 2026-11-27 (Opus pass 253: decisions.md over 39 kB; built, the rules in code)
+
+- **G212:** a Home row keeps its stored values as `defsUsed` (the session line's `defs`), not drawn; +10 B at start accepted. Would change if: the owner wants them drawn.
+- **The LaTeX export (G232):** only a ⚠ row gets its reason (whyLine) after the result; `\approx` and `=` stand alone, as the CSV's mark column. Would change if: the owner wants the rounding reason in a document.

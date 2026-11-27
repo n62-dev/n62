@@ -62,6 +62,9 @@ function expected(): Map<string, boolean> {
     m.set(`${k.id}/shiftlegend`, hasShiftHint && isLetter(k.shift));
     m.set(`${k.id}/alphalegend`, hasAlphaHint && isLetter(k.alpha));
   }
+  // R864: the Alpha key's corners (R729's K4) are the letters its layers type, a and A
+  m.set("alpha/shiftlegend", true);
+  m.set("alpha/alphalegend", true);
   return m;
 }
 
@@ -201,4 +204,162 @@ test("the italic font arriving after the first paint moves no key or legend", as
   await page.waitForTimeout(500);
   expect(await boxes()).toBe(early);
   expect(await page.evaluate(() => (window as unknown as { __shifts: string[] }).__shifts)).toEqual([]);
+});
+
+// R864 (owner, 2026-11-22, point 16): the letter that stands for the operand of a template is a variable too, in the same face; the
+// rest of the legend (e, 10, √, |, the digits, ⁻¹) and every letter of a b/c stay upright. The raised letters (ʸ ˣ ⁿ) are drawn as
+// the plain letter, raised, in that face.
+/** key/part → [the italic letters in order, the upright rest, which italic letters are raised]. */
+const TEMPLATES: Record<string, [string[], string, boolean[]]> = {
+  "sq/main": [["x"], "²", [false]],
+  "pow/main": [["x", "y"], "", [false, true]],
+  "pow/shiftlegend": [["n"], "√", [true]],
+  "neg/shiftlegend": [["x"], "||", [false]],
+  "div/shiftlegend": [["x"], "⁻¹", [false]],
+  "ln/shiftlegend": [["x"], "e", [true]],
+  "log/shiftlegend": [["x"], "10", [true]],
+  "frac/main": [[], "a b/c", []],
+};
+interface Part { text: string; italic: boolean; family: string; weight: string; raised: boolean }
+/** The italic runs of a face or legend (its elements in the italic style) and the text left upright, with each run raised or not
+ *  (its bottom above the bottom of the rest by 0.2 em). */
+const runs = (page: Page, ids: string[], root = ".pad"): Promise<Record<string, { parts: Part[]; rest: string; style: string } | null>> =>
+  page.evaluate(([ids, root]) => {
+    const out: Record<string, { parts: Part[]; rest: string; style: string } | null> = {};
+    for (const id of ids) {
+      const [key, part] = id.split("/");
+      const el = document.querySelector<HTMLElement>(key === "*" ? root : `${root} [data-key="${key}"] .${part}`);
+      if (!el) {
+        out[id] = null;
+        continue;
+      }
+      const kids = [...el.querySelectorAll<HTMLElement>("*")].filter((e) => getComputedStyle(e).fontStyle === "italic");
+      const px = parseFloat(getComputedStyle(el).fontSize);
+      let base = -Infinity;
+      for (const n of el.childNodes) {
+        if (n instanceof HTMLElement && kids.includes(n) && n.getBoundingClientRect().height < px * 0.9) continue;
+        const r = document.createRange();
+        r.selectNode(n);
+        base = Math.max(base, r.getBoundingClientRect().bottom);
+      }
+      const parts = kids.map((e) => {
+        const c = getComputedStyle(e);
+        return { text: e.textContent ?? "", italic: true, family: c.fontFamily, weight: c.fontWeight, raised: e.getBoundingClientRect().bottom < base - 0.2 * px };
+      });
+      let rest = "";
+      for (const n of el.childNodes) if (!(n instanceof HTMLElement && kids.includes(n))) rest += n.textContent ?? "";
+      out[id] = { parts, rest, style: getComputedStyle(el).fontStyle };
+    }
+    return out;
+  }, [ids, root] as const);
+
+function checkTemplates(seen: Awaited<ReturnType<typeof runs>>, want: Record<string, [string[], string, boolean[]]>, mathit: string, where: string): void {
+  for (const [id, [letters, rest, raised]] of Object.entries(want)) {
+    const s = seen[id];
+    const at = `${where}: ${id}`;
+    expect(s, at).not.toBeNull();
+    if (!s) continue;
+    expect(s.style, `${at}: the legend itself upright`).toBe("normal");
+    expect(s.parts.map((p) => p.text), `${at}: the italic letters`).toEqual(letters);
+    expect(s.rest, `${at}: the upright rest`).toBe(rest);
+    s.parts.forEach((p, i) => {
+      expect(first(p.family), `${at} "${p.text}": the variable face`).toBe(mathit);
+      expect(p.family, `${at} "${p.text}"`).not.toContain("STIX Two Math");
+      expect(p.weight, `${at} "${p.text}": weight`).toBe("400");
+      expect(p.raised, `${at} "${p.text}": raised`).toBe(raised[i]);
+    });
+  }
+}
+
+for (const [w, h] of [[412, 915], [360, 740]] as const)
+  test(`the letter of a template is italic and the rest of its legend upright, every state, Plain keys off and on: ${w} × ${h}`, async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: w, height: h });
+    await open(page);
+    const mathit = first(await variableFamily(page));
+    for (const keys of ["colour", "plain"]) {
+      await set(page, keys);
+      await page.evaluate(() => window.n62.session.releaseModifiers());
+      for (const [name, shift, alpha, cas] of STATES) {
+        if (cas) await tap(page, ["@cas"]);
+        await page.evaluate(([s, a]) => {
+          window.n62.session.shift = s as boolean;
+          window.n62.session.alpha = a as boolean;
+        }, [shift, alpha]);
+        await page.waitForTimeout(120);
+        checkTemplates(await runs(page, Object.keys(TEMPLATES)), TEMPLATES, mathit, `${keys}, ${name}`);
+      }
+      await tap(page, ["@home"]);
+    }
+  });
+
+test("the variable face has no italic of the modifier letters ʸ ˣ ⁿ (so they are drawn as the letter, raised)", async ({ page }) => {
+  await open(page);
+  const mathit = first(await variableFamily(page));
+  // (to verify, docs: R864) a glyph the face lacks falls back: drawn with two different fallbacks behind it, its width differs
+  const covered = await page.evaluate(async (fam) => {
+    await document.fonts.load(`20px "${fam}"`, "xʸˣⁿ");
+    const c = document.createElement("canvas").getContext("2d") as CanvasRenderingContext2D;
+    const w = (ch: string, fb: string): number => {
+      c.font = `italic 40px "${fam}", ${fb}`;
+      return c.measureText(ch).width;
+    };
+    return Object.fromEntries(["x", "ʸ", "ˣ", "ⁿ"].map((ch) => [ch, w(ch, "monospace") === w(ch, "serif")]));
+  }, mathit);
+  expect(covered["x"], "the probe sees the face's own x").toBe(true);
+  for (const ch of ["ʸ", "ˣ", "ⁿ"]) {
+    if (covered[ch]) test.info().annotations.push({ type: "R864", description: `${mathit} has ${ch}: it could be drawn as itself` });
+    expect.soft(covered[ch], `${mathit} has no ${ch}`).toBe(false);
+  }
+});
+
+test("the key pop and the flick bubble draw a template's letter italic as its legend does", async ({ page }) => {
+  await open(page);
+  const mathit = first(await variableFamily(page));
+  for (const keys of ["colour", "plain"]) {
+    await set(page, keys);
+    const f = await touch(page, "sq");
+    await expect(page.getByTestId("key-pop")).toHaveText("x²");
+    checkTemplates(await runs(page, ["*/pop"], '[data-testid="key-pop"]'), { "*/pop": [["x"], "²", [false]] }, mathit, `${keys}: the key pop of x²`);
+    await f.end();
+    const g = await touch(page, "pow");
+    await g.move(0, -35);
+    await expect(page.getByTestId("flick-bubble")).toHaveText("n√");
+    checkTemplates(await runs(page, ["*/bubble"], '[data-testid="flick-bubble"]'), { "*/bubble": [["n"], "√", [true]] }, mathit, `${keys}: the bubble of ⁿ√`);
+    await g.move(0, 0);
+    await g.end();
+    await page.evaluate(() => window.n62.entry.clear());
+  }
+});
+
+// R864: R729's K4 puts a (top left) and A (bottom left) on the Alpha key, the letters its layers type: italic in the variable face;
+// its face and the Shift key's face stay upright
+test("the Alpha key's a and A are italic in the variable face at rest, Shift armed and Alpha armed; the faces of Alpha and Shift upright", async ({ page }) => {
+  await open(page);
+  const mathit = first(await variableFamily(page));
+  for (const [name, shift, alpha] of [["at rest", false, false], ["Shift armed", true, false], ["Alpha armed", false, true]] as const) {
+    await page.evaluate(([s, a]) => {
+      window.n62.session.shift = s as boolean;
+      window.n62.session.alpha = a as boolean;
+    }, [shift, alpha]);
+    await page.waitForTimeout(120);
+    const seen = await legends(page);
+    const at = (key: string, part: string): Seen => seen.find((s) => s.key === key && s.part === part) as Seen;
+    for (const part of ["shiftlegend", "alphalegend"]) {
+      const s = at("alpha", part);
+      expect(s.text, `${name}: alpha ${part}`).toBe(part === "shiftlegend" ? "a" : "A");
+      expect(s.style, `${name}: alpha ${part}`).toBe("italic");
+      expect(first(s.family), `${name}: alpha ${part}`).toBe(mathit);
+      expect(s.weight).toBe("400");
+    }
+    expect(at("alpha", "main").style, `${name}: the Alpha face`).toBe("normal");
+    expect(at("shift", "main").style, `${name}: the Shift face`).toBe("normal");
+  }
+});
+
+test("a user key's own legend is drawn as typed: a backtick in it is no marker (R864)", async ({ page }) => {
+  await open(page);
+  await page.evaluate(() => window.n62.userKeys.set("u1", "primary", { label: "`x`²", action: { type: "+" } } as never));
+  await expect(page.locator('[data-key="u1"] .main')).toHaveText("`x`²");
+  expect(await page.locator('[data-key="u1"] .main *').count()).toBe(0);
 });

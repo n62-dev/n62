@@ -31,7 +31,7 @@ import { binary64Of } from "./binary64.ts";
 import { isAlias } from "./decisionAlias.ts";
 import { ICDF_DIGITS, ICDF_FAILED, erfValueText, icdfCalls, icdfPolished } from "./icdf.ts";
 import type { GiacValue } from "./bridge.ts";
-import { callsOf, functionsIn, isError, isTimeout, KEYWORDS, LIST_TYPE, matrixTyped, type Quoting, RATIONAL, splitList, topLevelArgs, wholeCall, withoutStrings } from "./giacPrint.ts";
+import { callsOf, functionsIn, isError, isTimeout, KEYWORDS, LIST_TYPE, mapNumbers, matrixTyped, type Quoting, RATIONAL, splitList, topLevelArgs, wholeCall, withoutStrings } from "./giacPrint.ts";
 import { complexReads, complexReplacedIn, complexSafe, forValue, nonReal, partsOf, purgeReads } from "./complex.ts";
 import { literalStart, uncheckedPastCap } from "./literalPrec.ts";
 import { noiseFreeStores, noisePart, withoutDoubleNoise, ZERO, zeroInDouble } from "./rootofNoise.ts";
@@ -92,18 +92,18 @@ export function hasFloat(text: string): boolean {
  * G38: `text` (Giac's print of a value computed at P digits) with every float printed as Giac prints it at the display
  * digits `n` (the host's Digits must be `n`): each literal is rounded to n significant digits here and read back by
  * Giac, which prints it in its own style (`3.33333333333e+19`, `0.5`). The input is not run again, so no decision
- * made at P is redone at n (`piecewise(sin(10^50)>0,x,evalf(1/2)*x)` stays 0.5*x).
+ * made at P is redone at n (`piecewise(sin(10^50)>0,x,evalf(1/2)*x)` stays 0.5*x). A string's digits are text (G382).
  */
 export function floatsAtDigits(giac: Giac, text: string, n: number): string {
-  return text.replace(new RegExp(FLOAT_LITERAL.source, "g"), (lit) => {
-    const m = /^(\d*)\.?(\d*)(?:e([+-]?\d+))?$/.exec(lit);
-    if (!m) return lit;
+  return mapNumbers(text, (mant, e) => {
+    const m = mant.includes(".") || e ? /^(\d*)\.?(\d*)(?:e([+-]?\d+))?$/.exec(mant + (e ?? "")) : null; // an integer is no float
+    if (!m) return null;
     const all = m[1]! + m[2]!;
     const lead = all.search(/[1-9]/);
     if (lead < 0) return "0.0";
     let digits = all.slice(lead);
     let exp = m[1]!.length - lead + Number(m[3] ?? 0); // value = 0.<digits> × 10^exp
-    if (digits.length <= n) return lit;
+    if (digits.length <= n) return null;
     let kept = BigInt(digits.slice(0, n)) + (digits.charAt(n) >= "5" ? 1n : 0n);
     if (kept.toString().length > n) {
       kept /= 10n;
@@ -111,8 +111,8 @@ export function floatsAtDigits(giac: Giac, text: string, n: number): string {
     }
     digits = kept.toString();
     const out = giac.eval(`0.${digits}e${exp}`);
-    return isError(out) ? lit : out.trim();
-  });
+    return isError(out) ? null : out.trim();
+  }, "printed");
 }
 
 /** G58: the longest text Home runs Giac's regroup on. regroup does not look at its interrupt, and on long texts it ran

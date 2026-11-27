@@ -34,6 +34,12 @@
   --slot-w: 0.42em;
   --slot-gap: 0.08em;
   --slot-shift: -0.25em;
+  /* the Find key's lens in its top-right corner and the bar along its foot (R865), both in --ring */
+  --find-lens: 12px;
+  --find-bar: 4px;
+  /* a template's raised letter (R864: ʸ ˣ ⁿ, drawn as y x n in the variable face, which has no italic of them): its size and lift */
+  --raise-size: 0.75em;
+  --raise-lift: 0.4em;
   --fs-caption: 12px;
   --fs-small: 13px;
   --fs-note: 14px;

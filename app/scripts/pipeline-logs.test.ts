@@ -68,6 +68,14 @@ describe("timing tests of runs 150 and 152", () => {
     expect(isTiming("e2e", { file: "working.spec.ts", title: "a job shows Working… and Cancel only after 150 ms, and its row keeps the result's height" })).toBe(true);
     expect(isTiming("e2e", { file: "working.spec.ts", title: "the Cancel key stops a job" })).toBe(false);
   });
+  it("G403f2: the long-chain tests of literalPrec.test.ts are timing; its other tests are not", () => {
+    const t = (title: string) => isTiming("vitest", { file: "src/engine/literalPrec.test.ts", title });
+    expect(t("a long chain of terms (G403f1) > a sum of sin(1), 30000 terms: phase-1's start, no throw, 30000 take at most 6 times 10000 and under 1000 ms")).toBe(true);
+    expect(t("a long chain of terms (G403f1) > a sum of ones, 10000 terms: phase-1's start, no throw")).toBe(true);
+    expect(t("a long chain of terms (G403f1) > reads a deep tree with no recursion of constDouble.ts either (a power's base, a product beside a sum)")).toBe(false);
+    expect(t("literalStart > is P without a long literal")).toBe(false);
+    expect(isTiming("vitest", { file: "src/engine/other.test.ts", title: "x terms: phase-1's start, no throw" })).toBe(false);
+  });
   it("another failure in the same files is not timing", () => {
     expect(isTiming("vitest", { file: "src/engine/novalue.test.ts", title: "G78 on the real engine > keeps 1/0 undefined" })).toBe(false);
     expect(isTiming("vitest", { file: "src/engine/homeDeadline.test.ts", title: "Home's deadline (real Giac) > sin(1) answers" })).toBe(false);

@@ -16,14 +16,14 @@ describe("look", () => {
     expect(FAMILIES.map((f) => f.name)).toEqual(["N62", "Black & White", "Solarized"]);
   });
   it("R153: a stored look naming Teal reads as N62 and keeps its other three values; a stored bw stays bw", () => {
-    expect(validLook({ family: "teal", brightness: "light", contrast: true, plain: true }, { ...defaultLook(), family: "solarized" })).toEqual({ family: "n62", brightness: "light", contrast: true, plain: true, shadow: true, pops: true, findFull: false });
+    expect(validLook({ family: "teal", brightness: "light", contrast: true, plain: true }, { ...defaultLook(), family: "solarized" })).toEqual({ family: "n62", brightness: "light", contrast: true, plain: true, shadow: true, pops: true, findFull: false, hand: "right" });
     expect(renamedLook({ family: "teal", brightness: "dark", plain: true })).toEqual({ family: "n62", brightness: "dark", plain: true });
     expect(validLook({ family: "bw" }, defaultLook()).family).toBe("bw");
     expect(renamedLook({ family: "bw" })).toEqual({ family: "bw" });
   });
   it("R150: a stored look naming Graphite, Gruvbox or Nord reads as N62 and keeps its brightness, High contrast and Plain keys", () => {
     for (const family of ["graphite", "gruvbox", "nord"])
-      expect(validLook({ family, brightness: "light", contrast: true, plain: true }, { ...defaultLook(), family: "bw" })).toEqual({ family: "n62", brightness: "light", contrast: true, plain: true, shadow: true, pops: true, findFull: false });
+      expect(validLook({ family, brightness: "light", contrast: true, plain: true }, { ...defaultLook(), family: "bw" })).toEqual({ family: "n62", brightness: "light", contrast: true, plain: true, shadow: true, pops: true, findFull: false, hand: "right" });
     expect(validLook({ family: "x", brightness: "light" }, { ...defaultLook(), family: "bw" }).family).toBe("bw"); // an unknown name still falls back
   });
   it("R150: a backup's or a preset's look naming a retired family is renamed to n62 with the rest kept; the other families stay", () => {
@@ -40,8 +40,8 @@ describe("look", () => {
     }
   });
   it("first-start defaults: Dark in the Android app, System in the browser, High contrast when asked, key shadows on", () => {
-    expect(defaultLook()).toEqual({ family: "n62", brightness: "system", contrast: false, plain: false, shadow: true, pops: true, findFull: false });
-    expect(defaultLook(true, true)).toEqual({ family: "n62", brightness: "dark", contrast: true, plain: false, shadow: true, pops: true, findFull: false });
+    expect(defaultLook()).toEqual({ family: "n62", brightness: "system", contrast: false, plain: false, shadow: true, pops: true, findFull: false, hand: "right" });
+    expect(defaultLook(true, true)).toEqual({ family: "n62", brightness: "dark", contrast: true, plain: false, shadow: true, pops: true, findFull: false, hand: "right" });
   });
   it("R156: validLook gives shadow true when the field is missing, keeps a stored boolean, and the fallback's for a wrong type", () => {
     const off = { ...defaultLook(), shadow: false };
@@ -69,9 +69,20 @@ describe("look", () => {
     expect(validLook({ family: "bw", brightness: "dark", contrast: false, plain: false, shadow: true, pops: true, findFull: false }, on).findFull).toBe(false);
     expect(validLook({}, on).findFull).toBe(false);
     expect(validLook({ findFull: true }, defaultLook()).findFull).toBe(true);
-    expect(validLook({ findFull: false }, on).findFull).toBe(false);
+    expect(validLook({ findFull: false, hand: "right" }, on).findFull).toBe(false);
     expect(validLook({ findFull: "yes" }, on).findFull).toBe(false);
     expect(validLook({ findFull: 1 }, defaultLook()).findFull).toBe(false);
+  });
+  it("R781: validLook gives hand right when the field is missing or wrong, and keeps a stored left or right", () => {
+    const left = { ...defaultLook(), hand: "left" as const };
+    expect(defaultLook().hand).toBe("right");
+    expect(defaultLook(true, true).hand).toBe("right");
+    expect(validLook({ family: "bw", brightness: "dark", contrast: false, plain: false, shadow: true, pops: true, findFull: false }, left).hand).toBe("right");
+    expect(validLook({}, left).hand).toBe("right");
+    expect(validLook({ hand: "left" }, defaultLook()).hand).toBe("left");
+    expect(validLook({ hand: "right" }, left).hand).toBe("right");
+    expect(validLook({ hand: "Left" }, left).hand).toBe("right");
+    expect(validLook({ hand: true }, left).hand).toBe("right");
   });
   it("System follows the phone; the other two do not", () => {
     const l = { ...defaultLook(), family: "solarized" as const, plain: true };
@@ -80,7 +91,7 @@ describe("look", () => {
     expect(themeOf({ ...l, brightness: "light", contrast: true }, false)).toMatchObject({ brightness: "light", contrast: "high" });
   });
   it("validLook keeps the fallback for a wrong field; stepped goes round", () => {
-    expect(validLook({ family: "x", brightness: "light", contrast: 1, plain: true }, defaultLook())).toEqual({ family: "n62", brightness: "light", contrast: false, plain: true, shadow: true, pops: true, findFull: false });
+    expect(validLook({ family: "x", brightness: "light", contrast: 1, plain: true }, defaultLook())).toEqual({ family: "n62", brightness: "light", contrast: false, plain: true, shadow: true, pops: true, findFull: false, hand: "right" });
     expect(stepped(["a", "b", "c"], "c", 1)).toBe("a");
     expect(stepped(["a", "b", "c"], "a", -1)).toBe("c");
   });
@@ -160,6 +171,13 @@ describe("the inline script of index.html", () => {
     expect(off.attrs).toEqual({ "data-family": "n62", "data-brightness": "dark" });
     expect(off.written).toEqual([]);
     expect(runInline({ stored: { family: "n62", brightness: "dark", shadow: true } }).attrs["data-shadow"]).toBe("on");
+  });
+  it("R781: Hand: data-hand=left only for a stored left; right, missing or wrong sets nothing; no file for it", () => {
+    const left = runInline({ stored: { family: "n62", brightness: "dark", shadow: false, hand: "left" } });
+    expect(left.attrs).toEqual({ "data-family": "n62", "data-brightness": "dark", "data-hand": "left" });
+    expect(left.written).toEqual([]);
+    for (const hand of ["right", "Left", 1, undefined]) expect(runInline({ stored: { family: "n62", brightness: "dark", hand } }).attrs["data-hand"]).toBeUndefined();
+    expect(runInline({ throws: true }).attrs["data-hand"]).toBeUndefined();
   });
 });
 

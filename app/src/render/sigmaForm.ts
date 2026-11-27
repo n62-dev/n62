@@ -12,6 +12,9 @@ import { decimalFromString, formatReal, isZero, PREFIXES, roundSignificant, toTe
 import { withUnit } from "../state/results.ts";
 import { complexToLatex } from "./home.ts";
 
+/** The most digits σ is drawn plain with beside a zero value (HomeSettings.digits is at most 12; R935). */
+const LONG = 12;
+
 /** The value and σ of one "value ± σ", each in the same form (σ never negative). */
 export interface SigmaDrawn {
   value: FormattedNumber;
@@ -105,6 +108,14 @@ export function sigmaDrawn(v: DecimalValue, sv: DecimalValue, o: FormatOptions, 
   // STD and FIX drawn plain have no exponent; the other forms write theirs, E0 too (sci, eng in format.ts)
   const plainValue = f.prefix === undefined && f.p === 0 && (o.format === "STD" || (o.format === "FIX" && !fixSci));
   const value = written(v.neg && !zero, d, e, vl, f, plainValue);
+  // R935 (F491): a zero's σ drawn plain past 12 digits (0 ± 220000000000000000000) takes its own E form as sigmaAlone draws
+  // it (0 ± 2.2E20); SCI, ENG and PFX write the zero in σ's exponent or prefix, one form for both (0E20 ± 2.2E20, ENG 0E18 ± 220E18)
+  if (zero && k + 2 > LONG) {
+    const s = sigmaAlone(sv, o);
+    if (!s || (o.format !== "SCI" && o.format !== "ENG" && o.format !== "PFX")) return s && { value, sigma: s };
+    const z: FormattedNumber = s.prefix !== undefined ? { neg: false, mantissa: "0", exponent: null, prefix: s.prefix } : { neg: false, mantissa: "0", exponent: s.exponent };
+    return { value: z, sigma: s };
+  }
   // σ in the value's prefix or exponent; an exponent of 0 is not written on σ (9.810E0 ± 0.050). A σ finer than the
   // value's confirmed digits: in its own form (3.14159265359E20 ± 3.0, not 0.000000000000000000030E20)
   const sigma = last > k ? sigmaAlone(sv, o) : written(false, s2.digits, s2.exp, k, f, f.p === 0);
