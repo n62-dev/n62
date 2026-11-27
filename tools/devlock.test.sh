@@ -151,4 +151,79 @@ wait "$wp" 2>/dev/null || true
 ls -A "$T/c7/locks" | grep -q '^\.waiting' && fail "a waiter marker is left behind"
 unset N62_COORD
 
+# 8. A257: waiters take a lock in arrival order (the oldest live marker first)
+export N62_COORD="$T/c8" N62_LOCK_POLL=1; mkdir -p "$T/c8"; L8="$T/c8/locks"
+waiter() {  # <name> <wait s> [hold s]: acquires host-cpu, notes the order, holds, releases
+  ( "$DL" acquire host-cpu "$1" "$2" >/dev/null 2>&1 && { echo "$1" >> "$T/order"; sleep "${3:-2}"; "$DL" release host-cpu "$1" >/dev/null; } ) &
+}
+"$DL" acquire host-cpu holder >/dev/null
+: > "$T/order"
+waiter w1 60; sleep 1; waiter w2 60; sleep 1; waiter w3 60
+sleep 3.5   # the polls of an unordered acquire would now fall in the order w2, w3, w1
+"$DL" release host-cpu holder >/dev/null
+wait $(jobs -p) 2>/dev/null || true
+[[ "$(tr '\n' ' ' < "$T/order")" == "w1 w2 w3 " ]] || fail "waiters did not take the lock in arrival order: $(tr '\n' ' ' < "$T/order")"
+ls -A "$L8" | grep -q '^\.waiting\|^\.wtmp' && fail "a waiter marker is left behind after the queue emptied"
+# a try without a wait never jumps a live waiter and writes no marker; a free lock with no waiter is taken
+"$DL" acquire host-cpu holder >/dev/null
+waiter q1 60 1; sleep 1.5
+"$DL" release host-cpu holder >/dev/null
+rc=0; "$DL" acquire host-cpu jumper 0 >/dev/null 2>&1 || rc=$?
+[[ $rc -eq 1 ]] || fail "a try without a wait took the lock past a live waiter (exit $rc)"
+wait $(jobs -p) 2>/dev/null || true
+"$DL" acquire host-cpu free 0 >/dev/null || fail "a free lock with no waiter was not taken"
+"$DL" release host-cpu free >/dev/null
+# an old-format marker (empty; n62-next's devlock) is ordered by its file's mtime: one older than w2's arrival holds w2 back,
+# one dated after it does not
+"$DL" acquire host-cpu holder >/dev/null
+sleep 300 & oldp=$!
+: > "$L8/.waiting-host-cpu.$oldp"; touch -d '-30 seconds' "$L8/.waiting-host-cpu.$oldp"
+: > "$T/order"; waiter w4 6 1
+sleep 1; "$DL" release host-cpu holder >/dev/null
+wait $(jobs -p | grep -v "^$oldp$") 2>/dev/null || true
+[[ ! -s "$T/order" ]] || fail "a waiter took the lock past an older old-format marker: $(cat "$T/order")"
+touch -d '+60 seconds' "$L8/.waiting-host-cpu.$oldp"
+"$DL" acquire host-cpu w5 5 >/dev/null 2>&1 || fail "an old-format marker dated after the arrival held a waiter back"
+"$DL" release host-cpu w5 >/dev/null
+rm -f "$L8/.waiting-host-cpu.$oldp"
+# a waiter that dies (kill -9: its marker stays) leaves the queue: its marker is stale by the pid rule, any waiter removes it, and the next one is not blocked
+"$DL" acquire host-cpu holder >/dev/null
+setsid "$DL" acquire host-cpu dead 60 >/dev/null 2>&1 & dp=$!
+for _ in $(seq 1 30); do [[ -e "$L8/.waiting-host-cpu.$dp" ]] && break; sleep 0.1; done
+[[ -e "$L8/.waiting-host-cpu.$dp" ]] || fail "a waiter wrote no marker (looked for .waiting-host-cpu.$dp)"
+[[ "$(sed -n 1p "$L8/.waiting-host-cpu.$dp")" =~ ^[0-9]{15,}$ ]] || fail "the marker holds no arrival time: $(cat "$L8/.waiting-host-cpu.$dp")"
+kill -9 "$dp"; wait "$dp" 2>/dev/null || true
+[[ -e "$L8/.waiting-host-cpu.$dp" ]] || fail "the dead waiter's marker was gone at once (the test needs it left over)"
+: > "$T/order"; waiter w6 30 1; sleep 1
+"$DL" release host-cpu holder >/dev/null
+wait $(jobs -p | grep -v "^$oldp$") 2>/dev/null || true
+[[ "$(cat "$T/order")" == w6 ]] || fail "a dead waiter's marker blocked the next waiter: $(cat "$T/order")"
+[[ ! -e "$L8/.waiting-host-cpu.$dp" ]] || fail "a stale marker (pid gone) was not removed by a waiter"
+# a marker whose pid lives but with another start time (a reused pid, A64) is stale too
+echo 1000 > "$L8/.waiting-host-cpu.$oldp"; echo 1 >> "$L8/.waiting-host-cpu.$oldp"
+"$DL" acquire host-cpu w7 5 >/dev/null 2>&1 || fail "a marker of a reused pid held a waiter back"
+[[ ! -e "$L8/.waiting-host-cpu.$oldp" ]] || fail "a marker of a reused pid was not removed"
+"$DL" release host-cpu w7 >/dev/null
+kill "$oldp"; wait "$oldp" 2>/dev/null || true
+# a waiter that gives up at its wait leaves the queue (no marker) and does not block the next
+"$DL" acquire host-cpu holder >/dev/null
+rc=0; "$DL" acquire host-cpu quitter 2 >/dev/null 2>&1 || rc=$?
+[[ $rc -eq 1 ]] || fail "the waiter did not give up (exit $rc)"
+ls -A "$L8" | grep -q '^\.waiting' && fail "a waiter that gave up left its marker"
+: > "$T/order"; waiter w8 30 1; sleep 1
+"$DL" release host-cpu holder >/dev/null
+wait $(jobs -p) 2>/dev/null || true
+[[ "$(cat "$T/order")" == w8 ]] || fail "a waiter that gave up blocked the next: $(cat "$T/order")"
+# slice hands over to the oldest of several waiters, in order
+"$DL" slice me-s sleep 2 >/dev/null 2>&1 & sg=$!
+for _ in $(seq 1 50); do "$DL" status | grep -q 'host-cpu: me-s' && break; sleep 0.1; done
+: > "$T/order"; waiter x1 60 1; sleep 1; waiter x2 60 1; sleep 0.5
+wait "$sg"
+rc=0; N62_SLICE_WAIT=0 "$DL" slice me-t true >/dev/null 2>&1 || rc=$?   # the next slice of a loop does not jump the queue
+[[ $rc -eq 1 ]] || fail "slice: the next slice jumped the queue (exit $rc)"
+wait $(jobs -p) 2>/dev/null || true
+[[ "$(tr '\n' ' ' < "$T/order")" == "x1 x2 " ]] || fail "slice: waiters did not follow in arrival order: $(tr '\n' ' ' < "$T/order")"
+ls -A "$L8" | grep -q '^\.waiting\|^\.wtmp' && fail "markers left behind at the end"
+unset N62_COORD N62_LOCK_POLL
+
 echo "devlock.test.sh: ok"

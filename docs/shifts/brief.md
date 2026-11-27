@@ -65,7 +65,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 892 | R729 key legends: armed ring, locked fill (K4); pass 252: review-only (`--no-worker`) of the kept branch at 6365316c | ron, Opus | `p1/ron-keylegends` | R723, R726, R728 |
 | 892a | R864 the letter in a template key is italic | ron, Opus | `p1/ron-templateitalic` | R728, R729 |
 | 892b | R865 Find stands out: a lens and a foot bar | ron, Opus | `p1/ron-findlook` | R861, R729, R864 |
-| 897 | [A257](packages/A257.md) host-cpu goes to the oldest waiter first | annabell, Sonnet | `p1/annabell-fairlock` | A256 |
+| 897 | A257 host-cpu goes to the oldest waiter first | annabell, Sonnet | `p1/annabell-fairlock` | A256 |
 | 898 | [R781](packages/R781.md) a left-hand layout setting (owner, 2026-11-20) | ron, Opus | `p1/ron-lefthand` | R729 |
 | 905 | [R796](packages/R796.md) Alpha + mol is cd in the unit view (K2) | ron, Opus | `p1/ron-candela` | – |
 | 906 | [R797](packages/R797.md) a hold copies in the unit view (U7) | ron, Opus | `p1/ron-unitholdcopy` | R790 |
