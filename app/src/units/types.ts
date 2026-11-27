@@ -71,9 +71,9 @@ export interface UnitJob {
   endLog?: string;
   /** The source is an absolute temperature (°C, °F), already in K: a value below 0 K is refused. */
   absTemp?: true;
-  /** G370: the job is a temperature difference T1 − T2 (its slots intervals): each temperature as a number in K; one
-   *  below 0 K is refused. */
-  kelvin?: [string, string];
+  /** G370, G385: the job holds temperature differences T1 − T2 (the whole formula or bracketed groups, their slots
+   *  intervals): each temperature as a number in K; one below 0 K is refused. */
+  kelvin?: string[];
   /** G316: the dimension key of an absolute temperature source (K1). Its job has no `check`, and at absolute zero its
    *  value is an exact 0, which holds no dimension symbol: the 0 has this dimension, not a pure number's. */
   sourceDim?: string;
@@ -222,6 +222,8 @@ export type UnitError =
   | { error: "temperature" | "logarithmic" | "nofactor"; unit: string }
   /** G370: T1 − T2 of two temperature scales (K − °C, °C − °F): their symbols, as typed. */
   | { error: "scales"; units: [string, string] }
+  /** G385: T1 − T2 of one scale among more terms without brackets (80 °C − 20 °C + 5 K): brackets make it a difference. */
+  | { error: "bracket" }
   /** G32: rpm or rev against an angle (rad); `unit` is its symbol. */
   | { error: "cycle"; unit: string }
   /** G161: W, VA and var meet (a conversion or a sum): they differ by the power factor, not by a unit factor. */

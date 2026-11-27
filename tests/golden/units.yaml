@@ -127,9 +127,22 @@ cases:
   - { id: "td14", input: "80*{oC}-20*{oC}", to: "oC", message: "Use K or Δ°C for a temperature difference", source: "derived", note: "an absolute °C as the end slot would read the difference as a temperature" }
   - { id: "td15", input: "20*{oC}+5*{oC}", message: "Use K or Δ°C for a temperature difference", source: "derived", note: "control: a sum of two temperatures" }
   - { id: "td16", input: "(80*{oC}-20*{oC})+5*{oC}", message: "Use K or Δ°C for a temperature difference", source: "derived", note: "control: a third term" }
-  - { id: "td17", input: "(80*{oC}-20*{oC})^2", message: "Use K or Δ°C for a temperature difference", source: "derived", note: "control: a power around the difference" }
-  - { id: "td18", input: "2*(80*{oC}-20*{oC})", message: "Use K or Δ°C for a temperature difference", source: "derived", note: "control: a product around the difference" }
-  - { id: "td19", input: "(80*{oC}-20*{oC})/(2*{s})", message: "Use K or Δ°C for a temperature difference", source: "derived", note: "control: a quotient around the difference" }
+  - { id: "td17", input: "(80*{oC}-20*{oC})^2", oracle: "(F(80)-F(20))**2", expect: "3600", mark: "=", exact: "3600", dim: "K2", source: "oracle", note: "G385: a bracketed difference takes part in arithmetic, 3600 K² (was refused, G370)" }
+  - { id: "td18", input: "2*(80*{oC}-20*{oC})", oracle: "2*(F(80)-F(20))", expect: "120", mark: "=", exact: "120", dim: "K1", unit: "K", source: "oracle", note: "G385: a product around the difference (was refused, G370)" }
+  - { id: "td19", input: "(80*{oC}-20*{oC})/(2*{s})", oracle: "(F(80)-F(20))/2", expect: "30", mark: "=", exact: "30", dim: "K1s-1", source: "oracle", note: "G385: a quotient around the difference (was refused, G370)" }
+  # --- G385: a bracketed (T1 − T2) of one absolute scale is an interval in K anywhere in a formula (owner, 2026-11-16: "allow in arithmetic"); the rest follows today's rules, an absolute temperature outside such a group stays refused (G17) ---
+  - { id: "tg01", input: "(80*{oC}-20*{oC})+5*{K}", oracle: "F(80)-F(20)+5", expect: "65", mark: "=", exact: "65", dim: "K1", unit: "K", source: "oracle", note: "a difference plus an interval in K (was Use K or Δ°C)" }
+  - { id: "tg02", input: "2*{k:g}*4186*{J / k:g K}*(80*{oC}-20*{oC})", to: "J", oracle: "2*4186*(F(80)-F(20))", expect: "502320", mark: "=", exact: "502320", source: "oracle", note: "the heat formula m·c·(T1 − T2) (was refused)" }
+  - { id: "tg03", input: "(80*{oC}-20*{oC})/(120*{s})", oracle: "(F(80)-F(20))/120", expect: "0.5", mark: "=", exact: "1/2", dim: "K1s-1", source: "oracle", note: "a rate of change, 0.5 K/s" }
+  - { id: "tg04", input: "(80*{oC}-20*{oC})-(50*{oF}-32*{oF})", oracle: "F(80)-F(20)-(F(50)-32)*F(5,9)", expect: "50", mark: "=", exact: "50", dim: "K1", unit: "K", source: "oracle", note: "two groups of two scales: 60 K − 10 K, each group of one scale" }
+  - { id: "tg05", input: "(pasupm(80,0.5)*{oC}-pasupm(20,0.5)*{oC})+5*{K}", oracle: "F(65)", expect: "65", mark: "≈", exact: "65", dim: "K1", unit: "K", unc: "0.71", unc_oracle: "sqrt(2)*F('0.5')", shown: "65.00 ± 0.71", source: "oracle", note: "± on the sides: two independent inputs, 1 °C = 1 K in σ (td10)" }
+  - { id: "tg06", input: "((80*{oC}-20*{oC}))*2", oracle: "2*(F(80)-F(20))", expect: "120", mark: "=", exact: "120", dim: "K1", unit: "K", source: "oracle", note: "a group nested in more brackets" }
+  - { id: "tg07", input: "(-300*{oC}-20*{oC})*2", message: "Below absolute zero", source: "derived", note: "each temperature of a group must be one, as in G370 (td11)" }
+  - { id: "tg08", input: "(300*{K}-20*{oC})*2", message: "K and °C are two scales: write both temperatures in one", source: "derived", note: "control: two scales in one group, G370's message" }
+  - { id: "tg09", input: "2*80*{oC}-20*{oC}", message: "Use K or Δ°C for a temperature difference", source: "derived", note: "control: 2·80 °C − 20 °C is not a difference" }
+  - { id: "tg10", input: "80*{oC}-20*{oC}+5*{K}", message: "Put the temperature difference in brackets: (T1 − T2)", source: "derived", note: "control: a difference without brackets inside a longer formula" }
+  - { id: "tg11", input: "(80*{oC}-20*{oC})+5*{oC}+1*{K}", message: "Use K or Δ°C for a temperature difference", source: "derived", note: "control: an absolute temperature outside the group (G17)" }
+  - { id: "tg12", input: "(80*{oC}+20*{oC})*2", message: "Use K or Δ°C for a temperature difference", source: "derived", note: "control: a sum of two temperatures is no group" }
   - { id: "l01", input: "1*{W}", to: "dBm", oracle: "10*log10(1000)", expect: "30", mark: "=", exact: "30", source: "derived", note: "10·log10(P / 1 mW)" }
   - { id: "l02", input: "1*{Np}", to: "dB", oracle: "20/ln(10)", expect: "8.68588963807", mark: "≈", exact: "20/ln(10)", source: "derived", note: "the field-quantity convention: 1 Np = 20/ln 10 dB" }
   - { id: "l03", input: "30*{dBm}", to: "W", oracle: "F(1)", expect: "1", mark: "=", exact: "1", source: "derived" }

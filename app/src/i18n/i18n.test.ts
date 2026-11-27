@@ -61,6 +61,8 @@ const FAMILIES: readonly { prefix: string; suffixes: readonly string[] | "any"; 
   { prefix: "units.cat.", suffixes: "any", file: "units/menu.ts" }, // a category of the unit tables
   { prefix: "units.cell.", suffixes: ["tap", "up", "down"], file: "units/find.ts" },
   { prefix: "units.const.", suffixes: "any", file: "units/menu.ts" }, // R92: a constant list of spec/units-menu.yaml, Math's e, pi, i
+  // G385: a unit-view refusal without a value, its key from the error (unitErrorMessage)
+  { prefix: "units.", suffixes: ["power", "temperature", "bracket", "level", "belowzero", "function", "divzero", "uncpower", "sigma", "store", "engine"], file: "units/messages.ts" },
   { prefix: "units.tool.", suffixes: ["end", "si", "alts", "unit", "number", "store"], file: "units/menu.ts" }, // R92: a tool's row (units/tools.ts ToolId)
 ];
 
