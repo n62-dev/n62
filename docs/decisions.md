@@ -89,7 +89,6 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **An undecided decision is refused (owner, 2026-10-19; built by G57):** a sign, comparison, floor or branch on a cut Giac cannot decide is refused as undecided, never a guess. Would change if: refusals turn up in everyday work where a ⚠ value served better.
 - **F29 (2026-10-18, G2 item 54): `exp` ignores the angle mode,** as on the G2 (`e^(i·90)` is −0.4481+0.8940·i in both modes); built by G21. Would change if: a Giac patch (G21b) replaces the rewrite.
 - **R29: the parser's messages, and a space between two numbers (2026-10-17).** The messages are i18n keys (R52); a space between two numbers is an error ("put × between two numbers", R51), though the G2 gives 6. Archived.
-- **G19 (2026-10-17): after a safe start, the next launch tries the stored definitions again.** Would change if: crashing definitions cost too many restarts in use.
 - **R18f1, R18f2 (2026-10-14): tests.** An exact true/false carries no mark; a test with a float side runs again at 14 and at P digits (true ≈, false ≈, or as typed). Archived. Would change if: a function is audited.
 - **P9 (2026-10-12): typed decimals in the CAS view become exact, as in Home;** `approx()` gives marked decimals.
 - **P10 (2026-10-12): Giac's English help lines in Find.** Confirmed by B. Parisse (email, 2026-10-19): `aide_cas` is entirely GPL; the non-GPL French documentation means R. De Graeve's LaTeX/PDF manuals.
@@ -154,8 +153,6 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **Stored definitions** (G3): rule: docs/04 6.2 `defs` and 2.4 "Built in G3"; k ≥ 15 in `evalf(<exact>,k)`; the defs load times out after 3 s and a timed-out store is never saved over.
 - **Built, archived ("2026-11-16, Ultra"):** G154; G148, G148f1, G148f2; The session line (G210, G211); Copy as Python (G213, G214); A stored name's mark in Vars (S53f1); R258: a stored value of more than one letter is `\operatorname{name}`. The Plot draws a stored real value (owner, 2026-11-16; R361); user functions are not drawn.
 - **G307 past the cap:** a huge `pi^n` or `exp(n)` past `MAX_EVAL_DIGITS` counts for the value only in a small value or an argument read modulo 2π (G348); then ⚠; a decision always counts it. Archived. Would change if: S20.
-- **G212:** a Home row keeps its stored values as `defsUsed` (the session line's `defs`), not drawn; +10 B at start accepted. Would change if: the owner wants them drawn.
-- **The LaTeX export (G232):** only a ⚠ row gets its reason (whyLine) after the result; `\approx` and `=` stand alone, as the CSV's mark column. Would change if: the owner wants the rounding reason in a document.
 - **Built, archived ("2026-11-17, the fix lane"):** G22, G26, G371; G92, G93; The angle mode, route R (S14, R64, G46); R18; Home number formats; Solve and Plot; Function app; Parser (L6); Discrete distributions (G113, G113f1); G140; R55; R36f1; t06 and Find (R221); G158; Unequal shapes are refused.
 - **Home and CAS share one Giac context, each with its own Ans** (`pasans`, `pcasans`). Would change if: G2 item 52 shows separate variables.
 - **R39 (Function, Solve; S12):** a literal fraction exponent is reduced first (`(-8)^(2/6)` = −2); the root template stays the real root in every view.
@@ -168,6 +165,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **arg(0) and atan2(0, 0) (G362):** both are 0, as Giac gives them and as C's atan2 and Python's cmath.phase do; Find's lines say so. Would change if: the owner wants the angle of 0 refused.
 - **G806's float pivots (pass 249):** det or rank of a float matrix is ⚠ without a count when patch 0071 warns, a singular typed one too: `rank(approx([[0.1,0.3],[0.2,0.6]]))` is ⚠ 1 (its doubles are exactly singular, 0.2 = 2·0.1, 0.6 = 2·0.3, but equal inexact products look like a coincidence; the golden row's note is wrong there); `rank(approx([[1,1],[1,1]]))` stays =. Would change if: the patch proves a product pair equal.
 - **G404's climb (pass 249):** its top level is CLIMB_TOP = 980 (the check's second run at MAX_EVAL_DIGITS); infinite at every level is ⚠ past the cap when its stated size is within MPFR's range, else an overflow; CAS approx and evalf climb as Home's; a list element past reach leaves Giac's text. Would change if: a value finite only from 981 digits.
+- **Built, archived (Opus pass 253):** G19, R87, G116 in archive/decisions-2026-10.md, G212, G232 in archive/decisions-2026-11.md; their rules stand in code.
 
 **Units**
 - **Built, archived ("2026-11-17, the fix lane"):** G17; G13, G7; R24a, R24af1; R61; R63; R92; The deep check of 2026-10-19 (G41).
@@ -193,8 +191,6 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **Releases:** the engine built in the pinned container (P2), `setarch -R`, bit-reproducible. **Minimum WebView:** Chrome 111 (R160; minSdk 24). Archived.
 - **Tests:** the golden gate as docs/04 7.3; values `derived` or `oracle`; timing tests skip their assertion under load; a DOM count is a Playwright test (R132). Archived.
 - **Built, archived ("2026-11-16, Ultra"):** A47b; A45; R38b, R88; G119; G172; A101.
-- **R87:** no ISC or UIUC text in `LICENSES/`: yaml is build-time only, Emscripten's runtime ships under MIT (THIRD_PARTY.md). Would change if: a shipped part needs another licence's text.
-- **G116, the sweep oracle:** on atanh's cut it takes Giac's side (+π/2·i for a real x > 1), and an argument on a cut within noise is a skip. Would change if: a case shows Giac off the textbook side.
 - **G798, what a law's side claims:** `=` its exact value, `≈` every shown digit, `⚠ n` n digits (as the sweep's judge reads it), a bare `⚠` or `⚠ 0` nothing; so G622's inverse with ⚠ 14 on a wrong matrix fails its law. Would change if: the owner reads "with ⚠ on either side it passes" as every ⚠.
 - **G798's det rows (pass 239):** F479's rows join G622; patch 0068 fixed them (seed 20781: 3 → 0). Would change if: they return.
 - **Start chunk room (owner, 2026-11-09):** a package over the pin raises it as docs/04 8.3 says; one over the 63 kB budget gets a cut, never an allowance. Would change if: the owner moves the budget.
