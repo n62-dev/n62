@@ -299,6 +299,27 @@ describe("the key legends' lit, filled and dimmed text (R729)", () => {
 // at least 3:1 (WCAG 1.4.11, a control told apart) in every family, brightness, High contrast and Plain keys; drawn dead, in
 // --key-text-dead, still there (1.5:1)
 describe("the Find key's lens and bar (R865)", () => {
+  // the rules themselves, read from Keypad.svelte (findkey.spec.ts checks them as drawn): one ink, --ring by default, --key-text under
+  // Plain keys, --key-text-dead on a dead Find; a ::before lens and a 4 px inset foot bar above the key shadow; gradients, no mask
+  const src = readFileSync(new URL("./keyboard/Keypad.svelte", import.meta.url), "utf8");
+  const style = src.slice(src.indexOf("<style>"));
+  const rule = (sel: string): string => {
+    const at = style.indexOf(`${sel} {`);
+    return at < 0 ? "" : style.slice(at, style.indexOf("}", at));
+  };
+  it("Keypad.svelte draws the lens and the bar in one ink: --ring, Plain keys --key-text, dead --key-text-dead", () => {
+    expect(style).toMatch(/--find-ink:\s*var\(--ring\)/);
+    expect(rule(':global(:root[data-keys="plain"]) .pad')).toMatch(/--find-ink:\s*var\(--key-text\)/);
+    expect(rule('.key[data-key="math"][data-dead="true"]')).toMatch(/--find-ink:\s*var\(--key-text-dead\)/);
+    const lens = rule('.key[data-key="math"]::before');
+    expect(lens).toMatch(/content:\s*""/);
+    expect(lens).toMatch(/position:\s*absolute/);
+    expect(lens).toMatch(/color:\s*var\(--find-ink\)/);
+    expect(lens).toMatch(/gradient\(/);
+    expect(lens).not.toMatch(/mask/);
+    expect(rule('.key[data-key="math"]')).toMatch(/box-shadow:\s*inset 0 calc\(-1 \* var\(--find-bar\)\) 0 var\(--find-ink\),\s*var\(--key-drop\)/);
+    expect(css).toMatch(/--find-bar:\s*4px;/);
+  });
   const all = allThemeBlocks();
   it("reads the 24 theme combinations", () => expect(all).toHaveLength(24));
   for (const [sel, t] of all)
