@@ -67,7 +67,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 892b | [R865](packages/R865.md) Find stands out: a lens and a foot bar | ron, Opus | `p1/ron-findlook` | R861, R729, R864 |
 | 893 | [R701](packages/R701.md) the folder plugin (F380) | annabell, Sonnet | `p1/annabell-folderproxy` | – |
 | 894 | R710 Plot draws its axes (F385) | ron, Opus | `p1/ron-plotaxes` | – |
-| 895 | [R709](packages/R709.md) every control has a spoken name (F384) | ron, Opus | `p1/ron-spokennames` | – |
+| 895 | R709 every control has a spoken name (F384) | ron, Opus | `p1/ron-spokennames` | – |
 | 896 | [A256](packages/A256.md) a sync run is audited | annabell, Sonnet | `p1/annabell-syncaudit` | – |
 | 897 | [A257](packages/A257.md) host-cpu goes to the oldest waiter first | annabell, Sonnet | `p1/annabell-fairlock` | A256 |
 | 898 | [R781](packages/R781.md) a left-hand layout setting (owner, 2026-11-20) | ron, Opus | `p1/ron-lefthand` | R729 |
