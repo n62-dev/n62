@@ -11,7 +11,6 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **G622f2, a singular float inv:** Recommended: refuse, as exact inv does. `inv(approx(10^-9*[[2.5,2E8,e],[2.5,π,2E-3],[5,2E8+π,e+2E-3]]))` is 1E14–1E22 noise, row 3 ≈.
 - **The release bar's week (A273, G799; pass 241):** Recommended: a night counts when every `NIGHTLY` finding falls under a package or bug line the pass names (no new cause), as the clock seed never repeats a known row. Night 1 (11-25): all 118 named (G802, G804, G805, G622f2, F145, F480, F487).
 - **R779, the drag after the arrow keys, on the Fairphone:** not reproduced in Chromium touch emulation (linetouch.spec.ts R779 cases); lineTouch.ts now ends a stale touch. Does the drag work on the Fairphone 6? If not, record `adb` pointer events for the sequence.
-- **G800's two findings (the unit sweep's known rows; no package yet):** F490: a σ under about 1E-154 gets ⚠ "first order does not hold here" (`pasupm(1E-170,1E-172)*{m}*2`; the share in evaluate.ts is worked out in doubles), a false ⚠, no wrong digit. F491: a value that rounds to 0 at σ's place draws σ plain from the units place, so `3E18 ± 1.2E20 m`'s headline reads `0 ± 120000000000000000000` in STD and SCI. Recommended: a package each; F491's σ in E form past 12 digits, as sigmaAlone.
 - **K22 after G385:** `80 °C − 5 K` (a temperature less an interval) keeps today's refusal and words, "Use K or Δ°C for a temperature difference"; G385 adds words only for an unbracketed `T1 − T2` in a longer formula. Recommended: keep; 75 °C needs a rule of its own (a point plus an interval), a package if wanted.
 - **A278, e2e on a built app (measured 2026-11-26):** Recommended: after the tag, and only if A281f1's clipboard per test leaves the e2e round over 450 s: a `vite build --mode e2e` served by `vite preview` is 26–34 % faster per test, but 73 of 207 spec files import `/src/` and need changes (about 1.5 days).
 
@@ -42,7 +41,6 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **Super mode dropped (owner, 2026-11-22):** no super mode; Select then ⌫ deletes a block; the unit view's slot buttons (R853), Your keys one window (R849, R848), N62 Light's Enter (R843). Built; full text: [archive/decisions-2026-11.md](archive/decisions-2026-11.md).
 - **Owner answers of 2026-11-21, night:** R128: another device's newer backup is offered as soon as the folder is chosen (the same one offer; R855). R770: a sheet under 120 px drops its margins, as built. R780: `.` and the space bar pick rows 11 and 12; longer lists number 1–10 and take letters, as built. G369: a % chip in Home is its pure number (0.42 % is 0.0042; G782).
 - **Touch, keys and Store (owner, 2026-11-10; the keys 2026-11-12):** as built (docs/05 3.5; docs/04 5.5); the keys: [06-keypad-vs-g2.md](06-keypad-vs-g2.md) section 3b. Archived. Would change if: A139 shows the gestures clash on a real WebView.
-- **Built, archived ("2026-11-12, evening"):** A73f1; R140–R150, R53; R95, R100, R94, R110; S12 (R66–R68, G45); R34, R43, R7, A4a points 3 and 4.
 - **Built, archived ("2026-11-17, the fix lane"):** R140's colour-vision floors (owner, 2026-11-07); R50 (owner 2026-11-07): three themes; Redo after ⌫ (R15c2).
 - **Owner answers of 2026-11-02 (vision; interview with sandra).** A working engineer, phone first; units and constants first; no AI in the app; marks, σ and digit groups each a setting. Archived. Would change if: an outside round shows another first user.
 - **Owner answers of 2026-11-02.** Stored names (R33) get a colour token per theme; the app's switch alone decides key vibration (A9, R112); the splash Dark (A59); the bars follow the look (owner, 2026-11-22, A266). Archived. Would change if: users want the system switch to mute the keys.
@@ -77,7 +75,6 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 ### Precision, engine and parser
 - **G141: a literal past `MAX_EVAL_DIGITS` makes the value ⚠ unchecked,** a power of ten too; G126's and G153's rows turn ⚠ until S20.
-- **Built, archived ("2026-11-12, evening"):** G78f1, G68, G84, G70, G71, G67, G65; A20 (G82); A12 and A62 (G83); A16 after G53; F50, F51 (G78); G33 and R56; A4a point 1 (G52); G20 (G28).
 - **G58, G59:** a Giac call deaf to its interrupt gets a `control_c()` patch at its cause (P19); when the exact and numeric answers disagree Home shows ⚠. Archived.
 - **S13, G57 (owner, 2026-10-20; built by G65): names from Giac's state;** an undecided run-once store is refused as `a:=` is. Archived. Would change if: A16's RAD Enter p95 > 150 ms.
 - **P19 (2026-10-20): a Giac bug is fixed at its cause** (patch, canary, link to Parisse; a TypeScript workaround only for a cause that is not local, registered in S17). Rule: `docs/rules-core.md`. Archived.
@@ -93,7 +90,6 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **P9 (2026-10-12): typed decimals in the CAS view become exact, as in Home;** `approx()` gives marked decimals.
 - **P10 (2026-10-12): Giac's English help lines in Find.** Confirmed by B. Parisse (email, 2026-10-19): `aide_cas` is entirely GPL; the non-GPL French documentation means R. De Graeve's LaTeX/PDF manuals.
 - **G783:** a free name keeps ln(1/x) and sqrt(1/x); the rewrite needs a proven positive argument (owner, 2026-11-22).
-- **K22 (owner, 2026-11-17):** the unit view's refusal of `80 °C − 5 K` and its words wait for G385, after the tag.
 - **P5 (2026-10-11; owner, 2026-11-16): behaviour against the reference.** The maths is Giac's wherever possible; it departs only where Giac gives a silent wrong answer. The G2 guides the keys and the flow, not the maths: its Home is HP's own engine, so a G2 result alone never changes a result, and no G2 question asks about maths. Home keeps Giac's principal root (complex `sqrt(-4)`, `asin(2)`), the ∛ template, Function and Solve the real odd root (R39). Archived.
 - **P8 (2026-10-12): the engineer core:** milestones 4, 5, 6, each with benchmark tasks; fewer features done well beat G2 parity.
 - **P4 (2026-10-11): the reference's logical key layout, our own look;** ▲ on an empty line picks the last history row.
@@ -102,7 +98,6 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **Ans in history (owner, 2026-11-20, G642/R836):** frozen in the history row, live on the entry line, a recalled row comes back live. Rejected: literal digits (1/3 ×3 gives 0.999999999999 or ≈1, σ and unit lost), Giac text (radians, no text over 2 kB), numbered ans1/ans2 (numbers shift when rows are deleted). Would change if: the G2 re-resolves a recalled Ans differently (tests/golden/g2.yaml question) or daily use asks.
 - **Ans in the unit view (R259; owner, 2026-11-12):** no slot before v0.1.0; an Ans with a unit or σ is refused, naming its row's chip. Would change if: daily use asks (≈0.5 d).
 - **Prefix entry (owner, 2026-10-31; night review fh-8):** Home has none; a prefix goes in the unit view's prefix cells (P11, docs/05 §7.2), and docs/04 2.7's prefix chip is dropped.
-- **Built, archived ("2026-11-12, evening"):** G81, R24d, R24b and R24c, G37, G15 and G25, the units menu ([spec/units-menu.yaml](../spec/units-menu.yaml)).
 - **S1 (2026-10-13): the unit slots.** The number comes before the units key; digits in a slot are only exponents; a live reading under the slot. Archived.
 - **S4 (2026-10-18): a library file carries definitions only;** settings and key slots go only in the backup. Archived. Would change if: keyboard set-ups are shared (a `// key:` line).
 - **U1–U6 over the unit pad (R838; pass 230):** while the pad is up they are its cells (R24d), so a user key that holds Settings or Mode does not open it there; Shift + Help, the bar's chip and Alt + Shift + O do. Would change if: the owner wants his user keys over the pad.
