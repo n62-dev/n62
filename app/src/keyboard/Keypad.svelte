@@ -500,6 +500,7 @@
     --on-c-shift: var(--on-key-shift);
     --on-c-alpha: var(--on-key-alpha);
     --dim: var(--key-text-dead);
+    --find-ink: var(--ring); /* R865: the Find key's lens and bar */
   }
   /* Key shadows (R156, Appearance): a solid line under each key and the round pad, in the row gap, drawn as a shadow so
      no key's box or touch area moves; an empty slot (outlined) and the pad's arrow zones have none */
@@ -625,6 +626,32 @@
   }
   .key[data-user="set"] {
     box-shadow: inset 0 0 0 var(--stroke-thin) var(--key-muted), var(--key-drop);
+  }
+  /* R865 (owner, 2026-11-22, way A): Find (the Math place's tap, the same key in the unit view) stands out without a fill (Enter's)
+     or a ring (armed, R729): a lens in its free top-right corner and a bar along its foot, in --ring, 3:1 on --key-fn in every
+     look; Plain keys --key-text, drawn dead --key-text-dead. Gradients, no mask (Chromium reads it bare only from 120, floor 111);
+     out of the flow, so the face and the legends keep their places */
+  :global(:root[data-keys="plain"]) .pad {
+    --find-ink: var(--key-text);
+  }
+  .key[data-key="math"][data-dead="true"] {
+    --find-ink: var(--key-text-dead);
+  }
+  .key[data-key="math"] {
+    box-shadow: inset 0 calc(-1 * var(--find-bar)) 0 var(--find-ink), var(--key-drop);
+  }
+  .key[data-key="math"]::before {
+    content: "";
+    position: absolute;
+    top: var(--sp-05);
+    right: var(--key-pad);
+    width: var(--find-lens);
+    height: var(--find-lens);
+    color: var(--find-ink);
+    background:
+      radial-gradient(circle at 41% 41%, transparent calc(var(--find-lens) * 0.22), currentColor calc(var(--find-lens) * 0.235) calc(var(--find-lens) * 0.335), transparent calc(var(--find-lens) * 0.35)) no-repeat,
+      linear-gradient(45deg, transparent calc(50% - var(--find-lens) * 0.06), currentColor calc(50% - var(--find-lens) * 0.05) calc(50% + var(--find-lens) * 0.05), transparent calc(50% + var(--find-lens) * 0.06)) right bottom / 36% 36% no-repeat;
+    pointer-events: none;
   }
   /* the unit pad's prefix cells (R24b): their own colour and a slot line after the letter (R866): the colour alone differed by 1.1:1 */
   .key[data-pad="prefix"] {
