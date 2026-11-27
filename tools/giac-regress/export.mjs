@@ -664,6 +664,9 @@ export const PATCHED_IDS = new Map([
   ["g802-home-inv-exp-approx-entry-scaled-00-40", "0069-vector-mpfr-arith-recursion.patch"],
   // G804: Zeta of a complex argument right at 40 digits (patch 0070 sizes Eta's series by the precision; ⚠ rows before it, not exported)
   ["g140-zeta-half+i-over-2^300-30", "0070-vector-entry-mpfr-precision.patch"], ["g140-zeta-half+i-plus-pi-30", "0070-vector-entry-mpfr-precision.patch"],
+  // G791 (F476): misc.cc giac_hamdist read a negative _INT_ beside a _ZINT as 2^32+v; the g791-keep-* rows pass on stock and stay in
+  // the check file; the refusals of opposite signs are written lines below
+  ...["hamdist-neg1-neg2^40", "hamdist-neg2^40-neg1", "hamdist-neg3-neg2^70", "hamdist-neg1-neg2^31"].map((k) => [`g791-${k}`, "0072-hamdist-signed-opposite-signs.patch"]),
 ]);
 // G122: Giac's exact answer is right (patch 0014), but pc()'s evalf of it at Digits 40 cancels the digits of a large k*pi
 // (asin(cos(30!)) = -pi/2+30!-k*pi with k of 32 digits keeps about 7, -pi/2+10^50-k*pi none); Home raises the precision
@@ -1148,6 +1151,13 @@ export function build(cases) {
     ["half-after-power", "2^100:; ", "convert(129,2,1/2)"],
   ]) {
     patched.push("// patch 0067-convert-subtype-integer.patch", `// g803-convert-129-2-${k}-refused (derived: no integer subtype; Parisse, 2026-11-24: "it should probably error")`, `Digits:=40:; ${pre}pasr:=0:; try { ${input}; } catch (err) { pasr:=1; }:; pc("g803-convert-129-2-${k}-refused",'pasr',1,1/10^30);`);
+    nPatched++;
+  }
+  // Patch 0072 (G791, F476), written lines: hamdist of two integers of opposite signs gave a count (mpz_hamdist's largest bit count,
+  // 31 low bits of a small pair, a negative _INT_ read as 2^32+v); now refused (pasr 1). The golden g791-*-refused rows are refusals,
+  // which the export leaves out.
+  for (const [k, input] of [["neg1-2^40", "hamdist(-1,2^40)"], ["2^40-neg1", "hamdist(2^40,-1)"], ["neg2^40-2^40", "hamdist(-2^40,2^40)"], ["neg1-2", "hamdist(-1,2)"], ["3-neg5", "hamdist(3,-5)"], ["0-neg2^31", "hamdist(0,-2^31)"]]) {
+    patched.push("// patch 0072-hamdist-signed-opposite-signs.patch", `// g791-hamdist-${k}-refused (derived: integers of opposite signs differ in infinitely many bits, two's complement)`, `Digits:=40:; pasr:=0:; try { ${input}; } catch (err) { pasr:=1; }:; pc("g791-hamdist-${k}-refused",'pasr',1,1/10^30);`);
     nPatched++;
   }
   for (const [id, input, value] of [

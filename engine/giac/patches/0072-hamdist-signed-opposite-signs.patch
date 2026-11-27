@@ -1,0 +1,36 @@
+# Upstream: giac 2.1.0 misc.cc giac_hamdist (under _hamdist, two integers and the binop list forms; G791, backlog F476): in the mixed cases (_INT___ZINT and _ZINT__INT_) the small integer was set with mpz_set_ui, which reads a negative int as 2^32+v (hamdist(-1,2^40) = 33, hamdist(-1,-2^40) = 4294967295, right 40), and two integers of opposite signs gave a count: mpz_hamdist returns the largest bit count (hamdist(-2^40,2^40) = 4294967295) and the two-small-integers loop counts 31 bits (hamdist(-1,2) = 30, hamdist(3,-5) = 28). Their Hamming distance in two's complement (unbounded, as GMP and Python read it) is infinite, so they are now refused (hamdist: the integers have opposite signs), and the mixed cases use mpz_set_si, as patch 0062 did for bitand, bitor and bitxor. Two integers of the same sign keep their count (hamdist(-1,-2) = 1, hamdist(1,2^40) = 2); the vector and string forms are unchanged.
+# Changed by Pascaline contributors, 2026-11-27
+--- a/src/misc.cc
++++ b/src/misc.cc
+@@ -6272,8 +6272,17 @@
+     return symbolic(at_bitxor,gen(makevecteur(a,b),_SEQ__VECT));
+   }
+ 
++  // N62 patch 0072 (G791): two integers of opposite signs differ in infinitely many bits (two's complement, unbounded), so
++  // hamdist refuses them (stock counted 31 bits of a small pair, hamdist(-1,2) = 30, and mpz_hamdist gives the largest
++  // bit count, hamdist(-2^40,2^40) = 4294967295); the _INT_ beside a _ZINT is set with mpz_set_si, as in patch 0062
++  // (mpz_set_ui read -1 as 2^32-1: hamdist(-1,2^40) = 33, hamdist(-1,-2^40) = 4294967295, right 40).
++  static bool hamdist_negative(const gen & g){
++    return g.type==_INT_?g.val<0:mpz_sgn(*g._ZINTptr)<0;
++  }
+   gen giac_hamdist(const gen & a,const gen & b){
+     unsigned long t=(a.type<< _DECALAGE) | b.type;
++    if ( (a.type==_INT_ || a.type==_ZINT) && (b.type==_INT_ || b.type==_ZINT) && hamdist_negative(a)!=hamdist_negative(b) )
++      return gensizeerr(gettext("hamdist: the integers have opposite signs"));
+     if (t==0){
+       unsigned res=0;
+       unsigned val=a.val ^ b.val;
+@@ -6294,11 +6303,11 @@
+       t=mpz_hamdist(*a._ZINTptr,*b._ZINTptr);
+       break;
+     case _INT___ZINT: 
+-      mpz_set_ui(e->z,a.val);
++      mpz_set_si(e->z,a.val);
+       t=mpz_hamdist(e->z,*b._ZINTptr);
+       break;
+     case _ZINT__INT_:
+-      mpz_set_ui(e->z,b.val);
++      mpz_set_si(e->z,b.val);
+       t=mpz_hamdist(*a._ZINTptr,e->z);
+       break;
+     default:

@@ -43,8 +43,10 @@ describe("an older build never overwrites newer data (A50)", () => {
     await kvSet("seed", 0); // opens the database and makes the store
     idb.stores.get("kv")!.set(key, record);
   };
-  /** kvGet's write-back is not awaited: let it land. */
-  const settle = (): Promise<void> => new Promise((r) => setTimeout(r, 20));
+  /** kvGet's write-back is not awaited: wait until it lands. It takes several fake-IDB hops (setTimeout 0 each), so a
+   *  fixed 20 ms wait lost the race under a loaded host (run 1668: the raw record still stored). */
+  const landed = (key: string, record: unknown): Promise<void> =>
+    vi.waitFor(() => expect(stored(key)).toEqual(record), { timeout: 5000, interval: 5 });
 
   it("a record stamped DATA_VERSION + 1 survives a save of the same key from today's code", async () => {
     const newer = { "@n62": DATA_VERSION + 1, value: { home: ["from a newer build"] } };
@@ -89,8 +91,7 @@ describe("an older build never overwrites newer data (A50)", () => {
     await seed("defs", SAMPLES["defs"]);
     const read = await kvGet("defs");
     const first = read.kind === "value" ? read.value : undefined;
-    await settle();
-    expect(stored("defs")).toEqual(stamp(first));
+    await landed("defs", stamp(first));
     await kvSet("defs", first);
     expect(await kvGet("defs")).toEqual({ kind: "value", value: first });
     expect(JSON.stringify(first)).toContain("D:=(sin((pi/180)*(1)))");
