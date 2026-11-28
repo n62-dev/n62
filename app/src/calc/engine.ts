@@ -88,7 +88,7 @@ export class EngineCalc implements Calc {
   }
 
   async cancel(): Promise<void> {
-    await mapCancel(this.engine.cancel());
+    await this.engine.cancel();
   }
 }
 
@@ -102,9 +102,7 @@ async function mapCancel<T>(p: Promise<T>): Promise<T> {
   }
 }
 
-function calcError(e: unknown): CalcCancelled | CalcFailure {
-  if (e instanceof CalcCancelled || e instanceof CalcFailure) return e;
-  if (e instanceof EngineCancelled) return new CalcCancelled();
-  const kind = e instanceof EngineMemoryError ? "memory" : e instanceof EngineCrashError ? "crashed" : e instanceof EngineLoadError ? "load" : "engine";
-  return new CalcFailure(kind, e instanceof Error ? e.message : String(e), { cause: e });
-}
+const calcError = (e: unknown): CalcCancelled | CalcFailure =>
+  e instanceof EngineCancelled
+    ? new CalcCancelled()
+    : new CalcFailure(e instanceof EngineMemoryError ? "memory" : e instanceof EngineCrashError ? "crashed" : e instanceof EngineLoadError ? "load" : "engine", e);

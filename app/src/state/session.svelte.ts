@@ -311,8 +311,8 @@ export class Session {
         return this.refreshNames();
       },
       (e: unknown) => {
-        const kind = e instanceof CalcFailure ? e.kind : "engine"; // G315: the port's kind, never engine/types.ts
-        this.engineFailure = kind === "load" || kind === "memory" ? kind : "crash";
+        // G315: the port's kind, never engine/types.ts
+        this.engineFailure = e instanceof CalcFailure && (e.kind === "load" || e.kind === "memory") ? e.kind : "crash";
         this.engineState = "failed";
       },
     );

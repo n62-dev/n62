@@ -120,13 +120,12 @@ export class CalcCancelled extends Error {
 
 /** G315: why a call (or the start) failed, in the port's words, so a view reads its kind and never the engine's error
  *  classes: `memory`, the engine ran out of memory (restarted); `crashed`, it stopped on the input (a wasm trap, a stack
- *  overflow; restarted, G183); `load`, it could not start (G318); `engine`, any other failure. The message is the
- *  engine's, never shown (G183: the row says its own line). */
+ *  overflow; restarted, G183); `load`, it could not start (G318); `engine`, any other failure. The message is the kind, the
+ *  engine's error its cause (G183: the row says its own line, never the error's text). */
 export class CalcFailure extends Error {
   readonly kind: "memory" | "crashed" | "load" | "engine";
-  constructor(kind: CalcFailure["kind"], message: string = kind, options?: ErrorOptions) {
-    super(message, options);
-    this.name = "CalcFailure";
+  constructor(kind: CalcFailure["kind"], cause?: unknown) {
+    super(kind, { cause });
     this.kind = kind;
   }
 }

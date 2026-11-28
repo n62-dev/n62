@@ -381,7 +381,7 @@ describe("an engine that stopped on the input (G183, G315: the port's CalcFailur
   ];
   for (const [kind, text] of kinds)
     it(`a CalcFailure of kind "${kind}" shows its own line, never the JS text (Home and CAS)`, async () => {
-      const s = new Session(failing(new CalcFailure(kind, "Maximum call stack size exceeded")), fakeKv());
+      const s = new Session(failing(new CalcFailure(kind, new RangeError("Maximum call stack size exceeded"))), fakeKv());
       await s.submit("1+1");
       s.setView("cas");
       await s.submit("1+1");
@@ -408,10 +408,10 @@ describe("an engine that stopped on the input (G183, G315: the port's CalcFailur
 describe("a failed engine start", () => {
   const failing = (err: Error): Calc => Object.assign(new ValueCalc(), { ready: () => Promise.reject(err) });
   const cases: [string, Error, string][] = [
-    ["a load failure", new CalcFailure("load", "out of memory"), "load"],
-    ["a memory failure", new CalcFailure("memory", "could not load"), "memory"],
-    ["a crash", new CalcFailure("crashed", "x"), "crash"],
-    ["an engine failure", new CalcFailure("engine", "x"), "crash"],
+    ["a load failure", new CalcFailure("load"), "load"],
+    ["a memory failure", new CalcFailure("memory"), "memory"],
+    ["a crash", new CalcFailure("crashed"), "crash"],
+    ["an engine failure", new CalcFailure("engine"), "crash"],
     ["any other error", new Error("x"), "crash"],
   ];
   for (const [name, err, kind] of cases)
