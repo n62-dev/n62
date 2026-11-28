@@ -619,3 +619,53 @@ describe("R929: a constant's own unit after its chip, in the field only", () => 
     expect(values.at(-1)).toBe(`2\\placeholder[u1]{}\\const{planck}{h}${unitLatex("J·s")}\\to\\placeholder[end]{}`);
   });
 });
+
+describe("R807: the active slot draws its caret, no other LaTeX holds it", () => {
+  /** The last LaTeX written to each prompt. */
+  function written(line: string): { view: UnitView; got: Record<string, string> } {
+    const h = host();
+    const got: Record<string, string> = {};
+    h.host.write = (id, latex) => void (got[id] = latex);
+    const view = new UnitView(CAT, line, {}, h.host);
+    view.start();
+    return { view, got };
+  }
+  const count = (s: string | undefined): number => (s?.match(/pas-caret/g) ?? []).length;
+
+  it("after the last factor of the active slot, one mark; the other slot has none", () => {
+    const { view, got } = written("5+6");
+    view.apply(U("km"));
+    expect(count(got["u1"])).toBe(1);
+    expect(got["u1"]?.indexOf("pas-caret")).toBeGreaterThan(got["u1"]?.indexOf("km") ?? 99);
+    expect(count(got["u2"])).toBe(0);
+    view.next();
+    expect(count(got["u1"])).toBe(0); // the slot left is drawn again, without it
+    expect(count(got["u2"])).toBe(1);
+  });
+
+  it("in the middle: before the factor at the caret (R806's setter), and an empty slot has it before its □", () => {
+    const { view, got } = written("5");
+    expect(count(got["u1"])).toBe(1);
+    expect(got["u1"]).toContain("square");
+    for (const e of [U("km"), U("s")]) view.apply(e);
+    (view.model("u1") as NonNullable<ReturnType<UnitView["model"]>>).caretAtForTest("num", 1);
+    view.apply({ do: "prefix", id: "k" }); // (a draw at the caret: the armed prefix stands there)
+    const latex = got["u1"] as string;
+    expect(count(latex)).toBe(1);
+    expect(latex.indexOf("km")).toBeLessThan(latex.indexOf("pas-caret"));
+    expect(latex.indexOf("pas-caret")).toBeLessThan(latex.lastIndexOf("mathrm{s}"));
+  });
+
+  it("in an empty denominator the caret stands before its □; the model's LaTeX, the row's and Copy's never hold it", () => {
+    const { view, got } = written("5");
+    for (const e of [U("m"), { do: "per" } as const]) view.apply(e);
+    expect(count(got["u1"])).toBe(1);
+    expect(got["u1"]).toContain("pas-empty");
+    const m = view.model("u1") as NonNullable<ReturnType<UnitView["model"]>>;
+    expect(m.latex).not.toContain("pas-caret");
+    view.apply(U("s"));
+    expect(view.drawn()).not.toContain("pas-caret");
+    expect(m.latex).not.toContain("pas-caret");
+    expect(m.latex).toBe(m.latexWith());
+  });
+});
