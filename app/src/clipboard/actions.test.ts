@@ -460,3 +460,47 @@ describe("ClipActions on a row with no confirmed digit", () => {
     expect(m.clip()).not.toBe("untouched");
   });
 });
+
+// Principle 3 (R815f1): a stored name whose value has no confirmed digit copies nothing, as the history row does; a constant's value
+// is written with the decimal mark of the setting, as every Copy writes it.
+describe("ClipActions copyName and copyValue", () => {
+  afterEach(() => {
+    vi.doUnmock("./impl.ts");
+  });
+  const make = (comma = false) => {
+    let clip = "sentinel";
+    let writes = 0;
+    const port: ClipboardPort = { writeText: async (t) => (writes++, (clip = t), true), readText: async () => clip, share: async () => false };
+    const acted: string[] = [];
+    const session = { items: [], displayContext: () => ({}) } as unknown as Session;
+    const c = new ClipActions(session, { app: null, showsEntry: true } as unknown as AppShell, {} as EntryController, { insert() {}, acted: (id) => void acted.push(id) }, port, () => comma);
+    return { c, clip: () => clip, writes: () => writes, acted };
+  };
+  const stub = (got: object | undefined) => vi.doMock("./impl.ts", async (orig) => ({ ...(await orig<object>()), nameCopy: async () => got }));
+  it("a name with no confirmed digit: the notice says so, the clipboard is unchanged, nothing is counted", async () => {
+    stub({ text: "-0.1", shown: "-0.1", named: false, noDigit: true });
+    const m = make();
+    expect(await m.c.copyName("A")).toBe(false);
+    expect(m.c.notice).toBe("No digit confirmed");
+    expect([m.clip(), m.writes(), m.acted]).toEqual(["sentinel", 0, []]);
+  });
+  it("a name with digits is copied, as before", async () => {
+    stub({ text: "0.5", shown: "0.5", named: false });
+    const m = make();
+    expect(await m.c.copyName("A")).toBe(true);
+    expect(m.clip()).toBe("0.5");
+  });
+  it("a constant's value takes the decimal comma: c as 299792458, one with an exponent as 8,8541878188E-12", async () => {
+    const point = make(false);
+    await point.c.copyValue("8.8541878188E-12");
+    expect(point.clip()).toBe("8.8541878188E-12");
+    const comma = make(true);
+    await comma.c.copyValue("299792458");
+    expect(comma.clip()).toBe("299792458");
+    await comma.c.copyValue("8.8541878188E-12");
+    expect(comma.clip()).toBe("8,8541878188E-12");
+    await comma.c.copyValue("1.380649E-23");
+    expect(comma.clip()).toBe("1,380649E-23");
+    expect(comma.c.notice).toContain("1,380649E-23");
+  });
+});

@@ -9,7 +9,7 @@ import type { MenuItem } from "../apps/types.ts";
 import { loadForms, type HistoryItem, type Session } from "../state/session.svelte.ts";
 import type { TapCounts } from "../state/taps.svelte.ts";
 import { drawnInput, targetRow, type PickPart } from "../state/pickRows.ts";
-import { noDigit } from "../state/displayMode.ts";
+import { commaResult, noDigit } from "../state/displayMode.ts";
 import { groupMarked } from "../render/groupText.ts";
 import { groupSepFor } from "../render/home.ts";
 import { tooLongToInsert, tooLongToInsertNote } from "../render/longInsert.ts";
@@ -264,12 +264,15 @@ export class ClipActions {
   copyName(name: string): Promise<boolean> {
     return this.serial(async () => {
       const got = await (await impl()).nameCopy(this.session, name, this.opts);
+      if (got?.noDigit) return this.refuseNoDigit(); // principle 3: no number is shown, so none is copied
       return got ? this.put(got.text, this.named(got.text, got.shown, true), true, got.named) : this.put(undefined);
     });
   }
-  /** R815: a value of a sheet's row (a constant's) as it stands, named in the notice; a hold on the row. */
+  /** R815: a value of a sheet's row (a constant's) named in the notice; a hold on the row. Its decimal point is the setting's mark, as
+   *  every Copy writes it (`8,8541878188E-12`). */
   copyValue(text: string): Promise<boolean> {
-    return this.copyRaw(text, this.named(text), true);
+    const t = this.decimalComma() ? commaResult(text, false) : text;
+    return this.copyRaw(t, this.named(t), true);
   }
   /** `named` (R832): the notice names the copy (the bar's rows, Shift + Select, a hold). */
   copyShown(item?: HistoryItem, named = false): Promise<boolean> {
