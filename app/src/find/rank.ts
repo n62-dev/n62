@@ -5,12 +5,17 @@
 // gives the same order, docs/03 rule 8), so there is no (1).
 // G161: a gauge pressure (psig, barg, kPag, MPag) is not fuzzy: one edit away is the absolute unit (psi, bar), the trap
 // G17 closes for °C, so it finds nothing rather than a wrong unit.
+// G402: in a unit search (the kinds hold "unit") a compound (`kj/kg`, `s/m`, `m^3/h`, `m3`: isCompound) is a name or
+// nothing: no word match (its words in any order: `s/m` is no m/s) and no fuzzy step (`kj` is no kg); a name also matches
+// without its brackets, dots and carets (`j/kgk` finds J/(kg*K), `kg/m3` kg/m^3). Every unit search's fuzzy step skips a
+// name under four letters: one edit off a short symbol is another unit (`mach` is no mAh). units/menu.ts puts the slot's
+// reading of a compound Find lacks first.
 // Ties: tier 0 first, then the context's kinds, then the shorter matched name, then the id.
 // Matching is in lower case; "_" counts as a space, and a name also matches without its spaces and "_" ("kb" finds
 // k_B, "g0" finds g_0).
 import type { FindContext, FindHit, FindItem, IndexItem } from "./types.ts";
 
-const EXACT = 900;
+export const EXACT = 900;
 const PREFIX = 800; // minus the letters still missing, at most 50
 const NAME_WORD = 600;
 const TITLE_WORD = 500;
@@ -19,18 +24,23 @@ const FUZZY = 300;
 /** G161: gauge readings, in the compact lower case of a query: the fuzzy step skips them. */
 const GAUGE = new Set(["psig", "barg", "kpag", "mpag"]);
 
-interface PreparedName { raw: string; norm: string; compact: string; cased: string; words: string[] }
+interface PreparedName { raw: string; norm: string; compact: string; cased: string; words: string[]; bare: string }
 interface Prepared { item: FindItem; names: PreparedName[]; title: string[]; desc: string[] }
 export interface PreparedIndex { items: Prepared[] }
 
 const norm = (s: string): string => s.toLowerCase().replace(/_/g, " ").replace(/\s+/g, " ").trim();
 const compact = (s: string): string => s.replace(/[\s_]/g, "");
 const words = (s: string): string[] => s.split(/[^\p{L}\p{N}°]+/u).filter(Boolean);
+/** G402: a compact name without the brackets, dots and carets of a compound ("j/(kg*k)" → "j/kgk"). */
+const bare = (s: string): string => s.replace(/[()*·^]/g, "");
+/** G402: the query writes a compound unit: `/`, `*`, `·`, `^`, or a digit after a letter (`kj/kg`, `m^3/h`, `m3`). */
+export const isCompound = (q: string): boolean => /[/*·^]|\p{L}\p{N}/u.test(q);
 
 function prepareItem(item: FindItem): Prepared {
   const names = item.names.map((raw) => {
     const n = norm(raw);
-    return { raw, norm: n, compact: compact(n), cased: compact(raw), words: words(n) };
+    const c = compact(n);
+    return { raw, norm: n, compact: c, cased: compact(raw), words: words(n), bare: bare(c) };
   });
   return { item, names, title: words(norm(item.title)), desc: words(norm(item.desc ?? "")) };
 }
@@ -70,8 +80,12 @@ function wordsPrefix(qw: readonly string[], ws: readonly string[]): boolean {
   return true;
 }
 
+/** How a unit search reads a query (G402): `compound` its bare form (a name or nothing), else `units` (no fuzzy name
+ *  under four letters); undefined: any other search. */
+type UnitMode = { compound: string } | "units" | undefined;
+
 /** The best match level of one item, with the name that gave it; 0 when nothing matches. */
-function level(p: Prepared, q: string, qc: string, qw: readonly string[], rawc: string): { score: number; matched: string } {
+function level(p: Prepared, q: string, qc: string, qw: readonly string[], rawc: string, mode: UnitMode): { score: number; matched: string } {
   let score = 0;
   let matched = "";
   const take = (s: number, m: string): void => {
@@ -80,14 +94,16 @@ function level(p: Prepared, q: string, qc: string, qw: readonly string[], rawc: 
   for (const n of p.names) {
     if (n.norm === q || n.compact === qc) take(EXACT + (n.cased === rawc ? 1 : 0), n.raw);
     else if (n.norm.startsWith(q) || n.compact.startsWith(qc)) take(PREFIX - Math.min(50, n.compact.length - qc.length), n.raw);
+    else if (typeof mode === "object") { if (n.bare === mode.compound) take(EXACT, n.raw); }
     else if (wordsPrefix(qw, n.words)) take(NAME_WORD, n.raw);
   }
-  if (score) return { score, matched };
+  if (score || typeof mode === "object") return { score, matched };
   if (wordsPrefix(qw, p.title)) return { score: TITLE_WORD, matched: "title" };
   if (wordsPrefix(qw, p.desc)) return { score: DESC_WORD, matched: "desc" };
   if (qc.length >= 4 && !GAUGE.has(qc)) {
     for (const n of p.names) {
       if (qc[0] !== n.compact[0] && qc[1] !== n.compact[1]) continue; // a typo in both first letters: too far
+      if (mode === "units" && n.bare.length < 4) continue; // (G402: mach is no mAh, mA·h)
       if (oneEdit(qc, n.compact)) take(FUZZY + 1, n.raw);
       else if (n.compact.length > qc.length && [-1, 0, 1].some((d) => oneEdit(qc, n.compact.slice(0, qc.length + d)))) take(FUZZY, n.raw);
     }
@@ -134,6 +150,7 @@ function nearAny(p: Prepared, qc: string): boolean {
  *  over every item (narrow.test.ts checks it). The near items are kept from three letters on, where the next key can
  *  be the first fuzzy one; the third key reads every item once to find them. */
 interface Narrow { index: PreparedIndex; live: readonly FindItem[] | undefined; filter: string; q: string; qc: string; qw: readonly string[]; near: boolean; cands: Prepared[] }
+// (G402: a compound in a unit search reads every item: a bare name of the longer query need not match the shorter one)
 let last: Narrow | undefined;
 /** The near items are needed for a query of this many letters (compact) or more. */
 const NEAR_FROM = 3;
@@ -167,13 +184,14 @@ export function search(index: PreparedIndex, query: string, ctx: FindContext = {
   const filter = ctx.filter ? new Set(ctx.filter) : undefined;
   const prefer = new Set(ctx.prefer ?? []);
   const hits: FindHit[] = [];
-  const prev = last !== undefined && last.index === index && last.live === ctx.live && last.filter === filterKey && narrows(last, q, qc, qw) ? last : undefined;
+  const mode: UnitMode = !filter?.has("unit") ? undefined : isCompound(qc) ? { compound: bare(qc) } : "units";
+  const prev = typeof mode !== "object" && last !== undefined && last.index === index && last.live === ctx.live && last.filter === filterKey && narrows(last, q, qc, qw) ? last : undefined;
   const lists = prev ? [prev.cands] : [preparedLive(ctx.live), index.items];
   const near = qc.length >= NEAR_FROM;
   const cands: Prepared[] = [];
   for (const list of lists) for (const p of list) {
     if (filter && !filter.has(p.item.kind)) continue;
-    const { score, matched } = q ? level(p, q, qc, qw, rawc) : { score: 1, matched: p.item.names[0] ?? "" };
+    const { score, matched } = q ? level(p, q, qc, qw, rawc, mode) : { score: 1, matched: p.item.names[0] ?? "" };
     if (!score) {
       if (near && nearAny(p, qc)) cands.push(p);
       continue;

@@ -41,6 +41,10 @@ aliases:
   "unit:hp": ["horsepower"]
   "unit:Btu": ["british thermal unit"]
   "unit:N": ["newton"]
+  "unit:lb": ["lbm", "pound mass"]   # G402
+  "unit:S": ["mho"]
+  "unit:PS": ["metric horsepower"]
+  "unit:atm": ["standard atmosphere"]
   # functions
   "fn:asin": ["arcsin"]
   "fn:acos": ["arccos"]
