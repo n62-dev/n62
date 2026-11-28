@@ -7,7 +7,7 @@ Phase 0 (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md). This fil
 
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
-- **docs/06 line 30, user keys (R821):** "(tap, Shift, Alpha)" → "(tap, Shift; Alpha with a switch, R821)". Needs the owner's yes; docs/06 is unchanged.
+- **docs/06 line 30, user keys (R821):** Recommended: yes, as built (pass 260): "(tap, Shift, Alpha)" → "(tap, Shift; Alpha with a switch, R821)". docs/06 is unchanged until then.
 - **R781, Hand = Left:** every key column mirrors, so the digits read 9 8 7 and Redo stands left of Undo (the pad's ◀ ▶ kept); the bar turns, its track and modes read as before; Appearance has 8 rows. Recommended (pass 254): keep the mirror but keep the reading order inside a run (the digits 7 8 9, Undo then Redo, ⇤ then ⇥), a follow-up R781f1 of about half a day, and confirm the lock and docs/06 3b line.
 - **G784, Paste of a copied name:** Copy writes letters (`2*i`, `β*2`); Paste reads one number, so `2*i` copied from the name i came back as the constant i (principle 3); G784f1 refuses a text copied from a row with a stand-in. Recommended: keep Paste a number reader; reading expressions is its own package (the letter i against the constant i needs a rule first).
 - **The release bar's week (A273, G799; pass 241):** Recommended: a night counts when every `NIGHTLY` finding falls under a package or bug line the pass names (no new cause), as the clock seed never repeats a known row. Night 1 (11-25): all 118 named (G802, G804, G805, G622f2, F145, F480, F487).
@@ -30,8 +30,6 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **P23 (2026-10-21, ended 2026-10-27, owner): the core freeze's net stays;** the list changes only with the owner. Rule: brief section 0, `tests/core/README.md`. Archived.
 - **The docs budgets stay (owner, 2026-10-20):** brief 40 kB (2026-11-10), backlog 20, decisions 40; when decisions.md has under 1 kB left, the Opus pass moves the full texts of built entries to the archive and keeps a short line.
   - **S55's targets:** brief, decisions and docs/04 at 90 % of their budgets; the backlog at 19 kB (its open lines stay word for word, S55 rule 1). Would change if: the backlog fails a package's docs check twice in a week.
-- **How research reaches the docs (owner, 2026-10-20):** rules sections 9 and 10; KhiCAS only after a per-file licence check (E5). Archived. Would change if: the line baseline blocks a fix two nights running.
-- **The pipeline merges what it audited, the night ends on time, the audit sees a behaviour diff (owner, 2026-10-19):** A17, G55, A18. Would change if: the diff stage adds over ten minutes to a run. Archived.
 - **P17 (2026-10-18; two lanes 2026-10-29, owner): the pipeline is the only path** (`scripts/pipeline.sh`, brief 0c; two lanes, one merge queue, A47b). Archived. Would change if: the queue's waits cost more than the second lane gains.
 - **Small packages (2026-10-14, the owner's rule).** One concern each, about a day or less, with its own reading list; placed by importance, then dependencies.
 
@@ -66,7 +64,6 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **The pad's sideways drag steps per number or name (owner, 2026-11-22, R867):** a token is a digit run, the ᴇ mark with its sign, or a letter run; boxes, chips, names and operators as before; taps, the hardware arrows and a tap on the line stay one character; Ctrl+← → the same as a drag. Changes P7 (1). Would change if: the owner finds the overshoot worse than the gain on the Fairphone.
 - **Find's query takes a hardware / * ^ (pass 259, G402; R946):** in both views a hardware `/`, `*` or `^` types itself, never its key's Alpha letter (`kj/kg` read `kjtkg`); touch keeps docs/04 3.7. Would change if: the owner wants the pad key's letter.
 - **The letters stay on the keys (2026-10-14).** Rule: docs/04 5.1 (the letters; the unassigned Shift cells). Would change if: Alpha taps near zero (P7 point 4); a function in the benchmark needs a key and no cell is free.
-- **Start chunk: 180 kB raw, 63 kB gzip (owner, 2026-10-27; raised 2026-11-09), pinned** (size-check.ts). Rule: docs/04 8.3. Archived. Would change if: the Tab One's keyboard-usable time passes 738 ms.
 - **The Ultra terminals' answers (owner, 2026-11-16; T1 to T6):** [the archive](archive/owner-answers-2026-11-16.md); each package file and the brief's rows state the answer they build.
 - **The release key (owner, 2026-11-16):** alias `n62` (`android/release-cert.sha256`) replaces the Pascaline one before any release; the four secrets keep their names.
 - **Home/CAS ☰ of four rows (owner, 2026-11-20, R830):** Delete, Share session, Clear history, Export ›; built. Rule: docs/05 3.3, 3.5. Archived ("Moved 2026-11-23"). Would change if: the counters show keys-only users missing Copy or Paste on ☰.
@@ -80,7 +77,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **P24 (2026-11-08): commercial reuse of our Giac fixes** is permitted to B. Parisse (email 13). Archived. Would change if: a contributor other than the owner writes a Giac fix.
 - **R58b (2026-10-19; built by R67): a letter typed with Alpha is always a name,** in CAS too; e and i come only from their keys. Archived.
 - **An undecided decision is refused (owner, 2026-10-19; built by G57):** a sign, comparison, floor or branch on a cut Giac cannot decide is refused as undecided, never a guess. Would change if: refusals turn up in everyday work where a ⚠ value served better.
-- **Built, archived (Opus pass 259):** F29 (G21) and Stored definitions (G3) in archive/decisions-2026-10.md; rules in code and docs/04 6.2.
+- **Built, archived (Opus passes 259, 260):** F29 (G21), Stored definitions (G3), research to the docs, the pipeline merges what it audited, the start chunk pin in archive/decisions-2026-10.md; rules in code, rules-core, docs/04 6.2 and 8.3.
 - **R29: the parser's messages, and a space between two numbers (2026-10-17).** The messages are i18n keys (R52); a space between two numbers is an error ("put × between two numbers", R51), though the G2 gives 6. Archived.
 - **R18f1, R18f2 (2026-10-14): tests.** An exact true/false carries no mark; a test with a float side runs again at 14 and at P digits (true ≈, false ≈, or as typed). Archived. Would change if: a function is audited.
 - **P9 (2026-10-12): typed decimals in the CAS view become exact, as in Home;** `approx()` gives marked decimals.
