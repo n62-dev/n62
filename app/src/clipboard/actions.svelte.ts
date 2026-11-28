@@ -259,6 +259,18 @@ export class ClipActions {
     const text = i && m ? m.copyFull(source(i), this.opts, seen) : undefined;
     return this.put(text, named && text ? this.named(text, shown, true) : undefined, named, seen.name); // R904: the copied text, not the drawing
   }
+  /** R815: a stored name's full value (Memory's tap, Enter and hold, Vars' hold, the Copy key in a sheet), as a hold on a history row's
+   *  result copies it; the notice names it. Nothing to copy (the name went, or reading it failed) says so. */
+  copyName(name: string): Promise<boolean> {
+    return this.serial(async () => {
+      const got = await (await import("./nameCopy.ts")).nameCopy(this.session, name, this.opts);
+      return got ? this.put(got.text, this.named(got.text, got.shown, true), true, got.named) : this.put(undefined);
+    });
+  }
+  /** R815: a value of a sheet's row (a constant's) as it stands, named in the notice; a hold on the row. */
+  copyValue(text: string): Promise<boolean> {
+    return this.copyRaw(text, this.named(text), true);
+  }
   /** `named` (R832): the notice names the copy (the bar's rows, Shift + Select, a hold). */
   copyShown(item?: HistoryItem, named = false): Promise<boolean> {
     return this.serial(async () => {

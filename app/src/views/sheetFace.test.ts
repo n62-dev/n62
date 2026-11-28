@@ -4,6 +4,7 @@
 import { describe, expect, it } from "vitest";
 import { keyboard, type Key, type Layer } from "../keyboard/keyboard.ts";
 import { pastedName, sheetFace, sheetJob, type SheetCtx } from "./sheetKeys.ts";
+import { Sheet } from "./sheet.svelte.ts";
 
 const key = (id: string): Key => {
   const k = keyboard.byId.get(id);
@@ -166,5 +167,22 @@ describe("R900: the Paste key (Shift + Deselect) in a list whose filter takes a 
     expect(pastedName("ΔT2")).toBe("ΔT2");
     expect(pastedName("a".repeat(32))).toBe("a".repeat(32));
     for (const no of ["a".repeat(33), "1+2", "12", "_x", "a b", "", "x²", "2.5"]) expect(pastedName(no), no).toBeUndefined();
+  });
+});
+
+describe("R815: the Copy key (Shift + Select) in Find, Vars and Memory", () => {
+  it("is the copy job there, by a tap with Shift on or by its layer; plain Select is not", () => {
+    expect(sheetJob(key("select"), ctx("find"), SHIFT, undefined)).toEqual({ kind: "copy" });
+    expect(sheetJob(key("select"), ctx("find"), NO, "shift")).toEqual({ kind: "copy" });
+    expect(sheetJob(key("select"), ctx("find"), NO, undefined).kind).not.toBe("copy");
+  });
+  it("is no copy job in the store sheet or another list", () => {
+    expect(sheetJob(key("select"), ctx("store"), SHIFT, undefined).kind).not.toBe("copy");
+    expect(sheetJob(key("select"), ctx("other"), SHIFT, undefined).kind).not.toBe("copy");
+  });
+  it("its face is dead without a highlighted row that copies, lit with one", () => {
+    const sheet = (copy: boolean): Sheet => new Sheet("find", "Vars", () => [{ id: "var:A", label: "A", run: () => {}, ...(copy ? { copy: () => {} } : {}) }], { remember: false });
+    expect(sheetFace(key("select"), { ...ctx("find"), of: sheet(true) }, SHIFT).dead).toBe(false);
+    expect(sheetFace(key("select"), { ...ctx("find"), of: sheet(false) }, SHIFT).dead).toBe(true);
   });
 });

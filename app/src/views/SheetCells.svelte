@@ -5,6 +5,7 @@
   // full). A free letter is dim. An armed cell (Sheet.armed: the first tap on a filled one) shows its question there.
   // Drawn by Sheet.svelte inside its list, so it scrolls with the names below it.
   import type { Row } from "./sheet.svelte.ts";
+  import { sheetHold } from "./sheetHold.ts";
 
   let { rows, columns, highlight, armed, ontap }: { rows: readonly Row[]; columns: number; highlight: number; armed: string | null; ontap: (index: number) => void } = $props();
 </script>
@@ -23,6 +24,7 @@
       data-armed={on}
       data-id={r.item.id}
       data-count={r.item.count ?? "row"}
+      use:sheetHold={r.item.copy}
       onclick={() => ontap(r.index)}
     ><span class="l">{r.item.label}</span>{#if line}<span class="v" data-testid="cell-value">{line}</span>{/if}</button>
   {/each}
