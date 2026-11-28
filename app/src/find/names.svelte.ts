@@ -44,11 +44,35 @@ function insertOf(n: UserName): string {
 /** R314: what the last delete or Clear all took out of the definitions log, one level, in memory only (a relaunch or a backup
  *  never holds it). It is dropped by the next Enter on the line, as Clear history's Undo is: an input newer than the copy's
  *  `seen` row. A module's, not Session's, so the start chunk holds none of it. */
-let copy = $state.raw<{ session: Session; rows: readonly LoggedDef[]; seen: number } | null>(null);
+let copy = $state.raw<{ session: Session; rows: readonly LoggedDef[]; seen: number; replaced?: true } | null>(null);
 const newest = (s: Session): number => Math.max(0, ...[...s.home, ...s.cas].filter((i) => i.status !== "note").map((i) => i.id));
 /** The Undo copy of `session` while it holds: nothing was entered since it was taken. */
 export function undoCopy(session: Session): readonly LoggedDef[] | null {
   return copy && copy.session === session && newest(session) <= copy.seen ? copy.rows : null;
+}
+
+/** R816: the Undo copy of `session` holds the old entry of a name a Paste replaced (its row says "replaced", its Undo goes back over the new value). */
+const wasReplaced = (session: Session): boolean => undoCopy(session) !== null && copy?.replaced === true;
+
+/** R816: `n` stores `latex` (a pasted number as the keys type it) as `latex ▶ n`, the one store path (Session.submit, as Enter on that line
+ *  sends it: a history row, the engine, the log). The name's old entry is kept first as the Undo copy (R314), whose `seen` takes the new
+ *  row in, so the copy lasts until the next Enter. False: nothing was sent (a job runs). A store that does not end done drops the copy. */
+async function replace(session: Session, n: UserName, latex: string): Promise<boolean> {
+  let rows: LoggedDef[] = [];
+  try {
+    rows = await entriesOf(session.calc.engine, [n.name]);
+  } catch {
+    /* no copy: the replace goes on */
+  }
+  const job = session.submit(`${latex}\\blacktriangleright ${nameLatex(n.name)}`);
+  if (!job) return false;
+  const seen = newest(session);
+  if (rows.length) copy = { session, rows, seen, replaced: true };
+  await job;
+  const row = [...session.home, ...session.cas].find((i) => i.id === seen);
+  if (row?.status !== "done" && copy?.seen === seen) copy = null;
+  await session.refreshNames();
+  return true;
 }
 
 export function forget(session: Session, names: readonly string[]): Promise<void> {
@@ -83,12 +107,13 @@ async function take(session: Session, names: readonly string[]): Promise<void> {
 export async function undoForget(session: Session): Promise<{ back: string[]; taken: string[] }> {
   const rows = undoCopy(session);
   if (!rows) return { back: [], taken: [] };
+  const over = wasReplaced(session); // R816
   copy = null;
   let back: string[] = [];
   try {
-    back = await restoreDefs(session.calc.engine, rows);
+    back = await restoreDefs(session.calc.engine, rows, over);
   } catch {
-    copy = { session, rows, seen: newest(session) }; // cancelled or the engine restarted: the copy stays for another try
+    copy = { session, rows, seen: newest(session), ...(over ? { replaced: true as const } : {}) }; // cancelled or the engine restarted: the copy stays for another try
     return { back: [], taken: [] };
   }
   await session.refreshNames();
@@ -221,12 +246,47 @@ export function showNames(shell: { sheet: Sheet | null }, entry: EntryController
     ui.note = "";
     copy?.(n);
   };
-  const row = (n: UserName, cell = false): MenuItem => ({
-    ...nameRow(n, session.displayContext(), liveItem(n).id, cell),
-    ...(memory ? { keep: true, swipe: () => remove(n) } : {}),
-    ...(copy ? { copy: () => copy(n) } : {}),
-    run: () => run(n),
-  });
+  /** R816: the replace Paste asked about (the pasted number's LaTeX and text, for the row `id`); it is asked while the sheet has that row
+   *  armed (Sheet.armed: any other press disarms it, sheetKeys.ts). */
+  let asked: { id: string; name: string; latex: string; text: string } | null = null;
+  const asks = (id: string): boolean => asked?.id === id && shell.sheet?.armed === id;
+  /** R816: Paste on a name: the first press reads the clipboard and arms the row's question, the second (`again`) stores. */
+  const paste = (n: UserName, id: string) => async (again: boolean, read: () => Promise<{ latex: string; text: string } | null>): Promise<boolean | void> => {
+    if (again && asked?.id === id) {
+      const { latex } = asked;
+      asked = null;
+      ui.armed = false;
+      ui.note = "";
+      const ok = await replace(session, n, latex);
+      settle();
+      const level = shell.sheet?.level;
+      const at = level ? level.items.findIndex((x) => x.id === id) : -1;
+      if (level && at >= 0) level.highlight = at; // (the replaced name is the newest now: its row moves to the top)
+      return ok;
+    }
+    const num = await read();
+    const sheet = shell.sheet;
+    if (!num || !sheet || sheet.level.current?.id !== id) return; // refused (said), or the sheet moved on while it read
+    ui.armed = false;
+    asked = { id, name: typedName(n.name), ...num };
+    sheet.armed = id;
+  };
+  const row = (n: UserName, cell = false): MenuItem => {
+    const base = nameRow(n, session.displayContext(), liveItem(n).id, cell);
+    const mine = memory && n.kind === "var";
+    const what = `${typedName(n.name)} ${valueOf(n, session.displayContext())}`;
+    return {
+      ...base,
+      ...(memory ? { keep: true, swipe: () => remove(n) } : {}),
+      ...(copy ? { copy: () => copy(n) } : {}),
+      ...(mine ? { paste: paste(n, base.id) } : {}),
+      run: () => run(n),
+      // R816: while Paste asks, the row is the question
+      get label() {
+        return mine && asks(base.id) ? memoryText("memory.replace", { what, with: asked?.text ?? "" }) : base.label;
+      },
+    };
+  };
   /** Vars' grid (R282): a free letter is not a name, but a tap on it puts the letter on the line, as typing it would. */
   const free = (letter: string): MenuItem => ({
     id: `name:${letter}`,
@@ -261,7 +321,7 @@ export function showNames(shell: { sheet: Sheet | null }, entry: EntryController
    *  the note saying so (a tap clears it). The next Enter on the line drops the copy (undoCopy). */
   const undoRow = (): MenuItem[] => {
     const rows = undoCopy(session);
-    const label = ui.note || (rows ? (rows.length === 1 ? memoryText("memory.undo1", { name: typedName(rows[0]!.entry.name) }) : memoryText("memory.undoN", { n: String(rows.length) })) : "");
+    const label = ui.note || (rows ? (rows.length === 1 ? memoryText(wasReplaced(session) ? "memory.replaced1" : "memory.undo1", { name: typedName(rows[0]!.entry.name) }) : memoryText("memory.undoN", { n: String(rows.length) })) : "");
     if (!label) return [];
     return [
       {
@@ -290,6 +350,6 @@ export function showNames(shell: { sheet: Sheet | null }, entry: EntryController
     search: found,
     remember: false,
     // R800: a digit key only highlights a Memory row (Enter copies it); it never copies a name or arms Clear all
-    ...(memory ? { digitPick: "highlight" as const } : { cells: NAME_COLUMNS, ...(newest() ? { at: newest() as string } : {}) }),
+    ...(memory ? { digitPick: "highlight" as const, note: () => (asked && asks(asked.id) ? memoryText("memory.replaceNote", { name: asked.name }) : undefined) } : { cells: NAME_COLUMNS, ...(newest() ? { at: newest() as string } : {}) }),
   });
 }

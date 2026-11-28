@@ -2,7 +2,7 @@
 // R900 (owner-style hunt 2026-11-23, h2 #12, #15): the Paste key (Shift + Deselect) in a sheet with a name filter (Find, Vars, Store in)
 // types the clipboard's first line into the filter when it is a name (a letter, then letters, digits and `_`, at most 32 characters);
 // any other text is the dead press and the sheet stays. Before, Store in closed and pasted on the line ("Paste: not a number") and
-// Find took it as a dead press. Controls: Memory's Paste (R816 is still to come: a dead press, nothing typed), Paste on the line.
+// Find took it as a dead press. Controls: Memory's Paste (nothing typed into a filter; R816 asks on a name, mempaste.spec.ts), Paste on the line.
 // The real engine; the expected values are the typed names themselves.
 import { expect, test, type Page } from "@playwright/test";
 import { entryValue, open, recordVibrations, setClipboard, tap, vibrations } from "./helpers.ts";
@@ -110,15 +110,16 @@ test("Vars: Paste with a stored name's text types it into the filter and highlig
   await expect(active(page)).toContainText("B");
 });
 
-test("controls: Memory's Paste stays a dead press with nothing typed (R816 to come); Paste on the line still pastes a number", async ({ page }) => {
+test("controls: Memory's Paste types nothing into a filter and is a dead press on a row that takes no pasted value (Clear all; R816 asks on a name); Paste on the line still pastes a number", async ({ page }) => {
   await page.evaluate(() => window.n62.session.setHaptics({ on: true, ms: 10 }));
   await tap(page, ["d5", "shift", "emark", "alpha", "vars", "enter"]);
   await expect.poll(() => names(page)).toEqual(["A"]);
   await setClipboard(page, "A");
   await tap(page, ["shift", "math"]);
   await expect(find(page)).toBeVisible();
+  await tap(page, ["down"]); // Clear all
   await tap(page, ["shift"]);
-  await expect(page.locator('[data-key="deselect"]')).toHaveAttribute("data-dead", "true"); // Memory: dimmed, dead
+  await expect(page.locator('[data-key="deselect"]')).toHaveAttribute("data-dead", "true"); // no name highlighted: dimmed, dead
   const v = (await vibrations(page)).length;
   await tap(page, ["deselect"]);
   await deadAfter(page, v, false);

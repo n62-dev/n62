@@ -3,7 +3,7 @@
 // included. The control: sheetFace says dead exactly when the sheet's job for the key (sheetJob, the one route.ts calls) is `none`.
 import { describe, expect, it } from "vitest";
 import { keyboard, type Key, type Layer } from "../keyboard/keyboard.ts";
-import { pastedName, sheetFace, sheetJob, type SheetCtx } from "./sheetKeys.ts";
+import { pastedName, pastes, sheetFace, sheetJob, type SheetCtx } from "./sheetKeys.ts";
 import { Sheet } from "./sheet.svelte.ts";
 
 const key = (id: string): Key => {
@@ -149,14 +149,14 @@ describe("control: dimmed exactly when the sheet's job is none", () => {
   });
 });
 
-describe("R900: the Paste key (Shift + Deselect) in a list whose filter takes a pasted name (Find, Vars, Store in; not Memory)", () => {
+describe("R900: the Paste key (Shift + Deselect) in a list whose filter takes a pasted name (Find, Vars, Store in; Memory takes it as a replace, R816)", () => {
   it("a tap with Shift and a flick up are `paste`, drawn lit; without `paste` (Memory, the other sheets) Find dims it and Store in sends it to the line", () => {
     for (const kind of ["find", "store"] as const) {
       expect(sheetJob(key("deselect"), ctx(kind, { paste: true }), SHIFT, undefined), kind).toEqual({ kind: "paste" });
       expect(sheetJob(key("deselect"), ctx(kind, { paste: true }), NO, "shift"), kind).toEqual({ kind: "paste" });
       expect(face("deselect", ctx(kind, { paste: true }), SHIFT, "shift"), kind).toEqual({ dead: false });
     }
-    expect(sheetJob(key("deselect"), ctx("find"), SHIFT, undefined)).toEqual({ kind: "none" }); // Memory: R816's to come
+    expect(sheetJob(key("deselect"), ctx("find"), SHIFT, undefined)).toEqual({ kind: "none" }); // without `paste` (Memory's sheet sets it, R816)
     expect(sheetJob(key("deselect"), ctx("store"), SHIFT, undefined)).toEqual({ kind: "line" }); // the store sheet before R900
     expect(sheetJob(key("deselect"), ctx("find", { paste: true }), NO, undefined)).not.toEqual({ kind: "paste" }); // Deselect alone is no Paste
   });
@@ -184,5 +184,21 @@ describe("R815: the Copy key (Shift + Select) in Find, Vars and Memory", () => {
     const sheet = (copy: boolean): Sheet => new Sheet("find", "Vars", () => [{ id: "var:A", label: "A", run: () => {}, ...(copy ? { copy: () => {} } : {}) }], { remember: false });
     expect(sheetFace(key("select"), { ...ctx("find"), of: sheet(true) }, SHIFT).dead).toBe(false);
     expect(sheetFace(key("select"), { ...ctx("find"), of: sheet(false) }, SHIFT).dead).toBe(true);
+  });
+});
+
+describe("R816: the Paste key in Memory is the replace of the highlighted name", () => {
+  const memory = (paste: boolean): Sheet =>
+    new Sheet("find", "Memory", () => [{ id: "var:A", label: "A", run: () => {}, ...(paste ? { paste: () => {} } : {}) }], { remember: false, filterable: true, digitPick: "highlight" });
+  const vars = new Sheet("find", "Vars", () => [{ id: "var:A", label: "A", run: () => {} }], { remember: false, filterable: true });
+  it("pastes(): Memory's level and Vars' take the key", () => {
+    expect(pastes(memory(true))).toBe(true);
+    expect(pastes(vars)).toBe(true);
+  });
+  it("its face is dead without a highlighted row that takes a pasted value (a function, Clear all, Undo), lit with one", () => {
+    const of = (m: Sheet): SheetCtx => ({ ...ctx("find"), of: m });
+    expect(sheetFace(key("deselect"), of(memory(true)), SHIFT).dead).toBe(false);
+    expect(sheetFace(key("deselect"), of(memory(false)), SHIFT).dead).toBe(true);
+    expect(sheetFace(key("deselect"), of(vars), SHIFT).dead).toBe(false); // Vars: the clipboard's name into the filter, as before
   });
 });

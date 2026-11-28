@@ -331,6 +331,21 @@ export class ClipActions {
       return clip;
     });
   }
+  /** R816: the clipboard as one number for Memory's replace: its LaTeX as the keys type it and its text as the question shows it
+   *  (`2.5`); a refusal says its notice as Paste on the line does (a text that is no number, a copied name, a clipboard that cannot be
+   *  read) and gives null. Nothing goes on the entry line. */
+  readNumber(): Promise<{ latex: string; text: string } | null> {
+    return this.serial(async () => {
+      const clip = await (await this.port()).readText();
+      const refuse = (key: "clip.unavailable" | "clip.copiedName" | "clip.notNumber"): null => (this.say(tc(key)), null);
+      if (clip === null) return refuse("clip.unavailable");
+      if (this.copiedName(clip)) return refuse("clip.copiedName");
+      const m = await impl();
+      const n = m.parsePastedNumber(clip, this.opts);
+      if (!n) return refuse("clip.notNumber");
+      return { latex: n.latex, text: m.pasteText(clip) ?? clip.trim() };
+    });
+  }
   /** ☰ → Paste, Home's and the apps' (R278f1): the paste, and the keys pressed meanwhile wait for it. */
   pasteHeld(): void {
     this.ops.hold?.(this.paste());
