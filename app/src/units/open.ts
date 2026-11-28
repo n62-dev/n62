@@ -371,6 +371,9 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem, unit?: FindItem)
       else if (sp === "esc") {
         if (!view.escape()) close();
       }
+      else if (sp === "clear") view.clear(); // R896
+      else if (cmd === "undo") view.undoBy(-1);
+      else if (cmd === "redo") view.undoBy(1);
       else if (a?.kind === "insert" && a.latex === STORE_ARROW) store();
       else if (sp === "paste") refusePaste(c2);
       else if (sp === "copy") copyResult(); // R797: Shift + Select, as a hold on the result
