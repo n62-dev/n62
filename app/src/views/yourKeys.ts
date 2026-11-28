@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Settings › Your keys (R4b, docs/05 3.4, docs/archive/mockups/settings.html section 3 frame 4): the free keys U1–U6 with their
-// Shift and Alpha layers, eighteen slots. A row per slot opens its level: Find (the pick sets the slot), a place or a
+// Shift and (R821, with its switch on) Alpha layers, twelve or eighteen slots. A row per slot opens its level: Find (the pick sets the slot), a place or a
 // sheet (Home, CAS, Apps, Menu, Mode, Settings), or empty. Pressing a free key while the list is open highlights its
 // row (route.ts, Sheet.goKey). The slots are in the stamped store under USER_KEYS (keyboard/userKeys.svelte.ts).
 import type { PresetsHost } from "./presetsView.svelte.ts";
@@ -44,12 +44,24 @@ const LAYERS = ["primary", "shift", "alpha"] as const;
 
 /** How many slots hold something, for the section's row. */
 export function slotsSet(u: UserKeys): number {
-  return USER_KEY_IDS.reduce((n, id) => n + USER_LAYERS.filter((l) => u.labelOf(id, l) !== undefined).length, 0);
+  return USER_KEY_IDS.reduce((n, id) => n + u.layers().filter((l) => u.labelOf(id, l) !== undefined).length, 0);
 }
 
+/** The section's rows as they stand now: the Alpha rows only while the switch is on (R821). */
 export function yourKeysItems(env: SettingsEnv, mark: () => DecimalMark = () => "point"): MenuItem[] {
+  return yourKeysRows(env, mark)();
+}
+
+/** The section's rows, built once: the function gives the rows that show now (the level reads it on every draw, so the switch
+ *  adds and drops the Alpha rows with the sheet open, R821). */
+export function yourKeysRows(env: SettingsEnv, mark: () => DecimalMark = () => "point"): () => MenuItem[] {
   const u = env.userKeys;
-  if (!u) return [];
+  if (!u) return () => [];
+  const all = rows(env, u, mark);
+  return () => all.filter((x) => x.slot?.layer !== "alpha" || u.alphaLayer);
+}
+
+function rows(env: SettingsEnv, u: UserKeys, mark: () => DecimalMark): MenuItem[] {
   const slot = (id: string, n: number, layer: Layer): MenuItem => {
     const name = `U${n}${MARK[layer]}`;
     return {
@@ -85,11 +97,22 @@ export function yourKeysItems(env: SettingsEnv, mark: () => DecimalMark = () => 
     unitCellsItem(env),
     ownUnitsItem(env, mark), // R201
     {
+      // R821 (owner, 2026-11-20): the third layer is a switch, a tick row as Key pop-ups (modeSheet.ts); the sheet stays
+      id: "alphalayer",
+      label: t("keys.alpha"),
+      hint: t("keys.alpha.hint"),
+      keep: true,
+      get selected() {
+        return u.alphaLayer;
+      },
+      run: () => u.setAlphaLayer(!u.alphaLayer),
+    },
+    {
       id: "reset",
       label: t("keys.reset"),
       keep: true,
       get confirm() {
-        return asks(RESET_KEYS, USER_KEY_IDS.flatMap((id, i) => USER_LAYERS.filter((l) => u.labelOf(id, l) !== undefined).map((l) => `U${i + 1}${MARK[l]}`)));
+        return asks(RESET_KEYS, USER_KEY_IDS.flatMap((id, i) => u.layers().filter((l) => u.labelOf(id, l) !== undefined).map((l) => `U${i + 1}${MARK[l]}`)));
       },
       run: () => u.reset(),
     },

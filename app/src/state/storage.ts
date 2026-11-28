@@ -22,6 +22,8 @@ const STORE = "kv";
 /** The free keys U1–U3 (R15b): per key id and layer (`primary`, `shift`), the user's `{ label, action }` or null for a
  *  slot the user emptied; a slot that is absent has its default from spec/keyboard.yaml (keyboard/userKeys.svelte.ts). */
 export const USER_KEYS = "userKeys";
+/** R821: whether the free keys have their third layer, Alpha (a flick down, its legend bottom left); a boolean (keyboard/userKeys.svelte.ts). */
+export const USER_KEYS_ALPHA = "userKeysAlpha";
 
 /**
  * The format version of every stored value. Raise it, with a step in MIGRATIONS (state/migrations.ts) and its keys in

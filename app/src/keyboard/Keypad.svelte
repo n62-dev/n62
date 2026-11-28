@@ -140,6 +140,8 @@
     void cas;
     // R820: and when a sheet opens or closes, its code comes in, its query empties or fills, or (a sheet open) the layer changes (Find's `sin`: g, Shift sin)
     void [sheet?.kind, sheet?.empty, sheet?.filter, sheetChunk.keys, sheet && shift, sheet && alpha];
+    // R821: and when a free key's slot is set or the Alpha switch turns (its letter line comes or goes, its legends change)
+    void [userKeys.alphaLayer, keys.filter((k) => k.user).map((k) => [k.label.primary, k.label.shift, k.label.alpha])];
     if (!padEl) return;
     const pad = padEl;
     fitLegends(pad);
@@ -432,7 +434,7 @@
     </div>{/if}
   {#each keys as key (key.id)}
     <!-- the letter line: the row's, or a pad cell's own flick down (the cluster has none otherwise) -->
-    {@const lettered = letterRows.has(key.row) || (key.pad && key.label.alpha)}
+    {@const lettered = letterRows.has(key.row) || (key.pad && key.label.alpha) || (key.user && userKeys.alphaLayer)}
     {@const place = gridPlace(keyboard, key)}
     <button
       type="button"
@@ -702,9 +704,9 @@
   .key:is([data-user], [data-pad="user"]) .shiftlegend {
     translate: 0 var(--legend-drop);
   }
-  /* a user cell with a flick down has the letter line in the cluster too: the face's track may shrink to what is left of
+  /* a user cell with a flick down has the letter line in the cluster too, and a free key while the Alpha switch is on (R821): the face's track may shrink to what is left of
      the key's 36 px less its 2 px padding (a fixed track, the face overflows it evenly), so the keys below do not move (docs/03 rule 8) */
-  .key[data-pad="user"][data-letters="true"] {
+  .key:is([data-pad="user"], [data-user])[data-letters="true"] {
     grid-template-rows: var(--legend-h) calc(var(--nav-h) - var(--sp-05) - 2 * var(--legend-h)) var(--legend-h);
   }
   .key[data-pad="empty"] {
@@ -733,7 +735,7 @@
       min-height: var(--nav-h-short);
     }
     /* the user cell's letter line at the short height: the same track, from the short nav height */
-    .key[data-pad="user"][data-letters="true"] {
+    .key:is([data-pad="user"], [data-user])[data-letters="true"] {
       grid-template-rows: var(--legend-h) calc(var(--nav-h-short) - var(--sp-05) - 2 * var(--legend-h)) var(--legend-h);
     }
   }

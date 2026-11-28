@@ -279,3 +279,21 @@ describe("the Entry setting's third value (R253)", () => {
     expect(checkBackup(file("nope")).ok).toBe(false);
   });
 });
+
+describe("the userKeysAlpha part (R821)", () => {
+  const file = (v: unknown): Uint8Array =>
+    new TextEncoder().encode(JSON.stringify({ "n62-backup": 1, parts: { userKeysAlpha: { "@n62": DATA_VERSION, value: v } } }));
+  it("is a backup key, left out of nothing", () => {
+    expect(BACKUP_KEYS).toContain("userKeysAlpha");
+    expect(LEFT_OUT).not.toContain("userKeysAlpha");
+  });
+  it("a boolean passes the check; anything else is refused, naming the part", () => {
+    expect(checkBackup(file(true)).ok).toBe(true);
+    expect(checkBackup(file(false)).ok).toBe(true);
+    for (const v of ["true", 1, 0, null, {}, []]) {
+      const r = checkBackup(file(v));
+      expect(r.ok, JSON.stringify(v)).toBe(false);
+      if (!r.ok) expect(r.part).toBe("userKeysAlpha");
+    }
+  });
+});

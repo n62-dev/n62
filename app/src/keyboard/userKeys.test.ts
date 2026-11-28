@@ -2,7 +2,7 @@
 // The free keys U1–U6 (R15b, R15c): defaults from spec/keyboard.yaml, the user's slots over them, kept in the stamped store.
 import { describe, expect, it } from "vitest";
 import { legend } from "../i18n/index.ts";
-import { stamp, unstamp, USER_KEYS } from "../state/storage.ts";
+import { stamp, unstamp, USER_KEYS, USER_KEYS_ALPHA } from "../state/storage.ts";
 import { MIGRATIONS } from "../state/migrations.ts";
 import { actionFor, KeyboardSpecError, keyboard, labelFor, loadKeyboard, type Key } from "./keyboard.ts";
 import { letterOf } from "../views/sheetKeys.ts";
@@ -132,6 +132,7 @@ describe("user keys: the Alpha layer (R15c3)", () => {
     expect(USER_LAYERS).toEqual(["primary", "shift", "alpha"]);
     const kv = fakeKv();
     const u = new UserKeys(kv);
+    u.setAlphaLayer(true); // R821: the third layer is a switch
     u.set("u1", "primary", sinh);
     u.set("u1", "shift", { label: "π", action: { insert: "\\pi" } });
     u.set("u1", "alpha", alphaB);
@@ -182,6 +183,7 @@ describe("user keys: the Alpha layer (R15c3)", () => {
 
   it("the user's Alpha binding is exact: the letter-case rules (R58) do not touch it", () => {
     const u = new UserKeys(fakeKv());
+    u.setAlphaLayer(true);
     u.set("u1", "alpha", { label: "X", action: { type: "X" } });
     const k = u.resolve(key("u1"));
     for (const cas of [false, true])
@@ -252,5 +254,73 @@ describe("user keys: a constant and the slot legends (R4b)", () => {
     expect(u.labelOf("u1", "alpha")).toBeUndefined();
     u.reset("u1", "primary");
     expect(u.labelOf("u1", "primary")).toBeUndefined();
+  });
+});
+
+describe("user keys: two layers, a switch for the third (R821)", () => {
+  const alphaB = { label: "x₀", action: { type: "x0" } };
+  const nulls = { u1: { primary: null, alpha: null } };
+
+  it("fresh: the switch is off, and a stored Alpha slot is neither drawn nor fired; Alpha + the key is the tap", () => {
+    const u = new UserKeys(fakeKv());
+    expect(u.alphaLayer).toBe(false);
+    expect(u.layers()).toEqual(["primary", "shift"]);
+    u.set("u1", "primary", sinh);
+    u.set("u1", "alpha", alphaB); // kept for when the switch is on
+    const k = u.resolve(key("u1"));
+    expect(k.actions.alpha).toBeUndefined();
+    expect(k.label.alpha).toBeUndefined();
+    expect(actionFor(k, false, true)).toEqual({ kind: "insert", latex: "\\sinh\\left(#0\\right)" });
+    expect(u.slots("u1").alpha).toEqual(alphaB);
+    u.setAlphaLayer(true);
+    expect(u.layers()).toEqual(["primary", "shift", "alpha"]);
+    const on = u.resolve(key("u1"));
+    expect(actionFor(on, false, true)).toEqual({ kind: "type", text: "x0" });
+    expect(on.label.alpha).toBe("x₀");
+  });
+
+  it("the switch is stored under USER_KEYS_ALPHA and read back", async () => {
+    const kv = fakeKv();
+    const u = new UserKeys(kv);
+    u.setAlphaLayer(true);
+    expect(kv.data.get(USER_KEYS_ALPHA)).toBe(true);
+    const again = new UserKeys(kv);
+    await again.restore();
+    expect(again.alphaLayer).toBe(true);
+    again.setAlphaLayer(false);
+    const third = new UserKeys(kv);
+    await third.restore();
+    expect(third.alphaLayer).toBe(false);
+  });
+
+  it("restore: no stored switch and an Alpha binding turns it on once and writes it; only nulls leave it off; a stored false stays off", async () => {
+    const withAlpha = fakeKv([[USER_KEYS, { u2: { alpha: alphaB } }]]);
+    const a = new UserKeys(withAlpha);
+    await a.restore();
+    expect(a.alphaLayer).toBe(true);
+    expect(withAlpha.data.get(USER_KEYS_ALPHA)).toBe(true);
+
+    const onlyNulls = fakeKv([[USER_KEYS, nulls]]);
+    const b = new UserKeys(onlyNulls);
+    await b.restore();
+    expect(b.alphaLayer).toBe(false);
+
+    const stored = fakeKv([[USER_KEYS, { u2: { alpha: alphaB } }], [USER_KEYS_ALPHA, false]]);
+    const c = new UserKeys(stored);
+    await c.restore();
+    expect(c.alphaLayer).toBe(false);
+    expect(stored.data.get(USER_KEYS_ALPHA)).toBe(false);
+
+    const none = new UserKeys(fakeKv());
+    await none.restore();
+    expect(none.alphaLayer).toBe(false);
+  });
+
+  it("labelOf and slotsSet-style reads still see a kept Alpha slot while off (the slot sheet and Reset follow layers())", () => {
+    const u = new UserKeys(fakeKv());
+    u.set("u1", "alpha", alphaB);
+    expect(u.labelOf("u1", "alpha")).toBeUndefined(); // not drawn while off
+    u.setAlphaLayer(true);
+    expect(u.labelOf("u1", "alpha")).toBe("x₀");
   });
 });

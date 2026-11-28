@@ -10,6 +10,7 @@ import { Session } from "../state/session.svelte.ts";
 import { UserKeys } from "../keyboard/userKeys.svelte.ts";
 import { unitCells } from "../units/userCells.svelte.ts";
 import { modeItems, numbersItems, settingsSections } from "./modeSheet.ts";
+import { slotsSet } from "./yourKeys.ts";
 import { lastPicks } from "./picks.ts";
 import { Sheet } from "./sheet.svelte.ts";
 import type { MenuItem } from "../apps/types.ts";
@@ -605,11 +606,10 @@ describe("Settings › Your keys (R4b)", () => {
     expect(byId(s, "keys")?.value).toBe("None set");
     s.pickNumber(5);
     const ids = s.level.items.map((x) => x.id);
-    expect(ids).toHaveLength(21); // 18 slots, Unit pad cells (R24d), Your units (R201), Reset all
-    expect(ids.slice(-3)).toEqual(["unitcells", "units", "reset"]);
-    expect(ids.slice(0, 4)).toEqual(["u1:primary", "u1:shift", "u1:alpha", "u2:primary"]);
+    expect(ids).toHaveLength(16); // R821: 12 slots (two layers), Unit pad cells (R24d), Your units (R201), the Alpha switch, Reset all
+    expect(ids.slice(-4)).toEqual(["unitcells", "units", "alphalayer", "reset"]);
+    expect(ids.slice(0, 4)).toEqual(["u1:primary", "u1:shift", "u2:primary", "u2:shift"]);
     expect(byId(s, "u2:shift")?.label).toBe("U2 ⇧");
-    expect(byId(s, "u1:alpha")?.label).toBe("U1 α");
     expect(byId(s, "u1:primary")?.value).toBe("Empty");
     s.pickNumber(1); // U1's level: Find…, the six places, Empty this slot
     expect(s.level.items.map((x) => x.id)).toEqual(["find", "home", "cas", "apps", "menu", "mode", "settings", "empty"]);
@@ -625,7 +625,7 @@ describe("Settings › Your keys (R4b)", () => {
   it("Find… hands the slot to the app", () => {
     const { s, chosen } = withKeys();
     s.pickNumber(5);
-    s.pickNumber(5); // U2 ⇧
+    s.pickNumber(4); // U2 ⇧ (R821: two layers while the Alpha switch is off)
     const p = s.pickNumber(1);
     if (p.kind === "run") p.item.run?.();
     expect(chosen).toEqual(["u2:shift"]);
@@ -676,11 +676,14 @@ describe("Settings › Your keys (R4b)", () => {
   });
 
   it("a free key pressed while the slots are listed goes to its row in its layer; elsewhere it does nothing", () => {
-    const { s } = withKeys();
+    const { s, userKeys } = withKeys();
     expect(s.goKey("u3", "primary")).toBe(false); // the Settings level lists no slots
     s.pickNumber(5);
     expect(s.goKey("u3", "shift")).toBe(true);
     expect(s.level.current?.id).toBe("u3:shift");
+    expect(s.goKey("u6", "alpha")).toBe(true); // R821: off, Alpha + the key is the tap: its row
+    expect(s.level.current?.id).toBe("u6:primary");
+    userKeys.setAlphaLayer(true);
     expect(s.goKey("u6", "alpha")).toBe(true);
     expect(s.level.current?.id).toBe("u6:alpha");
     expect(s.goKey("sin", "primary")).toBe(false);
@@ -795,5 +798,50 @@ describe("Settings › Counters: the three resets ask once (R857)", () => {
     expect(s.armed).toBe(null);
     s.activate(at(s, "bar"));
     expect(byId(s, "reset")?.confirm?.note).toBe("Clears the counts. Tap again."); // nothing counted yet: no since
+  });
+});
+
+describe("Settings › Your keys › Third layer (Alpha) (R821)", () => {
+  const withKeys = () => {
+    const userKeys = new UserKeys(fakeKv());
+    const s = new Sheet("settings", "Settings", () => settingsSections(session, { userKeys }), { remember: false });
+    s.pickNumber(5);
+    return { s, userKeys };
+  };
+  const alphaB = { label: "x₀", action: { type: "x0" } };
+
+  it("off: 16 rows, u1:primary … u6:shift, unitcells, units, alphalayer, reset; on: 22 with the Alpha rows", () => {
+    const { s, userKeys } = withKeys();
+    const off = s.level.items.map((x) => x.id);
+    expect(off).toHaveLength(16);
+    expect(off.slice(0, 2)).toEqual(["u1:primary", "u1:shift"]);
+    expect(off[11]).toBe("u6:shift");
+    expect(off.slice(12)).toEqual(["unitcells", "units", "alphalayer", "reset"]);
+    expect(byId(s, "alphalayer")?.selected).toBe(false);
+    userKeys.setAlphaLayer(true);
+    const on = s.level.items.map((x) => x.id);
+    expect(on).toHaveLength(22);
+    expect(on.slice(0, 4)).toEqual(["u1:primary", "u1:shift", "u1:alpha", "u2:primary"]);
+    expect(byId(s, "u1:alpha")?.label).toBe("U1 α");
+    expect(byId(s, "alphalayer")?.selected).toBe(true);
+  });
+
+  it("the row toggles the switch and the sheet stays", () => {
+    const { s, userKeys } = withKeys();
+    const row = (): number => s.level.items.findIndex((x) => x.id === "alphalayer"); // (past the digits: a tap or Enter picks it)
+    expect(s.activate(row())).toEqual({ kind: "stay" });
+    expect(userKeys.alphaLayer).toBe(true);
+    expect(s.activate(row())).toEqual({ kind: "stay" });
+    expect(userKeys.alphaLayer).toBe(false);
+  });
+
+  it("the section's count and Reset's names count an Alpha slot only while the switch is on", () => {
+    const { s, userKeys } = withKeys();
+    userKeys.set("u1", "alpha", alphaB);
+    expect(slotsSet(userKeys)).toBe(0);
+    userKeys.setAlphaLayer(true);
+    expect(slotsSet(userKeys)).toBe(1);
+    userKeys.set("u2", "primary", { label: "sinh", action: { insert: "\\sinh\\left(#0\\right)" } });
+    expect(slotsSet(userKeys)).toBe(2);
   });
 });

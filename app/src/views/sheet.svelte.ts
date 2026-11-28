@@ -399,10 +399,17 @@ export class Sheet {
     return i < 0 ? undefined : this.activate(i);
   }
 
+  /** The open level's row of a free key's slot in a layer; R821: with the Alpha switch off there is no Alpha row, and Alpha + the key is its tap. */
+  private slotRow(keyId: string, layer: string): number {
+    const at = (l: string): number => this.level.items.findIndex((x) => x.slot?.key === keyId && x.slot.layer === l);
+    const i = at(layer);
+    return i < 0 && layer === "alpha" ? at("primary") : i;
+  }
+
   /** A free key pressed while its slots are listed (Settings › Your keys, R4b): the highlight goes to that key's row in
    *  that layer. False when the open level lists no such slot, so the key does its usual sheet job. */
   goKey(keyId: string, layer: string): boolean {
-    const i = this.level.items.findIndex((x) => x.slot?.key === keyId && x.slot.layer === layer);
+    const i = this.slotRow(keyId, layer);
     if (i < 0) return false;
     this.level.highlight = i;
     return true;
@@ -419,7 +426,7 @@ export class Sheet {
    *  cells (R189), a free key's slot it lists (goKey), a key at a grid cell's place (pickKey)? Asked without acting. `layer`: the keypad's. */
   takes(key: Key, layer: string): boolean {
     const l = this.level;
-    return !!l.grid || (!!key.user && l.items.some((x) => x.slot?.key === key.id && x.slot.layer === layer)) || (l.columns !== undefined && !l.digits && l.items.some((x) => x.pick?.key === key.id));
+    return !!l.grid || (!!key.user && this.slotRow(key.id, layer) >= 0) || (l.columns !== undefined && !l.digits && l.items.some((x) => x.pick?.key === key.id));
   }
 
   /** R777 (route.ts deadPress): is a tap on this key a dead press here, without acting: ⌫ with nothing typed (R770) in a list that

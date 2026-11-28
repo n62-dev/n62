@@ -164,7 +164,7 @@ export class Presets {
 
   /** The current setup's values of each group. */
   private current(g: PresetGroup): GroupValues {
-    if (g === "keys") return { userKeys: freeKeys(this.env.userKeys), unitPadCells: this.env.cells.snapshot() };
+    if (g === "keys") return { userKeys: freeKeys(this.env.userKeys), unitPadCells: this.env.cells.snapshot(), alphaLayer: this.env.userKeys.alphaLayer };
     return settingsGroup($state.snapshot(this.env.session.settings) as Settings, g);
   }
 
@@ -233,6 +233,7 @@ export class Presets {
     if (keys && isObject(keys["userKeys"]))
       userKeys.write(Object.fromEntries(Object.entries(keys["userKeys"]).filter(([id, v]) => USER_KEY_IDS.includes(id) && isObject(v))) as StoredUserKeys);
     if (keys && isObject(keys["unitPadCells"])) cells.replace(keys["unitPadCells"] as StoredCells);
+    if (keys && typeof keys["alphaLayer"] === "boolean") userKeys.setAlphaLayer(keys["alphaLayer"]); // R821 (a preset from before it leaves the switch)
     session.taps.tap("presets");
     this.active = id;
     if (!this.refused) this.save();
