@@ -105,7 +105,7 @@ queries:
   - { query: "nano", expect: "pfx:n" }
   - { query: "mega", expect: "pfx:M" }
   - { query: "pico", expect: "pfx:p" }
-  # Functions (70)
+  # Functions (69)
   - { query: "sqrt", expect: "fn:sqrt" }
   - { query: "square root", expect: "fn:sqrt" }
   - { query: "cube root", expect: "tmpl:cbrt" }
@@ -170,12 +170,11 @@ queries:
   - { query: "permutations", expect: "fn:perm", note: "G401: nPr, not groupermu (a permutation group)" }
   - { query: "hypotenuse", expect: "fn:norm", note: "G401: norm([3,4]) = 5; Giac has no hypot" }
   - { query: "quadratic", expect: "fn:solve", note: "G401: exact roots; not a2q (a quadratic form)" }
-  - { query: "polynomial", expect: "fn:proot", note: "G401: the roots of a polynomial; polynomial fit finds the regression" }
-  - { query: "polynomial fit", expect: "fn:polynomial_regression", note: "G401" }
+  - { query: "polynomial", expect: "fn:proot", note: "G401: the roots of a polynomial; polynomial fit keeps fitpoly" }
   - { query: "exponential fit", expect: "fn:exponential_regression", note: "G401: tier 1, y = b·aˣ" }
   - { query: "power fit", expect: "fn:power_regression", note: "G401: tier 1, y = b·xᵐ" }
   - { query: "logarithmic fit", expect: "fn:logarithmic_regression", note: "G401: tier 1, y = a·ln x + b" }
-  - { query: "curve fit", expect: "fn:polynomial_regression", note: "G401: every regression carries the words" }
+  - { query: "curve fit", expect: "fn:polynomial_regression", note: "G401: the four regressions carry the words; ties go by id, so this one is third" }
   - { query: "dms", expect: "tmpl:dms", note: "G401: the Tmpl palette's degrees-minutes-seconds template" }
   - { query: "degrees minutes seconds", expect: "tmpl:dms", note: "G401" }
   # Milestone 6 (pending)

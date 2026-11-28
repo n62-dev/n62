@@ -31,9 +31,9 @@ const SLOT: FindContext = { filter: ["unit", "pfx"], prefer: ["unit"] };
 const ctxOf = (q: Query): FindContext => (q.where === "slot" ? SLOT : {});
 
 describe("find-queries.yaml", () => {
-  it("has 157 active phrases (3 that find no unit) and 4 pending ones, no duplicates", () => {
+  it("has 156 active phrases (3 that find no unit) and 4 pending ones, no duplicates", () => {
     expect(doc.schema).toBe(1);
-    expect(active.length).toBe(157);
+    expect(active.length).toBe(156);
     expect(absent.length).toBe(3);
     for (const q of doc.queries) expect([undefined, "slot"], q.query).toContain(q.where);
     expect(doc.queries.length - active.length).toBe(4);

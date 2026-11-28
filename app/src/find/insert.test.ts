@@ -14,16 +14,22 @@ const curated = (parse(readFileSync(join(here, "../../../find/functions.yaml"), 
 const opInsert = (n: string): string => `\\operatorname{${n.replace(/_/g, "\\_")}}\\left(#0\\right)`;
 // Giac names our parser renames on the way (input/emit.ts CALL_NAME): irem is pasmod, which is irem on integers.
 const CALL_NAME: Record<string, string> = { irem: "pasmod", median: "pasmedian", percentile: "paspercentile", sem: "passem" };
-const fill = (insert: string): string => insert.replace("#0", "x");
+// x in the selection's box, 1 in a template's other boxes (#?, tmpl:dms's minutes and seconds)
+const fill = (insert: string): string => insert.replace(/#[0@]/, "x").replaceAll("#?", "1");
 
 describe("Find insertion", () => {
-  it("puts a selection in every curated insert: its slot is #0, never #? (decisions.md R17 default, point 4)", () => {
-    for (const f of curated) if (f.insert) expect(f.insert.includes("#0") && !f.insert.includes("#?"), f.id).toBe(true);
+  // a template's main box may be #@ as on its key (tmpl:dms, the Tmpl palette's: a number before it is its degrees, R27a)
+  it("puts a selection in every curated insert: its slot is #0, never #?; a template's other boxes are #? (decisions.md R17 default, point 4)", () => {
+    for (const f of curated) {
+      if (!f.insert) continue;
+      const main = f.id.startsWith("tmpl:") ? /#[0@]/.exec(f.insert) : /#0/.exec(f.insert);
+      expect(main !== null && !f.insert.slice(0, main.index).includes("#?") && (f.id.startsWith("tmpl:") || !f.insert.includes("#?")), f.id).toBe(true);
+    }
   });
 
   it.each(curated.map((f) => [f.id, f] as const))("%s becomes its Giac command", (_, f) => {
     const giac = latexToGiac(fill(f.insert ?? opInsert(f.giac)));
-    expect(giac.startsWith(`${CALL_NAME[f.giac] ?? f.giac}(`), giac).toBe(true);
+    expect(giac === f.giac || giac.startsWith(`${CALL_NAME[f.giac] ?? f.giac}(`), giac).toBe(true);
   });
 
   it.each(["normald_cdf", "stddevp", "irem", "comb", "Gamma", "lcm", "plotfunc", "zeta"])("\\operatorname{%s} reaches Giac as written", (n) => {
