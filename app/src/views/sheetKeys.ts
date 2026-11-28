@@ -97,6 +97,9 @@ export function sheetFlick(key: Key, down: boolean, filter: boolean): SheetKey {
 /** The status line's controls keep their job in Find: they close it and go there, or toggle their sheet. */
 const FIND_PASS: readonly string[] = ["settings", "menu", "apps", "slot", "home", "cas", "switch", "symb", "plot", "num"];
 
+/** R946: the keys whose hardware character has no one-character primary: a hardware `/`, `*`, `^` presses them in `primary`. */
+const HW_OPERATOR: Readonly<Record<string, string>> = { div: "/", mul: "*", pow: "^" };
+
 /**
  * A key in Find (R4a, docs/04 3.7, decisions.md S2 rule M1). Every key types its letter in lower case, Tmpl and Math
  * too (no Alpha press); a flick down types it on any key. A digit key picks the row with its number while the level's
@@ -112,6 +115,8 @@ export function findKey(key: Key, layer: Layer | undefined, shift: boolean, empt
   if (memory && key.id === "bksp" && (layer === "shift" || (layer === undefined && shift))) return { kind: "delete" };
   const fixed = BY_ID[key.id];
   if (fixed) return fixed;
+  const typed = layer === "primary" ? HW_OPERATOR[key.id] : undefined; // R946: a hardware / * ^ types itself, never the key's Alpha letter (a tap has no layer)
+  if (typed) return { kind: "letter", ch: typed };
   const letter = letterOf(key)?.toLowerCase();
   const byAlpha = layer === "alpha" || (layer === undefined && alpha && letter !== undefined); // a flick down, or Alpha armed on a key with a letter
   const more = empty && !byAlpha && layer !== "shift" && !(layer === undefined && shift) ? afterZero(key, numbered) : undefined; // R780: `.` and the space bar pick rows 11 and 12 of the empty query's list
