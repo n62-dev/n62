@@ -29,7 +29,7 @@ class Reference {
   get empty(): boolean {
     return !this.num.length && !this.den && !this.armed.length;
   }
-  /** One press: true when it is taken (the probe's "ok"; today's ⌫ peels a power first and re-arms what the unit took). */
+  /** One press: true when it is taken (the probe's "ok"; R808: ⌫ removes the whole factor, a power key again takes the power off). */
   press(a: PadAction): boolean {
     switch (a.do) {
       case "prefix": {
@@ -62,23 +62,22 @@ class Reference {
         if (this.armed.length) return false;
         const f = this.list()[this.i - 1];
         if (!f) return false;
-        f.exp = a.n === -1 ? -f.exp : Math.sign(f.exp) * a.n;
+        f.exp = a.n === -1 ? -f.exp : Math.abs(f.exp) === a.n ? Math.sign(f.exp) : Math.sign(f.exp) * a.n; // (the same power again takes it off)
         return true;
       }
       case "delete": {
         if (this.empty) return true;
         if (this.armed.length) this.armed.pop();
-        else if (this.i > 0) {
-          const f = this.list()[this.i - 1] as F;
-          if (f.exp !== 1) f.exp = 1;
-          else {
-            this.list().splice(--this.i, 1);
-            this.armed = [...f.took];
-          }
-        } else if (this.den && !this.den.length) {
+        else if (this.i > 0) this.list().splice(--this.i, 1); // (the whole factor: its prefix and power go with it, nothing is armed again)
+        else if (this.side === "den") {
+          if (this.den?.length) return false; // (J/(kg·K) never becomes J·kg·K)
           this.den = undefined;
           this.side = "num";
           this.i = this.num.length;
+        } else if (this.num.length || this.den?.length) return false; // (the numerator's start, with factors after the caret)
+        else {
+          this.den = undefined; // (a bare ÷ with the caret before it)
+          this.i = 0;
         }
         return true;
       }
@@ -147,7 +146,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const fixture = readFileSync(join(here, "slot.caret.fixture.txt"), "utf8").trimEnd().split("\n");
 
 describe("R806: the caret at the end", () => {
-  it("20 000 random press sequences: the slot, LaTeX, reading, armed state and the refusals equal the reference; the caret is at the end", () => {
+  it("20 000 random press sequences: the slot, LaTeX, reading, armed state and the refusals equal the reference; the caret is at the end (R808: ⌫ whole, powers toggle)", () => {
     const seqs = sequences(20000);
     const kinds = new Set<string>(), powers = new Set<number>();
     let refused = 0;
@@ -173,7 +172,7 @@ describe("R806: the caret at the end", () => {
     expect([...powers].sort()).toEqual([-1, 2, 3, 4]);
     expect(refused).toBeGreaterThan(1000);
   });
-  it("the fixture is the phase-1 model's: 2 000 lines, some presses refused", () => {
+  it("the fixture is the R808 model's: 2 000 lines, some presses refused", () => {
     expect(fixture).toHaveLength(2000);
     expect(fixture.some((l) => (l.split(" ")[0] as string).includes("0"))).toBe(true);
     expect(new Set(fixture.filter((l) => l.startsWith("1 ")).map((l) => l.split(" ")[1])).size).toBeGreaterThan(1);
@@ -282,5 +281,160 @@ describe("R806: the caret inside", () => {
     expect(() => s.caretAtForTest("den", 0)).toThrow();
     expect(() => s.caretAtForTest("num", 2)).toThrow();
     expect(() => s.caretAtForTest("num", -1)).toThrow();
+  });
+});
+
+describe("R808: the caret moves, ⌫ and the powers act at it", () => {
+  const U = (id: string): PadAction => ({ do: "unit", id });
+  const K = { do: "prefix", id: "k" } as const;
+  const DEL = { do: "delete" } as const;
+  /** J ÷ kg·K, the caret at the end of the denominator. */
+  const jkgk = (): SlotModel => {
+    const s = new SlotModel(CAT);
+    for (const a of [U("J"), { do: "per" } as const, K, U("g"), U("K")]) expect(s.apply(a).ok).toBe(true);
+    return s;
+  };
+  const JKG = [{ unit: "J" }, { prefix: "k", unit: "g" }, { unit: "K" }];
+
+  it("◀ ▶ move one factor; at the numerator's end ▶ goes to the denominator's start and ◀ comes back; the ends are edges", () => {
+    const s = jkgk();
+    expect(s.move(-1)).toEqual({ ok: true, moved: true });
+    expect(s.caret).toEqual({ side: "den", i: 1 });
+    s.move(-1);
+    expect(s.caret).toEqual({ side: "den", i: 0 });
+    expect(s.move(-1)).toEqual({ ok: true, moved: true }); // (back to the numerator's end)
+    expect(s.caret).toEqual({ side: "num", i: 1 });
+    s.move(-1);
+    expect(s.move(-1)).toEqual({ ok: true, moved: false }); // the slot's start: the view crosses
+    expect(s.caret).toEqual({ side: "num", i: 0 });
+    s.move(1);
+    expect(s.caret).toEqual({ side: "num", i: 1 });
+    s.move(1);
+    expect(s.caret).toEqual({ side: "den", i: 0 });
+    s.move(1); s.move(1);
+    expect(s.caret).toEqual({ side: "den", i: 2 });
+    expect(s.move(1)).toEqual({ ok: true, moved: false });
+    const one = new SlotModel(CAT, { tokens: [{ unit: "m" }] }); // no ÷: the numerator's end is the slot's end
+    expect(one.move(1)).toEqual({ ok: true, moved: false });
+  });
+  it("caretTo puts the caret at a slot's start (▶ crossing in) or end (◀ crossing in, a tap)", () => {
+    const s = jkgk();
+    s.caretTo("start");
+    expect(s.caret).toEqual({ side: "num", i: 0 });
+    s.caretTo("end");
+    expect(s.caret).toEqual({ side: "den", i: 2 });
+  });
+  it("▲ in the denominator goes to the numerator's end, ▼ in the numerator to the denominator's end; elsewhere no move", () => {
+    const s = jkgk();
+    s.move(-1);
+    expect(s.vertical("up")).toEqual({ ok: true, moved: true });
+    expect(s.caret).toEqual({ side: "num", i: 1 });
+    expect(s.vertical("up")).toEqual({ ok: true, moved: false });
+    expect(s.vertical("down")).toEqual({ ok: true, moved: true });
+    expect(s.caret).toEqual({ side: "den", i: 2 });
+    expect(s.vertical("down")).toEqual({ ok: true, moved: false });
+    const one = new SlotModel(CAT, { tokens: [{ unit: "m" }] });
+    expect(one.vertical("down")).toEqual({ ok: true, moved: false }); // no ÷: the view takes ▼ into the chips
+    expect(one.vertical("up")).toEqual({ ok: true, moved: false });
+  });
+  it("J ÷ kg K, ◀, ⌫ gives J/K: the whole factor goes, its prefix with it, and nothing is armed again", () => {
+    const s = jkgk();
+    s.move(-1);
+    expect(s.apply(DEL)).toEqual({ ok: true });
+    expect(s.slot).toEqual({ tokens: [{ unit: "J" }, { unit: "K" }], per: 1 });
+    expect(s.armed).toEqual({ sqrt: false });
+    expect(s.caret).toEqual({ side: "den", i: 0 });
+    s.apply(U("g")); // J/(g·K)
+    expect(s.reading.text).toBe("joule per gram kelvin");
+  });
+  it("⌫ takes the factor with its power and its √ (m² and √m go whole)", () => {
+    const s = new SlotModel(CAT);
+    for (const a of [U("m"), { do: "power", n: 2 } as const, { do: "sqrt" } as const, U("s")]) s.apply(a);
+    s.apply(DEL);
+    expect(s.slot).toEqual({ tokens: [{ unit: "m", power: "2" }] });
+    s.apply(DEL);
+    expect(s.slot).toEqual({ tokens: [] });
+    expect(s.armed).toEqual({ sqrt: false });
+  });
+  it("m ² ²: m; ² ³: m³; the same power on m⁻² takes it off to m⁻¹; ⁻¹ still negates", () => {
+    const s = new SlotModel(CAT);
+    s.apply(U("m"));
+    s.apply({ do: "power", n: 2 });
+    expect(s.slot).toEqual({ tokens: [{ unit: "m", power: "2" }] });
+    s.apply({ do: "power", n: 2 });
+    expect(s.slot).toEqual({ tokens: [{ unit: "m" }] });
+    s.apply({ do: "power", n: 2 });
+    s.apply({ do: "power", n: 3 });
+    expect(s.slot).toEqual({ tokens: [{ unit: "m", power: "3" }] });
+    s.apply({ do: "power", n: -1 });
+    s.apply({ do: "power", n: 3 });
+    expect(s.slot).toEqual({ tokens: [{ unit: "m", power: "-1" }] });
+    s.apply({ do: "power", n: -1 });
+    expect(s.slot).toEqual({ tokens: [{ unit: "m" }] });
+  });
+  it("a power with nothing left of the caret in its part is refused with a message", () => {
+    const s = jkgk();
+    s.move(-1); s.move(-1);
+    const r = s.apply({ do: "power", n: 2 });
+    expect(r).toMatchObject({ ok: false, key: "units.slot.powerAlone" });
+    expect(!r.ok && r.message).toBe("A power needs a unit before it");
+    expect(s.slot.tokens).toEqual(JKG);
+  });
+  it("⌫ at an empty denominator's start: the ÷ goes and the caret is at the numerator's end", () => {
+    const s = new SlotModel(CAT);
+    for (const a of [U("m"), U("s"), { do: "per" } as const]) s.apply(a);
+    s.move(-1); s.move(1); // out and back in: the denominator's start
+    expect(s.caret).toEqual({ side: "den", i: 0 });
+    expect(s.apply(DEL)).toEqual({ ok: true });
+    expect(s.slot).toEqual({ tokens: [{ unit: "m" }, { unit: "s" }] });
+    expect(s.caret).toEqual({ side: "num", i: 2 });
+    expect(s.latex).not.toContain("frac");
+  });
+  it("⌫ at a denominator's start with units in it: refused with a message, the slot and the caret unchanged", () => {
+    const s = jkgk();
+    s.move(-1); s.move(-1);
+    const r = s.apply(DEL);
+    expect(r).toMatchObject({ ok: false, key: "units.slot.denHasUnits" });
+    expect(!r.ok && r.message).toBe("The denominator still has units");
+    expect(s.slot).toEqual({ tokens: JKG, per: 1 });
+    expect(s.caret).toEqual({ side: "den", i: 0 });
+  });
+  it("⌫ at the numerator's start with factors after the caret is a dead key (R806 left it a silent no-op)", () => {
+    const s = new SlotModel(CAT, { tokens: [{ unit: "m" }, { unit: "s" }] });
+    s.caretAtForTest("num", 0);
+    expect(s.apply(DEL)).toMatchObject({ ok: false, key: "units.slot.nothingBefore" });
+    expect(s.slot.tokens).toHaveLength(2);
+    const d = new SlotModel(CAT, { tokens: [{ unit: "m" }, { unit: "s" }], per: 1 });
+    d.caretAtForTest("num", 0);
+    expect(d.apply(DEL)).toMatchObject({ ok: false });
+    expect(d.slot).toEqual({ tokens: [{ unit: "m" }, { unit: "s" }], per: 1 });
+  });
+  it("÷ with the caret inside the numerator keeps every factor in the numerator, the caret at the new denominator's start", () => {
+    const s = new SlotModel(CAT, { tokens: [{ unit: "J" }, { unit: "K" }, { unit: "s" }] });
+    s.caretAtForTest("num", 1);
+    expect(s.apply({ do: "per" })).toEqual({ ok: true });
+    expect(s.caret).toEqual({ side: "den", i: 0 });
+    s.apply(U("m"));
+    expect(s.slot).toEqual({ tokens: [{ unit: "J" }, { unit: "K" }, { unit: "s" }, { unit: "m" }], per: 3 });
+  });
+  it("a move while a prefix or √ is armed is refused, as leaving the slot is; the caret stays", () => {
+    const s = new SlotModel(CAT, { tokens: [{ unit: "m" }, { unit: "s" }] });
+    s.apply(K);
+    expect(s.move(-1)).toMatchObject({ ok: false, key: "units.slot.prefixAlone" });
+    expect(s.vertical("down")).toMatchObject({ ok: false, key: "units.slot.prefixAlone" });
+    expect(s.caret).toEqual({ side: "num", i: 2 });
+    s.apply(K);
+    s.apply({ do: "sqrt" });
+    expect(s.move(1)).toMatchObject({ ok: false, key: "units.slot.rootAlone" });
+  });
+  it("a move ends a letter run that reads as a unit, and is refused with one that does not", () => {
+    const s = new SlotModel(slotCatalogue([
+      { id: "unit:m", kind: "unit", names: ["m"], title: "Meter", tier: 0, insert: "\\unit{m}{\\mathrm{m}}", si: "1", dim: "m1" },
+    ]), { tokens: [{ unit: "m" }] });
+    s.type("m");
+    expect(s.move(-1)).toEqual({ ok: true, moved: true });
+    expect(s.typing).toBe(false);
+    s.type("z");
+    expect(s.move(1)).toMatchObject({ ok: false, key: "units.slot.notUnit" });
   });
 });
