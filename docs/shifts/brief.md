@@ -60,8 +60,15 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
+| 887a | [R937](packages/R937.md) a pick or Paste goes in as one term (F495: wrong answers; owner, 2026-11-28) | ron, Sonnet | `p1/ron-pickterm` | – |
+| 887a1 | [R942](packages/R942.md) ∥ builds a two-box par: ⌫ never glues `par(520)` (wrong value) | ron, Sonnet | `p1/ron-parnode` | R937 |
+| 887b | [R938](packages/R938.md) a fold or unfold by swipe or ⌃ shows the newest row (F496) | ron, Sonnet | `p1/ron-foldnewest` | R937 |
+| 887c | [R941](packages/R941.md) the ⌫ grid checks the model's rules (owner, 2026-11-28: one ⌫/Del model) | ron, Sonnet | `p1/ron-bkspgrid` | R942 |
+| 887d | [R943](packages/R943.md) one box description, no behaviour change | ron, Sonnet | `p1/ron-boxnodes` | R941 |
+| 887e | [R944](packages/R944.md) ⌫ at a box start: a bare node goes, else select | ron, Sonnet | `p1/ron-boxstart` | R943 |
+| 887f | [R945](packages/R945.md) ⌫ after a structure deletes inside it (x², x⁻¹ in one ⌫) | ron, Sonnet | `p1/ron-afternode` | R944 |
+| 887g | [R946](packages/R946.md) a hardware `/`, `*`, `^` type themselves in Find (pass 259, G402's question) | ron, Sonnet | `p1/ron-findslash` | G402 |
 | 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Sonnet | `p1/ron-keepline` | – |
-| 909a | R896 Clear and Undo in the unit view | ron, Sonnet | `p1/ron-unitundo` | R808 |
 | 914 | [R816](packages/R816.md) Memory: Paste asks, then replaces a value (C6) | ron, Sonnet | `p1/ron-mempaste` | R815 |
 | 915 | [R818](packages/R818.md) Vars and Memory rows say what a name holds (C7) | ron, Sonnet | `p1/ron-namekinds` | – |
 | 916 | [R819](packages/R819.md) filter chips in Vars and Memory (C7) | ron, Sonnet | `p1/ron-namechips` | R818 |
@@ -72,6 +79,8 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 916d | [R878](packages/R878.md) setting rows 3: an opening row ends in › | ron, Sonnet | `p1/ron-openmark` | R877 |
 | 916e | [R879](packages/R879.md) ☰ in Home and CAS is the History menu | ron, Sonnet | `p1/ron-historymenu` | R875 |
 | 916f | [R880](packages/R880.md) the gear in ☰'s title row becomes "Settings ›" | ron, Sonnet | `p1/ron-settingsword` | R879 |
+| 916g | [R939](packages/R939.md) ☰ 5 "Copy as ›" (owner, 2026-11-28) | ron, Sonnet | `p1/ron-copyasmenu` | R879, R880 |
+| 916h | [R940](packages/R940.md) a picked row shows no Store ▶ · Copy › bar | ron, Sonnet | `p1/ron-nobar` | R939 |
 | 919 | [R821](packages/R821.md) user keys: two layers, a switch for Alpha | ron, Sonnet | `p1/ron-userkeyalpha` | R729 |
 | 920 | [R822](packages/R822.md) Store: a tap types Alpha's case | ron, Sonnet | `p1/ron-storecase` | R820 |
 | 921 | [R834](packages/R834.md) a faint ✕ on each history row deletes it (H1b) | ron, Sonnet | `p1/ron-rowx` | R832, R742 |

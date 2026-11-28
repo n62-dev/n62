@@ -37,11 +37,12 @@ Where we are and what is left, one or two lines per open item. Architecture: [04
 ## Tasks
 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
-- **F378, F379 (owner's bug list 4, 2026-11-23; `../drafts/2026-11-23-owner-bugs4/`).** A271's double back next (the rest ✓). Hardware Esc and arrows reach nothing in Plot (its entry line is hidden; before R928 too), so Esc cannot unfold it: no package yet (pass 247).
-- **F366–F377 (layers study 2026-11-23, sandra + sofia; `../drafts/2026-11-23-layers-study/`).** Input leaks through a layer over Home: all but F369 ✓. F369 (⌄ folds the keys under the view): no package, nothing is lost. The net: `layers.spec.ts`, its known list per F id (R916 R921 ✓).
-- **Owner-style hunt 2026-11-23 (h1, h2; sofia CONFIRMED).** Open in packages R899, R909–R911; the rest ✓ (R896 ✓).
-- **F236 (ron, R338).** history-first.spec.ts "engine not ready: the newest five rows" counts 20 renders against 15 under load: 4 failures on 11-12/13, none before. Find the extra re-format; a looser bound is no fix. G224f1 raised it to 20 (da18fc18): the fix sets 15 again.
-- **F238 (A139; R340).** Shift + Fmt, dead, has no `aria-disabled`: TalkBack does not say it does nothing.
+- **F495, F496 (owner's list 5, 11-28; `../drafts/2026-11-28-owner-bugs5/`).** F495 (wrong): a pick or Paste glues to the line (`5×5`, pick `6×6`: 1680): R937. F496 (unfold keeps the scroll): R938. ⌫ model: R941–R945 (E9 not queued).
+- **F378, F379 (owner's bug list 4, 2026-11-23; `../drafts/2026-11-23-owner-bugs4/`).** A271's double back next (the rest ✓). Hardware Esc and arrows reach nothing in Plot (its line is hidden), so Esc cannot unfold it: no package (pass 247).
+- **F366–F377 (layers study 2026-11-23; `../drafts/2026-11-23-layers-study/`).** All ✓ but F369 (⌄ folds the keys under the view; no package, nothing lost). Net: `layers.spec.ts`.
+- **Owner-style hunt 2026-11-23 (h1, h2; sofia CONFIRMED).** Open: R899, R909–R911; the rest ✓.
+- **F236 (ron, R338).** history-first.spec.ts "engine not ready: the newest five rows" counts 20 renders against 15 under load. Find the extra re-format, then 15 again (G224f1 raised it to 20, da18fc18).
+- **F238 (A139; R340).** Shift + Fmt, dead, has no `aria-disabled`: TalkBack does not say it is dead.
 - **Flaky e2e (reruns pass; find the wait, not a longer timeout):** linetouch.spec.ts "a tap puts the caret at the touched term, on a scrolled line too" (5); enginefail.spec.ts "the wasm does not load: the note says so, with Reload…" (4); tips.spec.ts "a key press only closes the tips…" (3); benchmark.spec.ts "t07 … in binary" (5, showed 60); foldbar.spec.ts "unfolding from the folded bar: ⌃ and a 30 px drag up from Copy…" (6); pass 248: store.spec.ts "the row bar's Store ▶ opens it…" (4); pass 249: fold.spec.ts "R740: unfolded, Store ▶ on a pick…" (3), "R740: folded, the sheet's last row…" (3); pass 254: fold.spec.ts "folded: a tap picks, the second inserts…" (3); pass 255: fit.spec.ts "the Home menu's four rows…" at 412 × 915 (3).
 - **F183, no package (G171's report).** `p(A)^2` (`A:=[[1,2,3]]`, `p(M):={local t; t:=M; return t;}`) is ⚠ 14, not refused: a program with a local has no known body. Fix: a `pure(name)` in Bodies (writesThrough false) so its call is evaluated.
 - **F85, no package (G102's Not done; cost only).** A Home input with chips is parsed twice per Enter (G100); the parse is its own bridge-2 call, so G102 could not fold it.
