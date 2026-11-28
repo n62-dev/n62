@@ -94,7 +94,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| B17 | [G365](packages/G365.md) Function reads a cell's kind | gorge, Opus | `p1/gorge-cellkind` | – |
+| B17 | G365 Function reads a cell's kind | gorge, Opus | `p1/gorge-cellkind` | – |
 | B18 | [G315](packages/G315.md) the one import cycle goes | gorge, Opus | `p1/gorge-namesmodule` | – |
 | B19 | [G314](packages/G314.md) EngineHost split in modules | gorge, Opus | `p1/gorge-hostsplit` | – |
 | B20 | [G401](packages/G401.md) Find knows engineers' words | gorge, Opus | `p1/gorge-findwords` | – |
