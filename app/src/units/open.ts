@@ -42,7 +42,7 @@ import { putRow, rowSlots, unitRow, type RowIn } from "./row.ts";
 import type { ConstPick } from "./menu.ts";
 import { unitTools, type UnitTool } from "./tools.ts";
 import { HwTyping } from "./typed.ts";
-import { UnitView, carry, type Shown, type ViewHost } from "./view.ts";
+import { SLOT_MARKS, UnitView, carry, type Shown, type ViewHost } from "./view.ts";
 
 /** The open unit view (window.n62.unitView in the e2e). */
 export interface OpenUnitView {
@@ -300,6 +300,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem, unit?: FindItem)
     panel.formula.append(mf);
     await mounted;
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    mf.shadowRoot?.append(Object.assign(document.createElement("style"), { textContent: SLOT_MARKS })); // R807
     setUp(mf, element, c, hw, new HwTyping(view));
     lockedValue(mf, view.fieldLatex, view.ids);
     view.start();

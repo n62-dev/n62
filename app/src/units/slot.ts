@@ -450,19 +450,30 @@ export class SlotModel {
   /** The slot as LaTeX (output only): factors joined by ·, the ÷ as a stacked fraction, the armed prefix or √ in
    *  `pas-armed`, a pair outside Find's list in `pas-rare`, an empty denominator as `pas-empty` □. */
   get latex(): string {
+    return this.latexWith();
+  }
+
+  /** R807: the slot's LaTeX with `caret` (a drawn mark, never part of `latex`: the history row and Copy read that) at the
+   *  caret, after the armed presses and the run's letters that stand there. An empty denominator keeps its □. */
+  latexWith(caret = ""): string {
     const armed = this.#pending.map((p) =>
       p.kind === "prefix" ? `\\class{pas-armed}{\\mathrm{${this.#cat.prefixes.get(p.id)?.latex ?? p.id}}}` : "\\class{pas-armed}{\\sqrt{\\square}}");
     // R313: letters that are no unit, as typed and marked (a run that reads as a unit is its factor)
     if (this.#run && !this.#run.factor) armed.push(`\\class{pas-rare}{\\mathrm{${this.#run.text}}}`);
-    // (the armed presses and the run's letters stand at the caret, in the list it is in)
-    const side = (list: readonly Factor[], at: number | undefined): string[] => {
+    // a side's factors joined by ·; the armed presses and the run's letters stand at the caret, in the list it is in, and the
+    // caret joins the part after it (else before it) with no · between; a side with no part is `empty` (a 1 above, a □ below; an empty slot drawn with its caret keeps its □)
+    const side = (list: readonly Factor[], on: "num" | "den", empty: string): string => {
       const parts = list.map((f) => this.#factorLatex(f));
-      if (at !== undefined) parts.splice(at, 0, ...armed);
-      return parts;
+      if (this.#side !== on) return parts.join("\\cdot") || empty;
+      parts.splice(this.#at, 0, ...armed);
+      const i = this.#at + armed.length;
+      if (i < parts.length) parts[i] = caret + parts[i];
+      else if (i) parts[i - 1] += caret;
+      else return caret + empty;
+      return parts.join("\\cdot");
     };
-    const num = side(this.#num, this.#side === "num" ? this.#at : undefined);
-    if (!this.#den) return num.join("\\cdot");
-    return `\\frac{${num.join("\\cdot") || "1"}}{${side(this.#den, this.#side === "den" ? this.#at : undefined).join("\\cdot") || "\\class{pas-empty}{\\square}"}}`;
+    const num = side(this.#num, "num", this.#den ? "1" : caret && "\\square");
+    return this.#den ? `\\frac{${num}}{${side(this.#den, "den", "\\class{pas-empty}{\\square}")}}` : num;
   }
 
   /** The reading in words from Find's titles ("kilonewton meter", "joule per kilogram kelvin"): the factors with a
