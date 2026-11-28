@@ -250,6 +250,38 @@ function unitFindShots(): Shot[] {
   );
 }
 
+/** R821: U1–U6 with their slots set (U1 sinh, cosh, tanh; U4 Settings; U6 a long name): the Alpha switch off, then on (the letter line,
+ *  bottom left), and Settings › Your keys with the switch off (16 rows) and on (22), at both sizes. */
+function userKeyShots(): Shot[] {
+  const fill = (alpha: boolean) => async (p: Page): Promise<void> => {
+    await p.evaluate((on) => {
+      const k = window.n62.userKeys;
+      const f = (n: string): { label: string; action: { insert: string } } => ({ label: n, action: { insert: `\\${n}\\left(#0\\right)` } });
+      k.set("u1", "primary", f("sinh"));
+      k.set("u1", "shift", f("cosh"));
+      k.set("u1", "alpha", f("tanh"));
+      k.set("u4", "primary", { label: "Settings", action: { special: "settings" } });
+      k.set("u6", "primary", { label: "arcsinh", action: { insert: "\\operatorname{arcsinh}\\left(#0\\right)" } });
+      k.setAlphaLayer(on);
+    }, alpha);
+  };
+  const sizes = [
+    { tag: "360", viewport: { width: 360, height: 740 } },
+    { tag: "412", viewport: { width: 412, height: 915 } },
+  ];
+  const list = (alpha: boolean) => async (p: Page): Promise<void> => {
+    await fill(alpha)(p);
+    await tap(p, ["help", "d5"]);
+  };
+  const cases = [
+    { id: "off", title: "U1–U6 set, the Alpha switch off: tap and Shift, no letter line", setup: fill(false) },
+    { id: "on", title: "U1–U6 set, the Alpha switch on: tanh bottom left on U1, the letter line on all six", setup: fill(true) },
+    { id: "list-off", title: "Settings › Your keys, the switch off: 12 slot rows, the switch above Reset", setup: list(false) },
+    { id: "list-on", title: "Settings › Your keys, the switch on: 18 slot rows", setup: list(true) },
+  ];
+  return sizes.flatMap((z) => cases.map((c) => ({ id: `userkeys-${c.id}-${z.tag}`, group: `Your keys and the third layer (R821), ${z.viewport.width} × ${z.viewport.height}`, title: c.title, viewport: z.viewport, setup: c.setup })));
+}
+
 interface Shot {
   readonly id: string;
   readonly group: string;
@@ -462,6 +494,7 @@ const shots: Shot[] = [
   },
   ...padShots(),
   ...unitFindShots(),
+  ...userKeyShots(),
   ...unitResultShots(),
   ...lookShots(someHistory), ...zebraShots(someHistory), ...menuMarkShots(), ...legendShots(), ...wrapShots(), ...creditsShots(someHistory), // R158, R149
   ...entryShots(), ...ringShots(), ...runShots(), ...logoShots(), // R157

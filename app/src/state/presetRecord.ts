@@ -17,10 +17,10 @@ export const GROUP_FIELDS: Readonly<Record<PresetGroup, readonly string[]>> = {
   numbers: ["decimalMark", "fmtCycle", "fixDecimals", "uncertainty", "marks", "groupSep"],
   look: ["family", "brightness", "contrast", "plain", "shadow", "pops", "findFull", "hand"],
   vibration: ["on", "strength", "ms", "click"],
-  keys: ["userKeys", "unitPadCells"],
+  keys: ["userKeys", "unitPadCells", "alphaLayer"], // (R821: alphaLayer is the free keys' Alpha switch, USER_KEYS_ALPHA; the other two are stored keys' names)
 };
 
-/** A group's values by field, as captured (`keys`: the stored records of USER_KEYS and UNIT_PAD_CELLS). */
+/** A group's values by field, as captured (`keys`: the stored records of USER_KEYS and UNIT_PAD_CELLS, and the Alpha switch). */
 export type GroupValues = Record<string, unknown>;
 
 export interface Preset {

@@ -253,20 +253,21 @@ test("your own function: one press on a free key, one flick for its Shift slot; 
   await expect(page.locator('[data-key="u1"]')).toHaveAttribute("data-user", "empty");
 });
 
-// R15c3: the third slot. No letter line in the cluster: the face shows the Alpha binding while Alpha is on, the bubble
-// while a flick down is armed; an empty Alpha slot is the tap.
+// R15c3: the third slot, behind R821's switch (set here: userkeyalpha.spec.ts has it off). The letter line shows the Alpha binding
+// bottom left, the bubble names it while a flick down is armed; an empty Alpha slot is the tap.
 test("a free key's Alpha slot: a flick down and Alpha + tap fire it, the bubble shows it; it survives a reload", async ({ page }) => {
   const cosh = { label: "cosh", action: { insert: "\\cosh\\left(#0\\right)" } };
   const wanted = "\\cosh\\left(\\placeholder{}\\right)";
   await page.evaluate(([a, b]) => {
+    window.n62.userKeys.setAlphaLayer(true);
     window.n62.userKeys.set("u1", "primary", a!);
     window.n62.userKeys.set("u1", "alpha", b!);
     window.n62.userKeys.set("u2", "primary", a!); // no Alpha slot: its Alpha is the tap
   }, [sinh, cosh] as const);
   const main = page.locator('[data-key="u1"] .main');
   await expect(main).toHaveText("sinh");
-  await expect(page.locator('[data-key="u1"] .alphalegend')).toHaveCount(0); // the cluster keeps no letter line
-  // Alpha + the key. R729: the face stays the tap (R821 draws the Alpha slot); Alpha changes u1, so its face dims, not u2's
+  await expect(page.locator('[data-key="u1"] .alphalegend')).toHaveText("cosh"); // the letter line, bottom left (R821)
+  // Alpha + the key. R729: the face stays the tap; Alpha changes u1, so its face dims, not u2's
   await tap(page, ["alpha"]);
   await expect(main).toHaveText("sinh");
   await expect(page.locator('[data-key="u1"]')).not.toHaveAttribute("data-fallback", "true");

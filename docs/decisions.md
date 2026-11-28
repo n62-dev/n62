@@ -7,6 +7,7 @@ Phase 0 (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md). This fil
 
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
+- **docs/06 line 30, user keys (R821):** "(tap, Shift, Alpha)" → "(tap, Shift; Alpha with a switch, R821)". Needs the owner's yes; docs/06 is unchanged.
 - **R781, Hand = Left:** every key column mirrors, so the digits read 9 8 7 and Redo stands left of Undo (the pad's ◀ ▶ kept); the bar turns, its track and modes read as before; Appearance has 8 rows. Recommended (pass 254): keep the mirror but keep the reading order inside a run (the digits 7 8 9, Undo then Redo, ⇤ then ⇥), a follow-up R781f1 of about half a day, and confirm the lock and docs/06 3b line.
 - **G784, Paste of a copied name:** Copy writes letters (`2*i`, `β*2`); Paste reads one number, so `2*i` copied from the name i came back as the constant i (principle 3); G784f1 refuses a text copied from a row with a stand-in. Recommended: keep Paste a number reader; reading expressions is its own package (the letter i against the constant i needs a rule first).
 - **G622f2, a singular float inv:** Recommended: refuse, as exact inv does. `inv(approx(10^-9*[[2.5,2E8,e],[2.5,π,2E-3],[5,2E8+π,e+2E-3]]))` is 1E14–1E22 noise, row 3 ≈.
@@ -70,6 +71,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **The Ultra terminals' answers (owner, 2026-11-16; T1 to T6):** [the archive](archive/owner-answers-2026-11-16.md); each package file and the brief's rows state the answer they build.
 - **The release key (owner, 2026-11-16):** alias `n62` (`android/release-cert.sha256`) replaces the Pascaline one before any release; the four secrets keep their names.
 - **Home/CAS ☰ of four rows (owner, 2026-11-20, R830):** Delete, Share session, Clear history, Export ›; built. Rule: docs/05 3.3, 3.5. Archived ("Moved 2026-11-23"). Would change if: the counters show keys-only users missing Copy or Paste on ☰.
+- **User keys: two layers, a switch for the third (owner, 2026-11-20, R821):** U1–U6 have tap and Shift; Alpha (a flick down, its legend bottom left) is Settings › Your keys › Third layer (Alpha), off first, on once when an Alpha slot is stored; a stored slot is kept while off. Rule: docs/05 3.4. Would change if: users set Alpha slots often.
 
 ### Precision, engine and parser
 - **G141: a literal past `MAX_EVAL_DIGITS` makes the value ⚠ unchecked,** a power of ten too; G126's and G153's rows turn ⚠ until S20.

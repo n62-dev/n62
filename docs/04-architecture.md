@@ -293,7 +293,7 @@ Positions use our rows and columns (`spec/keyboard.yaml`); the reference's id is
 | Esc (row 0, col 5), Undo \| Redo (row 1, cols 4–5) | Esc stops a running job, closes Settings, goes back one sheet level, drops a picked row, else clears the line (also the hardware Escape); Undo and Redo are dead without an entry line; Shift cells: docs/06 3b; [archive](archive/04-built-2026-11.md) section 5 | R15c, R15c2, R146 |
 | Select \| Deselect (row 2, cols 4–5, ids `select`, `deselect`) | Select grows the entry line's selection by the box model, Deselect walks it back; Shift + Select = Copy (the line's selection, else what a hold on the picked row's result copies, else the last finished row's; a dead press with none or in an app with nothing selected); Shift + Deselect = Paste (Paste's own path, `paste.ts`). Copy is also the bar's Copy › and a hold on a row's input or result; Paste is any system paste | R279, R723, R727 |
 | ☰ on the bar (the G2's Menu key [r3c4]) | app menus; Home/CAS: one numbered list of four (Delete, Share, Clear, Export ›; R830) on the picked row, else the last result (decisions.md S2); Store ▶ and Copy › on the picked row's bar | P8, S2, S9 |
-| User keys | U1–U6, all empty, with tap, Shift and Alpha (an empty Alpha slot is the tap; stored slots of U1–U3 and two-layer records stay valid); set in Settings › Your keys from Find, a place or a sheet; a tap on an empty slot (the tap or Shift; Alpha + an empty key is the tap) opens Settings › Your keys on that slot's row, no dead press | R15b, R15c, R705 |
+| User keys | U1–U6, all empty, with tap and Shift, Alpha behind a switch (off; on once for a stored Alpha slot; else the tap); set in Settings › Your keys from Find, a place or a sheet; a tap on an empty slot (the tap or Shift; Alpha + an empty key is the tap) opens Settings › Your keys on that slot's row, no dead press | R15b, R15c, R705, R821 |
 | Shift + `+` [r10c5] | Ans (`\ans`, built, R2) | reference |
 | Shift + `−` [r9c5] | the Base menu (5.4) | reference: Base |
 | Shift + 5 [r8c3]; Shift + 8 [r7c3] | `[ ]` vector or matrix template (EN5); `{ }` list | reference |
@@ -354,7 +354,7 @@ One IndexedDB database `n62`, store `kv` (`state/storage.ts`). Keys:
 | `defsStarts` | starts that ran the replay and never got ready (a load failure is not counted, G327); at 2 the engine starts without the log |
 | `tipsSeen` | tips shown |
 | `historyDropNoted` | the note "older rows are dropped after 200" was said (per install, not backed up) |
-| `userKeys`, `unitPadCells`, `taps`, `app.function`, `app.solve` | the user keys, the unit pad cells; the counters (Shift/Alpha, presses, preset applies); per app (`uses` counters) |
+| `userKeys`, `userKeysAlpha`, `unitPadCells`, `taps`, `app.function`, `app.solve` | the user keys and their Alpha switch, the unit pad cells; the counters (Shift/Alpha, presses, preset applies); per app (`uses` counters) |
 | `presets` | `state/presetRecord.ts`: `{ presets: [{ id, name, groups }], active, next }`; groups `mode`, `numbers`, `look`, `vibration`, `keys` (both key records, migrated too); AI format: `views/aiFormat.md` part 2 |
 | `units.targets`, `units.own` | the last target per dimension; your units (`units/ownRecord.ts`, as strict at a restore as at the start; ids `@name`, G233) |
 | `word` | `{ bits, signed }` (R194) |

@@ -23,7 +23,7 @@ import { findText } from "../i18n/enFind.ts";
 import { dataSection } from "./dataSection.svelte.ts";
 import { BRIGHTNESS, validLook, type Hand, type Look } from "../theme/look.ts";
 import { familyOf, FAMILIES, stepped } from "../theme/lookView.ts";
-import { yourKeysItems, yourKeysValue, type SettingsEnv } from "./yourKeys.ts";
+import { yourKeysRows, yourKeysValue, type SettingsEnv } from "./yourKeys.ts";
 import { presetRow, switchedRow } from "./presetsView.svelte.ts";
 import type { Sheet } from "./sheet.svelte.ts";
 import type { AppShell } from "../apps/shell.svelte.ts";
@@ -148,14 +148,22 @@ export function settingsMenu(session: Session, env: SettingsEnv = {}): SubMenu {
 }
 
 /** A section: a row with › that opens its own level (on row `at` when given). */
-function section(id: string, title: string, items: MenuItem[], value?: () => string, at?: string): MenuItem {
+function section(id: string, title: string, rows: MenuItem[] | (() => MenuItem[]), value?: () => string, at?: string): MenuItem {
   return {
     id,
     label: title,
     get value() {
       return value?.();
     },
-    submenu: { title, items, remember: false, ...(at === undefined ? {} : { at }) },
+    submenu: {
+      title,
+      // a function: rows that change while the sheet is open (Your keys, R821); a getter, which a spread would read once
+      get items() {
+        return typeof rows === "function" ? rows() : rows;
+      },
+      remember: false,
+      ...(at === undefined ? {} : { at }),
+    },
   };
 }
 
@@ -243,7 +251,7 @@ export function settingsSections(session: Session, env: SettingsEnv = {}, modeAt
       () => keyFeelText(s.haptics.on ? "settings.on" : "settings.off"),
     ),
     // Your keys (R4b, views/yourKeys.ts): only where the app gives the slots
-    ...(env.userKeys ? [section("keys", findText("keys.title"), yourKeysItems(env, () => session.settings.decimalMark), () => yourKeysValue(env))] : []),
+    ...(env.userKeys ? [section("keys", findText("keys.title"), yourKeysRows(env, () => session.settings.decimalMark), () => yourKeysValue(env))] : []),
     // Data (R38a, R38b: views/dataSection.svelte.ts; R59 adds the library): only where the app gives the backup
     ...(env.data ? [dataSection(env)] : []),
     section("counters", keyFeelText("settings.counters"), tapsItems(session, env), () => {

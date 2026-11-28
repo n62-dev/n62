@@ -28,6 +28,7 @@ export const BACKUP_KEYS: readonly string[] = [
   "history",
   "defs",
   "userKeys",
+  "userKeysAlpha", // R821: the free keys' third layer, a boolean (keyboard/userKeys.svelte.ts)
   "unitPadCells",
   "taps",
   "presets",
@@ -234,6 +235,7 @@ export const VALIDATORS: Validators = {
       USER_LAYERS,
       (b) => text(b["label"]) && actionOk(b["action"]),
     ),
+  userKeysAlpha: bool, // R821
   unitPadCells: (v) =>
     slotsOk(v, CELL_KEYS, ["tap", "up", "down"], (b) => text(b["unit"]) && (b["prefix"] === undefined || text(b["prefix"])) && (b["label"] === undefined || text(b["label"]))),
   taps: (v) => isObject(v) && isCount(v["shift"]) && isCount(v["alpha"]) && typeof v["since"] === "string" && (v["presses"] === undefined || isCount(v["presses"])) && (v["presets"] === undefined || isCount(v["presets"])) && (v["keys"] === undefined || (isObject(v["keys"]) && Object.values(v["keys"]).every(isCount))), // keys: R127, absent before

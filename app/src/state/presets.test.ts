@@ -51,11 +51,49 @@ async function setup(rec?: RawRecord) {
   return { kv, session, userKeys, cells, store, presets, looks, env };
 }
 
+describe("presets hold the Alpha switch (R821)", () => {
+  it("a preset's Your keys group captures alphaLayer and applies it; one without it leaves the switch alone", async () => {
+    const { userKeys, presets } = await setup();
+    userKeys.setAlphaLayer(true);
+    const id = presets.capture("Alpha", ["keys"]);
+    expect(presets.list.find((x) => x.id === id)?.groups.keys).toMatchObject({ alphaLayer: true });
+    userKeys.setAlphaLayer(false);
+    await presets.apply(id);
+    expect(userKeys.alphaLayer).toBe(true);
+    // an older preset (stored before the switch existed) does not hold it
+    const old = await setup({
+      "@n62": DATA_VERSION,
+      value: { presets: [{ id: 1, name: "Old", groups: { keys: { userKeys: {}, unitPadCells: {} } } }], active: null, next: 2 },
+    });
+    old.userKeys.setAlphaLayer(true);
+    await old.presets.apply(1);
+    expect(old.userKeys.alphaLayer).toBe(true);
+  });
+
+  it("a held switch that differs from the current one makes the active preset modified", async () => {
+    const { userKeys, presets } = await setup();
+    const id = presets.capture("Alpha", ["keys"]);
+    await presets.apply(id);
+    expect(presets.modified).toBe(false);
+    userKeys.setAlphaLayer(true);
+    expect(presets.modified).toBe(true);
+  });
+
+  it("a non-boolean alphaLayer in a preset is not applied", async () => {
+    const { userKeys, presets } = await setup({
+      "@n62": DATA_VERSION,
+      value: { presets: [{ id: 1, name: "Bad", groups: { keys: { alphaLayer: "yes" } } }], active: null, next: 2 },
+    });
+    await presets.apply(1);
+    expect(userKeys.alphaLayer).toBe(false);
+  });
+});
+
 describe("presets (R88)", () => {
   it("the model's copies of the start chunk's constants agree with them", () => {
     expect(START_COPIES).toEqual({ USER_KEY_IDS, USER_KEYS });
     // migratePresetKeys runs each key's steps under the field's name: the fields are the stored keys' names
-    expect(GROUP_FIELDS.keys).toEqual([USER_KEYS, UNIT_PAD_CELLS]);
+    expect(GROUP_FIELDS.keys).toEqual([USER_KEYS, UNIT_PAD_CELLS, "alphaLayer"]); // (R821: the third field is the Alpha switch, not a stored key's name)
   });
 
   it("capture holds exactly the ticked groups", async () => {

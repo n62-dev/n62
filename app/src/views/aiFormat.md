@@ -87,7 +87,7 @@ The backup is one JSON file. It holds the app's own stored records, so you write
 - A ticked part replaces the app's whole part, not a piece of it: slots the file does not hold go back to their defaults. To keep what the user has, work from their own backup file (Settings › Data › Save a backup) and change only these parts; the user unticks the other parts in the restore sheet.
 
 ### Part `userKeys`: the six free keys
-- `value` is an object whose keys are `u1` … `u6`. Each holds up to three slots, named by layer: `primary` (the tap), `shift` (a flick up) and `alpha` (a flick down).
+- `value` is an object whose keys are `u1` … `u6`. Each holds up to three slots, named by layer: `primary` (the tap), `shift` (a flick up) and `alpha` (a flick down; drawn and fired only while the app's Third layer (Alpha) switch is on).
 - A slot is `{ "label": "…", "action": { … } }`, or `null` to empty that slot. A slot that is not written keeps its default (empty).
 - `label`: non-empty text, drawn on the key; keep it to a few characters.
 - `action`: an object with exactly one of these four fields (the app's own `sample`, `chip`, `units` and `line` extras are accepted but not meant for you, so do not write them):
@@ -111,7 +111,7 @@ The backup is one JSON file. It holds the app's own stored records, so you write
 - `numbers`: `decimalMark` = "point" or "comma"; `fixDecimals` = a whole number from 0 to 12; `uncertainty` = "sigma", "muted" or "round"; `marks` = "muted", "colour" or "reason"; `groupSep` = "thin", "apos" or "comma".
 - `look`: `family` = "n62", "bw" or "solarized"; `brightness` = "system", "light" or "dark"; `contrast` = true or false; `plain` = true or false; `shadow` = true or false; `pops` = true or false; `findFull` = true or false; `hand` = "right" or "left".
 - `vibration`: `on` = true or false; `strength` = a whole number from 0 to 100; `ms` = a whole number from 5 to 100; `click` = true or false.
-- `keys`: `userKeys` and `unitPadCells`, each exactly the `value` of the part of that name above. Applying the preset puts those slots and cells on the keys.
+- `keys`: `userKeys` and `unitPadCells`, each exactly the `value` of the part of that name above, and `alphaLayer` = true or false (the Third layer (Alpha) switch of Your keys; a preset without it leaves the switch alone). Applying the preset puts those slots and cells on the keys.
 
 ### What refuses a file
 - Not JSON, not UTF-8, over 4 MB, no `"n62-backup"`, or a format number above 1.

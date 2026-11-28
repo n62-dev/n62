@@ -50,6 +50,9 @@ export const enFind = {
   "keys.menu": "Menu",
   "keys.emptyDo": "Empty this slot",
   "keys.reset": "Reset all your keys",
+  /** R821 (owner, 2026-11-20): the switch for the free keys' third layer. */
+  "keys.alpha": "Third layer (Alpha)",
+  "keys.alpha.hint": "A flick down on U1–U6, its legend bottom left",
   /** R857: the bulk resets ask once (MenuItem.confirm): the label while armed, the note under the list. */
   "keys.reset.armed": "Reset all your keys?",
   "keys.reset.note": "Clears {n} keys: {names}. Tap again.",

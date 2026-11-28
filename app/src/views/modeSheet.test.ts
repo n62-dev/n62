@@ -605,11 +605,10 @@ describe("Settings › Your keys (R4b)", () => {
     expect(byId(s, "keys")?.value).toBe("None set");
     s.pickNumber(5);
     const ids = s.level.items.map((x) => x.id);
-    expect(ids).toHaveLength(21); // 18 slots, Unit pad cells (R24d), Your units (R201), Reset all
-    expect(ids.slice(-3)).toEqual(["unitcells", "units", "reset"]);
-    expect(ids.slice(0, 4)).toEqual(["u1:primary", "u1:shift", "u1:alpha", "u2:primary"]);
+    expect(ids).toHaveLength(16); // R821: 12 slots (two layers), Unit pad cells (R24d), Your units (R201), the Alpha switch, Reset all
+    expect(ids.slice(-4)).toEqual(["unitcells", "units", "alphalayer", "reset"]);
+    expect(ids.slice(0, 4)).toEqual(["u1:primary", "u1:shift", "u2:primary", "u2:shift"]);
     expect(byId(s, "u2:shift")?.label).toBe("U2 ⇧");
-    expect(byId(s, "u1:alpha")?.label).toBe("U1 α");
     expect(byId(s, "u1:primary")?.value).toBe("Empty");
     s.pickNumber(1); // U1's level: Find…, the six places, Empty this slot
     expect(s.level.items.map((x) => x.id)).toEqual(["find", "home", "cas", "apps", "menu", "mode", "settings", "empty"]);
@@ -625,7 +624,7 @@ describe("Settings › Your keys (R4b)", () => {
   it("Find… hands the slot to the app", () => {
     const { s, chosen } = withKeys();
     s.pickNumber(5);
-    s.pickNumber(5); // U2 ⇧
+    s.pickNumber(4); // U2 ⇧ (R821: two layers while the Alpha switch is off)
     const p = s.pickNumber(1);
     if (p.kind === "run") p.item.run?.();
     expect(chosen).toEqual(["u2:shift"]);
@@ -676,7 +675,8 @@ describe("Settings › Your keys (R4b)", () => {
   });
 
   it("a free key pressed while the slots are listed goes to its row in its layer; elsewhere it does nothing", () => {
-    const { s } = withKeys();
+    const { s, userKeys } = withKeys();
+    userKeys.setAlphaLayer(true); // R821: the Alpha rows are there only while the switch is on (yourKeysAlpha.test.ts has it off)
     expect(s.goKey("u3", "primary")).toBe(false); // the Settings level lists no slots
     s.pickNumber(5);
     expect(s.goKey("u3", "shift")).toBe(true);
