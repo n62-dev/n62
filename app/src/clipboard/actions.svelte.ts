@@ -263,7 +263,7 @@ export class ClipActions {
    *  result copies it; the notice names it. Nothing to copy (the name went, or reading it failed) says so. */
   copyName(name: string): Promise<boolean> {
     return this.serial(async () => {
-      const got = await (await import("./nameCopy.ts")).nameCopy(this.session, name, this.opts);
+      const got = await (await impl()).nameCopy(this.session, name, this.opts);
       return got ? this.put(got.text, this.named(got.text, got.shown, true), true, got.named) : this.put(undefined);
     });
   }

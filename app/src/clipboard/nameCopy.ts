@@ -4,11 +4,10 @@
 // complex as `a+b*i`; its facts are the stored ones, so a float keeps only the digits that were confirmed) and written by the history's
 // own copyFull; a name stored from the unit view keeps its σ and unit after the number (`v ± σ unit`, as that row copies). A function is
 // its definition (`f(x)=x^2+1`). Loaded on the first copy (the clipboard code's chunk), never at start.
-import { decimalFromString, toText } from "../engine/format.ts";
-import { sigmaAlone } from "../render/sigmaForm.ts";
 import { commaResult, drawnFormat } from "../state/displayMode.ts";
 import { homeItem } from "../state/resultItem.ts";
 import type { Session } from "../state/session.svelte.ts";
+import { loadTidy } from "../state/tidyLoad.ts";
 import { copyFull, copyNames, type CopySource, type NameSeen, type TextOptions } from "./text.ts";
 
 /** A copy: the text, what the notice shows of the value as drawn (`shown`: the digits the sheet draws) and whether the text holds a
@@ -39,9 +38,10 @@ export async function nameCopy(session: Session, name: string, o: TextOptions): 
   if (!r.ok) return undefined;
   // a name stored from the unit view: σ and unit after the value, as the unit row's copy has them (the σ in the facts it was stored with)
   const unit = entry.unit?.text;
-  const sv = unit === undefined || entry.facts?.uncSigma === undefined ? null : decimalFromString(entry.facts.uncSigma);
-  const drawn = sv && sigmaAlone(sv, drawnFormat({}, undefined, session.settings));
-  const sigma = drawn ? (o.decimalComma ? commaResult(toText(drawn), false) : toText(drawn)) : null; // (2 digits, the form the unit view's row draws σ in)
+  // σ drawn as the unit row draws it (render/sigmaForm.ts, the tidy chunk's code: 2 digits, in the value's form)
+  const uncSigma = unit === undefined ? undefined : entry.facts?.uncSigma;
+  const drawn = uncSigma !== undefined && r.value ? (await loadTidy()).sigmaRow({ value: r.value, facts: { uncSigma, reliableDigits: entry.facts?.reliableDigits ?? null }, units: { unc: true } }, drawnFormat({}, undefined, session.settings), undefined)?.sigma.text : undefined;
+  const sigma = drawn === undefined ? null : o.decimalComma ? commaResult(drawn, false) : drawn;
   const units = unit === undefined ? undefined : { text: `${sigma === null ? "" : ` ± ${sigma}`} ${unit}` };
   const src: CopySource = { latex: name, status: "done", text: r.display, ...homeItem(r, false), ...(units ? { units } : {}) };
   const seen: NameSeen = { name: false };
