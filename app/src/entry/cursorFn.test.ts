@@ -25,6 +25,10 @@ const curated = yaml<{ functions: { id: string; giac: string; insert?: string }[
 const NOT_A_TEMPLATE: Readonly<Record<string, string>> = {
   "fn:factorial": "! is a postfix mark with no box: its operand is what stands before it, on the line",
 };
+/** Find's templates whose boxes are on the line, each with its reason (G401). */
+const ON_THE_LINE: Readonly<Record<string, string>> = {
+  "tmpl:dms": "°, ′ and ″ are marks on the line (spec/keyboard.yaml templates): no bracket holds the minutes or seconds",
+};
 
 /** Each slot of `template` filled as a key leaves it (□ for `#?`, nothing for `#0`), with the offset of that slot. */
 function slots(template: string): { latex: string; offset: number }[] {
@@ -127,6 +131,7 @@ describe("functionAt (R196)", () => {
 
   it.each(curated.map((f) => [f.id, f] as const))("finds %s at #0 of its Find insert (find/functions.yaml)", (id, f) => {
     const insert = f.insert ?? `\\operatorname{${f.giac.replace(/_/g, "\\_")}}\\left(#0\\right)`;
+    if (ON_THE_LINE[id] !== undefined) return expect(slots(insert).map(({ latex, offset }) => functionAt(latex, offset))).not.toContain(id);
     for (const { latex, offset } of slots(insert)) expect(functionAt(latex, offset), `${latex} at ${offset}`).toBe(id);
   });
 

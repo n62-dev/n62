@@ -19,7 +19,7 @@ const fn = (...names: string[]): string[] => names.map((n) => `fn:${n}`);
 export const CATEGORIES: readonly Category[] = [
   { id: "arith", title: "cat.arith", ids: fn("abs", "floor", "ceil", "frac", "irem", "gcd", "lcm", "factorial", "comb", "sigfig", "max", "min") },
   { id: "powers", title: "cat.powers", ids: [...fn("sqrt", "surd"), "tmpl:cbrt", ...fn("exp", "ln", "log10")] },
-  { id: "trig", title: "cat.trig", ids: fn("sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh", "tanh", "atan2") },
+  { id: "trig", title: "cat.trig", ids: [...fn("sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh", "tanh", "atan2"), "tmpl:dms"] },
   { id: "calculus", title: "cat.calculus", ids: fn("int", "diff", "limit") },
   { id: "algebra", title: "cat.algebra", ids: fn("solve") },
   { id: "matrix", title: "cat.matrix", ids: fn("det", "inv", "tran", "trn", "cross", "dot", "norm", "rref", "eigenvals", "egv") },
