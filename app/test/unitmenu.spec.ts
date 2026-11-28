@@ -140,7 +140,9 @@ for (const [w, h] of [[412, 915], [360, 740]] as const) {
       expect(await slotText(page, "u2")).toBe("h");
       expect(await activeId(page)).toBe("u2");
       await expect(result(page)).toHaveAttribute("data-text", text ?? "");
-      await page.keyboard.press("ArrowLeft");
+      await page.keyboard.press("ArrowLeft"); // R808: h is one factor: the first ← moves the caret before it,
+      expect(await activeId(page)).toBe("u2");
+      await page.keyboard.press("ArrowLeft"); // the second crosses to u1
       await expect.poll(() => activeId(page)).toBe("u1");
     });
   });
