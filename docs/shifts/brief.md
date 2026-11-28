@@ -61,7 +61,12 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 887a | [R937](packages/R937.md) a pick or Paste goes in as one term (F495: wrong answers; owner, 2026-11-28) | ron, Sonnet | `p1/ron-pickterm` | – |
+| 887a1 | [R942](packages/R942.md) ∥ builds a two-box par: ⌫ never glues `par(520)` (wrong value) | ron, Sonnet | `p1/ron-parnode` | R937 |
 | 887b | [R938](packages/R938.md) a fold or unfold by swipe or ⌃ shows the newest row (F496) | ron, Sonnet | `p1/ron-foldnewest` | R937 |
+| 887c | [R941](packages/R941.md) the ⌫ grid checks the model's rules (owner, 2026-11-28: one ⌫/Del model) | ron, Sonnet | `p1/ron-bkspgrid` | R942 |
+| 887d | [R943](packages/R943.md) one box description, no behaviour change | ron, Sonnet | `p1/ron-boxnodes` | R941 |
+| 887e | [R944](packages/R944.md) ⌫ at a box start: a bare node goes, else select | ron, Sonnet | `p1/ron-boxstart` | R943 |
+| 887f | [R945](packages/R945.md) ⌫ after a structure deletes inside it (x², x⁻¹ in one ⌫) | ron, Sonnet | `p1/ron-afternode` | R944 |
 | 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Sonnet | `p1/ron-keepline` | – |
 | 909a | R896 Clear and Undo in the unit view | ron, Sonnet | `p1/ron-unitundo` | R808 |
 | 914 | [R816](packages/R816.md) Memory: Paste asks, then replaces a value (C6) | ron, Sonnet | `p1/ron-mempaste` | R815 |

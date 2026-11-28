@@ -37,7 +37,7 @@ Where we are and what is left, one or two lines per open item. Architecture: [04
 ## Tasks
 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
-- **F495, F496 (owner's list 5, 11-28; `../drafts/2026-11-28-owner-bugs5/`).** F495 (wrong): a pick or Paste glues to the line (`5×5`, pick `6×6`: 1680): R937. F496 (unfold keeps the scroll): R938. ⌫ in templates (∥ `par(520)`): next.
+- **F495, F496 (owner's list 5, 11-28; `../drafts/2026-11-28-owner-bugs5/`).** F495 (wrong): a pick or Paste glues to the line (`5×5`, pick `6×6`: 1680): R937. F496 (unfold keeps the scroll): R938. ⌫ model: R941–R945 (E9 not queued).
 - **F378, F379 (owner's bug list 4, 2026-11-23; `../drafts/2026-11-23-owner-bugs4/`).** A271's double back next (the rest ✓). Hardware Esc and arrows reach nothing in Plot (its line is hidden), so Esc cannot unfold it: no package (pass 247).
 - **F366–F377 (layers study 2026-11-23; `../drafts/2026-11-23-layers-study/`).** All ✓ but F369 (⌄ folds the keys under the view; no package, nothing lost). Net: `layers.spec.ts`.
 - **Owner-style hunt 2026-11-23 (h1, h2; sofia CONFIRMED).** Open: R899, R909–R911; the rest ✓.
