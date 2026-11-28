@@ -3,13 +3,15 @@
 // the Calc port (gorge's MathEngine.table / analyze).
 export type { AnalysisRequest, AnalysisResult as AnalysisOutcome } from "../../calc/port.ts";
 import type { ComplexValue } from "../../engine/format.ts";
-import type { ValueFacts } from "../../calc/port.ts";
+import type { HomeResult, ValueFacts } from "../../calc/port.ts";
 
 /** One engine number as Home would show it (a HomeResult, or the part of it the views use). */
 export interface Cell {
   ok: boolean;
   display: string;
   value?: ComplexValue;
+  /** G365: the engine's kind of a cell with no number (Giac's undef, or an infinity at a pole): shown as NaN. */
+  kind?: HomeResult["kind"];
   /** What the engine confirmed, whole (a HomeResult has it; G86); drawn digits are cut to it and a ⚠ marks fewer
    *  (docs/04 2.4). */
   facts: ValueFacts;

@@ -123,8 +123,9 @@ export class FunctionApp implements AppInstance {
   private fmtPoint(c: Cell | undefined): string {
     if (!c) return "…";
     if (!c.ok) return numText("function.undefined");
-    // a pole or an undefined value: NaN, as the reference's Num view and Signed area show it (G2 items 19, 22)
-    if (/^[-+]?(infinity|inf|undef)$/.test(c.display)) return numText("function.nan");
+    // a pole or an undefined value: NaN, as the reference's Num view and Signed area show it (G2 items 19, 22); G365: from
+    // the engine's kind, never Giac's print
+    if (c.kind) return numText("function.nan");
     return c.value ? (confirmedText(c, this.host.settings) ?? c.display) : c.display;
   }
   /** ⚠: the cell shows more digits than the engine confirmed (the Num table and trace show no other mark). */
@@ -319,7 +320,7 @@ export class FunctionApp implements AppInstance {
   }
   private csvCell(c: Cell | undefined, copyFull: (i: CopySource, o?: TextOptions) => string | undefined, o: TextOptions): string {
     if (!c || !c.ok) return "";
-    if (/^[-+]?(infinity|inf|undef)$/.test(c.display)) return "NaN";
+    if (c.kind) return "NaN";
     return copyFull(numberSource(c.display, c), o) ?? this.mark(c.display);
   }
 
