@@ -99,6 +99,36 @@ queries:
   - { query: "percent", expect: "unit:percent", where: slot }
   - { query: "per mille", expect: "unit:permille", where: slot }
   - { query: "ppb", expect: "unit:ppb", where: slot }
+  # A compound unit typed on a keyboard (G402; night review 2026-11-16, fh-1): only the compound Find has, else no
+  # unit (the units menu puts the slot's reading first, units/menu.ts); never a wrong dimension by an edit or a word order.
+  # The last five are controls (psi and atm are rows above too, here in a slot).
+  - { query: "kj/kg", expect: none, where: slot, note: "not kg/kg; kJ/kg is no Find unit (the menu's reading row)" }
+  - { query: "nm3/h", expect: none, where: slot, note: "not nmi/h (one edit)" }
+  - { query: "s/m", expect: none, where: slot, note: "not m/s (the words in another order)" }
+  - { query: "kg/s", expect: none, where: slot, note: "not kg·m/s" }
+  - { query: "kn/m", expect: none, where: slot, note: "not kN·m" }
+  - { query: "j/kgk", expect: "unit:J/(kg*K)", where: slot, note: "not J/kg: the name without its brackets and dot" }
+  - { query: "w/mk", expect: "unit:W/(m*K)", where: slot, note: "not W/m²" }
+  - { query: "m^3/h", expect: none, where: slot, note: "not m³/s (3600 times the size)" }
+  - { query: "mach", expect: none, where: slot, note: "not mAh (one edit off a three-letter symbol); Find has no Mach number" }
+  - { query: "m3/h", expect: none, where: slot }
+  - { query: "btu/h", expect: none, where: slot, note: "the menu's reading row, as the grid's Btu/h" }
+  - { query: "w/m2k", expect: none, where: slot }
+  - { query: "wh/kg", expect: none, where: slot }
+  - { query: "lb/ft3", expect: none, where: slot }
+  - { query: "nmm", expect: none, where: slot }
+  - { query: "dbv", expect: none, where: slot }
+  - { query: "dbu", expect: none, where: slot }
+  - { query: "lbm", expect: "unit:lb", where: slot, note: "pound-mass" }
+  - { query: "mho", expect: "unit:S", where: slot }
+  - { query: "metric horsepower", expect: "unit:PS", where: slot, note: "qalc's Pferdestärke" }
+  - { query: "standard atmosphere", expect: "unit:atm", where: slot }
+  - { query: "kg/m3", expect: "unit:kg/m^3", where: slot, note: "a power written as a digit: the name without its caret" }
+  - { query: "km", expect: "unit:km", where: slot }
+  - { query: "psi", expect: "unit:psi", where: slot }
+  - { query: "atm", expect: "unit:atm", where: slot }
+  - { query: "kpa", expect: "unit:kPa", where: slot }
+  - { query: "kn", expect: "unit:kN", where: slot }
   # Prefixes (5)
   - { query: "kilo", expect: "pfx:k" }
   - { query: "micro", expect: "pfx:u" }

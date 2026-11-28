@@ -22,6 +22,12 @@ const items: FindItem[] = [
   item("fn:cos", ["cos"], "Cosine"),
   item("unit:mW", ["mW"], "Milliwatt"),
   item("unit:MW", ["MW"], "Megawatt"),
+  item("unit:m/s", ["m/s"], "Meter per Second"),
+  item("unit:kg*m/s", ["kg*m/s", "kg·m/s"], "Kilogram Meter per Second"),
+  item("unit:kg/kg", ["kg/kg"], "Kilogram per Kilogram"),
+  item("unit:kg/m^3", ["kg/m^3", "kg/m³"], "Kilogram per Cubic Meter"),
+  item("unit:J/(kg*K)", ["J/(kg*K)", "J/(kg·K)"], "Joule per Kilogram Kelvin"),
+  item("unit:mAh", ["mAh", "mA·h", "milliampere hour"], "Milliampere hour"),
 ];
 const index = prepare(items);
 const ids = (q: string, ctx: FindContext = {}): string[] => search(index, q, ctx).map((h) => h.item.id);
@@ -65,5 +71,19 @@ describe("Find ranking", () => {
     const live = [item("var:A", ["A"], "A = 5"), item("userfn:f", ["f"], "f(x) = x^2")];
     expect(ids("", { filter: ["var", "userfn"], live })).toEqual(["userfn:f", "var:A"]);
     expect(ids("a", { live })[0]).toBe("var:A");
+  });
+
+  it("G402: in a unit search a compound (`/`, `*`, `^`, a digit after letters) takes no fuzzy step and no word in another order", () => {
+    const unit: FindContext = { filter: ["unit", "pfx"], prefer: ["unit"] };
+    expect(ids("s/m", unit)).toEqual([]); // not m/s (the words in another order)
+    expect(ids("kg/s", unit)).toEqual([]); // not kg·m/s (the words kg, s inside it)
+    expect(ids("kj/kg", unit)).toEqual([]); // not kg/kg (kj one edit from kg)
+    expect(ids("kg/m3", unit)).toEqual(["unit:kg/m^3"]); // the name without its caret
+    expect(ids("j/kgk", unit)).toEqual(["unit:J/(kg*K)"]); // the name without its brackets and dot
+    expect(ids("m/s", unit)).toEqual(["unit:m/s"]);
+    expect(ids("kg", unit).slice(0, 3)).toEqual(["unit:kg/kg", "unit:kg*m/s", "unit:kg/m^3"]); // no compound: prefixes as ever
+    expect(ids("mach", unit)).toEqual([]); // one edit off a three-letter symbol is another unit
+    expect(ids("milliampere h", unit)).toEqual(["unit:mAh"]); // words still match without a compound
+    expect(ids("s/m")).toEqual(["unit:m/s"]); // (Home's Find, no unit filter: as before)
   });
 });
