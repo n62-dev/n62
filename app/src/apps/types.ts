@@ -86,6 +86,10 @@ export interface MenuItem {
    *  stored name's full value, a constant's value); the sheet stays open and nothing goes on the line. A row without one: a hold does
    *  nothing and the Copy key is a dead press. */
   copy?(): void;
+  /** R816 (Memory): the Paste key on the highlighted row replaces its value. `again`: the row was armed by the press before (it asks
+   *  once, then stores); `read` gives the clipboard as one number (a refusal said, null). False: nothing was done and nothing said (a job
+   *  runs), the dead press. A row without one: Paste is a dead press. */
+  paste?(again: boolean, read: () => Promise<{ latex: string; text: string } | null>): Promise<boolean | void> | boolean | void;
   /** Picking the item runs it and the sheet stays open (a switch in a list of switches). */
   readonly keep?: boolean;
   /** A row that acts on the selected slot or the entry line alone (R261: Symb's Clear; R278f1: Paste): a view whose rows are all such rows still gets the

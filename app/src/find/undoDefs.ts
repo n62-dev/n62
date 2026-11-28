@@ -38,11 +38,12 @@ export function putBackDefs(log: DefEntry[], rows: readonly LoggedDef[]): DefEnt
   return out;
 }
 
-/** Put `rows` back: the names the log holds again are left as they are. Returns the names restored. */
-export async function restoreDefs(engine: MathEngine | undefined, rows: readonly LoggedDef[]): Promise<string[]> {
+/** Put `rows` back: the names the log holds again are left as they are, unless `over` (R816: the rows are the old entries of names a
+ *  replace stored over, so they go back over the new ones). Returns the names restored. */
+export async function restoreDefs(engine: MathEngine | undefined, rows: readonly LoggedDef[], over = false): Promise<string[]> {
   if (!posting(engine)) return [];
   const taken = new Set((await engine.definitions()).map((e) => e.name));
-  const free = rows.filter((r) => !taken.has(r.entry.name));
+  const free = over ? [...rows] : rows.filter((r) => !taken.has(r.entry.name));
   if (!free.length) return [];
   const r: Response = await engine.call({ type: "define", defs: free.map((x) => x.entry) });
   if (r.type !== "defined") return [];

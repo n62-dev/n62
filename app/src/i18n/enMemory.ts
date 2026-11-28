@@ -5,6 +5,10 @@ export const enMemory = {
   /** The row under Memory's names after a delete (a tap brings the names back). */
   "memory.undo1": "{name} deleted · Undo",
   "memory.undoN": "{n} names deleted · Undo",
+  /** R816: Paste on a highlighted name asks (the row's label, the details line under the list), a second Paste replaces it; the Undo row after. */
+  "memory.replace": "Replace {what} with {with}?",
+  "memory.replaceNote": "Paste again to replace {name}. Any other key keeps it.",
+  "memory.replaced1": "{name} replaced · Undo",
   /** What an Undo says of a name defined since (it is left as it is). */
   "memory.taken": "{names} defined again, not restored",
 } as const;

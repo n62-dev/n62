@@ -4,7 +4,7 @@
 import { actionFor, type Key, type Layer } from "../keyboard/keyboard.ts";
 import { deadPress, holdKeys, isSelect, layerOf, modsFor, special, type Mods, type RouteCtx } from "../keyboard/route.ts";
 import type { MenuItem } from "../apps/types.ts";
-import type { Sheet } from "./sheet.svelte.ts";
+import type { Level, Sheet } from "./sheet.svelte.ts";
 
 export type SheetKey =
   | { kind: "move"; by: 1 | -1 }
@@ -165,11 +165,14 @@ export function storeKey(key: Key, shift: boolean, alpha: boolean, cas: boolean,
  *  sheet itself, `of`, and pastes reads it here, so the start chunk carries no rule of its own). */
 export type SheetCtx = { kind: "find" | "store" | "other"; filter: boolean; numbered: number; empty: boolean; cas: boolean; paste?: boolean; of?: Sheet };
 
-/** R900: the Paste key types a pasted name into the open level's filter: Find, Vars and Store in, not Memory (its Paste is R816's)
- *  nor a matrix grid's level. */
+/** R816: Memory's level (a list of names whose digit keys only highlight, R800): its Paste replaces the highlighted name. */
+const isMemory = (l: Level): boolean => l.digitPick === "highlight";
+
+/** R900: the Paste key types a pasted name into the open level's filter: Find, Vars and Store in, not a matrix grid's level; Memory
+ *  takes it too (R816), as a replace of the highlighted name, not a name for the filter. */
 export function pastes(sheet: Sheet): boolean {
   const l = sheet.level;
-  return (sheet.id === "find" || sheet.id === "store") && l.filterable && !l.digitPick && !l.grid;
+  return (sheet.id === "find" || sheet.id === "store") && l.filterable && !l.grid && (isMemory(l) || !l.digitPick);
 }
 
 /** R900: the Paste key (Shift + Deselect, R723), by a tap with its modifiers or a flick's layer; a free key holding it does nothing in a sheet. */
@@ -232,6 +235,7 @@ export function sheetFace(key: Key, s: SheetCtx, mods: Mods, layer?: Layer): { t
   if (job.kind === "letter") return { text: job.ch, dead: false };
   if (job.kind === "help") return { dead: s.of !== undefined && helpRow(s.of) === undefined }; // R869: no row to explain
   if (job.kind === "copy") return { dead: s.of !== undefined && s.of.level.current?.copy === undefined }; // R815: no row that copies
+  if (job.kind === "paste" && s.of && isMemory(s.of.level)) return { dead: s.of.level.current?.paste === undefined }; // R816: no row that takes a pasted value
   return { dead: job.kind === "none" };
 }
 
@@ -244,6 +248,7 @@ export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, mods
   const sheet = shell.sheet;
   if (!sheet) return false;
   const level = sheet.level;
+  const was = sheet.armed; // R816: Memory's Paste asks once, then replaces: the row it armed, which this press disarms like any other
   if (key.id !== "enter") sheet.disarm(); // R281: any press but Enter (the armed item's second pick) disarms
   // R4b: while Your keys is open, a free key goes to its own slot's row (the cluster stays live above the sheet)
   if (key.user && sheet.goKey(key.id, layerOf(modsFor(c, layer)))) return true;
@@ -256,7 +261,7 @@ export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, mods
     shell.picked(byPlace);
     return true;
   }
-  return sheetAct(c, key, layer, mods);
+  return sheetAct(c, key, layer, mods, was);
 }
 
 /** A letter from a hardware keyboard while a sheet is open (route.ts typeLetter, R930: here in the sheet's chunk). R300: an open
@@ -275,8 +280,8 @@ export function sheetLetter(c: RouteCtx, ch: string): boolean {
 
 /** What a key does in the open sheet (route.ts sheetPress, once the grid, a free key's slot and a cell's place have not taken it; here, in
  *  the sheet's own code, so the start chunk does not carry it). `layer`: the one a gesture chose; `mods`: the modifiers a queued key was
- *  pressed with (R8). True: the key was used up. */
-export function sheetAct(c: RouteCtx, key: Key, layer: Layer | undefined, mods?: Mods): boolean {
+ *  pressed with (R8). `armed`: the row the sheet had armed before this press disarmed it (R816). True: the key was used up. */
+export function sheetAct(c: RouteCtx, key: Key, layer: Layer | undefined, mods?: Mods, armed: string | null = null): boolean {
   const shell = c.shell;
   const sheet = shell.sheet!;
   const level = sheet.level;
@@ -337,7 +342,19 @@ export function sheetAct(c: RouteCtx, key: Key, layer: Layer | undefined, mods?:
       for (const ch of level.filter) c.entry.run({ kind: "type", text: ch });
       shell.closeSheet();
       return false;
-    case "paste":
+    case "paste": {
+      // R816, Memory: the highlighted name asks, then a second Paste replaces it (the row's own `paste`: its clipboard read, its question
+      // and its store); a row that takes none (a function, Clear all, Undo) is the dead press. The keys pressed meanwhile wait for it.
+      if (isMemory(level)) {
+        const row = level.current;
+        if (!row?.paste) {
+          c.dead();
+          return true;
+        }
+        const again = armed !== null && armed === row.id;
+        c.withClip((x) => holdKeys(c, Promise.resolve(row.paste!(again, () => x.readNumber())).then((ok) => ok === false && c.dead())));
+        return true;
+      }
       // R900: the clipboard's name into the filter (Find's in lower case, as its letters type); no name, or the sheet gone meanwhile,
       // is the dead press and the sheet stays. The keys pressed while it reads wait for it (holdKeys), so Paste, Enter picks the name.
       c.withClip((x) =>
@@ -348,6 +365,7 @@ export function sheetAct(c: RouteCtx, key: Key, layer: Layer | undefined, mods?:
         })),
       );
       return true;
+    }
     case "copy": {
       // R815: the highlighted row's value (a name's full value, a constant's); Clear all, Undo's row, a function in Find and an empty list are the dead press
       const row = level.current;

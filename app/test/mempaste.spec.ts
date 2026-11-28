@@ -67,17 +67,23 @@ test.describe("Memory's Paste replaces a name", () => {
     expect(await inputs(page)).toHaveLength(1);
   });
 
-  test("any other key disarms: Paste then ◀, then Paste again asks afresh and replaces nothing", async ({ page }) => {
+  test("any other key disarms: Paste then ▼ ▲ no longer asks; Paste then ◀ leaves the sheet, and Paste again asks afresh", async ({ page }) => {
     await memory(page, "2.5");
     await tap(page, KEYPASTE);
     await expect(row(page, "var:A")).toContainText("Replace A = 5 with 2.5?");
-    await tap(page, ["left"]);
+    await tap(page, ["down", "up"]);
     await expect(row(page, "var:A")).not.toContainText("Replace");
     await expect(find(page)).not.toContainText("Paste again to replace");
-    expect(await valueOfA(page)).toBe("5");
-    await tap(page, KEYPASTE); // armed again, not stored
+    await tap(page, KEYPASTE); // armed again, not stored: the ▼ ▲ were other presses
     await expect(row(page, "var:A")).toContainText("Replace A = 5 with 2.5?");
     expect(await valueOfA(page)).toBe("5");
+    await tap(page, ["left"]);
+    await expect(find(page)).toBeHidden();
+    await tap(page, ["shift", "math"]);
+    await tap(page, KEYPASTE);
+    await expect(row(page, "var:A")).toContainText("Replace A = 5 with 2.5?"); // asked, not replaced
+    expect(await valueOfA(page)).toBe("5");
+    expect(await inputs(page)).toHaveLength(1);
   });
 
   test("controls: Memory's tap still copies, the Copy key too; Paste on the line (Find closed) still pastes", async ({ page }) => {
