@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from "vitest";
 import { FakeCalc } from "../calc/fake.ts";
-import { CalcCancelled, type Calc, type CasOutcome, type HomeOutcome, type UserName } from "../calc/port.ts";
+import { CalcCancelled, CalcFailure, type Calc, type CasOutcome, type HomeOutcome, type UserName } from "../calc/port.ts";
 import type { ComplexValue } from "../engine/format.ts";
 import { safePrecision } from "../engine/homeEval.ts";
 import { t } from "../i18n/index.ts";
 import { jobText } from "../i18n/enJob.ts";
 import { loadRemoved, Session } from "./session.svelte.ts";
 import { fakeKv } from "./fakeKv.ts";
-import { EngineCrashError, EngineLoadError, EngineMemoryError } from "../engine/types.ts";
 
 
 const third: ComplexValue = {
@@ -370,16 +369,28 @@ describe("R66 (S12 row 2a): a power keeps Giac's principal root in Home and CAS"
   });
 });
 
-describe("an engine that stopped on the input (G183)", () => {
+describe("an engine that stopped on the input (G183, G315: the port's CalcFailure kinds)", () => {
   /** A Home and a CAS that reject with `e`. */
   const failing = (e: unknown): Calc =>
     Object.assign(new FakeCalc(), { ready: () => Promise.resolve(), home: () => Promise.reject(e), cas: () => Promise.reject(e), cancel: () => Promise.resolve() });
 
-  it("a crashed engine shows job.crashed, never the JS text", async () => {
-    const s = new Session(failing(new EngineCrashError("Maximum call stack size exceeded")), fakeKv());
-    await s.submit("1+1");
-    expect(s.home[0]).toMatchObject({ status: "error", text: jobText("job.crashed") });
+  const kinds: [CalcFailure["kind"], string][] = [
+    ["memory", jobText("job.memory")], // G24: out of memory keeps its own line
+    ["crashed", jobText("job.crashed")],
+    ["engine", t("error.engine")],
+  ];
+  for (const [kind, text] of kinds)
+    it(`a CalcFailure of kind "${kind}" shows its own line, never the JS text (Home and CAS)`, async () => {
+      const s = new Session(failing(new CalcFailure(kind, "Maximum call stack size exceeded")), fakeKv());
+      await s.submit("1+1");
+      s.setView("cas");
+      await s.submit("1+1");
+      for (const row of [s.home[0], s.cas[0]]) expect(row).toMatchObject({ status: "error", text });
+    });
+
+  it("the lines are the app's own", () => {
     expect(jobText("job.crashed")).toBe("The engine stopped on this input and was restarted");
+    expect(jobText("job.memory")).toBe("Out of memory: the engine was restarted");
   });
 
   it("any other rejection shows error.engine, not its text (Home and CAS)", async () => {
@@ -391,21 +402,16 @@ describe("an engine that stopped on the input (G183)", () => {
       for (const row of [s.home[0], s.cas[0]]) expect(row).toMatchObject({ status: "error", text: t("error.engine") });
     }
   });
-
-  it("out of memory keeps its own line (G24)", async () => {
-    const s = new Session(failing(new EngineMemoryError()), fakeKv());
-    await s.submit("1+1");
-    expect(s.home[0]).toMatchObject({ status: "error", text: jobText("job.memory") });
-  });
 });
 
-// R284: the kind of a failed start comes from the error's class, never its text; no row is added while it stands
+// R284: the kind of a failed start comes from the port's CalcFailure kind (G315), never its text; no row is added while it stands
 describe("a failed engine start", () => {
   const failing = (err: Error): Calc => Object.assign(new ValueCalc(), { ready: () => Promise.reject(err) });
   const cases: [string, Error, string][] = [
-    ["a load error", new EngineLoadError("out of memory"), "load"],
-    ["a memory error", new EngineMemoryError("could not load"), "memory"],
-    ["a crash", new EngineCrashError("x"), "crash"],
+    ["a load failure", new CalcFailure("load", "out of memory"), "load"],
+    ["a memory failure", new CalcFailure("memory", "could not load"), "memory"],
+    ["a crash", new CalcFailure("crashed", "x"), "crash"],
+    ["an engine failure", new CalcFailure("engine", "x"), "crash"],
     ["any other error", new Error("x"), "crash"],
   ];
   for (const [name, err, kind] of cases)

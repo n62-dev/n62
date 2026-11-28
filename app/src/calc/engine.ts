@@ -2,6 +2,9 @@
 // The Calc port on top of gorge's MathEngine (app/src/engine). The only place the views meet it.
 import {
   EngineCancelled,
+  EngineCrashError,
+  EngineLoadError,
+  EngineMemoryError,
   type AnalysisRequest,
   type AnalysisResult,
   type CasResult,
@@ -14,7 +17,7 @@ import {
 import { WorkerEngine } from "../engine/workerEngine.ts";
 import { userNamesOf } from "../engine/defs.ts";
 import { mark } from "../marks.ts";
-import { CalcCancelled, type Calc, type CalcSettings, type ChipFactsTable, type ConstTable, type CasOutcome, type HomeOutcome, type Quantity, type UnitError, type UnitRequest, type UserName } from "./port.ts";
+import { CalcCancelled, CalcFailure, type Calc, type CalcSettings, type ChipFactsTable, type ConstTable, type CasOutcome, type HomeOutcome, type Quantity, type UnitError, type UnitRequest, type UserName } from "./port.ts";
 import type { IndexItem } from "../find/types.ts";
 import type { WordStore } from "../state/wordStore.svelte.ts";
 
@@ -34,7 +37,7 @@ export class EngineCalc implements Calc {
   }
 
   async ready(): Promise<{ safeStart?: { skipped: number } }> {
-    const t = await this.engine.ready();
+    const t = await mapCancel(this.engine.ready());
     // measurement builds only (marks.ts): what tools/device_run.py reads as instantiateMs, initMs and replayMs
     mark("engine-timings", { instantiateMs: t.instantiateMs, initMs: t.initMs, replayMs: t.replayMs, readyMs: t.readyMs });
     return t.safeStart ? { safeStart: t.safeStart } : {};
@@ -81,18 +84,27 @@ export class EngineCalc implements Calc {
   }
 
   async names(): Promise<UserName[]> {
-    return userNamesOf(await this.engine.definitions());
+    return userNamesOf(await mapCancel(this.engine.definitions()));
   }
 
   async cancel(): Promise<void> {
-    await this.engine.cancel();
+    await mapCancel(this.engine.cancel());
   }
 }
 
+/** `p` with the engine's errors in the port's words (G315): a Cancel is CalcCancelled, every other rejection a CalcFailure
+ *  of its kind (the engine's error as its cause). */
 async function mapCancel<T>(p: Promise<T>): Promise<T> {
   try {
     return await p;
   } catch (e) {
-    throw e instanceof EngineCancelled ? new CalcCancelled() : e;
+    throw calcError(e);
   }
+}
+
+function calcError(e: unknown): CalcCancelled | CalcFailure {
+  if (e instanceof CalcCancelled || e instanceof CalcFailure) return e;
+  if (e instanceof EngineCancelled) return new CalcCancelled();
+  const kind = e instanceof EngineMemoryError ? "memory" : e instanceof EngineCrashError ? "crashed" : e instanceof EngineLoadError ? "load" : "engine";
+  return new CalcFailure(kind, e instanceof Error ? e.message : String(e), { cause: e });
 }

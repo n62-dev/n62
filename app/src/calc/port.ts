@@ -9,7 +9,7 @@ import type { ConstTable } from "../engine/constUnc.ts";
 export type { ChipEntry, ChipFactsTable } from "../engine/chipFacts.ts";
 export type { ConstEntry, ConstTable } from "../engine/constUnc.ts";
 
-export type { AnalysisRequest, AnalysisResult, HomeResult, KnownValue, SolveOutcome, SolveRequest, SolveRoot, TableRequest, ValueFacts } from "../engine/types.ts";
+export type { AnalysisRequest, AnalysisResult, HomeResult, KnownValue, SolveOutcome, SolveRequest, SolveRoot, StoredRead, TableRequest, UncTerm, ValueFacts } from "../engine/types.ts";
 export type { UserName } from "../engine/defs.ts";
 import type { UserName } from "../engine/defs.ts";
 import type { LibraryReply } from "../engine/library.ts";
@@ -115,6 +115,19 @@ export class CalcCancelled extends Error {
   constructor() {
     super("cancelled");
     this.name = "CalcCancelled";
+  }
+}
+
+/** G315: why a call (or the start) failed, in the port's words, so a view reads its kind and never the engine's error
+ *  classes: `memory`, the engine ran out of memory (restarted); `crashed`, it stopped on the input (a wasm trap, a stack
+ *  overflow; restarted, G183); `load`, it could not start (G318); `engine`, any other failure. The message is the
+ *  engine's, never shown (G183: the row says its own line). */
+export class CalcFailure extends Error {
+  readonly kind: "memory" | "crashed" | "load" | "engine";
+  constructor(kind: CalcFailure["kind"], message: string = kind, options?: ErrorOptions) {
+    super(message, options);
+    this.name = "CalcFailure";
+    this.kind = kind;
   }
 }
 

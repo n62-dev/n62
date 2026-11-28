@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The calculator session: current view, modifier keys, settings and the history of both views.
 // Plain logic on Svelte 5 runes; the engine comes in through the Calc port.
-import type { AngleUnit, Calc, CalcSettings, ConstTable, NumberFormat, UserName } from "../calc/port.ts";
+import { CalcFailure, type AngleUnit, type Calc, type CalcSettings, type ConstTable, type NumberFormat, type StoredRead, type UncTerm, type UserName } from "../calc/port.ts";
 import { ANS_KEY, pruneChips, validChips, type Chip, type ChipTable } from "../input/chips.ts";
 import { parseFailText } from "../input/errors.ts";
 import { loadEntry } from "../input/parser.ts";
 import { t } from "../i18n/index.ts";
-import { EngineLoadError, EngineMemoryError, type StoredRead, type UncTerm } from "../engine/types.ts";
 import { type ComplexValue, type MarkInfo } from "../engine/format.ts";
 import type { GroupSep } from "../render/home.ts";
 import {
@@ -267,7 +266,7 @@ export class Session {
   cas = $state<HistoryItem[]>([]);
   /** Set when the engine is starting or failed to start. */
   engineState = $state<"starting" | "ready" | "failed">("starting");
-  /** R284: why the engine failed to start, from G318's error class (never its text); unset until it has. */
+  /** R284: why the engine failed to start, from the port's CalcFailure kind (G318, G315; never its text); unset until it has. */
   engineFailure = $state<"load" | "memory" | "crash">();
   /** The user's variables and functions, the stored ones included (Vars, Find's live items; docs/04 3.4, 6.2). */
   userNames = $state<UserName[]>([]);
@@ -312,7 +311,8 @@ export class Session {
         return this.refreshNames();
       },
       (e: unknown) => {
-        this.engineFailure = e instanceof EngineLoadError ? "load" : e instanceof EngineMemoryError ? "memory" : "crash";
+        const kind = e instanceof CalcFailure ? e.kind : "engine"; // G315: the port's kind, never engine/types.ts
+        this.engineFailure = kind === "load" || kind === "memory" ? kind : "crash";
         this.engineState = "failed";
       },
     );

@@ -2,8 +2,7 @@
 // R930 (a start-chunk cut): a job's engine call and its result on the row, split from Session.finish. It runs only once the
 // item chunk is in, which finish awaits before the engine is sent anything (R155f2), so it rides in that load (state/itemLoad.ts)
 // and nothing waits longer than before.
-import { CalcCancelled, type CalcError, type CalcSettings, type ConstTable } from "../calc/port.ts";
-import { EngineCrashError, EngineMemoryError } from "../engine/types.ts";
+import { CalcCancelled, CalcFailure, type CalcError, type CalcSettings, type ConstTable } from "../calc/port.ts";
 import { hasMessage, t, type MessageKey } from "../i18n/index.ts";
 import { jobText } from "../i18n/enJob.ts";
 import type { ChipTable } from "../input/chips.ts";
@@ -55,8 +54,9 @@ export async function runJob(session: Session, live: HistoryItem, view: View, gi
       live.status = "cancelled";
     } else {
       live.status = "error";
-      // G183: our own line, never a JS error's text
-      live.text = e instanceof EngineMemoryError ? jobText("job.memory") : e instanceof EngineCrashError ? jobText("job.crashed") : t("error.engine");
+      // G183: our own line, never a JS error's text; G315: the port's kind says which
+      const kind = e instanceof CalcFailure ? e.kind : "engine";
+      live.text = kind === "memory" ? jobText("job.memory") : kind === "crashed" ? jobText("job.crashed") : t("error.engine");
     }
   }
 }
