@@ -146,6 +146,48 @@ test.describe("Memory copies", () => {
   });
 });
 
+// Principle 3: a name whose value has no confirmed digit (mark ⚠ n 0) copies nothing, as the history row it came from; the notice says why.
+test.describe("a name with no confirmed digit", () => {
+  /** sin(10^2000) (oracle: needs about 2000 digits, out of reach: no digit confirmed) stored in A through Store ▶, Memory open, a sentinel on the clipboard. */
+  async function none(page: Page): Promise<void> {
+    await start(page);
+    await page.evaluate(() => window.n62.session.submit("\\sin\\left(10^{2000}\\right)"));
+    await done(page, 1);
+    await expect(page.getByTestId("mark")).toHaveText("⚠ no digit confirmed");
+    await tap(page, ["shift", "emark"]); // Store ▶ on the newest result
+    await page.getByTestId("store").locator('[data-id="name:A"]').tap();
+    await expect(page.getByTestId("store")).toBeHidden();
+    await expect.poll(() => names(page)).toEqual(["A"]);
+    await gestures(page);
+    await setClipboard(page, "sentinel");
+    await tap(page, ["shift", "math"]);
+    await expect(row(page, "var:A")).toBeVisible();
+  }
+  const refused = async (page: Page): Promise<void> => {
+    await expect(page.getByTestId("notice")).toHaveText("No digit confirmed");
+    expect(await clipboard(page)).toBe("sentinel");
+    expect(await names(page)).toEqual(["A"]);
+  };
+
+  test("a tap on A says No digit confirmed and the clipboard keeps its sentinel", async ({ page }) => {
+    await none(page);
+    await row(page, "var:A").tap();
+    await refused(page);
+  });
+
+  test("Enter, a hold and the Copy key say the same", async ({ page }) => {
+    await none(page);
+    await tap(page, ["enter"]);
+    await refused(page);
+    await page.waitForTimeout(2500); // (the notice ends)
+    await hold(page, row(page, "var:A"));
+    await refused(page);
+    await page.waitForTimeout(2500);
+    await tap(page, KEYCOPY);
+    await refused(page);
+  });
+});
+
 test.describe("a hold copies in every sheet", () => {
   test("Vars: a hold on A = 7 copies 7, the sheet stays open and the line stays empty; a tap still inserts the name", async ({ page }) => {
     await start(page);
