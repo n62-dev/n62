@@ -18,6 +18,7 @@
   import { hasOptions, hasSteps, ROW, rowHeight, showsReason, twoLines } from "./sheetFit.ts";
   import { builtRows, keyedById, plainRow, rowKey, sameRows } from "./sheetWindow.ts";
   import { fitRows } from "./rowFit.ts";
+  import { rowSwipe } from "./rowGestures.ts";
 
   /** R145: the ⚙ in a ☰ sheet's title row (drawn, not the emoji glyph, which Android paints in colour). Here, not in
    *  icons.ts: only this lazy chunk draws it, and icons.ts rides with the first app's opening (R145f1, R362). */
@@ -160,6 +161,21 @@
     pressed = false;
   });
   const px = (n: number | undefined): string | undefined => (n === undefined ? undefined : `${n}px`);
+  /** R813: a row whose item has `swipe` (Memory's names) slides out to the left behind the red strip and runs it (rowSwipe.ts,
+   *  as a history row does); a row without one gets nothing attached. */
+  function swipes(node: HTMLElement, run: (() => void) | undefined): { update(r: (() => void) | undefined): void; destroy(): void } {
+    let now = run;
+    const opts = { enabled: true, onswipe: () => void now?.() };
+    let inner = run ? rowSwipe(node, opts) : undefined;
+    return {
+      update(r) {
+        now = r;
+        if (r && !inner) inner = rowSwipe(node, opts);
+        else if (!r && inner) (inner.destroy(), (inner = undefined));
+      },
+      destroy: () => inner?.destroy(),
+    };
+  }
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (the keys drive the sheet; a tap on the history beside it closes it) -->
@@ -264,6 +280,8 @@
             data-id={r.item.id}
             data-count={r.item.count ?? "row"}
             style:height={px(rowHeight(row, { reason: second, steps, options: options !== undefined }))}
+            data-swipe={r.item.swipe ? "" : undefined}
+            use:swipes={r.item.swipe}
             onclick={() => ontap(r.index)}
           >
             <span class="n">{r.n === undefined ? "" : numberFace(r.n)}</span>{#if r.item.glyph}<span class="tile math" class:small={"text" in r.item.glyph && r.item.glyph.text.length > 1} data-testid="row-glyph" aria-hidden="true">{@html "icon" in r.item.glyph ? HOME : r.item.glyph.text}</span>{/if}<span class="text"><span class="label">{#if r.item.latex}<MathView latex={r.item.latex} label={r.item.label} />{:else}{label}{/if}</span>{#if reason}<span class="reason">{r.item.reason}</span>{:else if r.item.hint}<span class="reason" data-testid="row-hint">{r.item.hint}</span>{:else if r.item.dots && steps}<span class="dots under" data-testid="row-dots" aria-hidden="true">{#each r.item.dots as c}<i style:background={c}></i>{/each}</span>{/if}</span>{#if r.item.dots && !steps}<span class="dots" data-testid="row-dots" aria-hidden="true">{#each r.item.dots as c}<i style:background={c}></i>{/each}</span>{/if}{#if r.item.note}<span class="note" data-testid="row-note">{r.item.note}</span>{/if}{#if options}<span class="seg" data-testid="row-options">{#each options as o (o.id)}<button type="button" class="opt" use:pressFlag data-option={o.id} aria-label={o.spoken} aria-pressed={o.selected} disabled={r.item.disabled || o.disabled} onclick={(e) => { e.stopPropagation(); onoption(r.index, o.id); }}>{o.label}</button>{/each}</span>{/if}{#if steps}<button type="button" class="step" use:pressFlag data-testid="step-down" aria-label={sheetText("sheet.stepDown")} disabled={r.item.disabled} onclick={(e) => { e.stopPropagation(); sheet.adjustAt(r.index, -1); }}>◀</button>{/if}{#if r.item.value !== undefined}<span class="value" data-testid="sheet-value">{r.item.value}</span>{/if}{#if steps}<button type="button" class="step" use:pressFlag data-testid="step-up" aria-label={sheetText("sheet.stepUp")} disabled={r.item.disabled} onclick={(e) => { e.stopPropagation(); sheet.adjustAt(r.index, 1); }}>▶</button>{/if}{#if r.item.selected !== undefined}<span class="tick" aria-hidden="true">{r.item.selected ? "✓" : ""}</span>{/if}{#if r.item.submenu}<span class="more" aria-hidden="true">›</span>{/if}
@@ -527,6 +545,11 @@
     font-size: calc(var(--row, var(--sheet-row)) * 0.4286);
     cursor: pointer;
     flex-shrink: 0;
+  }
+  /* R813: a row that swipes out (rowSwipe.ts): the red strip sits in it past its right edge; a drag down is the list's scroll */
+  .row[data-swipe] {
+    position: relative;
+    touch-action: pan-y;
   }
   .row[aria-disabled="true"] {
     cursor: default;

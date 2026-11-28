@@ -197,6 +197,28 @@ describe("Memory", () => {
   });
 });
 
+// R813: a swipe left on a name's row in Memory deletes it (Sheet.svelte turns an item's `swipe` into rowSwipe); Vars, a search's
+// hits in Vars, Clear all and the Undo row carry none.
+describe("R813: Memory's swipe", () => {
+  it("only Memory's name rows carry a swipe; Vars' rows and cells do not, nor Clear all", () => {
+    const m = setup(true).sheet.level.items;
+    expect(m.filter((i) => i.swipe).map((i) => i.id)).toEqual(["userfn:area", "userfn:p", "var:b_1", "var:A"]);
+    expect(m.find((i) => i.id === "clearall")?.swipe).toBeUndefined();
+    const v = setup(false).sheet;
+    expect(v.level.items.some((i) => i.swipe)).toBe(false);
+    v.level.type("a");
+    expect(v.level.items.some((i) => i.swipe)).toBe(false);
+  });
+
+  it("the swipe deletes that name and leaves the sheet open on the others", () => {
+    const { sheet, session } = setup(true);
+    sheet.level.items.find((i) => i.id === "var:A")?.swipe?.();
+    expect(session.userNames.map((u) => u.name)).toEqual(["b_1", "p", "area"]);
+    expect(sheet.level.items.some((i) => i.id === "var:A")).toBe(false);
+    expect(sheet.level.items.at(-1)?.id === "clearall" || sheet.level.items.at(-1)?.id === "undo").toBe(true);
+  });
+});
+
 // R260 (vr-2): the engine's stand-in never reaches the user: Vars' row, its details line and the Find item read the
 // name as typed (render/home.ts typedName), while a pick still inserts and deletes the stored name.
 describe("R260: a stand-in shown as the letter typed", () => {

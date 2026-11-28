@@ -64,7 +64,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 908 | R807 the slot draws its caret and its marks (C2) | ron, Sonnet | `p1/ron-unitcaretdraw` | R806 |
 | 909 | [R808](packages/R808.md) the caret moves; ⌫ and the powers act at it (C3) | ron, Sonnet | `p1/ron-unitcaretmove` | R807 |
 | 909a | [R896](packages/R896.md) Clear and Undo in the unit view | ron, Sonnet | `p1/ron-unitundo` | R808 |
-| 911 | [R813](packages/R813.md) Memory: a swipe left deletes, with Undo (C6) | ron, Sonnet | `p1/ron-memswipe` | R314 |
+| 911 | R813 Memory: a swipe left deletes, with Undo (C6) | ron, Sonnet | `p1/ron-memswipe` | R314 |
 | 912 | [R814](packages/R814.md) Memory: Shift + ⌫ deletes (C6) | ron, Sonnet | `p1/ron-memdelkey` | R813 |
 | 913 | [R815](packages/R815.md) Memory copies the full value (C6) | ron, Sonnet | `p1/ron-memcopy` | R814 |
 | 914 | [R816](packages/R816.md) Memory: Paste asks, then replaces a value (C6) | ron, Sonnet | `p1/ron-mempaste` | R815 |
