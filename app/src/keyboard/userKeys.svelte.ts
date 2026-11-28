@@ -145,6 +145,18 @@ export class UserKeys {
     this.write(next);
   }
 
+  /** R821: Reset all your keys: gives back the slots of the layers that show now (`layers()`); an Alpha slot stored while the
+   *  switch is off is kept for when it turns on (the section's note names only the shown ones). */
+  resetShown(): void {
+    const next: StoredUserKeys = {};
+    for (const id of Object.keys(this.stored)) {
+      const slots = { ...this.slots(id) };
+      for (const l of this.layers()) delete slots[l];
+      if (Object.keys(slots).length > 0) next[id] = slots;
+    }
+    this.write(next);
+  }
+
   /** A key's stored slots ({} for none, or for a damaged record). A preset reads them (R88, state/presets.svelte.ts). */
   slots(id: string): Partial<Record<UserLayer, UserBinding | null>> {
     const s = this.stored[id];

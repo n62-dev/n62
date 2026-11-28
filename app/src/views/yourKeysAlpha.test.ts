@@ -88,4 +88,15 @@ describe("Settings › Your keys › Third layer (Alpha) (R821)", () => {
     expect(s.goKey("u2", "alpha")).toBe(true);
     expect(s.level.current?.id).toBe("u2:alpha");
   });
+
+  it("Reset all with the switch off names and clears only the shown layers: a stored Alpha slot is kept (R821 fix)", () => {
+    const { s, userKeys } = withKeys();
+    userKeys.set("u1", "alpha", alphaB);
+    expect(byId(s, "reset")?.confirm?.note).toBe("No key is set: nothing to clear.");
+    const reset = (): number => s.level.items.findIndex((x) => x.id === "reset");
+    s.activate(reset()); // the first pick arms (R857), the second clears
+    s.activate(reset());
+    userKeys.setAlphaLayer(true);
+    expect(userKeys.labelOf("u1", "alpha")).toBe("x₀");
+  });
 });

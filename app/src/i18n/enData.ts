@@ -55,6 +55,7 @@ export const enData = {
   "part.history": "History",
   "part.defs": "Definitions",
   "part.userKeys": "Your keys",
+  "part.userKeysAlpha": "Your keys' third layer (Alpha)",
   "part.unitPadCells": "Unit pad cells",
   "part.taps": "Counters",
   "part.presets": "Presets",

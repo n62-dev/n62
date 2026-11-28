@@ -281,6 +281,10 @@ describe("the Entry setting's third value (R253)", () => {
 });
 
 describe("the userKeysAlpha part (R821)", () => {
+  it("every backup part has a name of its own, never the raw key (R821 fix)", () => {
+    for (const k of BACKUP_KEYS) expect(partName(k), k).not.toBe(k);
+    expect(partName("userKeysAlpha")).toBe("Your keys' third layer (Alpha)");
+  });
   const file = (v: unknown): Uint8Array =>
     new TextEncoder().encode(JSON.stringify({ "n62-backup": 1, parts: { userKeysAlpha: { "@n62": DATA_VERSION, value: v } } }));
   it("is a backup key, left out of nothing", () => {

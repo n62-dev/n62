@@ -114,7 +114,7 @@ function rows(env: SettingsEnv, u: UserKeys, mark: () => DecimalMark): MenuItem[
       get confirm() {
         return asks(RESET_KEYS, USER_KEY_IDS.flatMap((id, i) => u.layers().filter((l) => u.labelOf(id, l) !== undefined).map((l) => `U${i + 1}${MARK[l]}`)));
       },
-      run: () => u.reset(),
+      run: () => u.resetShown(),
     },
   ];
 }

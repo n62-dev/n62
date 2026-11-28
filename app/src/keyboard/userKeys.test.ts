@@ -323,4 +323,19 @@ describe("user keys: two layers, a switch for the third (R821)", () => {
     u.setAlphaLayer(true);
     expect(u.labelOf("u1", "alpha")).toBe("x₀");
   });
+
+  it("Reset all (resetShown) while the switch is off clears the two shown layers and keeps a stored Alpha slot for on (R821 fix)", () => {
+    const u = new UserKeys(fakeKv());
+    u.set("u1", "primary", sinh);
+    u.set("u1", "alpha", alphaB);
+    u.set("u2", "alpha", alphaB);
+    u.resetShown();
+    expect(u.labelOf("u1", "primary")).toBeUndefined();
+    u.setAlphaLayer(true);
+    expect(u.labelOf("u1", "alpha")).toBe(alphaB.label);
+    expect(u.labelOf("u2", "alpha")).toBe(alphaB.label);
+    u.resetShown(); // on: every layer goes
+    expect(u.labelOf("u1", "alpha")).toBeUndefined();
+    expect(u.labelOf("u2", "alpha")).toBeUndefined();
+  });
 });

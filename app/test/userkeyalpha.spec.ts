@@ -137,5 +137,26 @@ for (const size of SIZES) {
       expect(px).toBeGreaterThanOrEqual(9);
       expect(px).toBeLessThan(14); // the unfitted face is 15 px
     });
+
+    test("the switch turning on refits at once: U4 on Settings with an Alpha slot set first fits at 11 px or more inside its key, no Shift or Alpha press (R821 fix)", async ({ page }) => {
+      await page.evaluate(() => {
+        const k = window.n62.userKeys;
+        k.set("u4", "primary", { label: "Settings", action: { special: "settings" } });
+        k.set("u4", "alpha", { label: "tanh", action: { insert: "\\tanh\\left(#0\\right)" } });
+      });
+      const key = page.locator('[data-key="u4"]');
+      await expect(key.locator(".main")).toHaveText("Settings");
+      await expect(key.locator(".alphalegend")).toHaveCount(0); // off: the slot is kept, not drawn
+      await setSwitch(page, true);
+      await expect(key.locator(".alphalegend")).toHaveText("tanh");
+      await expect
+        .poll(async () => {
+          const k = await box(key);
+          const m = await box(key.locator(".main"));
+          return m.x >= k.x - 0.5 && m.x + m.width <= k.x + k.width + 0.5 && (await fontPx(key.locator(".main"))) >= 11 && (await fontPx(key.locator(".main"))) < 14;
+        })
+        .toBe(true);
+      await expect(key.locator(".main")).not.toHaveAttribute("data-cut", /.*/);
+    });
   });
 }
