@@ -6,3 +6,4 @@ export { choosePort } from "./native.ts";
 export { saveFile, type SaveResult } from "./files.ts";
 export { copyExactText, copyFull, copyShownText, sessionCsv, sessionLatex, sessionText, tableCsv, withoutMark } from "./text.ts";
 export { translateRows, type PyRow, type PyOptions } from "./python.ts";
+export { nameCopy } from "./nameCopy.ts"; // R815: a stored name's full value (in this chunk: a chunk of its own would add its name to the start chunk)

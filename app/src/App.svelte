@@ -231,7 +231,7 @@
   /** Vars and Shift + Math (R4b): Find on the user's variables and functions, or Memory (the code only, not the index). */
   function openNames(memory: boolean): void {
     if (!memory && !shell.showsEntry) return dead();
-    onFind(finder(), (m) => { picked = null; m.showNames(shell, entry, session, memory); });
+    onFind(finder(), (m) => { picked = null; m.showNames(shell, entry, session, memory, withClip); });
   }
   /** Store ▶ in Home or CAS (R281): "Store in" (views/storeSheet.svelte.ts, in Vars' chunk); `row`: the result on the line (none: the line, R301). */
   function openStore(row?: HistoryItem): void {

@@ -114,20 +114,21 @@ export function preview(it: FindItem): string {
   return parts.filter(Boolean).join(" · ");
 }
 
-/** One item as a row of the sheet; picking it runs `pick`. */
-export function itemRow(it: FindItem, pick: (it: FindItem) => void): MenuItem {
+/** One item as a row of the sheet; picking it runs `pick`. R815: a constant's row also copies its value (a hold, the Copy key) through
+ *  `copy`, when it is given. */
+export function itemRow(it: FindItem, pick: (it: FindItem) => void, copy?: (it: FindItem) => void): MenuItem {
   const note = unitNote(it);
-  return { id: it.id, label: it.title, value: shownName(it), preview: preview(it), ...(note ? { note } : {}), run: () => pick(it) };
+  return { id: it.id, label: it.title, value: shownName(it), preview: preview(it), ...(note ? { note } : {}), ...(copy && it.kind === "const" && it.value !== undefined ? { copy: () => copy(it) } : {}), run: () => pick(it) };
 }
 
 /** Find's sheet: the categories on an empty query, and the search for typed letters (in a category: its items only).
  *  An item's row is made once, so the sheet draws a hit that stays in the result as the same row. */
-export function findMenu(index: FindIndex, pick: (it: FindItem) => void): { categories: MenuItem[]; search: (q: string) => MenuItem[] } {
+export function findMenu(index: FindIndex, pick: (it: FindItem) => void, copy?: (it: FindItem) => void): { categories: MenuItem[]; search: (q: string) => MenuItem[] } {
   // one row object per item while Find is open: a hit that stays from key to key is the same row (R132, E3)
   const made = new Map<FindItem, MenuItem>();
   const rowOf = (it: FindItem): MenuItem => {
     let r = made.get(it);
-    if (r === undefined) made.set(it, (r = itemRow(it, pick)));
+    if (r === undefined) made.set(it, (r = itemRow(it, pick, copy)));
     return r;
   };
   const rows = (hits: readonly FindItem[]): MenuItem[] => hits.map(rowOf);
@@ -191,7 +192,8 @@ export function showFind(c: RouteCtx, index: FindIndex, slot?: SlotTarget): void
     if ((it.kind === "unit" || it.kind === "pfx") && shell.app === null) return lazy(c, import("../units/open.ts").then((m) => m.openUnits(c, undefined, it)));
     putOnLine(entry, it);
   };
-  const { categories, search } = findMenu(index, pick);
+  const copy = (it: FindItem): void => c.withClip((x) => void (it.value !== undefined && x.copyValue(it.value))); // R815: a hold on a constant's row copies its value
+  const { categories, search } = findMenu(index, pick, copy);
   shell.showFind(slot ? t("slot.title") : t("title"), categories, search);
   // R932, Settings › Appearance › Find opens full screen: the sheet opens filling the screen. It is open now: every caller
   // waits for the sheet's view, which brings its model (App.svelte openFind, onFind), so the open is not deferred.

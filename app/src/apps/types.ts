@@ -82,6 +82,10 @@ export interface MenuItem {
   /** R813: a swipe left on the row (past 40 % of its width, views/rowSwipe.ts) runs this; the row then slides out behind the
    *  red strip. Memory's name rows delete the name (with R314's Undo row). A right swipe and a short one do nothing. */
   swipe?(): void;
+  /** R815: a hold on the row and the Copy key (Shift + Select) on the highlighted row run this: what they copy is the row's value (a
+   *  stored name's full value, a constant's value); the sheet stays open and nothing goes on the line. A row without one: a hold does
+   *  nothing and the Copy key is a dead press. */
+  copy?(): void;
   /** Picking the item runs it and the sheet stays open (a switch in a list of switches). */
   readonly keep?: boolean;
   /** A row that acts on the selected slot or the entry line alone (R261: Symb's Clear; R278f1: Paste): a view whose rows are all such rows still gets the

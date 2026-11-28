@@ -50,7 +50,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **Owner answers of 2026-11-02 (vision; interview with sandra).** A working engineer, phone first; units and constants first; no AI in the app; marks, σ and digit groups each a setting. Archived. Would change if: an outside round shows another first user.
 - **Owner answers of 2026-11-02.** Stored names (R33) get a colour token per theme; the app's switch alone decides key vibration (A9, R112); the splash Dark (A59); the bars follow the look (owner, 2026-11-22, A266). Archived. Would change if: users want the system switch to mute the keys.
 - **Bulk resets ask once (owner, 2026-11-22, R857); one-slot clears do not.** Archived. Rule: docs/05 3.4.
-- **R4b's four defaults, as built:** Memory deletes a name without asking (Clear all asks once) and a delete has a one-level Undo (R314); a Find pick for a slot closes the sheets; a key's constant keeps its value and σ; Vars is dead without an entry line. Archived.
+- **R4b's four defaults, as built:** Memory's tap, Enter or hold copies a name's full value (R815); deleting is its swipe or Shift + ⌫ (R813, R814), without asking (Clear all asks once), with a one-level Undo (R314); a Find pick for a slot closes the sheets; a key's constant keeps its value and σ; Vars is dead without an entry line. Archived.
 - **R15c1 menus (owner, 2026-10-20): a long menu scrolls** in the viewport (docs/05 3.1); the ⚙ in its title opens Settings (R145). Would change if: the scroll feels slow on the APK.
 - **M4-2 (owner, 2026-10-20):** the task budgets (t02 9 presses, t04 12, t10 25, t05 4), t09's two deviations, ± on Shift + `,` (R71), the unit result as its mockup (R62). Archived. Your hand timing stays the gate.
 - **R15c Store (owner, 2026-10-19; G2 item 58, device):** Shift + ᴇ (Store ▶) on an empty line after a result starts `Ans ▶`, as + − × ÷ do; built in R15c2.
@@ -174,6 +174,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 
 - **σ's digits, one rule (R883, R885; pass 248):** every σ (a constant's, a typed ±, a name or chip) mutes the value's digits from σ's first digit's place on (`2.5 ± 0.1` mutes its 5); σ is drawn at 2 significant digits, PFX too (`4.70 k ± 0.10 k`), the value at least to σ's last digit and in σ's form; the unit view's second line writes σ at 2 digits (the full σ: the σ sheet, Copy). Rule: docs/04 2.6 (R885). Would change if: the owner wants σ at one digit.
 - **A value with σ (R884):** muted digits by default; Rounded to σ is a setting (owner, 2026-11-23).
+- **R807's look (pass 257):** the caret a 1.5 px `--text` bar; armed `--key-on`, rare `--warn`, empty □ muted. Would change if: the owner's look.
 - **A ratio chip (G369, G782; pass 229):** its pure number wherever it goes, the unit view's slot and Store ▶ too. Built, archived.
 - **The check of 2026-10-19:** a zero term keeps its dimension for the unit check (G35). Would change if: the per-term check costs more than the 5 ms p95 bar.
 

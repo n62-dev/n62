@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R4b (docs/04 3.4, 5.1; docs/05 3.4): Vars lists the user's stored names and inserts one; Shift + Math, Memory,
-// deletes one and clears all; Settings › Your keys sets U1–U6 (tap, Shift, Alpha) from Find or from a place, and a slot
+// copies one (R815; a swipe or Shift + ⌫ deletes it) and clears all; Settings › Your keys sets U1–U6 (tap, Shift, Alpha) from Find or from a place, and a slot
 // fires after a reload. Every path by keys (digits, Enter, Esc) and by touch (taps on the rows). The real engine: the
 // names come from its definitions log.
 import { expect, test, type Page } from "@playwright/test";
+import { finger, STILL_MS } from "./core-lib.ts";
 import { entryValue, flick, lastResult, open, tap } from "./helpers.ts";
 
 const find = (page: Page) => page.getByTestId("find");
@@ -28,6 +29,13 @@ async function start(page: Page): Promise<void> {
 async function store(page: Page, digit: string, letterKey: "vars" | "math", count: number): Promise<void> {
   await tap(page, [digit, "shift", "emark", "alpha", letterKey, "enter"]);
   await expect(page.locator('[data-status="done"]')).toHaveCount(count);
+}
+/** R813: a swipe left across 60 % of the name's row (slowly, lifted at rest: no fling) deletes it, once the gesture's chunk is in. */
+async function swipeOut(page: Page, id: string): Promise<void> {
+  const css = `[data-testid="find"] [role="menuitem"][data-id="${id}"]`;
+  const width = (await row(page, id).boundingBox())?.width ?? 0;
+  await expect(row(page, id).locator('[data-testid="swipe-del"]')).toHaveCount(1, { timeout: 15_000 });
+  await finger(page, css, { dx: -0.6 * width, steps: 12, still: STILL_MS });
 }
 /** The stored names are written asynchronously; a reload after this keeps them. */
 async function reload(page: Page): Promise<void> {
@@ -139,7 +147,7 @@ test.describe("Vars", () => {
 });
 
 test.describe("Memory", () => {
-  test("by keys: Enter deletes the highlighted name, the last row clears all on the second Enter", async ({ page }) => {
+  test("by keys: Shift + ⌫ deletes the highlighted name (R814), the last row clears all on the second Enter", async ({ page }) => {
     await start(page);
     await store(page, "d5", "vars", 1);
     await store(page, "d7", "math", 2);
@@ -147,7 +155,7 @@ test.describe("Memory", () => {
     await expect(title(page)).toHaveText("Memory");
     await expect(nrows(page)).toHaveCount(3); // B, A and Clear all
     await expect(active(page)).toHaveAttribute("data-id", "var:B");
-    await tap(page, ["enter"]); // deletes B; the sheet stays
+    await tap(page, ["shift", "bksp"]); // deletes B; the sheet stays
     await expect(find(page)).toBeVisible();
     await expect(nrows(page)).toHaveCount(2);
     await expect(row(page, "var:B")).toHaveCount(0);
@@ -166,7 +174,7 @@ test.describe("Memory", () => {
     await expect(lastResult(page)).not.toHaveAttribute("data-text", "5");
   });
 
-  test("R800: a digit only highlights a row, it never deletes a name or arms Clear all; Enter still deletes", async ({ page }) => {
+  test("R800: a digit only highlights a row, it never deletes a name or arms Clear all; Shift + ⌫ deletes", async ({ page }) => {
     await start(page);
     await store(page, "d5", "vars", 1);
     await store(page, "d7", "math", 2);
@@ -181,7 +189,7 @@ test.describe("Memory", () => {
     await expect.poll(() => names(page)).toEqual(["A", "B"]);
     await tap(page, ["d2"]);
     await expect(active(page)).toHaveAttribute("data-id", "var:A");
-    await tap(page, ["enter"]); // Enter keeps its job
+    await tap(page, ["shift", "bksp"]);
     await expect(row(page, "var:A")).toHaveCount(0);
     await expect.poll(() => names(page)).toEqual(["B"]);
   });
@@ -192,7 +200,7 @@ test.describe("Memory", () => {
     await store(page, "d7", "math", 2);
     await tap(page, ["shift", "math", "vars"]); // a: the search finds A only
     await expect(nrows(page)).toHaveCount(1);
-    await tap(page, ["enter"]);
+    await tap(page, ["shift", "bksp"]);
     await expect(nrows(page)).toHaveCount(0); // A is gone from the hits at once
     await tap(page, ["bksp"]);
     await expect(nrows(page)).toHaveCount(2); // B and Clear all
@@ -200,12 +208,15 @@ test.describe("Memory", () => {
     expect(await names(page)).toEqual(["B"]);
   });
 
-  test("by touch: a tap on a name deletes it, two taps on Clear all clear the rest", async ({ page }) => {
+  test("by touch: a tap on a name copies it and deletes nothing (R815), a swipe deletes it, two taps on Clear all clear the rest", async ({ page }) => {
     await start(page);
     await store(page, "d5", "vars", 1);
     await store(page, "d7", "math", 2);
     await tap(page, ["shift", "math"]);
     await row(page, "var:A").tap();
+    await expect(row(page, "var:A")).toBeVisible();
+    await expect.poll(() => names(page)).toEqual(["A", "B"]);
+    await swipeOut(page, "var:A");
     await expect(row(page, "var:A")).toHaveCount(0);
     await expect.poll(() => names(page)).toEqual(["B"]);
     await row(page, "clearall").tap();
@@ -220,9 +231,10 @@ test.describe("Memory", () => {
     await store(page, "d7", "math", 2);
     await tap(page, ["shift", "math"]);
     await expect(row(page, "undo")).toHaveCount(0); // nothing deleted yet
-    await row(page, "var:A").tap();
+    await swipeOut(page, "var:A"); // R813: the swipe (a tap copies since R815)
     await expect(row(page, "var:A")).toHaveCount(0);
     await expect(row(page, "undo")).toContainText("A deleted · Undo");
+    await page.waitForTimeout(250); // (Chrome takes a touch right after a drag as the stop of its fling)
     await row(page, "undo").tap();
     await expect(row(page, "var:A")).toBeVisible();
     await expect(row(page, "undo")).toHaveCount(0); // one level: the copy went with the Undo
