@@ -81,7 +81,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 916f | [R880](packages/R880.md) the gear in ☰'s title row becomes "Settings ›" | ron, Sonnet | `p1/ron-settingsword` | R879 |
 | 916g | [R939](packages/R939.md) ☰ 5 "Copy as ›" (owner, 2026-11-28) | ron, Sonnet | `p1/ron-copyasmenu` | R879, R880 |
 | 916h | [R940](packages/R940.md) a picked row shows no Store ▶ · Copy › bar | ron, Sonnet | `p1/ron-nobar` | R939 |
-| 919 | [R821](packages/R821.md) user keys: two layers, a switch for Alpha | ron, Sonnet | `p1/ron-userkeyalpha` | R729 |
+| 919 | R821 user keys: two layers, a switch for Alpha | ron, Sonnet | `p1/ron-userkeyalpha` | R729 |
 | 920 | [R822](packages/R822.md) Store: a tap types Alpha's case | ron, Sonnet | `p1/ron-storecase` | R820 |
 | 921 | [R834](packages/R834.md) a faint ✕ on each history row deletes it (H1b) | ron, Sonnet | `p1/ron-rowx` | R832, R742 |
 | 921a | [R859](packages/R859.md) rows take a tap across the line | ron, Sonnet | `p1/ron-rowbands` | R858, R742, R834 |
