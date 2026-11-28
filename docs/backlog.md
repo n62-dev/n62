@@ -23,13 +23,12 @@ Where we are and what is left, one or two lines per open item. Architecture: [04
 10. **A266's device step:** plug the Tab One (HA24BZ2Y) in; `adb devices` from WSL must list it (the adb server restarts itself after `adb kill-server`, a gap of about 6 s). Then A266f1 runs by day (does the WebView run under the bars, the five looks with shots), and R701's rerun its `folder.rec.ts` step (pass 252); no gate compiles N62BarsPlugin.java until then.
 11. **G784** (decisions.md): should Paste read a copied name back?
 12. **On the Fairphone at the next APK (pass 234):** R843's orange Enter in N62 Light; R866's slot line on the unit pad's prefix keys; R863's ⚙ draws as text, not a colour emoji (else R863f1: an inline SVG); R867's drag feel per number or name (decisions.md); R872's Enters in Black & White and Solarized (rest, Shift armed, Alpha locked); R874's faint mark on an empty history in B&W Dark and N62 Dark, now in the hint's colour at 1.25:1 (pass 235); R933's darker non-digit keys in Solarized Dark and Light and B&W Light (should High contrast follow?); R871's Shift + Fmt legend Cycle; R881's rainbow turns smoothly, grey key texts (pass 248); R742's picked row at arm's length (N62 Light, Solarized Dark; Tab One too), its zebra shots; R728's Alpha state, CAS keypad shot (pass 250); R729's ring and fill, R864's italic x and raised ⁿ, R865's lens and foot bar on Find (main, unit view), R781's Hand = Left (pass 254).
-13. **G622f2** (decisions.md): refuse inv of a singular float matrix?
-14. **The release bar's week** (decisions.md, pass 241): count a night by cause?
-15. **A278** (decisions.md): e2e on a built app, after the tag?
-16. **K22** (decisions.md): keep refusing `80 °C − 5 K` after G385?
-17. **R781** (decisions.md): Hand = Left mirrors the digits (9 8 7) too?
-18. **G315's cycle** (decisions.md): a ron package?
-19. **docs/06 line 30** (decisions.md, R821): Alpha with a switch? Then try it on your phone.
+13. **The release bar's week** (decisions.md, pass 241): count a night by cause?
+14. **A278** (decisions.md): e2e on a built app, after the tag?
+15. **K22** (decisions.md): keep refusing `80 °C − 5 K` after G385?
+16. **R781** (decisions.md): Hand = Left mirrors the digits (9 8 7) too?
+17. **G315's cycle** (decisions.md): a ron package?
+18. **docs/06 line 30** (decisions.md, R821): Alpha with a switch? Then try it on your phone.
 
 ### Upstream reports (owner; drafts in `../outreach/upstream-reports.md`)
 - **MathLive**, filed 2026-10-19: [#3122](https://github.com/arnog/mathlive/issues/3122) (⌫ at `\left…\right`), [#3123](https://github.com/arnog/mathlive/issues/3123) (touch caret), [#3124](https://github.com/arnog/mathlive/issues/3124) (focus restore); [#3125](https://github.com/arnog/mathlive/issues/3125) (Redo after ⌫, 2026-10-20); M5, M7 (`isImplicitArg` takes no matrix, F68, nor i or e, F184) drafted by R75, R334; M6 (no public sideways scroll; text in `../outreach/upstream-reports.md`) drafted by R277.
@@ -38,6 +37,8 @@ Where we are and what is left, one or two lines per open item. Architecture: [04
 ## Tasks
 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
+- **F497, F498 (nightly 259, 11-28; `../drafts/2026-11-28-nightly259/`).** F497 (G808): `|e^(arcsin π)|` ≈ -1.147-4.672·i, right 4.81047738097 (Giac drops abs of exp). F498 (G809): `rank(inv(10^-13*[[3,0],[9.81,0]]))` ⚠14 2: "Not invertible" falls to the double path.
+- **Nightly 259, extreme reach:** a flat false plot of `cos(x+2ᴇ22)` (R948); `|acos x|` past 1 not drawn (R949); Paste refuses 2^4500's 1355 digits (R950); Giac's double `cos(1e22)` 0.8367, right 0.5232 (no road reaches it).
 - **F495, F496 (owner's list 5, 11-28; `../drafts/2026-11-28-owner-bugs5/`).** F495 (wrong): a pick or Paste glues to the line (`5×5`, pick `6×6`: 1680): R937. F496 (unfold keeps the scroll): R938. ⌫ model: R941–R945 (E9 not queued).
 - **F378, F379 (owner's bug list 4, 2026-11-23; `../drafts/2026-11-23-owner-bugs4/`).** A271's double back next (the rest ✓). Hardware Esc and arrows reach nothing in Plot (its line is hidden), so Esc cannot unfold it: no package (pass 247).
 - **F366–F377 (layers study 2026-11-23; `../drafts/2026-11-23-layers-study/`).** All ✓ but F369 (⌄ folds the keys under the view; no package, nothing lost). Net: `layers.spec.ts`.
@@ -56,7 +57,7 @@ Where we are and what is left, one or two lines per open item. Architecture: [04
 - **F172, A73f2.** Stored history costs nothing, the rows drawn at start do (bar 1.5 s): a CAS-last cold start is 1507 ms against Home's 1323; A73f2 says where.
 - **F196, G301 built.** CAS DEG reduces a constant's `pi/180` quotient; a free name or Home keeps it, 5+ `sqrt` are slow (open).
 - **F198, no package (named limit).** `1/0`, `tan(90°)` show `infinity` unmarked; `0/0` is refused (G168).
-- **F66.** At a hole (x/x at x = 0) Home refuses (G168), Num and CAS show the value of Giac's simplified form, the plot evaluator has NaN; 6 rows in `viewsweep-known.yaml`.
+- **F66 (G810).** At a hole (x/x, x^0, (x+x)/log x at x = 0) Home refuses (G168), Num shows a value (subst simplifies with x free; viewsweep-known.yaml).
 - **nr1114-be-2, fixed by G353 (patch 0049).** Left: Giac's weighted forms (misc.cc stddevmean) still sum x² in one pass: stored `L:=approx([1/10,1/10,1/10])`, `variance(L,[1,1,1])` is ⚠ -1E-62, `stddev(L,[1,1,1])` ⚠ 1E-31·i. Family 6.
 - **G353's trace (no package).** Before G353 `stats1(L)` of stored floats was ⚠ alone, ≈ after `linreg(L,…)` (facts.ts inherited's check); cause not traced. Family 2.
 - **G405's trace (no package).** Earlier golden cases change solve: after `g177-cos-half-atan-1+i-30` the pre-G405 engine gave `size(solve(x^3-3*x+2-10^-30=0,x))` 3 at Digits 30, a fresh one 2; not epsilon or Digits. G405's rows run `own: true`. Family 2.
@@ -66,9 +67,9 @@ Where we are and what is left, one or two lines per open item. Architecture: [04
 - **F300–F321 (T2's hunt, 2026-11-16; evidence `../drafts/2026-11-16-ultra/t2-bughunt/findings.md`).** F306 G555; F307, F308 G556; F318 G558; F321 G560; F313 R551 (before the tag); F312 G559; F314, F315 R552; F300 R550 (after the tag).
 - **F460 (G557's report).** `normal((i*sqrt(-2))^(1/3))` is a rootof worth 1.12246204831·i, stock too (right 0.561231024155+0.972080648620·i). Family 5.
 - **F461 (pass 213, code read).** A CAS row that reads a name stored with a unit (G371) has no unit-dropped note; G392's is Home's. Family 12.
-- **F462 (G576's report).** Home `sin(3^(1e6))` ≈ -0.920699462879 (4.3 s), `sin(2^(1e6))` ≈ -0.9 (right -0.0887753640826, 0.650909333380; mpmath): a huge float argument confirms digits it cannot hold. Family 4.
-- **F480, no package (G792f1's report; G792's patch 0066 took float matrices).** Home `cos(10^-7*[[2E-8,0,0.2],[2.5,2,1],[2,0.2,6.02E8]])*[[7],[3.7],[5]]` typed with ᴇ (exact) at 30 digits: ⚠13 7.000007430143 in RAD (right 6.99999999688891…, mpmath): an exact matrix's analytic_apply in doubles (sweep-known.yaml). Family 3. A273's first nightly (11-25, before patch 0069): about 25 ≈ rows of sin, cos, exp of exact matrices; pass 241's recheck of one (`cos([[2,0.3,10],[2.5,1.05,0],[3!,3.7,e]])`, 30 digits) is ⚠ 14 now; the next NIGHTLY says for the rest.
-- **F484, no package (G799's view sweep; 4 gate rows, 11 nightly).** In DEG a CAS exact fraction copies as its text: `asin(-1)*12^(-1)` copies `-15/2`, which Paste refuses (docs/04 2.6: its digits, `-7.5`, as in RAD). Likely casItem keeps `drawn` (G46f1) and valueFull writes it before the rational. Family 1.
+- **F462 (G814).** Home `cos(e^(10^6))` bare ⚠ 0.753258646426, right -0.398201626413 (mpmath): an angle past the cap; `sin(3^(1e6))` is ⚠ no digit now. Family 4.
+- **F480 (G811).** sin, cos, exp of an exact matrix run in doubles (analytic_apply) under ≈ or ⚠ 13: `e^(10^-14*[[π,0.2,2ᴇ3],[0.001,π,1],[9.81,0.1,7]])` [3,2] 5.3E-17, right 1.0E-15 (nightly 259). Family 3.
+- **F484 (R947).** In DEG a CAS exact fraction copies as its text (`-15/2`), which Paste refuses; a list of exact elements copies Giac's text. Family 1.
 - **F492, no package (G403f1's report).** `literalStart` throws RangeError on a power tower `2^2^…^2` of 10000 carets, phase-1 too: giacPrint.ts `operandEnd` recurses (via `powersIn`, `constantPowers`). Fix: a stack, or read as too deep (⚠). Family 6.
 - **F493 (G550).** The unit view refuses `W!` and `factorial(G·1ᴇ11)` ("could not evaluate") where Home carries σ; a true/false of a σ input (`W>700`) gets no ⚠. Families 8, 1.
 - **F494 (G403f2, run 1690).** Flaky vitest: rainbow.test.ts bw light "every key face against its texts", 5094 ms of 5000 under load: bar its growth.
