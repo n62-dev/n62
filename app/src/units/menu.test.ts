@@ -89,13 +89,14 @@ describe.skipIf(!full)("the units menu on the generated index", () => {
     };
     const kj = first("kJ/kg");
     expect([kj.row?.id, kj.row?.label, kj.row?.value]).toEqual(["uprod:kJ/kg", "kilojoule per kilogram", "kJ/kg"]);
-    expect(kj.acts).toEqual([{ do: "pair", prefix: "k", id: "J" }, { do: "per" }, { do: "unit", id: "kg" }]);
+    expect(kj.acts).toEqual([{ do: "pair", prefix: "k", id: "J" }, { do: "per" }, { do: "pair", prefix: "k", id: "g" }]); // (kg is k and g, as a pick of kg gives it)
     expect(first("kj/kg").acts).toEqual(kj.acts); // case-folded: kj is kJ
     expect(first("btu/h").acts).toEqual(productActions("Btu/h", cat)); // the grid's Btu/h row
     expect(first("Btu/h").acts).toEqual(productActions("Btu/h", cat));
     expect(first("m^3/h").acts).toEqual(productActions("m^3/h", cat));
-    expect(first("s/m").row?.label).toBe("second per meter");
-    expect(first("kg/s").acts).toEqual([{ do: "unit", id: "kg" }, { do: "per" }, { do: "unit", id: "s" }]);
+    expect([first("s/m").row?.label, first("s/m").row?.preview]).toEqual(["second per meter", "second per meter · L⁻¹·T"]);
+    expect(kj.row?.preview).toBe("kilojoule per kilogram · L²·T⁻²");
+    expect(first("kg/s").acts).toEqual([{ do: "pair", prefix: "k", id: "g" }, { do: "per" }, { do: "unit", id: "s" }]);
     expect(first("kn/m").acts).toEqual([{ do: "pair", prefix: "k", id: "N" }, { do: "per" }, { do: "unit", id: "m" }]); // kN, not knot
     expect(first("wh/kg").row?.value).toBe("Wh/kg");
     expect(first("kg/m^3").row?.id).toBe("unit:kg/m^3"); // Find's own unit, no reading row

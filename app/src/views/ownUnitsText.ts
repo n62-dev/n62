@@ -31,13 +31,16 @@ const isInt = (s: string): boolean => {
   return d.length > 0 && d.length < 4 && [...d].every((c) => c >= "0" && c <= "9");
 };
 
+/** How one symbol is read: readSymbol on the catalogue (G402: Find's query reads it case-folded after that). */
+type Read = (sym: string) => ReturnType<typeof readSymbol>;
+
 /** One side of the ÷: its factors as tokens, or the text that is no unit. */
-function side(text: string, cat: SlotCatalogue): UnitToken[] | string {
+function side(text: string, read: Read): UnitToken[] | string {
   const out: UnitToken[] = [];
   for (const word of text.split(/[*\s]+/).filter((w) => w !== "")) {
     const [sym = "", pow, ...more] = word.split("^");
     if (more.length > 0 || (pow !== undefined && (!isInt(pow) || Number(pow) === 0))) return word;
-    const u = readSymbol(cat, sym);
+    const u = read(sym);
     if (!u) return sym;
     out.push({ ...(u.prefix !== undefined ? { prefix: u.prefix } : {}), unit: u.unit, ...(pow !== undefined && Number(pow) !== 1 ? { power: String(Number(pow)) } : {}) });
   }
@@ -45,11 +48,11 @@ function side(text: string, cat: SlotCatalogue): UnitToken[] | string {
 }
 
 /** The text as a slot, or the first word that is no unit of Find's (or that nothing was typed). */
-export function readOf(text: string, cat: SlotCatalogue): OfRead {
+export function readOf(text: string, cat: SlotCatalogue, read: Read = (sym) => readSymbol(cat, sym)): OfRead {
   const [top = "", ...rest] = text.split("/");
-  const up = side(top.trim() === "1" ? "" : top, cat);
+  const up = side(top.trim() === "1" ? "" : top, read);
   if (typeof up === "string") return { ok: false, unit: up };
-  const down = side(rest.join(" "), cat);
+  const down = side(rest.join(" "), read);
   if (typeof down === "string") return { ok: false, unit: down };
   if (up.length === 0) {
     if (down.length === 0) return { ok: false, empty: true };

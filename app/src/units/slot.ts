@@ -191,6 +191,34 @@ export function readSymbol(cat: SlotCatalogue, text: string): { prefix?: string;
   return undefined;
 }
 
+/** G402: a symbol of Find's query in a unit slot: readSymbol as cased, else the same in lower case (`kj` is kJ, `btu`
+ *  Btu, `kn` kN, `h` stays the hour). */
+export function readSymbolFolded(cat: SlotCatalogue, text: string): { prefix?: string; unit: string } | undefined {
+  return readSymbol(cat, text) ?? readSymbol(foldedCatalogue(cat), text.toLowerCase());
+}
+
+const foldedCats = new WeakMap<SlotCatalogue, SlotCatalogue>();
+/** G402: the catalogue with its keyboard names in lower case, for readSymbolFolded. A lower-case name two ids share
+ *  (`h`: h, H; `mw`: mW, MW; the prefixes `m`, `M`) is left out, so it reads as no unit rather than a guessed one. */
+function foldedCatalogue(cat: SlotCatalogue): SlotCatalogue {
+  const had = foldedCats.get(cat);
+  if (had || !cat.symbols) return had ?? cat;
+  const fold = (m: ReadonlyMap<string, string>): Map<string, string> => {
+    const out = new Map<string, string>();
+    const two = new Set<string>();
+    for (const [name, id] of m) {
+      const k = name.toLowerCase();
+      if (out.has(k) && out.get(k) !== id) two.add(k);
+      else out.set(k, id);
+    }
+    for (const k of two) out.delete(k);
+    return out;
+  };
+  const made = { ...cat, symbols: { units: fold(cat.symbols.units), prefixes: fold(cat.symbols.prefixes) } };
+  foldedCats.set(cat, made);
+  return made;
+}
+
 /** A unit the catalogue lacks, as the user sees it: an own unit whose definition is gone (G234) by its name, never with
  *  the internal OWN_PREFIX; any other id as it is. */
 const bareName = (id: string): string => (isOwnId(id) ? id.slice(OWN_PREFIX.length) : id);
