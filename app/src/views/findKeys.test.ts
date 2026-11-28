@@ -96,3 +96,12 @@ describe("a level that searches (Find)", () => {
     expect(s.level.rows.map((r) => r.item.id)).toEqual(["in-a:x"]);
   });
 });
+
+describe("R946: a hardware / * ^ types itself in Find", () => {
+  it("the layer a hardware key presses (primary) types the character; a tap, still the Alpha letter", () => {
+    expect(findKey(key("div"), "primary", false, false)).toEqual({ kind: "letter", ch: "/" });
+    expect(findKey(key("mul"), "primary", false, true)).toEqual({ kind: "letter", ch: "*" });
+    expect(findKey(key("pow"), "primary", false, false)).toEqual({ kind: "letter", ch: "^" });
+    expect(findKey(key("div"), undefined, false, false)).toEqual({ kind: "letter", ch: "t" });
+  });
+});
