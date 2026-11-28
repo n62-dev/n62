@@ -10,7 +10,8 @@ import { decideTwice, nonRealArg, restsOnDecision } from "./decisions.ts";
 import { climbedFacts } from "./doubleElements.ts";
 import { confirmedFloat, resultFromFacts, type HomeResult } from "./homeEval.ts";
 import { defaultHomeSettings } from "./homeDefaults.ts";
-import { exactFacts, isAudited, notBuiltin, shapeOfValue, valuePrecision, whyOf, withDigits, type Giac } from "./numeric.ts";
+import { exactFacts, isAudited, shapeOfValue, valuePrecision, whyOf, withDigits, type Giac } from "./numeric.ts";
+import { notBuiltin } from "./names.ts";
 
 /**
  * The numeric result of the bare value `bare` (decimals exact) at `digits`, the setting's Digits `setDigits` put back:

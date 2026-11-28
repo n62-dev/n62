@@ -40,6 +40,7 @@ One line per module: what it owns, who calls it. Groups as in docs/04 section 6.
 | `dead.ts` | G183: `deadEngine()`, whether a throw out of a request left the engine dead (`memory` G24, or `crash`: a wasm trap or a stack overflow), so the client restarts it; called by `host.ts` |
 | `homeEval.ts` | exact-first Home (from the Phase 0 spike): results carry a `value` and the precision facts; `sigfig` and our other engine definitions; called by `host.ts`, `solve.ts`, `analysis.ts`, `units/` |
 | `numeric.ts` | honest precision (docs/04 2.4): values, shapes, the agreement check at two precisions, the re-evaluation of floats, the double fallback; called by `homeEval.ts` and most guards |
+| `names.ts` | G315: the lists of Giac's names (`AUDITED_FUNCTIONS`, `PERIODIC`) and the prints of names (`namePrint`, `notBuiltin`), out of `numeric.ts` and `converge.ts` so engine/ has no import cycle (`importCycle.test.ts`); called by `numeric.ts`, `complex.ts`, `converge.ts`, `literalPrec.ts`, `degrees.ts` and the guards |
 | `lname.ts` | G771: `namesOf`, Giac's lname of an expression (the names in it) from the bridge's elements; called by `converge.ts`, `novalue.ts` |
 | `decisions.ts` | G38: the decisions Giac makes inside an exact evaluation, and their second run at P+20 and P+40; called by `homeEval.ts`, `host.ts` |
 | `counts.ts` | G405: `size`, `dim`, `nops` of a list Giac computed with floats take the list's mark (⚠ when a function in it is not audited, else ≈), never =; called by `homeEval.ts` |

@@ -385,7 +385,8 @@ describe.skipIf(!giacAvailable())("G38: the exact path decides at P and at P + 2
   });
 
   it("floatsAtDigits rounds each float of a P text to the display digits, as Giac prints them (source: derived)", async () => {
-    const { floatsAtDigits, notBuiltin } = await import("./numeric.ts");
+    const { floatsAtDigits } = await import("./numeric.ts");
+    const { notBuiltin } = await import("./names.ts");
     const giac = engineGiac(await loadNodeGiac());
     const third = "0.3333333333333333333333333333333333333333";
     expect(floatsAtDigits(giac, `${third}*x+${third}e20*y-0.9999999999999999999999999999999999999999*z+2`, 12)).toBe(
@@ -395,7 +396,7 @@ describe.skipIf(!giacAvailable())("G38: the exact path decides at P and at P + 2
   });
 
   it("G53: a built-in's print is asked once per Giac instance, a keyword's never, a user's name on every call (source: derived, Giac refuses sin:=3)", async () => {
-    const { notBuiltin, namePrint } = await import("./numeric.ts");
+    const { notBuiltin, namePrint } = await import("./names.ts");
     const giac = engineGiac(await loadNodeGiac());
     const asked: string[] = [];
     const counted = fakeGiac((t: string) => (asked.push(t), giac.eval(t)));
