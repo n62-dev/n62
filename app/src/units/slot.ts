@@ -222,11 +222,20 @@ const refuse = (key: UnitMessageKey, vars?: Readonly<Record<string, string>>): S
 const OK: SlotResult = { ok: true };
 const BACK: SlotResult = { ok: true, back: true };
 
+/** R806: where a slot's caret is: in the numerator or the denominator, `i` factors from its start (0 … its length). */
+export interface SlotCaret { readonly side: "num" | "den"; readonly i: number }
+
+/** The slot is two lists and a caret (R806; docs/04 4.3): the numerator, the denominator once a ÷ is pressed (absent:
+ *  no ÷; empty: a ÷ with nothing after it yet), and the caret between two factors of one of them. A unit, a prefix and
+ *  unit pair, a prefix, √, a power and ⌫ act at the caret; the ÷ opens the denominator and the caret goes into it.
+ *  Nothing moves the caret yet, so it stays at the end (the end of the denominator, else of the numerator) and every
+ *  press does what it did when the slot was one list with a ÷ index. */
 export class SlotModel {
   readonly #cat: SlotCatalogue;
-  #factors: Factor[] = [];
-  /** Index of the first factor below the ÷; absent: no ÷. Equal to the length: a ÷ with nothing after it yet. */
-  #per: number | undefined;
+  #num: Factor[] = [];
+  #den: Factor[] | undefined;
+  #side: "num" | "den" = "num";
+  #at = 0;
   #pending: Pending[] = [];
   #run: Run | undefined;
 
@@ -236,15 +245,40 @@ export class SlotModel {
     this.#cat = catalogue;
     if (!from) return;
     if (from.per !== undefined && (from.per < 0 || from.per > from.tokens.length || !Number.isInteger(from.per))) throw new Error(`bad ÷ place ${from.per}`);
-    this.#per = from.per;
+    const factors: Factor[] = [];
     for (const t of from.tokens) {
       const m = /^(-?\d+)(?:\/(\d+))?$/.exec(t.power ?? "1");
       const num = Number(m?.[1]), den = Number(m?.[2] ?? "1");
       if (!m || (den !== 1 && den !== 2) || num === 0) throw new Error(`a power the pad cannot make: ${t.power ?? ""}`);
       const root = den === 2;
       const took: Pending[] = [...(root ? [{ kind: "sqrt" } as const] : []), ...(t.prefix !== undefined ? [{ kind: "prefix", id: t.prefix } as const] : [])];
-      this.#factors.push({ ...(t.prefix !== undefined ? { prefix: t.prefix } : {}), unit: t.unit, exp: num, root, took });
+      factors.push({ ...(t.prefix !== undefined ? { prefix: t.prefix } : {}), unit: t.unit, exp: num, root, took });
     }
+    if (from.per === undefined) this.#num = factors;
+    else {
+      this.#num = factors.slice(0, from.per);
+      this.#den = factors.slice(from.per);
+      this.#side = "den";
+    }
+    this.#at = this.#list().length;
+  }
+
+  /** R806: the caret (read-only; R807 draws it). */
+  get caret(): SlotCaret {
+    return { side: this.#side, i: this.#at };
+  }
+
+  /** R806, for tests until R808 moves the caret by key: put the caret at `i` of the numerator or denominator. Throws on
+   *  a place the slot does not have, and while a letter run is open. */
+  caretAtForTest(side: "num" | "den", i: number): void {
+    const list = side === "num" ? this.#num : this.#den;
+    if (this.#run || !list || !Number.isInteger(i) || i < 0 || i > list.length) throw new Error(`no caret place ${side} ${i}`);
+    this.#side = side;
+    this.#at = i;
+  }
+
+  #list(): Factor[] {
+    return this.#side === "num" ? this.#num : (this.#den as Factor[]);
   }
 
   /** One pad press. A refused press leaves the slot as it was; its message is from the i18n table. R313: a press ends a
@@ -277,7 +311,7 @@ export class SlotModel {
       case "unit": {
         if (!this.#cat.units.has(a.id)) return refuse("units.slot.unknown", { unit: a.id });
         const prefix = this.#armedPrefix();
-        this.#factors.push({ ...(prefix !== undefined ? { prefix } : {}), unit: a.id, exp: 1, root: this.#pending.some((p) => p.kind === "sqrt"), took: this.#pending });
+        this.#list().splice(this.#at++, 0, { ...(prefix !== undefined ? { prefix } : {}), unit: a.id, exp: 1, root: this.#pending.some((p) => p.kind === "sqrt"), took: this.#pending });
         this.#pending = [];
         return OK;
       }
@@ -291,29 +325,34 @@ export class SlotModel {
       case "per": {
         const pending = this.#pendingRefusal();
         if (pending) return pending;
-        if (this.#per !== undefined) return refuse("units.slot.secondPer");
-        this.#per = this.#factors.length;
+        if (this.#den) return refuse("units.slot.secondPer");
+        this.#den = []; // (the numerator keeps every factor, the ones after the caret too)
+        this.#side = "den";
+        this.#at = 0;
         return OK;
       }
       case "power": {
         const pending = this.#pendingRefusal();
         if (pending) return pending;
-        const last = this.#factors[this.#factors.length - 1];
-        if (!last || this.#per === this.#factors.length) return refuse("units.slot.powerAlone");
+        const last = this.#list()[this.#at - 1];
+        if (!last) return refuse("units.slot.powerAlone");
         last.exp = a.n === -1 ? -last.exp : Math.sign(last.exp) * a.n;
         return OK;
       }
       case "delete": {
         if (this.empty) return BACK;
         if (this.#pending.length) this.#pending.pop();
-        else if (this.#per !== undefined && this.#per === this.#factors.length) this.#per = undefined;
-        else {
-          const last = this.#factors[this.#factors.length - 1];
-          if (last && last.exp !== 1) last.exp = 1;
-          else if (last) {
-            this.#factors.pop();
+        else if (this.#at > 0) {
+          const last = this.#list()[this.#at - 1] as Factor;
+          if (last.exp !== 1) last.exp = 1;
+          else {
+            this.#list().splice(--this.#at, 1);
             this.#pending = [...last.took];
           }
+        } else if (this.#den && !this.#den.length) { // (the caret in an empty denominator: the ÷ goes)
+          this.#den = undefined;
+          this.#side = "num";
+          this.#at = this.#num.length;
         }
         return OK;
       }
@@ -365,7 +404,7 @@ export class SlotModel {
 
   #unread(run: Run): void {
     if (!run.factor) return;
-    this.#factors.pop();
+    this.#list().splice(--this.#at, 1);
     this.#pending = run.took;
     delete run.factor;
   }
@@ -375,7 +414,7 @@ export class SlotModel {
     if (!s) return;
     const prefix = s.prefix ?? this.#armedPrefix();
     run.factor = { ...(prefix !== undefined ? { prefix } : {}), unit: s.unit, exp: 1, root: run.took.some((p) => p.kind === "sqrt"), took: run.took };
-    this.#factors.push(run.factor);
+    this.#list().splice(this.#at++, 0, run.factor);
     this.#pending = [];
   }
 
@@ -383,18 +422,19 @@ export class SlotModel {
    *  nor with letters that are no unit (R313). */
   check(): SlotResult {
     if (this.#run && !this.#run.factor) return refuse("units.slot.notUnit", { letters: this.#run.text });
-    return this.#pendingRefusal() ?? (this.#per !== undefined && this.#per === this.#factors.length ? refuse("units.slot.perEmpty") : OK);
+    return this.#pendingRefusal() ?? (this.#den && !this.#den.length ? refuse("units.slot.perEmpty") : OK);
   }
 
   /** The slot for the evaluator (G16's UnitSlot). A ÷ with nothing after it is left out; a ÷ on an empty slot (1/s)
    *  becomes the powers negated with no ÷, since the evaluator wants a numerator. */
   get slot(): UnitSlot {
-    const per = this.#per === this.#factors.length ? undefined : this.#per;
-    const tokens = this.#factors.map((f): UnitToken => {
-      const power = powerText(f, per === 0);
+    const den = this.#den?.length ? this.#den : undefined;
+    const flip = den !== undefined && !this.#num.length;
+    const tokens = [...this.#num, ...(den ?? [])].map((f): UnitToken => {
+      const power = powerText(f, flip);
       return { ...(f.prefix !== undefined ? { prefix: f.prefix } : {}), unit: f.unit, ...(power !== "1" ? { power } : {}) };
     });
-    return per === undefined || per === 0 ? { tokens } : { tokens, per };
+    return den === undefined || flip ? { tokens } : { tokens, per: this.#num.length };
   }
 
   /** The armed prefix (highlighted on the pad) and whether √ is armed. */
@@ -404,36 +444,40 @@ export class SlotModel {
   }
 
   get empty(): boolean {
-    return !this.#factors.length && this.#per === undefined && !this.#pending.length && !this.#run;
+    return !this.#num.length && this.#den === undefined && !this.#pending.length && !this.#run;
   }
 
   /** The slot as LaTeX (output only): factors joined by ·, the ÷ as a stacked fraction, the armed prefix or √ in
    *  `pas-armed`, a pair outside Find's list in `pas-rare`, an empty denominator as `pas-empty` □. */
   get latex(): string {
-    const parts = this.#factors.map((f) => this.#factorLatex(f));
     const armed = this.#pending.map((p) =>
       p.kind === "prefix" ? `\\class{pas-armed}{\\mathrm{${this.#cat.prefixes.get(p.id)?.latex ?? p.id}}}` : "\\class{pas-armed}{\\sqrt{\\square}}");
     // R313: letters that are no unit, as typed and marked (a run that reads as a unit is its factor)
     if (this.#run && !this.#run.factor) armed.push(`\\class{pas-rare}{\\mathrm{${this.#run.text}}}`);
-    if (this.#per === undefined) return [...parts, ...armed].join("\\cdot");
-    const num = parts.slice(0, this.#per).join("\\cdot") || "1";
-    const den = [...parts.slice(this.#per), ...armed].join("\\cdot") || "\\class{pas-empty}{\\square}";
-    return `\\frac{${num}}{${den}}`;
+    // (the armed presses and the run's letters stand at the caret, in the list it is in)
+    const side = (list: readonly Factor[], at: number | undefined): string[] => {
+      const parts = list.map((f) => this.#factorLatex(f));
+      if (at !== undefined) parts.splice(at, 0, ...armed);
+      return parts;
+    };
+    const num = side(this.#num, this.#side === "num" ? this.#at : undefined);
+    if (!this.#den) return num.join("\\cdot");
+    return `\\frac{${num.join("\\cdot") || "1"}}{${side(this.#den, this.#side === "den" ? this.#at : undefined).join("\\cdot") || "\\class{pas-empty}{\\square}"}}`;
   }
 
   /** The reading in words from Find's titles ("kilonewton meter", "joule per kilogram kelvin"): the factors with a
    *  positive power, then "per" and the rest, whichever side of the ÷ they were typed on. */
   get reading(): Reading {
-    const per = this.#per ?? this.#factors.length;
+    const all = [...this.#num.map((f) => ({ f, down: false })), ...(this.#den ?? []).map((f) => ({ f, down: true }))];
     const above: ReadingPart[] = [];
     const below: ReadingPart[] = [];
-    this.#factors.forEach((f, i) => {
-      const exp = i >= per ? -f.exp : f.exp;
+    for (const { f, down } of all) {
+      const exp = down ? -f.exp : f.exp;
       const names = this.#names(f);
       const { marked } = names;
       // G37: °C, °F (an offset in its factor) with another unit or a power is an interval, as the evaluator reads it.
       const affine = this.#cat.units.get(f.unit)?.si?.includes("+") === true;
-      const words = affine && (this.#factors.length > 1 || exp !== 1 || f.root) ? unitText("units.read.interval", { u: names.words }) : names.words;
+      const words = affine && (all.length > 1 || exp !== 1 || f.root) ? unitText("units.read.interval", { u: names.words }) : names.words;
       let text = Math.abs(exp) === 1 ? words
         : Math.abs(exp) === 2 ? unitText("units.read.square", { u: words })
         : Math.abs(exp) === 3 ? unitText("units.read.cube", { u: words })
@@ -441,8 +485,8 @@ export class SlotModel {
         : unitText("units.read.power", { u: words, p: String(Math.abs(exp)) });
       if (f.root) text = unitText("units.read.root", { u: text });
       (exp > 0 ? above : below).push({ text, marked });
-    });
-    if (this.#run && !this.#run.factor) (this.#per === undefined ? above : below).push({ text: this.#run.text, marked: true }); // R313
+    }
+    if (this.#run && !this.#run.factor) (this.#side === "num" ? above : below).push({ text: this.#run.text, marked: true }); // R313
     const parts = below.length ? [...above, { text: unitText("units.read.per"), marked: false }, ...below] : above;
     return { text: parts.map((p) => p.text).join(" "), parts, marked: parts.some((p) => p.marked) };
   }
