@@ -163,19 +163,19 @@ describe("size-check", () => {
     expect(r.notBuilt).toEqual([]);
     const failed = r.failures.map((f) => f.split(":")[0]);
     expect(failed).toContain("Find UI chunk");
-    expect(failed).not.toContain("Unit view chunk"); // the UI chunk and the builder together, exactly at 44.22 kB, are allowed
+    expect(failed).not.toContain("Unit view chunk"); // the UI chunk and the builder together, exactly at 45.13 kB, are allowed
     expect(failed).toContain("Find index asset");
     expect(failed).toContain("qalc wasm + glue");
   });
 
-  it("budgets the unit view's UI chunk and builder as one, at 44.22 kB raw (R24c; Opus pass 24, G81; R313; G233; R918; R885; R797; R807; R808; R808f1)", () => {
+  it("budgets the unit view's UI chunk and builder as one, at 45.13 kB raw (R24c; Opus pass 24, G81; R313; G233; R918; R885; R797; R807; R808; R808f1; R896)", () => {
     const { manifest, files } = base(1000);
     const units = {
       ...manifest,
       "src/units/calc.ts": { file: "assets/units.js", src: "src/units/calc.ts", isDynamicEntry: true },
       "src/units/open.ts": { file: "assets/open.js", src: "src/units/open.ts", isDynamicEntry: true },
     };
-    const r = checkSizes(fakeDist(units, { ...files, "assets/units.js": 10_000, "assets/open.js": 34_221 }));
+    const r = checkSizes(fakeDist(units, { ...files, "assets/units.js": 10_000, "assets/open.js": 35_131 }));
     expect(r.failures.map((f) => f.split(":")[0])).toEqual(["Unit view chunk"]);
     expect(r.rows.find((x) => x.rule === "Unit view chunk")?.files.sort()).toEqual(["assets/open.js", "assets/units.js"]);
   });
