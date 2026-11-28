@@ -138,10 +138,11 @@ export function findKey(key: Key, layer: Layer | undefined, shift: boolean, empt
 /**
  * A key in the store sheet (R281, docs/archive/store-design.md design A): a name is typed into its filter. A key that
  * types a letter on the line types it, in the layer it was pressed in (`shift`, `alpha`: a tap before it or a flick; x
- * alone, Alpha + Vars A; lower case in CAS, `cas`, R58). ▲ ▼ ◀ ▶, Enter, Esc and ⌫ keep their sheet job (⌫ with
+ * alone, Alpha + Vars A; lower case in CAS, `cas`, R58). R822: a plain tap on a key whose letter is its Alpha one types it in
+ * the case Alpha types in this view (A in Home, a in CAS; `alphaLower`'s rule), so the name stored is the name the key types on the line. ▲ ▼ ◀ ▶, Enter, Esc and ⌫ keep their sheet job (⌫ with
  * nothing typed goes on to the line, R281f1). A plain
  * digit picks no row there: after a letter it belongs to the name (`A1`), before one it does nothing. A plain key that
- * types no letter types its Alpha letter, as in every sheet, and the place keys keep theirs. Any other key types no name
+ * types no letter types its Alpha letter, as in every sheet (in the case R822 says), and the place keys keep theirs. Any other key types no name
  * (`line`): it does its job on the line, so every press after ▶ that did not type a name does what it did before.
  * `empty`: nothing typed yet.
  */
@@ -156,6 +157,7 @@ export function storeKey(key: Key, shift: boolean, alpha: boolean, cas: boolean,
   const k = layered ? undefined : sheetKey(key, true);
   const p = key.actions.primary;
   if (p?.kind === "special" && p.name === "settings") return { kind: "line" }; // the ⚙ key: Settings from the line, as before R887
+  if (k?.kind === "letter") return cas ? { kind: "letter", ch: k.ch.toLowerCase() } : k; // R822: the tap's letter in the case Alpha types in this view: lower in CAS (= alphaLower(false, true, cas), spelled out: the import cost the start chunk 10 B; storeCase.test.ts ties it to Alpha)
   return k && k.kind !== "none" ? k : { kind: "line" };
 }
 

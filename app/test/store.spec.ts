@@ -221,3 +221,21 @@ test("R804 (c): Vin = 9 stored; 2 ▶ V i n: Enter arms Vin; with only V typed, 
   await expect(done(page)).toHaveCount(3);
   expect(await names(page)).toEqual(["V", "Vin"]);
 });
+
+// R822: in the Store sheet a plain tap types the letter in the case Alpha types in the view: in CAS 7 ▶, a tap on Vars stores `a`, the name
+// Alpha + Vars types on the line; in Home it stays A.
+test("R822 (CAS): 7 ▶ then a tap on Vars stores a; Alpha + Vars, Enter on the line gives 7", async ({ page }) => {
+  await tap(page, ["@cas", "d7", "shift", "emark", "vars", "enter"]);
+  await expect(done(page)).toHaveCount(1);
+  expect(await names(page)).toEqual(["a"]);
+  await tap(page, ["alpha", "vars", "enter"]);
+  await expect(lastResult(page)).toHaveAttribute("data-text", "7");
+});
+
+test("R822 (Home): 7 ▶ then a tap on Vars still stores A", async ({ page }) => {
+  await tap(page, ["d7", "shift", "emark", "vars", "enter"]);
+  await expect(done(page)).toHaveCount(1);
+  expect(await names(page)).toEqual(["A"]);
+  await tap(page, ["alpha", "vars", "enter"]);
+  await expect(lastResult(page)).toHaveAttribute("data-text", "7");
+});
