@@ -219,7 +219,7 @@ No usage boost (P11), so the same query always gives the same order (docs/03 rul
 - Functions insert `\operatorname{name}\left(#0\right)` (`#0`: a selection becomes the argument); templates insert their LaTeX, each with a parser rule and round-trip case.
 
 ### 3.7 Keys inside Find
-Every key types its Alpha letter in lower case (no Alpha press); Shift + key types the key's primary character (digits, `.`); the space key types a space; ⌫ deletes; ▲▼ and the trackpad move the selection; Enter inserts; Esc closes. Vars opens the same sheet on the user's variables and functions (no index needed); Shift + Math, Memory, deletes the highlighted name with Enter and clears all with Enter twice. A digit picks the numbered row while the query is empty and types itself after a letter (`g0`, `log10`, `e24`); in Memory a digit only highlights the row (R800), Enter deletes. Help shows the highlighted item's help (R869): R197's rows for a function, a card from the index for a unit, prefix or constant, as a level over Find; a row that is no index item is a dead press.
+Every key types its Alpha letter in lower case (no Alpha press); Shift + key types the key's primary character (digits, `.`); the space key types a space; ⌫ deletes; ▲▼ and the trackpad move the selection; Enter inserts; Esc closes. Vars opens the same sheet on the user's variables and functions (no index needed); Shift + Math, Memory, deletes the highlighted name with Enter and clears all with Enter twice; Shift + ⌫ (the hardware Delete) does the same job in Memory (R814: a name goes with R314's Undo, Clear all arms), and plain ⌫ stays the search's. A digit picks the numbered row while the query is empty and types itself after a letter (`g0`, `log10`, `e24`); in Memory a digit only highlights the row (R800), Enter deletes. Help shows the highlighted item's help (R869): R197's rows for a function, a card from the index for a unit, prefix or constant, as a level over Find; a row that is no index item is a dead press.
 **Keystroke budget:** an item used before: Math, first letter, Enter (3 presses); a new one: Math, the letters, Enter. Benchmark task 5 checks it.
 
 ### 3.8 The query test
@@ -279,7 +279,7 @@ Positions use our rows and columns (`spec/keyboard.yaml`); the reference's id is
 | Key | Decided | Source and why |
 |---|---|---|
 | Math (row 3, col 1) [r4c2] | Find, everything (R4a) | P8 |
-| Shift + Math | Memory: Find on variables and user functions, with delete and "clear all" | reference: Mem |
+| Shift + Math | Memory: Find on variables and user functions; a swipe left on a name deletes it (R813, with Undo), and "clear all" | reference: Mem |
 | Vars (row 3, col 0) [r4c1] | Find, filtered to variables; Shift = Chars (R725; Paste there from R329 until R723) | P8 |
 | Tmpl (row 3, col 2) [r4c3] | the 6 × 3 template palette, picked by arrows, Enter or a tap (r8 rule M1) | P8, P11 |
 | Shift + Tmpl | the unit view (unit slots) | P11; reference: Units |

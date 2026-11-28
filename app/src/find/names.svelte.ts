@@ -213,7 +213,7 @@ export function showNames(shell: { sheet: Sheet | null }, entry: EntryController
   };
   const row = (n: UserName, cell = false): MenuItem => ({
     ...nameRow(n, session.displayContext(), liveItem(n).id, cell),
-    ...(memory ? { keep: true } : {}),
+    ...(memory ? { keep: true, swipe: () => run(n) } : {}),
     run: () => run(n),
   });
   /** Vars' grid (R282): a free letter is not a name, but a tap on it puts the letter on the line, as typing it would. */
