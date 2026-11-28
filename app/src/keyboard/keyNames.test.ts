@@ -4,6 +4,8 @@
 import { describe, expect, it } from "vitest";
 import { enKeyNames } from "../i18n/enKeyNames.ts";
 import { UnitPad } from "../units/pad.ts";
+import { fakeKv } from "../state/fakeKv.ts";
+import { UserKeys } from "./userKeys.svelte.ts";
 import { keyboard, withDecimalMark, type Key, type Layer } from "./keyboard.ts";
 import { hasLayer, keyLabels, layerName } from "./keyNames.ts";
 
@@ -88,5 +90,18 @@ describe("key names (R41)", () => {
     // an empty user cell ("+"): the free key's own name
     const empty = new UnitPad({}).key(keyboard.byId.get("u1") as Key, null) as Key;
     expect(keyLabels(empty, false, false, false).label).toBe("Free key 1, empty: tap to set it");
+  });
+
+  it("R821: a free key announces and describes its Alpha layer only while the switch is on", () => {
+    const u1 = keyboard.byId.get("u1") as Key;
+    const userKeys = new UserKeys(fakeKv());
+    userKeys.set("u1", "alpha", { label: "tanh", action: { insert: "\\tanh\\left(#0\\right)" } });
+    expect(hasLayer(userKeys.resolve(u1), "alpha")).toBe(false);
+    expect(keyLabels(userKeys.resolve(u1), false, true, false).description).not.toContain("Alpha");
+    userKeys.setAlphaLayer(true);
+    const on = userKeys.resolve(u1);
+    expect(hasLayer(on, "alpha")).toBe(true);
+    expect(keyLabels(on, false, false, false).description).toContain("Alpha: tanh");
+    expect(keyLabels(on, false, true, false).label).toBe("tanh");
   });
 });

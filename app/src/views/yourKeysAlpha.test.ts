@@ -56,6 +56,20 @@ describe("Settings › Your keys › Third layer (Alpha) (R821)", () => {
     expect(userKeys.alphaLayer).toBe(false);
   });
 
+  it("the highlight stays on the switch row when the Alpha rows come and go above it (tap, then Enter)", () => {
+    const { s, userKeys } = withKeys();
+    const row = (): number => s.level.items.findIndex((x) => x.id === "alphalayer");
+    s.activate(row()); // on: six rows now above the switch
+    expect(userKeys.alphaLayer).toBe(true);
+    expect(s.level.current?.id).toBe("alphalayer");
+    expect(s.enter()).toEqual({ kind: "stay" }); // Enter toggles it back, not U5 α
+    expect(userKeys.alphaLayer).toBe(false);
+    expect(s.level.current?.id).toBe("alphalayer");
+    expect(s.enter()).toEqual({ kind: "stay" });
+    expect(userKeys.alphaLayer).toBe(true);
+    expect(s.level.current?.id).toBe("alphalayer");
+  });
+
   it("the section's count and Reset's names count an Alpha slot only while the switch is on", () => {
     const userKeys = new UserKeys(fakeKv());
     userKeys.set("u1", "alpha", alphaB);

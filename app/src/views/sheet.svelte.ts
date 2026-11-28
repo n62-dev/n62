@@ -558,6 +558,9 @@ export class Sheet {
     }
     if (item.keep) {
       item.run?.();
+      // R821: a switch can add or drop rows above itself (Your keys: the Alpha rows): the highlight follows the row by id
+      const at = level.items.findIndex((i) => i.id === item.id);
+      if (at >= 0) level.highlight = at;
       return STAY;
     }
     if (item.submenu) {
