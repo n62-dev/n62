@@ -61,12 +61,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Sonnet | `p1/ron-keepline` | – |
-| 908 | R807 the slot draws its caret and its marks (C2) | ron, Sonnet | `p1/ron-unitcaretdraw` | R806 |
-| 909 | R808 the caret moves; ⌫ and the powers act at it (C3) | ron, Sonnet | `p1/ron-unitcaretmove` | R807 |
 | 909a | [R896](packages/R896.md) Clear and Undo in the unit view | ron, Sonnet | `p1/ron-unitundo` | R808 |
-| 911 | [R813](packages/R813.md) Memory: a swipe left deletes, with Undo (C6) | ron, Sonnet | `p1/ron-memswipe` | R314 |
-| 912 | [R814](packages/R814.md) Memory: Shift + ⌫ deletes (C6) | ron, Sonnet | `p1/ron-memdelkey` | R813 |
-| 913 | [R815](packages/R815.md) Memory copies the full value (C6) | ron, Sonnet | `p1/ron-memcopy` | R814 |
 | 914 | [R816](packages/R816.md) Memory: Paste asks, then replaces a value (C6) | ron, Sonnet | `p1/ron-mempaste` | R815 |
 | 915 | [R818](packages/R818.md) Vars and Memory rows say what a name holds (C7) | ron, Sonnet | `p1/ron-namekinds` | – |
 | 916 | [R819](packages/R819.md) filter chips in Vars and Memory (C7) | ron, Sonnet | `p1/ron-namechips` | R818 |
@@ -95,8 +90,8 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | B17 | G365 Function reads a cell's kind | gorge, Opus | `p1/gorge-cellkind` | – |
-| B18 | [G315](packages/G315.md) the one import cycle goes | gorge, Opus | `p1/gorge-namesmodule` | – |
-| B19 | [G314](packages/G314.md) EngineHost split in modules | gorge, Opus | `p1/gorge-hostsplit` | – |
+| B18 | G315 the one import cycle goes | gorge, Opus | `p1/gorge-namesmodule` | – |
+| B19 | G314 EngineHost split in modules | gorge, Opus | `p1/gorge-hostsplit` | – |
 | B20 | [G401](packages/G401.md) Find knows engineers' words | gorge, Opus | `p1/gorge-findwords` | – |
 | B21 | [G402](packages/G402.md) Find reads a compound unit | gorge, Opus | `p1/gorge-findcompound` | G401 |
 

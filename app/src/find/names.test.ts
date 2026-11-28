@@ -14,13 +14,15 @@ const kv = (): Kv => ({ get: () => Promise.resolve(undefined), set: () => Promis
 const name = (n: string, kind: UserName["kind"], preview: string, time: number): UserName => ({ name: n, kind, preview, view: "home", time });
 
 function setup(memory: boolean) {
+  const copied: string[] = [];
+  const withClip = (run: (c: never) => void): void => run({ copyName: (n: string) => void copied.push(n) } as never);
   const session = new Session(new FakeCalc(), kv());
   session.userNames = [{ ...name("A", "var", "5", 1), mark: "=" }, { ...name("b_1", "var", "7", 2), mark: "=" }, name("p", "fn", "done", 3), name("area", "fn", "done", 4)];
   const inserted: string[] = [];
   const entry = { run: (a: { kind: string; latex?: string }) => void inserted.push(a.latex ?? "") } as unknown as EntryController;
   const shell: { sheet: Sheet | null } = { sheet: null };
-  showNames(shell, entry, session, memory);
-  return { session, inserted, sheet: shell.sheet as Sheet };
+  showNames(shell, entry, session, memory, withClip);
+  return { session, inserted, copied, sheet: shell.sheet as Sheet };
 }
 
 describe("live items", () => {
@@ -166,12 +168,21 @@ describe("marks (S53f1, store-bu-1)", () => {
 });
 
 describe("Memory", () => {
-  it("a pick deletes the name and the sheet stays; the hits are read again", () => {
+  it("a pick copies the name's value (R815): nothing is deleted and the sheet stays", () => {
+    const { sheet, session, copied } = setup(true);
+    sheet.level.type("a");
+    expect(sheet.activate(0)).toEqual({ kind: "stay" });
+    expect(copied).toEqual(["A"]);
+    expect(session.userNames.map((u) => u.name)).toEqual(["A", "b_1", "p", "area"]);
+    expect(sheet.level.items.map((r) => r.id)).toEqual(["var:A", "userfn:area"]);
+  });
+
+  it("a swipe deletes the name and the sheet stays; the hits are read again", () => {
     const { sheet, session } = setup(true);
     expect(sheet.level.items.at(-1)?.id).toBe("clearall");
     sheet.level.type("a");
     expect(sheet.level.items.map((r) => r.id)).toEqual(["var:A", "userfn:area"]);
-    expect(sheet.activate(0)).toEqual({ kind: "stay" });
+    sheet.level.items[0]?.swipe?.();
     expect(session.userNames.map((u) => u.name)).toEqual(["b_1", "p", "area"]);
     expect(sheet.level.items.map((r) => r.id)).toEqual(["userfn:area"]);
     expect(sheet.level.highlight).toBe(0);
@@ -192,8 +203,45 @@ describe("Memory", () => {
   it("deleting a row disarms Clear all", () => {
     const { sheet } = setup(true);
     sheet.activate(sheet.level.items.length - 1);
-    sheet.activate(0);
+    sheet.level.items[0]?.swipe?.();
     expect(sheet.level.items.at(-1)?.label).toBe("Clear all");
+  });
+});
+
+// R813: a swipe left on a name's row in Memory deletes it (Sheet.svelte turns an item's `swipe` into rowSwipe); Vars, a search's
+// hits in Vars, Clear all and the Undo row carry none.
+describe("R815: Memory's and Vars' rows copy", () => {
+  it("every name row of Memory and of Vars (list and cells) carries `copy`, which asks the clipboard for that name; Clear all does not", () => {
+    const m = setup(true);
+    expect(m.sheet.level.items.filter((i) => i.copy).map((i) => i.id)).toEqual(["userfn:area", "userfn:p", "var:b_1", "var:A"]);
+    expect(m.sheet.level.items.find((i) => i.id === "clearall")?.copy).toBeUndefined();
+    m.sheet.level.items.find((i) => i.id === "var:b_1")?.copy?.();
+    expect(m.copied).toEqual(["b_1"]);
+    const v = setup(false);
+    expect(v.sheet.level.items.filter((i) => i.copy).map((i) => i.id).sort()).toEqual(["userfn:area", "userfn:p", "var:A", "var:b_1"]);
+    v.sheet.level.items.find((i) => i.id === "var:A")?.copy?.();
+    expect(v.copied).toEqual(["A"]);
+    expect(v.inserted).toEqual([]); // a hold inserts nothing
+  });
+});
+
+describe("R813: Memory's swipe", () => {
+  it("only Memory's name rows carry a swipe; Vars' rows and cells do not, nor Clear all", () => {
+    const m = setup(true).sheet.level.items;
+    expect(m.filter((i) => i.swipe).map((i) => i.id)).toEqual(["userfn:area", "userfn:p", "var:b_1", "var:A"]);
+    expect(m.find((i) => i.id === "clearall")?.swipe).toBeUndefined();
+    const v = setup(false).sheet;
+    expect(v.level.items.some((i) => i.swipe)).toBe(false);
+    v.level.type("a");
+    expect(v.level.items.some((i) => i.swipe)).toBe(false);
+  });
+
+  it("the swipe deletes that name and leaves the sheet open on the others", () => {
+    const { sheet, session } = setup(true);
+    sheet.level.items.find((i) => i.id === "var:A")?.swipe?.();
+    expect(session.userNames.map((u) => u.name)).toEqual(["b_1", "p", "area"]);
+    expect(sheet.level.items.some((i) => i.id === "var:A")).toBe(false);
+    expect(sheet.level.items.at(-1)?.id === "clearall" || sheet.level.items.at(-1)?.id === "undo").toBe(true);
   });
 });
 

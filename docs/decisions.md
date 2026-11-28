@@ -14,6 +14,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **The release bar's week (A273, G799; pass 241):** Recommended: a night counts when every `NIGHTLY` finding falls under a package or bug line the pass names (no new cause), as the clock seed never repeats a known row. Night 1 (11-25): all 118 named (G802, G804, G805, G622f2, F145, F480, F487).
 - **R779, the drag after the arrow keys, on the Fairphone:** not reproduced in Chromium touch emulation (linetouch.spec.ts R779 cases); lineTouch.ts now ends a stale touch. Does the drag work on the Fairphone 6? If not, record `adb` pointer events for the sequence.
 - **K22 after G385:** `80 °C − 5 K` (a temperature less an interval) keeps today's refusal and words, "Use K or Δ°C for a temperature difference"; G385 adds words only for an unbracketed `T1 − T2` in a longer formula. Recommended: keep; 75 °C needs a rule of its own (a point plus an interval), a package if wanted.
+- **G315, the import cycle left:** the engine one is gone; the probes (`tools/probes/review-1109/vca-scc.py`, `review-1114/ca-scc.pl`) still find `apps/shellSheets.ts` ↔ `views/sheet.svelte.ts` (R930's re-export at `sheet.svelte.ts:11`, c9074acb, after the package's walk), in ron's files. Recommended: a small ron package that lets the shell take the sheets' rows from the sheet chunk without `shellSheets.ts` importing `Sheet` back (a builder passed in), start chunk and openSheet's wait unchanged.
 - **A278, e2e on a built app (measured 2026-11-26):** Recommended: after the tag, and only if A281f1's clipboard per test leaves the e2e round over 450 s: a `vite build --mode e2e` served by `vite preview` is 26–34 % faster per test, but 73 of 207 spec files import `/src/` and need changes (about 1.5 days).
 
 ## Decided proposals
@@ -49,7 +50,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **Owner answers of 2026-11-02 (vision; interview with sandra).** A working engineer, phone first; units and constants first; no AI in the app; marks, σ and digit groups each a setting. Archived. Would change if: an outside round shows another first user.
 - **Owner answers of 2026-11-02.** Stored names (R33) get a colour token per theme; the app's switch alone decides key vibration (A9, R112); the splash Dark (A59); the bars follow the look (owner, 2026-11-22, A266). Archived. Would change if: users want the system switch to mute the keys.
 - **Bulk resets ask once (owner, 2026-11-22, R857); one-slot clears do not.** Archived. Rule: docs/05 3.4.
-- **R4b's four defaults, as built:** Memory deletes a name without asking (Clear all asks once) and a delete has a one-level Undo (R314); a Find pick for a slot closes the sheets; a key's constant keeps its value and σ; Vars is dead without an entry line. Archived.
+- **R4b's four defaults, as built:** Memory's tap, Enter or hold copies a name's full value (R815); deleting is its swipe or Shift + ⌫ (R813, R814), without asking (Clear all asks once), with a one-level Undo (R314); a Find pick for a slot closes the sheets; a key's constant keeps its value and σ; Vars is dead without an entry line. Archived.
 - **R15c1 menus (owner, 2026-10-20): a long menu scrolls** in the viewport (docs/05 3.1); the ⚙ in its title opens Settings (R145). Would change if: the scroll feels slow on the APK.
 - **M4-2 (owner, 2026-10-20):** the task budgets (t02 9 presses, t04 12, t10 25, t05 4), t09's two deviations, ± on Shift + `,` (R71), the unit result as its mockup (R62). Archived. Your hand timing stays the gate.
 - **R15c Store (owner, 2026-10-19; G2 item 58, device):** Shift + ᴇ (Store ▶) on an empty line after a result starts `Ans ▶`, as + − × ÷ do; built in R15c2.
@@ -173,6 +174,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 
 - **σ's digits, one rule (R883, R885; pass 248):** every σ (a constant's, a typed ±, a name or chip) mutes the value's digits from σ's first digit's place on (`2.5 ± 0.1` mutes its 5); σ is drawn at 2 significant digits, PFX too (`4.70 k ± 0.10 k`), the value at least to σ's last digit and in σ's form; the unit view's second line writes σ at 2 digits (the full σ: the σ sheet, Copy). Rule: docs/04 2.6 (R885). Would change if: the owner wants σ at one digit.
 - **A value with σ (R884):** muted digits by default; Rounded to σ is a setting (owner, 2026-11-23).
+- **R807's look (pass 257):** the caret a 1.5 px `--text` bar; armed `--key-on`, rare `--warn`, empty □ muted. Would change if: the owner's look.
 - **A ratio chip (G369, G782; pass 229):** its pure number wherever it goes, the unit view's slot and Store ▶ too. Built, archived.
 - **The check of 2026-10-19:** a zero term keeps its dimension for the unit check (G35). Would change if: the per-term check costs more than the 5 ms p95 bar.
 

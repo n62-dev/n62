@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R800: in Memory a digit key only moves the highlight to the numbered row; it never deletes a name nor arms Clear all
-// (owner's walk 2026-11-20, B1). Enter keeps its job. Vars and Find are unchanged.
+// (owner's walk 2026-11-20, B1). Enter copies the highlighted name's value (R815; before it deleted it). Vars and Find are unchanged.
 import { describe, expect, it, vi } from "vitest";
 import { FakeCalc } from "../calc/fake.ts";
 import type { UserName } from "../engine/defs.ts";
@@ -14,12 +14,14 @@ const kv = (): Kv => ({ get: () => Promise.resolve(undefined), set: () => Promis
 const name = (n: string, preview: string, time: number): UserName => ({ name: n, kind: "var", preview, view: "home", time, mark: "=" });
 
 function setup(memory: boolean) {
+  const copied: string[] = [];
+  const withClip = (run: (c: never) => void): void => run({ copyName: (n: string) => void copied.push(n) } as never);
   const session = new Session(new FakeCalc(), kv());
   session.userNames = [name("A", "5", 1), name("B", "7", 2)];
   const forget = vi.spyOn(session.calc, "home"); // Memory's delete (names.svelte.ts forget) purges through the engine
   const shell: { sheet: Sheet | null } = { sheet: null };
-  showNames(shell, { run: () => undefined } as unknown as EntryController, session, memory);
-  return { session, forget, sheet: shell.sheet as Sheet };
+  showNames(shell, { run: () => undefined } as unknown as EntryController, session, memory, withClip);
+  return { session, forget, copied, sheet: shell.sheet as Sheet };
 }
 
 describe("R800: Memory's digits highlight", () => {
@@ -40,12 +42,19 @@ describe("R800: Memory's digits highlight", () => {
     expect(sheet.level.current?.label).toBe("Clear all");
     expect(forget).not.toHaveBeenCalled();
   });
-  it("Enter on the highlighted name still deletes it", async () => {
-    const { sheet, forget } = setup(true);
+  it("Enter on the highlighted name copies its value and deletes nothing (R815)", () => {
+    const { sheet, forget, copied, session } = setup(true);
     sheet.pickNumber(3);
     sheet.pickNumber(1);
+    expect(copied).toEqual([]);
+    expect(sheet.enter()).toEqual({ kind: "stay" });
+    expect(copied).toEqual(["B"]);
     expect(forget).not.toHaveBeenCalled();
-    sheet.enter();
+    expect(session.userNames.map((u) => u.name)).toEqual(["A", "B"]);
+  });
+  it("the swipe still deletes the highlighted name (R813)", async () => {
+    const { sheet, forget } = setup(true);
+    sheet.level.current?.swipe?.();
     await vi.waitFor(() => expect(forget).toHaveBeenCalledTimes(1)); // (R314: the entries are kept first, then the purge)
     expect(forget).toHaveBeenCalledWith("purge(B)", expect.anything());
   });

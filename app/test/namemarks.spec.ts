@@ -58,7 +58,7 @@ test("after Memory deletes x, the next x is plain", async ({ page }) => {
   await storeX(page);
   await tap(page, ["x"]);
   await expect.poll(async () => (await letters(page)).colours[0]).toBe((await letters(page)).mark);
-  await tap(page, ["bksp", "shift", "math", "enter", "esc"]); // Memory: Enter deletes the highlighted name
+  await tap(page, ["bksp", "shift", "math", "shift", "bksp", "esc"]); // Memory: Shift + ⌫ deletes the highlighted name (R814; Enter copies it, R815)
   await expect.poll(() => page.evaluate(() => window.n62.session.userNames.length)).toBe(0);
   await tap(page, ["x"]);
   expect(await entryValue(page)).toBe("x");

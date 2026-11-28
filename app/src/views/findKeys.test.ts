@@ -49,6 +49,19 @@ describe("findKey: every key types its letter, digits pick only on an empty quer
   });
 });
 
+describe("R814: Memory's Shift + ⌫ (and the hardware Delete) deletes the highlighted row", () => {
+  it("in Memory Shift + ⌫, by a tap with Shift or by its layer, is a delete; plain ⌫ stays backspace", () => {
+    expect(findKey(key("bksp"), undefined, true, true, 10, false, true)).toEqual({ kind: "delete" });
+    expect(findKey(key("bksp"), "shift", false, false, 10, false, true)).toEqual({ kind: "delete" }); // the hardware Delete: layer shift
+    expect(findKey(key("bksp"), undefined, false, false, 10, false, true)).toEqual({ kind: "backspace" });
+    expect(findKey(key("bksp"), "primary", false, false, 10, false, true)).toEqual({ kind: "backspace" });
+  });
+  it("in Vars and Find Shift + ⌫ stays backspace", () => {
+    expect(findKey(key("bksp"), undefined, true, true)).toEqual({ kind: "backspace" });
+    expect(findKey(key("bksp"), "shift", false, false)).toEqual({ kind: "backspace" });
+  });
+});
+
 describe("a level that searches (Find)", () => {
   const cats = (): MenuItem[] => [
     item("cat:a", { submenu: { title: "A", items: [item("one"), item("two")], search: (q) => [item(`in-a:${q}`)] } }),

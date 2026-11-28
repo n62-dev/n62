@@ -20,6 +20,11 @@ export type SheetKey =
   /** A tap on a key that is not a digit types its letter into the filter (no Alpha press needed). */
   | { kind: "letter"; ch: string }
   | { kind: "backspace" }
+  /** R814, Memory: Shift + ⌫ (the hardware Delete) deletes the highlighted name, or arms Clear all, as its swipe and Enter do. */
+  | { kind: "delete" }
+  /** R815, the Copy key (Shift + Select) in Find, Vars and Memory: the highlighted row copies its value (MenuItem.copy: a stored name's full
+   *  value, a constant's); a row with none, or no row, is the dead press. */
+  | { kind: "copy" }
   /** The key keeps its own job: Shift and Alpha (their state is kept as it is), the ⚙ key (Settings as the sheet's next
    *  level, R887), and the controls that change place (the status line's ☰ and place name, and Tmpl, toggle their sheet;
    *  its view tabs and a user key that holds Home, CAS, Apps, Menu or a view close it and go there). A user key that
@@ -100,9 +105,11 @@ const FIND_PASS: readonly string[] = ["settings", "menu", "apps", "slot", "home"
  * the key's letter as a flick down does, Shift or not, digits included (Alpha, 7 is q); a key with no letter keeps its
  * job. A key whose own character is a letter types that letter (the x key types x; its letter d by Alpha or a flick).
  * ▲ ▼ move, Enter inserts, ▶ opens a category, ◀ and Esc go back a level (the top closes), ⌫ deletes. `shift`, `alpha`:
- * Shift, Alpha is on for this tap; `empty`: the open level's query is empty.
+ * Shift, Alpha is on for this tap; `empty`: the open level's query is empty. R814: `memory` (Memory's level): Shift + ⌫, a tap with
+ * Shift on or the layer a hardware Delete presses, deletes the highlighted row; plain ⌫ stays the search's.
  */
-export function findKey(key: Key, layer: Layer | undefined, shift: boolean, empty: boolean, numbered = 10, alpha = false): SheetKey {
+export function findKey(key: Key, layer: Layer | undefined, shift: boolean, empty: boolean, numbered = 10, alpha = false, memory = false): SheetKey {
+  if (memory && key.id === "bksp" && (layer === "shift" || (layer === undefined && shift))) return { kind: "delete" };
   const fixed = BY_ID[key.id];
   if (fixed) return fixed;
   const letter = letterOf(key)?.toLowerCase();
@@ -166,6 +173,12 @@ const isPaste = (key: Key, mods: Mods, layer: Layer | undefined): boolean => {
   return a?.kind === "special" && a.name === "paste";
 };
 
+/** R815: the Copy action (Shift + Select, R723), by a tap with its modifiers or a flick's layer; a free key holding it does nothing in a sheet. */
+const isCopy = (key: Key, mods: Mods, layer: Layer | undefined): boolean => {
+  const a = key.user ? undefined : layer === undefined ? actionFor(key, mods.shift, mods.alpha) : key.actions[layer];
+  return a?.kind === "special" && a.name === "copy";
+};
+
 /** R869: the Help action, by a tap with its modifiers or a flick's layer (Shift + the ⚙ key since R863; a free key holding it does
  *  nothing in a sheet). */
 const isHelp = (key: Key, mods: Mods, layer: Layer | undefined): boolean => {
@@ -198,10 +211,11 @@ export function sheetJob(key: Key, s: SheetCtx, mods: Mods, layer: Layer | undef
   if (s.paste && isPaste(key, mods, layer)) return { kind: "paste" };
   if (s.kind === "store") return storeKey(key, mods.shift, mods.alpha, s.cas, s.empty);
   if (s.kind === "find" && isHelp(key, mods, layer)) return { kind: "help" }; // R869: Help on Find's highlighted row
+  if (s.kind === "find" && isCopy(key, mods, layer)) return { kind: "copy" }; // R815: Copy on the highlighted row
   if (s.of?.helpCloses && isHelp(key, mods, layer)) return { kind: "back" }; // R870: a second Help closes the unit view's Help sheet
   // R887: the ⚙ key's tap opens Settings on the sheet; Shift + it is Help, which stays dead in any other sheet (R863)
   if (p?.kind === "special" && p.name === "settings" && !key.user && (mods.shift || layer === "shift")) return { kind: "none" };
-  if (s.kind === "find") return findKey(key, layer, mods.shift, s.empty, s.numbered, mods.alpha);
+  if (s.kind === "find") return findKey(key, layer, mods.shift, s.empty, s.numbered, mods.alpha, s.of?.level.digitPick === "highlight");
   return layer === "alpha" || layer === "shift" ? sheetFlick(key, layer === "alpha", s.filter) : sheetKey(key, s.filter, s.numbered);
 }
 
@@ -212,6 +226,7 @@ export function sheetFace(key: Key, s: SheetCtx, mods: Mods, layer?: Layer): { t
   const job = sheetJob(key, s.of ? { ...s, paste: pastes(s.of) } : s, mods, layer);
   if (job.kind === "letter") return { text: job.ch, dead: false };
   if (job.kind === "help") return { dead: s.of !== undefined && helpRow(s.of) === undefined }; // R869: no row to explain
+  if (job.kind === "copy") return { dead: s.of !== undefined && s.of.level.current?.copy === undefined }; // R815: no row that copies
   return { dead: job.kind === "none" };
 }
 
@@ -301,6 +316,15 @@ export function sheetAct(c: RouteCtx, key: Key, layer: Layer | undefined, mods?:
       } else if (deadPress(c, key)) c.dead();
       else level.backspace();
       return true;
+    case "delete": {
+      // R814 (Memory): the highlighted name goes as its swipe takes it (R813, with R314's Undo row); Clear all arms as Enter does;
+      // any other row (Undo's) and an empty list are the dead press
+      const row = level.current;
+      if (row?.swipe) row.swipe();
+      else if (row?.id === "clearall") shell.picked(sheet.enter());
+      else c.dead();
+      return true;
+    }
     case "line":
       // R281: a key that types no name after ▶ (⌫ with nothing typed too, sheetKeys.ts storeKey): its job on the line.
       // R281f1: what was typed into the filter goes on the line first, one character at a time as typeLetter types it
@@ -319,6 +343,13 @@ export function sheetAct(c: RouteCtx, key: Key, layer: Layer | undefined, mods?:
         })),
       );
       return true;
+    case "copy": {
+      // R815: the highlighted row's value (a name's full value, a constant's); Clear all, Undo's row, a function in Find and an empty list are the dead press
+      const row = level.current;
+      if (row?.copy) row.copy();
+      else c.dead();
+      return true;
+    }
     case "help": {
       // R869: the highlighted row's help as a level over Find (the index and the help chunk load first; the keys pressed meanwhile
       // wait, holdKeys); no index item there, or the sheet changed meanwhile, is the dead press and Find stays

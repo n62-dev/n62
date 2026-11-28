@@ -6,67 +6,57 @@ import type { GiacBridge, GiacParse, GiacValue } from "./bridge.ts";
 import type { Request, Response } from "./protocol.ts";
 import type { AnalysisRequest, AnalysisResult, CasResult, CasSettings, HomeResult, HomeSettings, SolveOutcome, SolveRequest, StoredRead, TableRequest } from "./types.ts";
 import {
-  definitionsUsedBy,
   ENGINE_DEFINITIONS,
   WORKER_DEFINITION_NAMES,
-  decideFloatTest,
   floatsAsEvalf,
   homeEval,
   homeSetupCommands,
   angleCommand,
   pasdegCommand,
-  latexShown,
-  onceUndecided,
-  resultFromFacts,
   safePrecision,
-  symbolicWhy,
-  testSides,
   toExactLiterals,
-  unquote,
 } from "./homeEval.ts";
-import { eseriesDefinition } from "./eseries.ts";
 import { askedLiterals } from "./asked.ts";
-import { floatsAtView, shownOf } from "./shownText.ts";
 import { resolveAngle } from "./angleMigration.ts";
-import { isDimensionError, mayCombineLists, mayPowerMatrix, nonSquarePower, shapeRefusal, type Bodies, type KnownBody } from "./nonsquare.ts";
-import { unaskedPoly } from "./polyvec.ts";
-import { approxClimbed } from "./approxClimb.ts";
-import { approxRange, lostCas, mayApproxRange, mayBeNumbers, throughInfinity } from "./novalue.ts";
-import { listAsArguments, mayListAsArguments } from "./listargs.ts";
-import { callsIn, errorRefusal, floatBounds, giacPair, hasDefiniteIntegral, hasNestedIntegral, integratedNumerically, refusalOf } from "./converge.ts";
+import { mayCombineLists, mayPowerMatrix, nonSquarePower, type Bodies, type KnownBody } from "./nonsquare.ts";
+import { mayApproxRange } from "./novalue.ts";
+import { mayListAsArguments } from "./listargs.ts";
+import { callsIn } from "./converge.ts";
 import { enEngine } from "../i18n/enEngine.ts";
 import { parseText } from "../i18n/enParser.ts";
-import { WORD_DEFINITIONS } from "./wordOps.ts";
 import { wordDefinitions, wordOfSettings } from "./wordSettings.ts";
 import { dropAngleFactor, PASDEG } from "./angles.ts";
-import { askedDigits, DOUBLE_DIGITS, doubleFormsIn, notBuiltin, unauditedIn, floatFacts, hasFloat, integratedFacts, numberLatex, shapeOfValue, valuePrecision, whyOf, withDigits } from "./numeric.ts";
-import { balanced, callsOf, holdsList, isError, isName, isTimeout, leadingName, namesIn, parsePrinted, typedFromPrinted, wholeCall, wordsOf } from "./giacPrint.ts";
-import { contradictedCall, contradictedFloats, decidedAtDouble, decideTwice, nonRealArg, restsOnDecision } from "./decisions.ts";
+import { DOUBLE_DIGITS, hasFloat, valuePrecision, withDigits } from "./numeric.ts";
+import { notBuiltin } from "./names.ts";
+import { callsOf, holdsList, isError, isName, leadingName, namesIn, parsePrinted, typedFromPrinted, wholeCall, wordsOf } from "./giacPrint.ts";
+import { restsOnDecision } from "./decisions.ts";
 import { assignmentIn, clearingCall, formIn, formOf, functionTarget, mayStore, NOT_HERE_HEADS, programStores, scratchBack, STATE_HEADS, STRING_HEADS, writesScratch, writesThrough, type InputForm, type ProgramStores } from "./stores.ts";
-import { fnFacts, inherited, nameFacts, readFacts, readsFacts, storedFacts, storeFacts, type FactsHost } from "./facts.ts";
-import { changedPart, changesOf, isOurs, namesOf, namesPart, readsFrom, statePart, tableOf, type InputReads, type StoredName } from "./stateRead.ts";
-import { applyDefChanges, keyOf, PREVIEW_MAX, replayOrder, type DefChange, type DefEntry, type NameFacts, type StoredMark } from "./defs.ts";
+import { fnFacts, inherited, nameFacts, readsFacts, storedFacts, storeFacts, type FactsHost } from "./facts.ts";
+import { changedPart, changesOf, isOurs, namesOf, readsFrom, statePart, tableOf, type InputReads, type StoredName } from "./stateRead.ts";
+import { applyDefChanges, keyOf, PREVIEW_MAX, type DefChange, type DefEntry, type NameFacts, type StoredMark } from "./defs.ts";
 import { aloneFacts, resultFacts, sideShown, storedMark } from "./storedMark.ts";
 import { SOLVE_HARD_TIMEOUT_S, solveRequest, unknownsOf } from "./solve.ts";
 import { analyze, table } from "./analysis.ts";
 import { UNIT_DEFINITIONS, unitEval, withNames } from "../units/evaluate.ts";
 import { constUncDigits, inexactConstsIn, withConstValues, type ConstTable } from "./constUnc.ts";
-import { CHIP_PREFIX, CONST_PREFIX, EQ_DIFF, EQ_INEXACT_FLAG, EQ_VERDICT } from "./ourNames.ts";
+import { CHIP_PREFIX, CONST_PREFIX, EQ_DIFF, EQ_INEXACT_FLAG } from "./ourNames.ts";
 import { chipCommand, chipNameFacts, chipSigma, chipsIn, literalChip, withChipValues, type ChipFactsTable } from "./chipFacts.ts";
 import { nameSigma, nameSigmaInputs, namesChanged, sigmaThrough, unitNamesOf, unitOfStore, withNameFacts, withSigmaLost } from "./nameSigma.ts";
 import type { Quantity, UnitError, UnitJob } from "../units/types.ts";
 import { contextDiff, hostContext, isFlagName, namesFlag, namesUnreadFlag } from "./flags.ts";
 import { contextOf, gated, type GatedGiac } from "./ctxGate.ts";
 import { aboutsOf, leakPart, namesAssuming, putBack, selfHolding, setsAssumption } from "./assumed.ts";
-import { plainRowsText, soleMatrixLatexOfText } from "./matrixType.ts";
 import { readMatrices, type MatrixRead } from "./matrixRead.ts";
 import { readPlotValues, type PlotValue } from "./plotValues.ts";
-import { casSequence, nameBack } from "./sequences.ts";
 import { exportText, importText } from "./library.ts";
+import { DefsReplay } from "./defsReplay.ts";
+import { casAnswer, casDecide, casErrorAnswer, casRefusals, type CasError, type CasRun } from "./casSteps.ts";
 import { deadEngine, startDead } from "./dead.ts";
 
+export { REPLAY_BATCH } from "./defsReplay.ts";
+
 /** G65: what the call after an input found: the names it read and stored (stateRead.ts), and Giac's settings. */
-interface AfterInput {
+export interface AfterInput {
   reads: InputReads;
   /** The table after the input (when the state was read) and the names that changed or went. */
   table: Map<string, StoredName> | null;
@@ -157,8 +147,6 @@ class GiacSyntaxError extends Error {
   }
 }
 
-type CasError = NonNullable<CasResult["error"]>;
-
 /** Names in a printed value that are not user names (a value with only these in it does not depend on the order of the
  *  replay). */
 const CONSTANT_NAMES: ReadonlySet<string> = new Set(["i", "pi", "e", "infinity", "inf", "undef", "euler_gamma", "true", "false"]);
@@ -212,75 +200,13 @@ export class EngineHost implements FactsHost {
 
   /** G83: the user's functions restore() has not given to Giac yet, by name; loaded on first use (need). */
   private pending = new Map<string, DefEntry>();
+  /** G314: the definitions replay (defsReplay.ts) over this host's state. */
+  private readonly defs: DefsReplay;
 
   /** Loads the definitions `text` mentions that are not loaded yet: the user's pending functions (G83) and ours.
    *  Called before every input reaches Giac. */
   need(text: string): void {
-    if (this.pending.size) this.loadPending(text);
-    this.needOurs(text);
-  }
-
-  /** Our definitions (ENGINE_DEFINITIONS, eseries) that `text` mentions and that are not loaded yet. */
-  private needOurs(text: string): void {
-    for (const name of definitionsUsedBy(text)) {
-      if (this.loaded.has(name)) continue;
-      this.giac.eval(name in WORD_DEFINITIONS ? wordDefinitions(this.word.bits, this.word.signed)[name]! : (ENGINE_DEFINITIONS[name] ?? eseriesDefinition()));
-      for (const n of name in ENGINE_DEFINITIONS ? [name] : WORKER_DEFINITION_NAMES) this.loaded.add(n); // eseries + helper
-    }
-  }
-
-  /**
-   * G83 (docs/04 6.2): every pending function whose name is a word in `text`, and, transitively, every pending function
-   * named in such a body or in the stored value of a name the text reads (`S:=(g(x))` reads g), goes to Giac in one
-   * batch. A text that lists or clears the names (VARS, expr, rm_all_vars, restart, restart_vars, rm_a_z) loads them all.
-   */
-  private loadPending(text: string): void {
-    const queue = wordsOf(text).some((w) => LOAD_ALL.has(w)) ? [...this.pending.keys()] : wordsOf(text);
-    const seen = new Set<string>();
-    const todo: DefEntry[] = [];
-    while (queue.length) {
-      const n = queue.pop()!;
-      if (seen.has(n)) continue;
-      seen.add(n);
-      const e = this.pending.get(n) ?? this.byName.get(n);
-      if (!e || e.kind === "assume") continue;
-      if (this.pending.has(n)) todo.push(e);
-      for (const c of e.cmds) for (const w of wordsOf(c)) if (!seen.has(w)) queue.push(w);
-    }
-    if (!todo.length) return;
-    for (const e of todo) {
-      this.pending.delete(e.name);
-      this.needOurs(e.cmds[0]!);
-    }
-    for (let k = 0; k < todo.length; k += REPLAY_BATCH) {
-      const part = todo.slice(k, k + REPLAY_BATCH);
-      this.runBatch(part.map((e) => e.cmds[0]!), part.map((e) => e.name));
-    }
-    // The stored table learns the loaded names as Giac prints them, so the input's state part does not count them as
-    // its stores (G65's changesOf would log them as vars with the input's facts).
-    // G104: their entries only
-    const node = parsePrinted(this.giac.eval(namesPart(this.modeDigits, todo.map((e) => e.name))));
-    const table = node ? tableOf(node) : null;
-    if (table) for (const e of todo) { const t = table.get(e.name); if (t) this.stored.set(e.name, t); }
-    // the `// Success` notes and any error of the load are not the input's
-    this.giac.clearMessages();
-  }
-
-  /**
-   * G29: plain commands (`a:=1;b:=2;`) in one Giac call. One that printed an error or returned one is run again one
-   * command at a time (values and functions can be set twice), so one bad entry never takes the others down (G19).
-   */
-  private runBatch(batch: readonly string[], names: readonly string[]): void {
-    if (!batch.length) return;
-    this.giac.clearMessages();
-    const out = this.giac.eval(batch.join(";") + ";");
-    // Any message or error result: a syntax error, or a reserved name that aborts the rest of the batch (`pi:=3`).
-    if (batch.length > 1 && (/error|reserved word|not allowed/i.test(this.giac.messages()) || /^GIAC_ERROR/.test(out))) {
-      // Errors only: a warning (`declared as global`) is no reason to run twice. The names are purged first, so a
-      // rerun sees them as free again, as in the first run (G3: S:=(K*x+1) must not meet a K set by the aborted run).
-      for (const n of names) this.giac.eval(`purge(${n})`);
-      for (const c of batch) this.giac.eval(c);
-    }
+    this.defs.need(text);
   }
 
   constructor(raw: GiacApi, rawBridge: GiacBridge) {
@@ -294,6 +220,7 @@ export class EngineHost implements FactsHost {
     });
     this.giac = giac;
     this.bridge = bridge;
+    this.defs = new DefsReplay({ giac, loaded: this.loaded, pending: this.pending, byName: () => this.byName, stored: () => this.stored, word: () => this.word, modeDigits: () => this.modeDigits });
     // R64, G46: Giac in radians, and pasdeg (our parser's degree factor) set before any input: the units, raw eval and
     // replay paths have no mode setup of their own
     giac.eval(angleCommand("rad"));
@@ -331,45 +258,12 @@ export class EngineHost implements FactsHost {
     this.watched = { eval: read, value, ambiguousPower: () => ambiguous, roundedPivot: () => rounded, digits: giac.digits };
   }
 
-  /** Replays definitions (a fresh engine: at init, or the stored log on first launch) and adds them to the log.
-   *  Symbolic values first, while every name in them is still free (defs.ts). Returns the time it took. */
+  /** Replays definitions (a fresh engine: at init, or the stored log on first launch; defsReplay.ts) and adds them to
+   *  the log. Returns the time it took. */
   restore(stored: readonly DefEntry[]): number {
     const t0 = performance.now();
     const entries = this.withoutFlags(this.migrated(stored));
-    // G83: a function (one balanced command) waits in `pending` until an input names it (need). One whose name Giac
-    // already holds is replayed now: a loaded body that calls it would otherwise meet the old definition.
-    const plain = (e: DefEntry): boolean => (e.kind === "var" || e.kind === "fn") && e.cmds.length === 1 && balanced(e.cmds[0]!, "typed");
-    for (const e of entries) {
-      if (e.kind !== "other") this.pending.delete(e.name);
-      if (e.kind === "fn" && plain(e) && !this.byName.has(e.name)) this.pending.set(e.name, e);
-    }
-    // G29: values go to Giac REPLAY_BATCH at a time (`a:=1;b:=2;`), which halves the per-call cost. Assumptions and
-    // inputs kept as typed go alone.
-    let batch: string[] = [];
-    let names: string[] = [];
-    const flush = (): void => {
-      this.runBatch(batch, names);
-      batch = [];
-      names = [];
-    };
-    for (const e of replayOrder(entries)) {
-      if (this.pending.get(e.name) === e) continue;
-      // A replayed command may use one of ours, or a pending function (G83). A symbolic value is set while every
-      // name in it is still free (G3), so it loads only ours.
-      for (const c of e.cmds) {
-        if (e.early) this.needOurs(c);
-        else this.need(c);
-      }
-      if (plain(e)) {
-        batch.push(e.cmds[0]!);
-        names.push(e.name);
-        if (batch.length >= REPLAY_BATCH) flush();
-      } else {
-        flush();
-        for (const c of e.cmds) this.giac.eval(c);
-      }
-    }
-    flush();
+    this.defs.replay(entries);
     this.record(entries.map((e) => ({ set: e })));
     // G67: a replayed body or command may have changed a Giac setting; G65: the table of stored names, in the same call
     const post = this.after("", false, "full");
@@ -1090,199 +984,27 @@ export class EngineHost implements FactsHost {
     const userFn = (name: string): boolean => builtin(name) && !(name in ENGINE_DEFINITIONS) && !WORKER_DEFINITION_NAMES.includes(name);
     // G171: an input that ran once too (not a definition); its refused store is purged, so no name keeps Giac's answer
     const onceRun = single && !guarded;
-    const shapes = (): ReturnType<typeof nonSquarePower> => onceRun && form.noValue ? false : nonSquarePower(this.giac, onceRun && asg0 ? asg0.rhs : body, text, ambiguous, () => false, performance.now() - t0, userFn, this.bodiesFor(input), onceRun, "pcasans");
-    if (isError(text)) {
-      // G225f2: Giac's error for operands of its matrix type of different shape is the refusal their plain rows get, as in Home
-      const sizes = isDimensionError(text) ? shapeRefusal(shapes()) : null;
-      if (sizes) return fail(enEngine[`error.${sizes}`], sizes);
-      const noLimit = errorRefusal(body, text); // G305 (F182): one-sided limits that differ: no limit, as in Home, nothing stored
-      if (noLimit) return fail(enEngine[`error.${noLimit}`], noLimit);
-      // G71 (F59): no MPFR value at P (a decision over BesselJ): an expression that stores nothing is decided at the double,
-      // with ⚠, as in Home. An assignment keeps the error (its definitions-log entry would hold a double).
-      const dbl = isTimeout(text) || asg0 || form.stores ? null : decidedAtDouble(this.giac, "pcasans", body, digitsSet);
-      if (dbl === null) return fail(text, isTimeout(text) ? "timeout" : "engine");
-      const why = { unaudited: unauditedIn(body, "typed") };
-      const engineMs = performance.now() - t0;
-      if ("text" in dbl) return { result: { ok: true, text: dbl.text, latex: dbl.text, timedOut: false, engineMs, approximate: true, facts: { exact: false, reliableDigits: null, warn: "unaudited", why } }, defs: [] };
-      const r = resultFromFacts(dbl.facts, dbl.shape, digitsSet, "numeric", true, engineMs);
-      const numeric = { ...r, facts: { ...r.facts, why } };
-      return { result: { ok: true, text: numeric.display, latex: numberLatex(numeric.display), timedOut: false, engineMs, numeric, facts: numeric.facts }, defs: [] };
-    }
+    // G314: the steps are casSteps.ts's; r carries the run and its current answer
+    const r: CasRun<AfterInput> = {
+      giac: this.giac, watched: this.watched, host: this, byName: () => this.byName, input, s, t0, exactInput, test, form, asg0, guarded, digitsSet, body, run,
+      ambiguousPower: this.strict.ambiguousPower, single, onceRun, userFn, text, ambiguous, fail,
+      shapes: () => onceRun && form.noValue ? false : nonSquarePower(this.giac, onceRun && asg0 ? asg0.rhs : body, r.text, r.ambiguous, () => false, performance.now() - t0, userFn, this.bodiesFor(input), onceRun, "pcasans"),
+      // G65: the call after the input (its checks ran it again; nothing after this does but print the result).
+      after: () => this.after(input, true, single, r.text),
+      // G49f3: a function defined here keeps the facts of the names its body holds, as in Home (fnFacts).
+      defsOf: (post, preview, facts) => {
+        if (!single) return [];
+        const read = readsFacts(this, post.reads).facts;
+        const fn = post.reads.fn ? fnFacts(facts ? [facts] : [], read) : null;
+        return this.defsAfter(input, [exactInput], preview, storeFacts(facts, [], read), fn, "cas", Math.trunc(s.digits), s.angle, post);
+      },
+    };
+    if (isError(text)) return casErrorAnswer(r);
     const unstored = this.unstored(input);
     if (unstored) return fail(unstored, "builtInName");
-    // An == or ≠ test on a float side: decided by its own digits, as in Home (R18f2).
-    const inexactTest = test && this.giac.eval(EQ_INEXACT_FLAG) === "1";
-    const decided = inexactTest && !single ? decideFloatTest(this.giac, exactInput, digitsSet) : null;
-    if (decided) {
-      text = run();
-      ambiguous = this.strict.ambiguousPower();
-      this.giac.eval(`purge(${EQ_VERDICT})`);
-    }
-    // G325f2: Giac's evalf of its exact text of asin, acos or acosh of a non-real argument cancels: run from the argument's float, as Home
-    const [complexArg, contradicted] = [nonRealArg(this.giac, valuePrecision(digitsSet)), contradictedCall(this.giac, valuePrecision(digitsSet), digitsSet)]; // per call (fix round 2)
-    const floatsOf = (e: string): string | null => contradictedFloats(this.giac, e, text, valuePrecision(digitsSet), digitsSet, complexArg, contradicted);
-    const floatInput = (single && !guarded) || isError(text) ? null : floatsOf(exactInput);
-    const bodyFloats = floatInput !== null && guarded ? (floatsOf(guarded.rhs) ?? body) : floatInput;
-    if (floatInput !== null) text = run(bodyFloats!);
-    // G38: a result that rests on a numeric decision is decided again at P + 20 (and P + 40), as in Home; an exact
-    // == or ≠ test too, only one with a float side is decideFloatTest's.
-    // A plain name:=value decides its value (the right-hand side) and stores the agreed one, as Home does; other
-    // stateful inputs (f(x):=…, purge, assume, =>) must not run twice.
-    const asg = form.assignment;
-    const once = asg ? form.once : form.stores;
-    // G48: an input that runs once and rests on a decision is ⚠, as in Home (it cannot be decided again).
-    let undecided = once && !inexactTest && onceUndecided(this.giac, form, exactInput, text);
-    const decisionExpr = asg ? toExactLiterals(asg.rhs) : exactInput;
-    // G57: a decision the precisions do not agree on, or a tie Giac cannot prove, is refused as in Home (nothing is stored).
-    let refusedCut = false;
-    if (!once && !inexactTest && !hasFloat(text) && restsOnDecision(decisionExpr, "typed", text, notBuiltin(this.giac), complexArg)) {
-      const d = decideTwice(this.watched, decisionExpr, text, digitsSet, digitsSet, mayBeNumbers(text)); // G806: Giac's messages (roundedPivot); G404: it climbs as Home's
-      if ("undecided" in d) undecided = true;
-      if ("undecided" in d && d.refused) refusedCut = true;
-      if (!("undecided" in d) && d.from !== undefined) {
-        if (this.giac.eval(`pcasans:=${d.from};purge(${d.from})`).startsWith("GIAC_ERROR")) this.giac.eval(`purge(${d.from})`);
-        if (asg && !guarded) this.giac.eval(`${asg.name}:=pcasans`);
-        text = d.text;
-      }
-    }
-    // G119, G173 (owner, 2026-11-05): Giac's sequence answer as in Home (sequences.ts); none is refused, and a name it was
-    // stored under goes back (a guarded assignment has stored nothing yet)
-    const seq = casSequence(this.giac, "pcasans", text, (f) => withDigits(this.giac, valuePrecision(digitsSet), digitsSet, f), form, this.byName);
-    if (seq?.empty && asg0 && !guarded) this.giac.eval(nameBack(asg0.name, this.byName));
-    if (seq?.empty) return fail(enEngine["error.noValue"], "noValue");
-    if (seq) {
-      text = seq.text;
-      if (asg && !guarded) this.giac.eval(`${asg.name}:=pcasans`);
-    }
-    // G39: a divergent integral or series, or no limit, is refused as in Home; Giac's [exact, numeric] pair of a
-    // definite integral is shown as Giac's text (both answers) with ⚠, never as a numeric list.
-    const refused = guarded ? refusalOf(this.giac, guarded.rhs, text, digitsSet) : single ? null : refusalOf(this.giac, exactInput, text, digitsSet);
-    if (refused && refused !== "unchecked") return fail(enEngine[`error.${refused}`], refused);
-    if (refusedCut) return fail(enEngine["error.undecided"], "undecided");
-    // G97 (F69): a power, inverse or division of a non-square matrix is Giac's elementwise answer, refused as in Home.
-    const square = shapes();
-    // a refused once store keeps the name's earlier value, as Home (which stores only on success): its logged entry back
-    const logged = asg0 ? this.byName.get(asg0.name) : undefined;
-    const badShape = shapeRefusal(square); // G225: or dot, cross of vectors of different lengths
-    if (badShape && onceRun && asg0) this.giac.eval(logged ? putBack([], [logged]) : `purge(${asg0.name})`);
-    if (badShape) return fail(enEngine[`error.${badShape}`], badShape);
-    // G111 (F98), R80f1: one list argument of LambertW, a distribution and others read as their argument list, refused as in Home.
-    const listRefused = listAsArguments(this.giac, asg0 ? asg0.rhs : exactInput, userFn);
-    if (listRefused) return fail(enEngine[`error.${listRefused}`], listRefused);
-    // G106 (F78): Giac's polynomial of a list plus a number (`[1,4]+1` = poly1[1,5]), which the input did not ask for.
-    if (unaskedPoly(this.giac, "pcasans", asg0 ? asg0.rhs : exactInput, text, userFn)) return fail(enEngine["error.listPlusNumber"], "listPlusNumber");
-    // G148: approx or evalf of a finite value past MPFR's range (±infinity, or a float 0) is refused as in Home.
-    const range0 = guarded || !single ? approxRange(this.giac, asg0 ? asg0.rhs : exactInput, text, valuePrecision(digitsSet), () => false, userFn) : null;
-    // G404: one finite higher up the climb is that number, climbed as in Home (approxClimb.ts); past its reach Giac's text, ⚠
-    const climbed = range0 !== null && typeof range0 === "object" ? approxClimbed(this.giac, "pcasans", range0.bare, askedDigits(input) ?? digitsSet, digitsSet, performance.now() - t0) : null;
-    const pastCap = climbed !== null && typeof climbed === "object" && "pastReach" in climbed;
-    if (pastCap) text = climbed.pastReach;
-    const range = range0 !== null && typeof range0 === "object" ? (climbed === "undecided" ? climbed : climbed ? null : "noValue") : range0;
-    if (range) return fail(enEngine[`error.${range}`], range);
-    // G168 (F93): Giac's undef, or the call back with no free name (no number comes of it), is refused as in Home; an
-    // assignment that ran once puts its name back, as a non-square power's (G171), so no name keeps Giac's word.
-    const lostAsked = !pastCap && (!!guarded || !single || (onceRun && !!asg0 && !form.noValue));
-    const lost = lostAsked ? lostCas(this.giac, "pcasans", asg0 ? asg0.rhs : exactInput, text, () => false, userFn, digitsSet, !!guarded || !single) : null;
-    if (lost && onceRun && asg0) this.giac.eval(logged ? putBack([], [logged]) : `purge(${asg0.name})`);
-    if (lost) return fail(enEngine[`error.${lost}`], lost);
-    // G320 (arch review N5; owner 2026-11-10, answer 7): an answer with no free name that rests on an infinity inside
-    // (1/(1/0), exp(ln(0)): Giac's extended reals) is refused as in Home, after the lost number (lostCas, as Home's
-    // lostNumber) and with the same inputs; with a free name in the answer Giac's algebra stays.
-    const viaInf = lostAsked && mayBeNumbers(text) && throughInfinity(this.giac, asg0 ? asg0.rhs : exactInput, text, () => false, performance.now() - t0, userFn);
-    if (viaInf && onceRun && asg0) this.giac.eval(logged ? putBack([], [logged]) : `purge(${asg0.name})`);
-    if (viaInf) return fail(enEngine["error.divisionByZero"], "divisionByZero");
-    if (guarded) {
-      const stored = this.giac.eval(`${guarded.name}:=pcasans`);
-      if (isError(stored)) return fail(stored, isTimeout(stored) ? "timeout" : "engine");
-    }
-    text = plainRowsText(this.giac, "pcasans", text); // G130 (F125): Giac's matrix type as plain rows, as in Home
-    // A check that could not finish: the result stands with ⚠ (its numeric facts, or the text's mark).
-    const unverified = refused === "unchecked" || square === "unchecked";
-    const pair = !single && hasDefiniteIntegral(exactInput) && giacPair(text, hasNestedIntegral(exactInput)) !== null;
-    // G65: the call after the input (its checks above ran it again; nothing after this does but print the result).
-    const after = (): AfterInput => this.after(input, true, single, text);
-    // G49f3: a function defined here keeps the facts of the names its body holds, as in Home (fnFacts).
-    const defsOf = (post: AfterInput, preview: string, facts: NameFacts | null): DefChange[] => {
-      if (!single) return [];
-      const read = readsFacts(this, post.reads).facts;
-      const fn = post.reads.fn ? fnFacts(facts ? [facts] : [], read) : null;
-      return this.defsAfter(input, [exactInput], preview, storeFacts(facts, [], read), fn, "cas", Math.trunc(s.digits), s.angle, post);
-    };
-    if (climbed && typeof climbed === "object" && "ok" in climbed) {
-      const post = after(); // the moved run of `inherited` would meet the input's infinity again: none
-      const numeric = inherited(this, climbed, post.reads, null, climbed.digits ?? digitsSet, digitsSet);
-      return { result: { ok: true, text: numeric.display, latex: numberLatex(numeric.display), timedOut: false, engineMs: performance.now() - t0, numeric, facts: numeric.facts }, defs: defsOf(post, numeric.display, resultFacts(numeric)) };
-    }
-    // A number with a float in it: checked like Home (the value as `numeric`, its text and LaTeX from our formatter).
-    // `evalf(e,n)` alone is shown with the n digits it asks for, checked at that precision (decisions M4-6).
-    // G103: its shape from bridge-3's kind and elements (one call, only for a text with a float)
-    const shape = hasFloat(text) && !pair ? shapeOfValue(this.giac.value("pcasans", [])) : null;
-    if (shape) {
-      const asked = askedDigits(input);
-      const digits = asked ?? Math.trunc(s.digits);
-      // G90: evalf of an integral whose exact answer keeps Giac's integrate(…) is its numeric integration of the typed
-      // integrand (float bounds), ⚠ without a count, as in Home.
-      const integrated = !single && integratedNumerically(this.giac, exactInput, text);
-      const read = floatFacts(this.giac, "pcasans", single ? null : integrated ? floatBounds(exactInput) : (floatInput ?? exactInput), shape, digits, Math.trunc(s.digits), exactInput);
-      const facts = read && integrated ? integratedFacts(read) : read;
-      if (facts) {
-        let numeric = resultFromFacts(facts, shape, digits, "numeric", true, performance.now() - t0);
-        if (unverified) numeric.facts = { ...numeric.facts, warn: numeric.facts.warn ?? "unchecked" };
-        if (asked !== null) numeric.digits = asked;
-        const body = asg ? asg.rhs : input;
-        const why0 = whyOf(facts, single ? null : exactInput);
-        const why = refused === "unchecked" || square === "unchecked" ? { ...(why0 ?? {}), ...(refused === "unchecked" ? { existsUnchecked: true } : {}), ...(square === "unchecked" ? { squareUnchecked: true } : {}) } : why0;
-        if (why) numeric.facts = { ...numeric.facts, why };
-        const post = after();
-        numeric = inherited(this, numeric, post.reads, single || post.flagsChanged ? null : exactInput, digits, Math.trunc(s.digits));
-        return {
-          result: { ok: true, text: numeric.display, latex: numberLatex(numeric.display), timedOut: false, engineMs: performance.now() - t0, numeric, facts: numeric.facts },
-          defs: defsOf(post, numeric.display, resultFacts(numeric)),
-        };
-      }
-    }
-    // G38: a float in a non-number prints with the precision it was computed at (P). pcasans keeps the P result; the
-    // text prints its floats at the setting (floatsShown), never by running the input again (that redid decisions).
-    // G317: shownText.ts, the one path a side name's CAS preview takes too
-    const { text: atView, slot, atN } = floatsAtView(this.giac, text, "pcasans", digitsSet);
-    text = atView;
-    // An == or ≠ test on a side with a float in it (input/emit.ts equalityTest): its true or false is approximate.
-    // A float in a non-number (x-0.54764225985): nobody checked its digits, so ⚠ without a count (G27, docs/04 2.4),
-    // as the definitions log records it.
-    const unchecked = hasFloat(text) || undecided || unverified || pastCap;
-    // G51: a result without a float that read a stored name, or called a function, with facts takes their warn, why.inherited
-    // and (R36f1) why.rounded, as `inherited` does for a number; one built from exact names stays unmarked.
-    const post = after();
-    const read = readFacts(this, input, post.reads);
-    // G71 (N7): Giac's two-argument round and trunc work in a double; the integer trunc(x,0) prints is not exact.
-    const doubled = doubleFormsIn(exactInput, "typed").length > 0;
-    const approximate = (test && this.giac.eval(EQ_INEXACT_FLAG) === "1") || unchecked || doubled || read !== null;
-    const own = decided?.warn ?? (doubled ? "unaudited" : unchecked ? "unchecked" : undefined);
-    const warn = own === "unaudited" || read?.facts.warn === "unaudited" ? "unaudited" : (own ?? read?.facts.warn);
-    const symWhy = symbolicWhy(own, testSides(exactInput));
-    // G38: "decided at limited precision"; the value was computed, not compared, so `once` is not said.
-    const why0 = pastCap ? { pastCap: true as const } : pair ? { differ: true } : undecided ? { ...(symWhy && !symWhy.once ? symWhy : {}), decided: true } : symWhy;
-    const why1 = refused === "unchecked" || square === "unchecked" ? { ...(why0 ?? {}), ...(refused === "unchecked" ? { existsUnchecked: true } : {}), ...(square === "unchecked" ? { squareUnchecked: true } : {}) } : why0;
-    const why = read && (read.causes.length || read.rounded.length) ? { ...(why1 ?? {}), ...(read.causes.length ? { inherited: read.causes } : {}), ...(read.rounded.length ? { rounded: read.rounded } : {}) } : why1;
-    // G46, G109, G173 (shownText.ts shownOf): Ans, chips (`full`) and pcasans keep the radian text, which means the same
-    // in every mode, and Giac's `list[…]`; MathPrint draws Giac's latex() (`\{…\}`)
-    const { deg, shown } = shownOf(this.giac, text, s.angle);
-    const tex = deg !== null ? (soleMatrixLatexOfText(this.giac, deg) ?? this.giac.eval(`latex(quote(${deg}))`)) : latexShown(this.giac, slot, text);
-    if (atN) this.giac.eval("purge(pasfl)");
-    if (isError(tex)) return fail(tex, isTimeout(tex) ? "timeout" : "engine");
-    return {
-      result: {
-        ok: true,
-        text: shown,
-        ...(shown !== text ? { full: text } : {}),
-        latex: unquote(tex),
-        timedOut: false,
-        engineMs: performance.now() - t0,
-        ...(approximate ? { approximate } : {}),
-        facts: { exact: false, reliableDigits: null, ...(warn ? { warn } : {}), ...(why ? { why } : {}) },
-      },
-      defs: defsOf(post, shown, unchecked ? { exact: false, reliableDigits: null, warn: "unchecked", inexact: true } : null),
-    };
+    const decided = casDecide(r);
+    const checked = casRefusals(r, decided);
+    return "result" in checked ? checked : casAnswer(r, decided, checked);
   }
 
   solve(req: SolveRequest, s: HomeSettings): SolveOutcome {
@@ -1395,12 +1117,6 @@ export class EngineHost implements FactsHost {
     this.modeDigits = Math.trunc(digits);
   }
 }
-
-/** Commands per Giac call in a replay (G29; tools/probes/replay-cost.mjs: 10–50 are as fast, 200 in one call is not). */
-export const REPLAY_BATCH = 25;
-
-/** G83: inputs that list or clear the user's names: every pending function is loaded first. */
-const LOAD_ALL: ReadonlySet<string> = new Set(["VARS", "expr", "rm_all_vars", "restart", "restart_vars", "rm_a_z"]);
 
 /** G83f1: the expression strings of a request, for need(): one per line, the absent ones left out. */
 function expressionsOf(...lists: (readonly (string | undefined)[] | undefined)[]): string {

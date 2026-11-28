@@ -8,7 +8,7 @@
 import { hasAngleFactor } from "./angles.ts";
 import type { Giac } from "./numeric.ts";
 import { callsOf, isError } from "./giacPrint.ts";
-import { PERIODIC as TRIG } from "./converge.ts";
+import { PERIODIC as TRIG } from "./names.ts";
 
 const INVERSE = ["asin", "acos", "atan", "asec", "acsc", "acot"];
 /** Inert names Giac keeps as they are while it simplifies the arguments. */

@@ -3,7 +3,8 @@
 // integers, a branch), and their second run at P + 20 and P + 40. Split out of numeric.ts (G71). Synchronous, UI-free;
 // only erasable TypeScript syntax.
 import { literalPastCap, literalStart } from "./literalPrec.ts";
-import { DOUBLE_DIGITS, doubleChecked, hasFloat, MAX_EVAL_DIGITS, namePrint, numbersAt, shapeOfValue, size, valuePrecision, withDigits, type ElementFacts, type Giac, type Parts, type Shape } from "./numeric.ts";
+import { DOUBLE_DIGITS, doubleChecked, hasFloat, MAX_EVAL_DIGITS, numbersAt, shapeOfValue, size, valuePrecision, withDigits, type ElementFacts, type Giac, type Parts, type Shape } from "./numeric.ts";
+import { namePrint } from "./names.ts";
 import { callsOf, closing, functionsIn, isError, isName, isNameChar, LIST_TYPE, names, namesIn, numbers, type Quoting, RATIONAL, topLevelArgs, UNCLOSED, walk, withoutStrings } from "./giacPrint.ts";
 import { decimalFromString, isZero, type DecimalValue } from "./format.ts";
 import { toExactLiterals } from "./exactLiterals.ts";
