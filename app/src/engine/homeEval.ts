@@ -14,7 +14,7 @@
 // Runs synchronously next to the engine (inside the Giac worker, or in Node for tests). Only
 // erasable TypeScript syntax, so Node runs this file directly.
 import { valueFactsOf, type StoredRead, type StoredUse, type UncTerm, type ValueFacts } from "./types.ts";
-import type { GiacKind, GiacValue } from "./bridge.ts";
+import { noValueOf, type GiacValue, type NoValueKind } from "./bridge.ts";
 import { errorRefusal, floatBounds, refusalOf, giacPair, hasDefiniteIntegral, hasNestedIntegral, integratedNumerically, type Refusal } from "./converge.ts";
 import { enEngine } from "../i18n/enEngine.ts";
 import { approxRange, elementAt, lostFloat, lostNumber, mayBeNumbers, powerPastRange, throughInfinity, underflow, zeroElements } from "./novalue.ts";
@@ -87,13 +87,6 @@ export { defaultHomeSettings, HOME_BUDGET_STEPS, safePrecision } from "./homeDef
 /** `numeric`: a value from a numeric method (Solve, Function analysis) at work precision, rounded for display. */
 export type HomePath = "exact" | "exact-big" | "float-big" | "float-timeout" | "float-error" | "numeric";
 
-/** G365: the kinds of a value with no number (bridge.ts GIAC_KINDS). */
-export type NoValueKind = Extract<GiacKind, "undef" | "infinity">;
-/** The bridge's undef or infinity of a value that is not a vector: kindOf calls a vector whose first element is undef
- *  undef too (Giac's is_undef: [undef,1], set[undef]), which its shape or its tree ([2, …]) tells apart (probed). */
-const noValueKind = (v: GiacValue): NoValueKind | undefined =>
-  (v.kind === "undef" || v.kind === "infinity") && v.shape === undefined && !(Array.isArray(v.tree) && v.tree[0] === 2) ? v.kind : undefined;
-
 export interface HomeResult {
   ok: boolean;
   /** Canonical text: STD at `digits` (format.ts), Giac's text for non-numbers, the error text when !ok. */
@@ -131,8 +124,7 @@ export interface HomeResult {
   braces?: true;
   /** The digits the input asked for (`evalf(e,n)`, decisions M4-6): the result is shown with them, not the setting. */
   digits?: number;
-  /** G365: the bridge's kind (api.cc kindOf) of a result that is Giac's undef or an infinity, signed or not; the Function
-   *  app shows NaN for it without reading Giac's print. Absent for anything else (a number, a list holding undef). */
+  /** G365: Giac's undef or an infinity, from the bridge (bridge.ts noValueOf): the Function app shows NaN for it. */
   kind?: NoValueKind;
   /** Giac `latex()` of a result that is not a number (raw; the view tidies it up and draws it, as in CAS). R18f3. */
   latex?: string;
@@ -751,8 +743,7 @@ export function homeEval(
     const unchecked = hasFloat(text) || forced !== undefined;
     const warn = decided?.warn ?? (forced === "pastCap" ? "unchecked" : forced) ?? (unchecked ? "unchecked" : undefined);
     const why = forced === "pastCap" ? { pastCap: true as const } : symbolicWhy(warn, testSides(exactBody));
-    const kind = noValueKind(value);
-    return done({ ok: true, display, ...(kind ? { kind } : {}), ...(listed ? { braces: true as const } : {}), exact: text, ...(deg !== null || listed || shownText !== plainShown ? { full: text } : {}), ...latex, path: "exact", approximate: inexactTest || unchecked, facts: { exact: false, reliableDigits: null, ...(warn ? { warn } : {}), ...(why ? { why } : {}) } });
+    return done({ ok: true, display, ...noValueOf(value), ...(listed ? { braces: true as const } : {}), exact: text, ...(deg !== null || listed || shownText !== plainShown ? { full: text } : {}), ...latex, path: "exact", approximate: inexactTest || unchecked, facts: { exact: false, reliableDigits: null, ...(warn ? { warn } : {}), ...(why ? { why } : {}) } });
   };
   // G44f1: Giac's inverse distribution function gives ±infinity for some p inside (0, 1) (fisher_icdf(3,4,1-10^-20)):
   // the polish computes the value; when it cannot, Giac's infinity is shown with ⚠. At p = 0 or 1 it is exact.
