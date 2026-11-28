@@ -81,7 +81,9 @@ test.describe("the unit view from the keys", () => {
     expect(await activeId(page)).toBe("end");
     await tap(page, ["right"]); // nothing after the end slot
     expect(await activeId(page)).toBe("end");
-    await tap(page, ["left", "left"]);
+    await tap(page, ["left", "left"]); // (R808: the empty end slot crosses at once, then ◀ walks u2's s)
+    expect(await activeId(page)).toBe("u2");
+    await tap(page, ["left"]); // the start of u2: crosses
     expect(await activeId(page)).toBe("u1");
     await tap(page, ["esc"]); // (the end slot is empty: the line keeps the slots without it)
     await expect(shown(page)).toBeHidden();
@@ -341,8 +343,7 @@ test("⌫ on an empty slot steps back to the slot before (as ⌫ at the start of
   expect(await activeId(page)).toBe("u1");
   expect(meant(await tokens(page, "u1")), "the slot before keeps its tokens").toBe("k:m");
   expect(await pulses(["bksp"])).toBe(1);
-  expect(meant(await tokens(page, "u1")), "the next ⌫ removes its last token").toBe("");
-  await tap(page, ["bksp"]); // the armed k
+  expect(meant(await tokens(page, "u1")), "the next ⌫ removes its last factor, k m whole (R808)").toBe("");
   expect(await page.evaluate(() => window.n62.unitView?.view.model("u1")?.empty)).toBe(true);
   expect(await pulses(["bksp"]), "⌫ on the first slot, empty: dead").toBe(3);
   expect(await activeId(page)).toBe("u1");

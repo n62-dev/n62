@@ -72,7 +72,7 @@ describe("UnitView: a result that arrives after a slot changed", () => {
 
   it("shows nothing when a slot changed while Working showed (km made into m)", async () => {
     const { view, h, done } = await running();
-    view.move(-1);
+    view.step(-1); // (R808: ◀ would first walk the end slot's m ÷ s; the button crosses at once)
     expect(view.activeId).toBe("u1");
     view.apply({ do: "delete" });
     view.apply({ do: "delete" });
@@ -117,7 +117,7 @@ describe("UnitView: ⌫ on an empty slot steps back, as ⌫ at the start of a bo
     return { view, h };
   }
 
-  it("on an empty slot that is not the first: to the slot before, which keeps its tokens; the next ⌫ removes its last", () => {
+  it("on an empty slot that is not the first: to the slot before, which keeps its tokens; the next ⌫ removes its last (R808: the whole factor, nothing armed again)", () => {
     const { view, h } = second();
     view.apply(DEL);
     expect(view.activeId).toBe("u1");
@@ -125,7 +125,7 @@ describe("UnitView: ⌫ on an empty slot steps back, as ⌫ at the start of a bo
     expect(h.dead()).toBe(0);
     view.apply(DEL);
     expect(view.model("u1")?.slot).toEqual({ tokens: [] });
-    expect(view.model("u1")?.armed).toEqual({ prefix: "k", sqrt: false });
+    expect(view.model("u1")?.armed).toEqual({ sqrt: false });
     expect(view.reading.text).toBe("");
   });
 
@@ -144,7 +144,6 @@ describe("UnitView: ⌫ on an empty slot steps back, as ⌫ at the start of a bo
     const { view, h } = second();
     view.apply(DEL);
     view.apply(DEL);
-    view.apply(DEL); // the armed k
     expect(view.model("u1")?.empty).toBe(true);
     expect(h.dead()).toBe(0);
     const shown = view.shown;
@@ -191,7 +190,7 @@ describe("UnitView: More… keeps the result until a unit is picked (R118, vr-8)
   it("Find closed without a pick: the next pad press is an ordinary press, not a pick (the end slot is not cleared)", async () => {
     const { view, h } = await shownResult();
     view.more("m1s-1");
-    view.move(-1);
+    view.step(-1);
     view.apply(U("h"));
     expect(view.model("end")?.slot).toEqual({ tokens: [{ unit: "m" }, { unit: "s" }], per: 1 });
     expect(view.model("u1")?.slot.tokens).toHaveLength(3);
@@ -200,7 +199,7 @@ describe("UnitView: More… keeps the result until a unit is picked (R118, vr-8)
 
   it("a pick replaces the end slot, makes it active and evaluates", async () => {
     const { view, h } = await shownResult();
-    view.move(-1);
+    view.step(-1);
     view.more("m1s-1");
     view.pickMore(U("km"));
     expect(view.activeId).toBe("end");
@@ -667,5 +666,133 @@ describe("R807: the active slot draws its caret, no other LaTeX holds it", () =>
     expect(view.drawn()).not.toContain("pas-caret");
     expect(m.latex).not.toContain("pas-caret");
     expect(m.latex).toBe(m.latexWith());
+  });
+});
+
+describe("R808: ◀ ▶ ▲ ▼ walk a slot's factors before they cross to another slot", () => {
+  /** "1+2": u1 holds nothing, u2 holds m s ÷ h (the caret at its end); the second slot is active. */
+  function two(): { view: UnitView; h: ReturnType<typeof host>; written: Record<string, string> } {
+    const h = host();
+    const written: Record<string, string> = {};
+    const view = new UnitView(CAT, "1+2", {}, { ...h.host, write: (id, latex) => void (written[id] = latex) });
+    view.start();
+    view.apply(U("km"));
+    view.apply({ do: "next" });
+    for (const e of [U("m"), U("s"), { do: "per" } as const, U("h")]) view.apply(e);
+    expect(view.activeId).toBe("u2");
+    return { view, h, written };
+  }
+  const caret = (view: UnitView, id = view.activeId) => (view.model(id) as NonNullable<ReturnType<UnitView["model"]>>).caret;
+
+  it("◀ in a slot with factors moves the caret first, and crosses only at the slot's start, landing at the end of the slot before", () => {
+    const { view, h } = two();
+    expect(caret(view)).toEqual({ side: "den", i: 1 });
+    view.move(-1);
+    expect(caret(view)).toEqual({ side: "den", i: 0 });
+    view.move(-1);
+    expect(caret(view)).toEqual({ side: "num", i: 2 });
+    view.move(-1); view.move(-1);
+    expect(caret(view)).toEqual({ side: "num", i: 0 });
+    expect(view.activeId).toBe("u2");
+    view.move(-1); // the slot's start: crosses
+    expect(view.activeId).toBe("u1");
+    expect(caret(view)).toEqual({ side: "num", i: 1 });
+    view.move(-1); view.move(-1); // the first slot's start: a dead key
+    expect(view.activeId).toBe("u1");
+    expect(h.dead()).toBe(1);
+  });
+
+  it("▶ walks to the end and crosses to the start of the slot after", () => {
+    const { view } = two();
+    view.step(-1);
+    expect(caret(view)).toEqual({ side: "num", i: 1 });
+    view.move(1);
+    expect(view.activeId).toBe("u2");
+    expect(caret(view)).toEqual({ side: "num", i: 0 });
+    for (let i = 0; i < 4; i++) view.move(1);
+    expect(caret(view)).toEqual({ side: "den", i: 1 });
+    expect(view.activeId).toBe("u2");
+  });
+
+  it("a move draws the caret where it went; the reading and the slot stay", () => {
+    const { view, written } = two();
+    const before = [view.reading.text, JSON.stringify(view.model("u2")?.slot)];
+    view.move(-1);
+    expect(written["u2"]?.indexOf("pas-caret")).toBeLessThan(written["u2"]?.indexOf("mathrm{h}") as number);
+    expect([view.reading.text, JSON.stringify(view.model("u2")?.slot)]).toEqual(before);
+  });
+
+  it("▲ and ▼ go between the numerator and the denominator; ▼ in a slot without ÷ keeps its job (the chips), ▲ with no row is dead", async () => {
+    const { view, h } = two();
+    view.arrowUp();
+    expect(caret(view)).toEqual({ side: "num", i: 2 });
+    view.arrowDown();
+    expect(caret(view)).toEqual({ side: "den", i: 1 });
+    expect(h.dead()).toBe(0);
+    view.arrowDown(); // (the denominator, no result shown: dead as before)
+    expect(h.dead()).toBe(1);
+    // a slot with no ÷: ▼ enters the chips of a result
+    const h2 = host();
+    const v = new UnitView(CAT, "72", {}, h2.host);
+    v.start();
+    v.apply(U("km"));
+    v.setChecking(true);
+    v.apply(U("m"));
+    const done = v.next();
+    h2.answer({ ...RESULT, dimension: "m1" } as unknown as Quantity);
+    await done;
+    expect(v.shown.kind).toBe("result");
+    v.arrowDown();
+    expect(v.row).toBe(0);
+    v.arrowUp();
+    expect(v.row).toBe(-1);
+  });
+
+  it("a move with a prefix armed shows the refusal and leaves the caret; ⌫ at the denominator's start with units says so", () => {
+    const { view, h } = two();
+    view.apply({ do: "prefix", id: "k" });
+    view.move(-1);
+    expect(view.shown).toMatchObject({ kind: "message", text: "A prefix needs a unit after it" });
+    expect(caret(view)).toEqual({ side: "den", i: 1 });
+    expect(h.dead()).toBe(1);
+    view.apply({ do: "delete" }); // the armed k
+    view.move(-1);
+    view.apply({ do: "delete" });
+    expect(view.shown).toMatchObject({ kind: "message", text: "The denominator still has units" });
+    expect(h.dead()).toBe(2);
+    expect(view.model("u2")?.slot).toEqual({ tokens: [{ unit: "m" }, { unit: "s" }, { unit: "h" }], per: 2 });
+  });
+
+  it("a slot reached by ◀ from the next one takes ⌫ at its end (control)", () => {
+    const { view } = two();
+    view.step(-1);
+    expect(caret(view)).toEqual({ side: "num", i: 1 });
+    view.apply({ do: "delete" });
+    expect(view.model("u1")?.empty).toBe(true);
+  });
+});
+
+describe("R808f1: a slot that becomes active without ◀ ▶ has its caret at its end", () => {
+  const caret = (view: UnitView) => (view.model(view.activeId) as NonNullable<ReturnType<UnitView["model"]>>).caret;
+  const units = (view: UnitView, id: string) => view.model(id)?.slot.tokens.map((t) => t.unit);
+  const made = (): UnitView => { const v = new UnitView(CAT, "1", {}, host().host); v.start(); return v; };
+
+  it("⌫ on the empty end slot (✕ Check) leaves u1 active with the caret at its end: the next ⌫ removes h, not km", () => {
+    const view = made();
+    view.apply(U("km")); view.apply(U("h")); view.move(-1); // the caret between km and h
+    view.setChecking(true); view.apply({ do: "delete" }); // (a tap on the end slot with Check on; ⌫ on it: ✕ Check)
+    expect([view.checking, view.activeId, caret(view)]).toEqual([false, "u1", { side: "num", i: 2 }]);
+    view.apply({ do: "delete" });
+    expect(units(view, "u1")).toEqual(["km"]);
+  });
+
+  it("Tools › the end slot puts the caret at the end of a filled end slot that ◀ had moved into", () => {
+    const view = made();
+    view.setChecking(true);
+    view.apply(U("m")); view.apply(U("s")); view.move(-1); // inside the end slot
+    view.step(-1); view.toEnd(); // the ← button: u1; Tools › the end slot
+    expect([view.activeId, caret(view)]).toEqual(["end", { side: "num", i: 2 }]);
+    view.apply({ do: "delete" });
+    expect(units(view, "end")).toEqual(["m"]);
   });
 });
