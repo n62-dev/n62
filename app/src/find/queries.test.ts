@@ -31,10 +31,10 @@ const SLOT: FindContext = { filter: ["unit", "pfx"], prefer: ["unit"] };
 const ctxOf = (q: Query): FindContext => (q.where === "slot" ? SLOT : {});
 
 describe("find-queries.yaml", () => {
-  it("has 183 active phrases (18 that find no unit) and 4 pending ones, no duplicates in one place", () => {
+  it("has 184 active phrases (19 that find no unit) and 4 pending ones, no duplicates in one place", () => {
     expect(doc.schema).toBe(1);
-    expect(active.length).toBe(183);
-    expect(absent.length).toBe(18);
+    expect(active.length).toBe(184);
+    expect(absent.length).toBe(19);
     for (const q of doc.queries) expect([undefined, "slot"], q.query).toContain(q.where);
     expect(doc.queries.length - active.length).toBe(4);
     expect(new Set(doc.queries.map((q) => `${q.where ?? ""}|${q.query}`)).size).toBe(doc.queries.length); // (G402: a phrase may be a row in a slot too)

@@ -107,6 +107,7 @@ queries:
   - { query: "s/m", expect: none, where: slot, note: "not m/s (the words in another order)" }
   - { query: "kg/s", expect: none, where: slot, note: "not kg·m/s" }
   - { query: "kn/m", expect: none, where: slot, note: "not kN·m" }
+  - { query: "pa/m", expect: none, where: slot, note: "a pressure gradient: the menu's reading row reads Pa/m (a whole name before pico + are)" }
   - { query: "j/kgk", expect: "unit:J/(kg*K)", where: slot, note: "not J/kg: the name without its brackets and dot" }
   - { query: "w/mk", expect: "unit:W/(m*K)", where: slot, note: "not W/m²" }
   - { query: "m^3/h", expect: none, where: slot, note: "not m³/s (3600 times the size)" }

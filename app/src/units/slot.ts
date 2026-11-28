@@ -178,12 +178,12 @@ export function isLetters(s: string): boolean {
  *  run as a unit's name (`km`, `kWh`, `psi`; a unit that is a prefix and a unit of Find's list as both, as a pick from
  *  Find gives it: km is k and m), else the longest prefix name and a unit's name for the rest (`mN`, as the pad's prefix
  *  and unit cells give it). Exact, as cased (`Ms` is no ms); undefined: no unit. */
-export function readSymbol(cat: SlotCatalogue, text: string): { prefix?: string; unit: string } | undefined {
+export function readSymbol(cat: SlotCatalogue, text: string, split = true): { prefix?: string; unit: string } | undefined {
   const sym = cat.symbols;
   if (!sym) return undefined;
   const whole = sym.units.get(text);
   if (whole !== undefined) return splitPair(cat, whole) ?? { unit: whole };
-  for (let i = text.length - 1; i >= 1; i--) {
+  for (let i = split ? text.length - 1 : 0; i >= 1; i--) {
     const prefix = sym.prefixes.get(text.slice(0, i));
     const unit = sym.units.get(text.slice(i));
     if (prefix !== undefined && unit !== undefined && !splitPair(cat, unit)) return { prefix, unit };
@@ -191,10 +191,13 @@ export function readSymbol(cat: SlotCatalogue, text: string): { prefix?: string;
   return undefined;
 }
 
-/** G402: a symbol of Find's query in a unit slot: readSymbol as cased, else the same in lower case (`kj` is kJ, `btu`
- *  Btu, `kn` kN, `h` stays the hour). */
+/** G402: a symbol of Find's query in a unit slot: a whole unit's name as cased, then in lower case, and only then a
+ *  prefix and a unit, as cased, then in lower case (readSymbol's `split` false: the whole name only). `kj` is kJ, `btu`
+ *  Btu, `kn` kN, `h` stays the hour; `pa` is Pa, never pico and are. */
 export function readSymbolFolded(cat: SlotCatalogue, text: string): { prefix?: string; unit: string } | undefined {
-  return readSymbol(cat, text) ?? readSymbol(foldedCatalogue(cat), text.toLowerCase());
+  const folded = foldedCatalogue(cat);
+  const lower = text.toLowerCase();
+  return readSymbol(cat, text, false) ?? readSymbol(folded, lower, false) ?? readSymbol(cat, text) ?? readSymbol(folded, lower);
 }
 
 const foldedCats = new WeakMap<SlotCatalogue, SlotCatalogue>();

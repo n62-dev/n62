@@ -98,6 +98,10 @@ describe.skipIf(!full)("the units menu on the generated index", () => {
     expect(kj.row?.preview).toBe("kilojoule per kilogram · L²·T⁻²");
     expect(first("kg/s").acts).toEqual([{ do: "pair", prefix: "k", id: "g" }, { do: "per" }, { do: "unit", id: "s" }]);
     expect(first("kn/m").acts).toEqual([{ do: "pair", prefix: "k", id: "N" }, { do: "per" }, { do: "unit", id: "m" }]); // kN, not knot
+    const pa = first("pa/m"); // a whole name case-folded (Pa) before a prefix and a unit as typed (pico, are)
+    expect([pa.row?.value, pa.acts]).toEqual(["Pa/m", [{ do: "unit", id: "Pa" }, { do: "per" }, { do: "unit", id: "m" }]]);
+    expect(first("pa/s").row?.value).toBe("Pa/s");
+    expect(first("1/pa").acts).toEqual([{ do: "unit", id: "Pa" }, { do: "power", n: -1 }]); // Pa⁻¹, not (pico·are)⁻¹
     expect(first("wh/kg").row?.value).toBe("Wh/kg");
     expect(first("kg/m^3").row?.id).toBe("unit:kg/m^3"); // Find's own unit, no reading row
     expect(first("w/mk").row?.id).toBe("unit:W/(m*K)");
