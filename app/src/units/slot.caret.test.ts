@@ -154,13 +154,15 @@ describe("R806: the caret at the end", () => {
       const m = new SlotModel(CAT), r = new Reference();
       const oks: boolean[] = [];
       for (const a of seq) {
-        const ok = m.apply(a).ok;
-        expect(ok, `${JSON.stringify(seq)} at ${JSON.stringify(a)}`).toBe(r.press(a));
+        // 110 000 presses: expect() only on a mismatch (220 000 calls took most of the 5 s budget under load)
+        const ok = m.apply(a).ok, want = r.press(a);
+        if (ok !== want) expect(ok, `${JSON.stringify(seq)} at ${JSON.stringify(a)}`).toBe(want);
         oks.push(ok);
         kinds.add(a.do);
         if (a.do === "power") powers.add(a.n);
         if (!ok) refused++;
-        expect(m.caret, JSON.stringify(seq)).toEqual({ side: r.side, i: r.i });
+        const c = m.caret;
+        if (c.side !== r.side || c.i !== r.i) expect(c, JSON.stringify(seq)).toEqual({ side: r.side, i: r.i });
       }
       const shown = { slot: m.slot, latex: m.latex, reading: m.reading, armed: m.armed, empty: m.empty };
       const ref = { slot: r.slot, latex: r.latex, reading: r.reading, armed: r.armedView, empty: r.empty };

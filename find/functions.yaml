@@ -8,7 +8,8 @@
 #   names   extra names a user may type (Giac's own names are added from aide_cas, except `drop`)
 #   drop    Giac names not to offer for this item (they mean something else in our entry line)
 #   insert  the LaTeX the entry line receives (default \operatorname{<name>}\left(#0\right))
-#   giac    the Giac command that insert must become through our parser (checked by app/src/find/insert.test.ts)
+#   giac    the Giac command that insert must become through our parser (checked by app/src/find/insert.test.ts); a template that
+#           becomes no call (tmpl:dms) gives its whole Giac text, x in #0 (or #@) and 1 in each other box (#?)
 #   syntax  shown in the preview (default: from aide_cas)
 #   golden  the golden case id
 #   example { input, expect, mark[, angle] } (G231): one example in our own words; `input` is the LaTeX the entry line holds, `expect` the
@@ -17,6 +18,7 @@
 functions:
   - { id: "fn:sqrt", title: "Square root", desc: "Square root; of a negative number gives an imaginary result.", names: ["square root", "√"], insert: "\\sqrt{#0}", giac: "sqrt", syntax: "sqrt(x)", golden: "fn-sqrt2", example: { input: "\\sqrt{16}", expect: "4", mark: "=" } }
   - { id: "tmpl:cbrt", title: "Cube root", desc: "Real cube root: ∛(−8) = −2.", names: ["cbrt", "cube root", "∛"], insert: "\\sqrt[3]{#0}", giac: "surd", syntax: "∛x", golden: "fn-cbrt2", example: { input: "\\sqrt[3]{-27}", expect: "-3", mark: "=" } }
+  - { id: "tmpl:dms", title: "Degrees, minutes, seconds", desc: "An angle in degrees, minutes and seconds, in every angle mode: 30°15′36″ is 30.26°.", names: ["dms", "°′″"], insert: "#@\\degree#?\\prime#?\\doubleprime", giac: "(x+1/60+1/3600)*pi/180/pasdeg", syntax: "d°m′s″", golden: "tmpl-dms-01", example: { input: "30\\degree15\\prime36\\doubleprime", expect: "30.26", mark: "=", angle: "deg" } }
   - { id: "fn:surd", title: "Real n-th root", desc: "Real n-th root of x: surd(x, n).", names: ["nth root", "root"], giac: "surd", golden: "fn-cbrt-neg8", example: { input: "\\operatorname{surd}\\left(-32,5\\right)", expect: "-2", mark: "=" } }
   - { id: "fn:ln", title: "Natural logarithm", desc: "Logarithm to base e.", names: ["natural log", "natural logarithm"], drop: ["log", "LN"], insert: "\\ln\\left(#0\\right)", giac: "ln", syntax: "ln(x)", golden: "fn-ln2", example: { input: "\\ln\\left(100\\right)", expect: "4.60517018599", mark: "≈" } }
   - { id: "fn:log10", title: "Common logarithm (log₁₀)", desc: "Logarithm to base 10.", names: ["log", "lg", "common log", "decimal logarithm"], insert: "\\log\\left(#0\\right)", giac: "log10", syntax: "log10(x)", golden: "fn-log10-2", example: { input: "\\log\\left(1000\\right)", expect: "3", mark: "=" } }

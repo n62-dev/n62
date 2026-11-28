@@ -46,6 +46,23 @@ aliases:
   "fn:acos": ["arccos"]
   "fn:atan": ["arctan"]
   "fn:linterp": ["interpolate", "interpolation", "lookup", "table"]   # G361 (G356: not Giac's lagrange or interp)
+  # G401: the engineers' words (night review 2026-11-16, fh-4, fh-5)
+  "fn:linsolve": ["simultaneous equations", "linear system", "system of linear equations"]
+  "fn:fsolve": ["solve numerically", "numerical solve"]
+  "fn:romberg": ["numerical integration", "numeric integral", "trapezoid", "trapezoidal rule"]   # int keeps "integral"
+  "fn:partfrac": ["partial fractions", "partial fraction decomposition"]
+  "fn:normalize": ["unit vector"]
+  "fn:rectangular_coordinates": ["polar to rectangular", "polar to cartesian"]
+  "fn:polar_coordinates": ["rectangular to polar", "cartesian to polar"]
+  "fn:perm": ["permutations", "arrangements"]
+  "fn:norm": ["hypotenuse"]   # norm([3,4]) = 5; Giac has no hypot
+  "fn:solve": ["quadratic", "quadratic equation"]
+  "fn:proot": ["polynomial", "polynomial roots", "roots of a polynomial"]
+  "fn:exponential_regression": ["exponential fit", "curve fit"]
+  "fn:power_regression": ["power fit", "curve fit"]
+  "fn:logarithmic_regression": ["logarithmic fit", "curve fit"]
+  "fn:polynomial_regression": ["curve fit"]
+  "tmpl:dms": ["degrees minutes seconds", "degrees, minutes, seconds"]
 
 symbols:
   "const:StdT": "T_std"

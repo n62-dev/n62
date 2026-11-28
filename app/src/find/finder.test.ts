@@ -63,7 +63,7 @@ describe.skipIf(!full)("Find on the generated index", () => {
     const arith = menu.categories.find((c) => c.id === "cat:arith")?.submenu;
     expect(arith?.items.map((it) => it.id)).toEqual(["fn:abs", "fn:floor", "fn:ceil", "fn:frac", "fn:irem", "fn:gcd", "fn:lcm", "fn:factorial", "fn:comb", "fn:sigfig", "fn:max", "fn:min"]);
     const trig = menu.categories.find((c) => c.id === "cat:trig")?.submenu;
-    expect(trig?.items.map((it) => it.id)).toEqual(["fn:sin", "fn:cos", "fn:tan", "fn:asin", "fn:acos", "fn:atan", "fn:sinh", "fn:cosh", "fn:tanh", "fn:atan2"]);
+    expect(trig?.items.map((it) => it.id)).toEqual(["fn:sin", "fn:cos", "fn:tan", "fn:asin", "fn:acos", "fn:atan", "fn:sinh", "fn:cosh", "fn:tanh", "fn:atan2", "tmpl:dms"]);
   });
 
   // G222: the normal and t distributions (density, cumulative, inverse) are curated, each with a golden case that exists
