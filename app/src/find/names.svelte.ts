@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Vars and Memory (R4b, docs/04 3.4 and 5.1): Find on the user's variables and functions, the live items of the
 // session's names (stored ones included once the engine has read its log). Vars lists them and inserts one; Shift +
-// Math, Memory, lists the same and deletes one (Enter) or all (the last row, Enter twice). In Find's lazy chunk. No
+// Math, Memory, lists the same: a tap or Enter on a name copies its full value (R815), a swipe or Shift + ⌫ deletes it (R813, R814),
+// the last row clears all (Enter twice). A hold on a row of either copies the value too. In Find's lazy chunk. No
 // index is needed: the live items go through rank.ts's search over an empty index.
 import type { MenuItem } from "../apps/types.ts";
 import type { UserName } from "../engine/defs.ts";
+import type { ClipActions } from "../clipboard/actions.svelte.ts"; // (type only: the clipboard code is not part of Find's chunk)
 import type { EntryController } from "../entry/controller.ts";
 import { findText as t } from "../i18n/enFind.ts";
 import { memoryText } from "../i18n/enMemory.ts";
@@ -192,7 +194,7 @@ export function nameItems(names: readonly UserName[], row: (n: UserName, cell: b
 const ui = $state({ armed: false, note: "" });
 
 /** Vars (`memory` false) or Memory (true) as a sheet above the keypad, its keys those of Find (route.ts, sheetKeys.ts). */
-export function showNames(shell: { sheet: Sheet | null }, entry: EntryController, session: Session, memory: boolean): void {
+export function showNames(shell: { sheet: Sheet | null }, entry: EntryController, session: Session, memory: boolean, withClip?: (run: (c: ClipActions) => void) => void): void {
   ui.armed = false;
   ui.note = "";
   const names = (): readonly UserName[] => session.userNames;
@@ -203,17 +205,26 @@ export function showNames(shell: { sheet: Sheet | null }, entry: EntryController
     level.refresh();
     level.highlight = Math.min(level.highlight, level.items.length - 1);
   };
+  /** R815: the name's full value on the clipboard (the clipboard code loads first, the keys pressed meanwhile are not held). */
+  const copy = withClip && ((n: UserName): void => withClip((c) => void c.copyName(n.name)));
+  /** Memory's swipe and Shift + ⌫ (R813, R814): the name goes (the Undo row comes once the entries are kept). */
+  const remove = (n: UserName): void => {
+    ui.armed = false;
+    ui.note = "";
+    void forget(session, [n.name]).then(settle);
+    settle();
+  };
+  /** A tap or Enter: Memory copies the value (R815; the sheet and the name stay), Vars inserts the name. */
   const run = (n: UserName): void => {
-    if (memory) {
-      ui.armed = false;
-      ui.note = "";
-      void forget(session, [n.name]).then(settle); // (the Undo row comes once the entries are kept)
-      settle();
-    } else entry.run({ kind: "insert", latex: insertOf(n) });
+    if (!memory) return entry.run({ kind: "insert", latex: insertOf(n) });
+    ui.armed = false;
+    ui.note = "";
+    copy?.(n);
   };
   const row = (n: UserName, cell = false): MenuItem => ({
     ...nameRow(n, session.displayContext(), liveItem(n).id, cell),
-    ...(memory ? { keep: true, swipe: () => run(n) } : {}),
+    ...(memory ? { keep: true, swipe: () => remove(n) } : {}),
+    ...(copy ? { copy: () => copy(n) } : {}),
     run: () => run(n),
   });
   /** Vars' grid (R282): a free letter is not a name, but a tap on it puts the letter on the line, as typing it would. */
@@ -278,7 +289,7 @@ export function showNames(shell: { sheet: Sheet | null }, entry: EntryController
   shell.sheet = new Sheet("find", t(memory ? "memory.title" : "vars.title"), listed, {
     search: found,
     remember: false,
-    // R800: a digit key only highlights a Memory row (Enter deletes); it never deletes a name or arms Clear all
+    // R800: a digit key only highlights a Memory row (Enter copies it); it never copies a name or arms Clear all
     ...(memory ? { digitPick: "highlight" as const } : { cells: NAME_COLUMNS, ...(newest() ? { at: newest() as string } : {}) }),
   });
 }
