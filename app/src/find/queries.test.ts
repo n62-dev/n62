@@ -31,13 +31,13 @@ const SLOT: FindContext = { filter: ["unit", "pfx"], prefer: ["unit"] };
 const ctxOf = (q: Query): FindContext => (q.where === "slot" ? SLOT : {});
 
 describe("find-queries.yaml", () => {
-  it("has 156 active phrases (3 that find no unit) and 4 pending ones, no duplicates", () => {
+  it("has 184 active phrases (19 that find no unit) and 4 pending ones, no duplicates in one place", () => {
     expect(doc.schema).toBe(1);
-    expect(active.length).toBe(156);
-    expect(absent.length).toBe(3);
+    expect(active.length).toBe(184);
+    expect(absent.length).toBe(19);
     for (const q of doc.queries) expect([undefined, "slot"], q.query).toContain(q.where);
     expect(doc.queries.length - active.length).toBe(4);
-    expect(new Set(doc.queries.map((q) => q.query)).size).toBe(doc.queries.length);
+    expect(new Set(doc.queries.map((q) => `${q.where ?? ""}|${q.query}`)).size).toBe(doc.queries.length); // (G402: a phrase may be a row in a slot too)
     for (const q of doc.queries) expect(q.query, q.query).toBe(q.query.toLowerCase()); // Find types lower case only
   });
 });
@@ -95,7 +95,7 @@ describe.skipIf(!hasIndex)("Find index and query test", () => {
     expect(first / rows.length).toBeGreaterThanOrEqual(0.9);
   });
 
-  it("finds no unit for a gauge reading (G161: psig is not psi, barg not bar)", () => {
+  it("finds no unit for a gauge reading (G161: psig is not psi, barg not bar) or a compound Find lacks (G402: s/m is not m/s)", () => {
     const wrong = absent.map((q) => ({ q: q.query, units: search(index, q.query, ctxOf(q)).slice(0, 3).filter((h) => h.item.kind === "unit").map((h) => h.item.id) }));
     expect(wrong.filter((w) => w.units.length)).toEqual([]);
   });

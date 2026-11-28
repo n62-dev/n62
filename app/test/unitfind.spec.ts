@@ -4,7 +4,7 @@
 // prefixed unit as a prefix and a unit), the units that are not on the pad each within the probe's Find count, a user
 // cell is set from a Find hit ("Put on the unit pad": the cell, then its tap, up or down) and from Settings › Your keys ›
 // Unit pad cells, survives a restart and resets to its default, an empty user cell opens Find, and a unit without an exact
-// factor is marked in its row.
+// factor is marked in its row. G402: a word a keyboard types in the slot's Find is no unit one edit off a short symbol.
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -184,6 +184,21 @@ test.describe("Find in a slot", () => {
     expect(await tokens(page)).toEqual([{ unit: "percent" }]);
     await expect(page.getByTestId("unit-reading")).toHaveText("percent");
     expect(await page.evaluate(() => window.n62.unitView?.view.model("u1")?.latex)).toBe("\\mathrm{\\%}"); // drawn as %
+  });
+
+  test("G402: on a keyboard in the slot's Find, mach finds no unit (not mAh, one edit off) and lbm is the pound; Enter puts lb in the slot", async ({ page }) => {
+    await tap(page, ["d3"]);
+    await unitsKey(page);
+    await openFind(page);
+    await page.keyboard.type("mach");
+    await expect(find(page)).toContainText("mach");
+    await expect(rows(page)).toHaveCount(0);
+    for (let i = 0; i < 4; i++) await page.keyboard.press("Backspace");
+    await page.keyboard.type("lbm");
+    await expect(rows(page).first()).toHaveAttribute("data-id", "unit:lb");
+    await tap(page, ["enter"]);
+    await expect(find(page)).toBeHidden();
+    expect((await tokens(page)).map((t) => `${t.prefix ?? ""}${t.unit}`).join(" ")).toBe("lb");
   });
 });
 

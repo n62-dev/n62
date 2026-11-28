@@ -5,15 +5,21 @@
 // caller's: units/find.ts turns it into tokens. A product the grids name that Find has no item for (cm^2, Btu/h) is a
 // row too, picked as the factors it is made of. R92: after the categories, so no row moves, Constants (the spec's
 // lists; a pick is the caller's, units/open.ts puts it on Home's line) and Tools (units/tools.ts, the unit view's places).
-// R862: the same Tools rows and Constants are the unit view's ☰ (unitViewMenu).
+// R862: the same Tools rows and Constants are the unit view's ☰ (unitViewMenu). G402: a typed compound Find lacks
+// (`kJ/kg`, `s/m`) is the first row as the slot reads it (readingRow), not a unit an edit or a word order away (rank.ts).
 // Loaded on the first Math press in a slot (units/find.ts).
 import raw from "../../../spec/units-menu.yaml";
 import type { MenuItem } from "../apps/types.ts";
 import { itemRow, type FindIndex } from "../find/finder.ts";
-import { search } from "../find/rank.ts";
+import { EXACT, isCompound, search } from "../find/rank.ts";
 import type { FindItem } from "../find/types.ts";
 import { unitText, type UnitMessageKey } from "../i18n/enUnits.ts";
-import { slotCatalogue, splitPair, type PadAction, type SlotCatalogue } from "./slot.ts";
+import { readOf } from "../views/ownUnitsText.ts";
+import { slotDim, slotText } from "./build.ts";
+import { dimensionText } from "./dims.ts";
+import { factorTable } from "./factors.ts";
+import { readSymbolFolded, slotCatalogue, SlotModel, splitPair, type PadAction, type SlotCatalogue } from "./slot.ts";
+import type { UnitSlot } from "./types.ts";
 import type { UnitTool } from "./tools.ts";
 
 interface RawCategory { name: string; dims: string[]; first: string[]; hide?: string[]; appended?: boolean }
@@ -67,6 +73,34 @@ export function productActions(text: string, cat: SlotCatalogue): PadAction[] | 
   return out;
 }
 
+/** G402: a slot as the pad presses it (a prefixed unit as a pair, a power after its unit, ÷ before the first factor
+ *  below it); a power the pad cannot make (past ⁴) gives undefined. */
+export function slotActions(slot: UnitSlot): PadAction[] | undefined {
+  const out: PadAction[] = [];
+  const per = slot.per ?? slot.tokens.length;
+  for (const [i, t] of slot.tokens.entries()) {
+    if (i === per) out.push({ do: "per" });
+    out.push(t.prefix !== undefined ? { do: "pair", prefix: t.prefix, id: t.unit } : { do: "unit", id: t.unit });
+    const p = Number(t.power ?? "1");
+    const n = Math.abs(p);
+    if (!Number.isInteger(p) || n > 4) return undefined;
+    if (n !== 1) out.push({ do: "power", n: n as 2 | 3 | 4 });
+    if (p < 0) out.push({ do: "power", n: -1 });
+  }
+  return out;
+}
+
+/** G402: a query that writes a compound (rank.ts isCompound) as the slot reads typed letters (ownUnitsText.ts readOf;
+ *  each symbol by R313's readSymbol, exact, then case-folded), when it is more than one unit; else undefined. */
+function readCompound(q: string, cat: SlotCatalogue): UnitSlot | undefined {
+  const text = q.trim();
+  if (!isCompound(text)) return undefined;
+  const read = readOf(text, cat, (sym) => readSymbolFolded(cat, sym));
+  if (!read.ok) return undefined;
+  const [one, more] = read.of.tokens;
+  return more || read.of.per !== undefined || (one?.power ?? "1") !== "1" ? read.of : undefined;
+}
+
 const SUP: Readonly<Record<string, string>> = { "2": "²", "3": "³", "4": "⁴" };
 const pretty = (s: string): string => s.split("^").map((p, i) => (i === 0 ? p : (SUP[p.slice(0, 1)] ?? `^${p.slice(0, 1)}`) + p.slice(1))).join("");
 
@@ -78,8 +112,27 @@ export function unitsMenu(index: FindIndex, o: UnitsMenuOptions): { categories: 
   };
   const slots = slotCatalogue(index.items);
   const rows = (hits: readonly FindItem[]): MenuItem[] => hits.map(row);
+  const hitsOf = (q: string): ReturnType<typeof search> => search(index.prepared, q, { filter: ["unit", "pfx"], prefer: ["unit"], limit: index.items.length });
   const find = (q: string, within?: ReadonlySet<string>): MenuItem[] =>
-    rows(search(index.prepared, q, { filter: ["unit", "pfx"], prefer: ["unit"], limit: index.items.length }).map((h) => h.item).filter((it) => !within || within.has(it.id)).slice(0, 50));
+    rows(hitsOf(q).map((h) => h.item).filter((it) => !within || within.has(it.id)).slice(0, 50));
+  let table: ReturnType<typeof factorTable> | undefined;
+  /** G402: the slot's reading of a typed compound as a product row, first; none when Find has the name itself. */
+  const readingRow = (q: string): MenuItem | undefined => {
+    const slot = o.product && readCompound(q, slots);
+    const acts = slot && slotActions(slot);
+    const product = o.product;
+    if (!slot || !acts || !product) return undefined;
+    table ??= factorTable(index.items);
+    const text = slotText(slot, table);
+    const words = new SlotModel(slots, slot).reading.text;
+    return { id: `uprod:${text}`, label: words, value: text, preview: `${words} · ${dimensionText(slotDim(slot, table))}`, run: () => product(acts) };
+  };
+  const top = (q: string): MenuItem[] => {
+    const hits = hitsOf(q);
+    const read = (hits[0]?.score ?? 0) >= EXACT ? undefined : readingRow(q);
+    const found = rows(hits.slice(0, read ? 49 : 50).map((h) => h.item));
+    return read ? [read, ...found] : found;
+  };
 
   if (o.dim !== undefined) {
     const of = index.items.filter((it) => it.kind === "unit" && it.dim === o.dim).sort((a, b) => (a.tier ?? 0) - (b.tier ?? 0));
@@ -121,7 +174,7 @@ export function unitsMenu(index: FindIndex, o: UnitsMenuOptions): { categories: 
   if (o.tools) categories.push(toolsRow(o.tools));
   // G369: a category `appended` comes after Tools, so no pinned row moves (spec/layout-lock.yaml)
   for (const cat of spec.categories) if (cat.appended) categories.push(category(cat));
-  return { categories, search: (q) => find(q) };
+  return { categories, search: top };
 }
 
 /** R92: Constants, the spec's lists in its order; an id Find lacks is left out; More is every other Find constant in

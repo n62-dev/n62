@@ -80,6 +80,40 @@ describe.skipIf(!full)("the units menu on the generated index", () => {
     expect(bare.categories.find((c) => c.id === "ucat:Area")?.submenu?.items.some((r) => r.id.startsWith("uprod:"))).toBe(false);
   });
 
+  it("G402: a compound typed on a keyboard is first as the slot reads it (exact, then case-folded), picked as its factors", () => {
+    const first = (q: string): { row: MenuItem | undefined; acts: unknown } => {
+      const row = menu.search(q)[0];
+      const n = products.length;
+      row?.run?.();
+      return { row, acts: products.slice(n)[0] };
+    };
+    const kj = first("kJ/kg");
+    expect([kj.row?.id, kj.row?.label, kj.row?.value]).toEqual(["uprod:kJ/kg", "kilojoule per kilogram", "kJ/kg"]);
+    expect(kj.acts).toEqual([{ do: "pair", prefix: "k", id: "J" }, { do: "per" }, { do: "pair", prefix: "k", id: "g" }]); // (kg is k and g, as a pick of kg gives it)
+    expect(first("kj/kg").acts).toEqual(kj.acts); // case-folded: kj is kJ
+    expect(first("btu/h").acts).toEqual(productActions("Btu/h", cat)); // the grid's Btu/h row
+    expect(first("Btu/h").acts).toEqual(productActions("Btu/h", cat));
+    expect(first("m^3/h").acts).toEqual(productActions("m^3/h", cat));
+    expect([first("s/m").row?.label, first("s/m").row?.preview]).toEqual(["second per meter", "second per meter · L⁻¹·T"]);
+    expect(kj.row?.preview).toBe("kilojoule per kilogram · L²·T⁻²");
+    expect(first("kg/s").acts).toEqual([{ do: "pair", prefix: "k", id: "g" }, { do: "per" }, { do: "unit", id: "s" }]);
+    expect(first("kn/m").acts).toEqual([{ do: "pair", prefix: "k", id: "N" }, { do: "per" }, { do: "unit", id: "m" }]); // kN, not knot
+    const pa = first("pa/m"); // a whole name case-folded (Pa) before a prefix and a unit as typed (pico, are)
+    expect([pa.row?.value, pa.acts]).toEqual(["Pa/m", [{ do: "unit", id: "Pa" }, { do: "per" }, { do: "unit", id: "m" }]]);
+    expect(first("pa/s").row?.value).toBe("Pa/s");
+    // a symbol with a capital is read as typed only (R313: Ms is no ms): M·m/s and M·s/m, never mm/s or ms/m
+    const mm = first("Mm/s");
+    expect([mm.row?.value, mm.acts]).toEqual(["Mm/s", [{ do: "pair", prefix: "M", id: "m" }, { do: "per" }, { do: "unit", id: "s" }]]);
+    const ms = first("Ms/m");
+    expect([ms.row?.value, ms.acts]).toEqual(["Ms/m", [{ do: "pair", prefix: "M", id: "s" }, { do: "per" }, { do: "unit", id: "m" }]]);
+    expect(first("1/pa").acts).toEqual([{ do: "unit", id: "Pa" }, { do: "power", n: -1 }]); // Pa⁻¹, not (pico·are)⁻¹
+    expect(first("wh/kg").row?.value).toBe("Wh/kg");
+    expect(first("kg/m^3").row?.id).toBe("unit:kg/m^3"); // Find's own unit, no reading row
+    expect(first("w/mk").row?.id).toBe("unit:W/(m*K)");
+    for (const q of ["mw/m", "m3/h", "lb/ft3", "nm3/h", "mach", "kg"]) expect(menu.search(q)[0]?.id.startsWith("uprod:"), q).not.toBe(true); // mw: mW or MW, so none
+    expect(unitsMenu(index, { pick: () => {} }).search("kj/kg").some((r) => r.id.startsWith("uprod:"))).toBe(false); // (a cell holds one unit)
+  });
+
   it("a unit row has the second job 'Put on the unit pad'; a prefix and a product row have none", () => {
     const kpa = level("ucat:Pressure").find((r) => r.id === "unit:kPa");
     expect(kpa?.put?.label).toBe("Put on the unit pad");
