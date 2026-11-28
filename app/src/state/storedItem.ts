@@ -6,7 +6,7 @@ import type { ComplexValue, PrecisionFacts } from "../engine/format.ts";
 import { validChips } from "../input/chips.ts";
 import { isFormStep, type ResultFacts } from "./displayMode.ts";
 import { FULL_LIMIT, HISTORY_LIMIT, ITEMS_LIMIT, rowUid } from "./results.ts";
-import { MAX_DIGITS, type HistoryItem, type UsedValue } from "./session.svelte.ts";
+import { MAX_DIGITS, type AnsSnapshot, type HistoryItem, type UsedValue } from "./session.svelte.ts";
 
 /** A stored `word` (G211) when whole: the rule of wordSetting.ts validWord, repeated so this chunk does not import that
  *  module (the shared import hoisted it into the start chunk, +40 B gzip); word.test.ts runs both on one table. */
@@ -31,6 +31,20 @@ const keptValue = (x: unknown): x is { value: string; exact: boolean } =>
 function validReads(x: unknown): HistoryItem["reads"] {
   const ok = Array.isArray(x) && x.every((d) => keptValue(d) && typeof (d as { name?: unknown }).name === "string" && d.value.length <= FULL_LIMIT);
   return ok ? (x as NonNullable<HistoryItem["reads"]>).map(({ name, value, exact }) => ({ name, value, exact })) : undefined;
+}
+
+/** G642: a stored Ans snapshot. Its value within FULL_LIMIT, else none (as before G642); the chip's fields by the chip's
+ *  own check (chips.ts validChips; one it refuses whole, as an exact value with σ, leaves `value` and `exact`, as before);
+ *  `shown` a string within FULL_LIMIT and `from` a uid, each dropped alone when it fails. A row stored before G642 has
+ *  only `value` and `exact` and keeps them. */
+function validAns(x: unknown): AnsSnapshot | undefined {
+  if (!keptValue(x) || x.value.length > FULL_LIMIT) return undefined;
+  const { shown, from } = x as { shown?: unknown; from?: unknown };
+  return {
+    ...(validChips({ "res:0": x })?.["res:0"] ?? { value: x.value, exact: x.exact }),
+    ...(typeof shown === "string" && shown.length <= FULL_LIMIT ? { shown } : {}),
+    ...(typeof from === "string" && /^[^\s{}\\]{1,64}$/.test(from) ? { from } : {}),
+  };
 }
 
 /** Stored facts read back from IndexedDB, through the one mapping for stored facts (readValueFacts: an item stored
@@ -85,7 +99,8 @@ export function restoredItem(i: HistoryItem, id: number): HistoryItem {
   const du = validUses(defsUsed); // G212
   if (du) out.defsUsed = du;
   if (settingReset === true) out.settingReset = true;
-  if (keptValue(ans) && ans.value.length <= FULL_LIMIT) out.ans = { value: ans.value, exact: ans.exact };
+  const a = validAns(ans);
+  if (a) out.ans = a;
   const rd = validReads(reads);
   if (rd) out.reads = rd;
   if (typeof full === "string" && full.length <= FULL_LIMIT) {

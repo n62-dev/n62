@@ -40,16 +40,17 @@ const row = (s: Session, k: number): HistoryItem => {
   if (!r) throw new Error(`no row ${k}`);
   return r;
 };
+const casRow = (s: Session, k: number): HistoryItem => {
+  const r = s.cas[k];
+  if (!r) throw new Error(`no CAS row ${k}`);
+  return r;
+};
 /** G×5.972ᴇ24 with G as a constant chip of find/factors.yaml's numbers (value 6.67430E-11, σ 1.5E-15): a result with σ. */
 const G_CHIP: Chip = { value: "6.67430E-11", exact: false, unc: "1.5E-15" };
 const G_TIMES_M = "\\const{G}{G}\\times5.972\\times10^{24}";
 
 // ---- cases that fail today, each with the package that makes it pass (that package deletes its line) ------------------
-const KNOWN_FAIL = new Map<string, string>([
-  ["snapshot-source", "G642"],
-  ["snapshot-roundtrip", "G642"],
-  ["snapshot-sigma-roundtrip", "G642"],
-]);
+const KNOWN_FAIL = new Map<string, string>([]);
 const known = (id: string, what: string, fn: () => Promise<void>): void => {
   const pkg = KNOWN_FAIL.get(id);
   (pkg ? it.fails : it)(`${pkg ? `${pkg} (known-fail) ` : ""}${what}`, { timeout: 60_000 }, fn);
@@ -105,7 +106,7 @@ describe.skipIf(!giacAvailable())("G640: Ans frozen in history, live on the line
     expect(s.sigma(r2)).toBeTruthy(); // the result shows σ
   });
 
-  // ---- known-fail until G642 ----
+  // ---- G642: green since the snapshot ----
   known("snapshot-source", "sin(1), then Ans×2: the snapshot names its source row (`from`, the uid) and the LaTeX it showed (`shown`)", async () => {
     const s = session();
     await s.submit("\\sin\\left(1\\right)");
@@ -134,5 +135,22 @@ describe.skipIf(!giacAvailable())("G640: Ans frozen in history, live on the line
     const chip = s.chipFor(row(s, 0));
     await s.submit("\\ans\\times2");
     expect(roundTrip(row(s, 1)).ans).toMatchObject({ value: chip?.value, exact: false, unc: chip?.unc });
+  });
+
+  it("G642: CAS in DEG, sin(x), then Ans×2: the snapshot keeps the radian `value` (the chip's) and the drawn `shown` (the degree one)", { timeout: 60_000 }, async () => {
+    const s = session();
+    s.setView("cas");
+    s.setAngle("deg");
+    await s.submit("\\sin\\left(x\\right)");
+    const r1 = casRow(s, 0);
+    expect(r1.view).toBe("cas");
+    expect(r1.drawn).toBeTruthy(); // G46f1: the radian text and the drawn one differ
+    const shown = s.display(r1, true).latex;
+    await s.submit("\\ans\\times2");
+    const a = roundTrip(casRow(s, 1)).ans;
+    expect(a?.value).toBe(r1.full); // the radian text, as the chip and the line's `exact`
+    expect(a?.value).not.toBe(r1.drawn);
+    expect(a?.shown).toBe(shown);
+    expect(a?.from).toBe(r1.uid);
   });
 });

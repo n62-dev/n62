@@ -59,7 +59,8 @@ export function chipKeysIn(latex: string): Set<string> {
   return keys;
 }
 
-/** Only the entries of `table` that `latex` refers to (Ans is resolved at Enter, never stored). */
+/** Only the entries of `table` that `latex` refers to. Ans is resolved at Enter and never kept in a table (a recall
+ *  resolves it again); the row keeps what it was apart, in HistoryItem.ans (G642). */
 export function pruneChips(table: ChipTable, latex: string): ChipTable {
   const used = chipKeysIn(latex);
   const out: ChipTable = {};

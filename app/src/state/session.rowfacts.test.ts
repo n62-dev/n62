@@ -257,7 +257,8 @@ describe("G213f1: Ans's value at Enter and the stored names read, kept on the ro
     await s.submit("\\ans+1", "7+1");
     const [first, second] = s.home as [HistoryItem, HistoryItem];
     expect(first.full).toBeDefined();
-    expect(second.ans).toEqual({ value: first.full, exact: first.fullExact });
+    // G642: with the snapshot's source row and the LaTeX it showed
+    expect(second.ans).toEqual({ value: first.full, exact: first.fullExact, shown: s.display(first, true).latex, from: first.uid });
     expect(Object.keys(second.chips ?? {})).not.toContain(ANS_KEY);
     expect(first.ans).toBeUndefined();
   });
