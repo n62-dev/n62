@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { countAll, evalLines, evalOutside, isTestFile, judge, readBaseline, textLines } from "./text-rules.ts";
+import { countAll, evalLines, evalOutside, isTestFile, judge, readBaseline, TEXT_DIRS, textLines, totals } from "./text-rules.ts";
 
 describe("textLines (G88)", () => {
   it.each([
@@ -65,5 +65,27 @@ describe("the baseline holds (G88f1)", () => {
     const v = judge(raised, baseline, hits, evalOutside(app));
     expect(v.ok).toBe(false);
     expect(v.failures.some((f) => f.startsWith(`${file}:`))).toBe(true);
+  });
+});
+
+describe("the main thread's apps are counted (G365)", () => {
+  const app = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+  it("src/apps is a counted directory, with its files in the baseline", () => {
+    expect(TEXT_DIRS).toContain("src/apps");
+    const { counts } = countAll(app);
+    const apps = Object.keys(counts).filter((f) => f.startsWith("src/apps/"));
+    expect(apps.length).toBeGreaterThan(0);
+    const baseline = readBaseline(app);
+    for (const f of apps) expect(baseline[f], f).toBe(counts[f]);
+    expect(totals(baseline)["src/apps"]).toBeGreaterThan(0);
+  });
+  it("the Function app reads no Giac word in its cells", () => {
+    const { hits } = countAll(app);
+    const fn = hits["src/apps/function/app.svelte.ts"] ?? [];
+    expect(fn.filter((h) => /infinity|undef/.test(h.text))).toEqual([]);
+  });
+  it("an .eval( in src/apps still fails (the eval rule keeps engine and units alone)", () => {
+    expect(evalOutside(app).every((e) => !e.startsWith("src/engine/") && !e.startsWith("src/units/"))).toBe(true);
+    expect(judge({}, {}, {}, ["src/apps/x.ts:1: g.eval(a)"]).ok).toBe(false);
   });
 });
