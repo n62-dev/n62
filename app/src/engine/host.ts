@@ -6,7 +6,6 @@ import type { GiacBridge, GiacParse, GiacValue } from "./bridge.ts";
 import type { Request, Response } from "./protocol.ts";
 import type { AnalysisRequest, AnalysisResult, CasResult, CasSettings, HomeResult, HomeSettings, SolveOutcome, SolveRequest, StoredRead, TableRequest } from "./types.ts";
 import {
-  definitionsUsedBy,
   ENGINE_DEFINITIONS,
   WORKER_DEFINITION_NAMES,
   decideFloatTest,
@@ -24,7 +23,6 @@ import {
   toExactLiterals,
   unquote,
 } from "./homeEval.ts";
-import { eseriesDefinition } from "./eseries.ts";
 import { askedLiterals } from "./asked.ts";
 import { floatsAtView, shownOf } from "./shownText.ts";
 import { resolveAngle } from "./angleMigration.ts";
@@ -36,17 +34,16 @@ import { listAsArguments, mayListAsArguments } from "./listargs.ts";
 import { callsIn, errorRefusal, floatBounds, giacPair, hasDefiniteIntegral, hasNestedIntegral, integratedNumerically, refusalOf } from "./converge.ts";
 import { enEngine } from "../i18n/enEngine.ts";
 import { parseText } from "../i18n/enParser.ts";
-import { WORD_DEFINITIONS } from "./wordOps.ts";
 import { wordDefinitions, wordOfSettings } from "./wordSettings.ts";
 import { dropAngleFactor, PASDEG } from "./angles.ts";
 import { askedDigits, DOUBLE_DIGITS, doubleFormsIn, unauditedIn, floatFacts, hasFloat, integratedFacts, numberLatex, shapeOfValue, valuePrecision, whyOf, withDigits } from "./numeric.ts";
 import { notBuiltin } from "./names.ts";
-import { balanced, callsOf, holdsList, isError, isName, isTimeout, leadingName, namesIn, parsePrinted, typedFromPrinted, wholeCall, wordsOf } from "./giacPrint.ts";
+import { callsOf, holdsList, isError, isName, isTimeout, leadingName, namesIn, parsePrinted, typedFromPrinted, wholeCall, wordsOf } from "./giacPrint.ts";
 import { contradictedCall, contradictedFloats, decidedAtDouble, decideTwice, nonRealArg, restsOnDecision } from "./decisions.ts";
 import { assignmentIn, clearingCall, formIn, formOf, functionTarget, mayStore, NOT_HERE_HEADS, programStores, scratchBack, STATE_HEADS, STRING_HEADS, writesScratch, writesThrough, type InputForm, type ProgramStores } from "./stores.ts";
 import { fnFacts, inherited, nameFacts, readFacts, readsFacts, storedFacts, storeFacts, type FactsHost } from "./facts.ts";
-import { changedPart, changesOf, isOurs, namesOf, namesPart, readsFrom, statePart, tableOf, type InputReads, type StoredName } from "./stateRead.ts";
-import { applyDefChanges, keyOf, PREVIEW_MAX, replayOrder, type DefChange, type DefEntry, type NameFacts, type StoredMark } from "./defs.ts";
+import { changedPart, changesOf, isOurs, namesOf, readsFrom, statePart, tableOf, type InputReads, type StoredName } from "./stateRead.ts";
+import { applyDefChanges, keyOf, PREVIEW_MAX, type DefChange, type DefEntry, type NameFacts, type StoredMark } from "./defs.ts";
 import { aloneFacts, resultFacts, sideShown, storedMark } from "./storedMark.ts";
 import { SOLVE_HARD_TIMEOUT_S, solveRequest, unknownsOf } from "./solve.ts";
 import { analyze, table } from "./analysis.ts";
@@ -64,7 +61,10 @@ import { readMatrices, type MatrixRead } from "./matrixRead.ts";
 import { readPlotValues, type PlotValue } from "./plotValues.ts";
 import { casSequence, nameBack } from "./sequences.ts";
 import { exportText, importText } from "./library.ts";
+import { DefsReplay } from "./defsReplay.ts";
 import { deadEngine, startDead } from "./dead.ts";
+
+export { REPLAY_BATCH } from "./defsReplay.ts";
 
 /** G65: what the call after an input found: the names it read and stored (stateRead.ts), and Giac's settings. */
 interface AfterInput {
@@ -213,75 +213,13 @@ export class EngineHost implements FactsHost {
 
   /** G83: the user's functions restore() has not given to Giac yet, by name; loaded on first use (need). */
   private pending = new Map<string, DefEntry>();
+  /** G314: the definitions replay (defsReplay.ts) over this host's state. */
+  private readonly defs: DefsReplay;
 
   /** Loads the definitions `text` mentions that are not loaded yet: the user's pending functions (G83) and ours.
    *  Called before every input reaches Giac. */
   need(text: string): void {
-    if (this.pending.size) this.loadPending(text);
-    this.needOurs(text);
-  }
-
-  /** Our definitions (ENGINE_DEFINITIONS, eseries) that `text` mentions and that are not loaded yet. */
-  private needOurs(text: string): void {
-    for (const name of definitionsUsedBy(text)) {
-      if (this.loaded.has(name)) continue;
-      this.giac.eval(name in WORD_DEFINITIONS ? wordDefinitions(this.word.bits, this.word.signed)[name]! : (ENGINE_DEFINITIONS[name] ?? eseriesDefinition()));
-      for (const n of name in ENGINE_DEFINITIONS ? [name] : WORKER_DEFINITION_NAMES) this.loaded.add(n); // eseries + helper
-    }
-  }
-
-  /**
-   * G83 (docs/04 6.2): every pending function whose name is a word in `text`, and, transitively, every pending function
-   * named in such a body or in the stored value of a name the text reads (`S:=(g(x))` reads g), goes to Giac in one
-   * batch. A text that lists or clears the names (VARS, expr, rm_all_vars, restart, restart_vars, rm_a_z) loads them all.
-   */
-  private loadPending(text: string): void {
-    const queue = wordsOf(text).some((w) => LOAD_ALL.has(w)) ? [...this.pending.keys()] : wordsOf(text);
-    const seen = new Set<string>();
-    const todo: DefEntry[] = [];
-    while (queue.length) {
-      const n = queue.pop()!;
-      if (seen.has(n)) continue;
-      seen.add(n);
-      const e = this.pending.get(n) ?? this.byName.get(n);
-      if (!e || e.kind === "assume") continue;
-      if (this.pending.has(n)) todo.push(e);
-      for (const c of e.cmds) for (const w of wordsOf(c)) if (!seen.has(w)) queue.push(w);
-    }
-    if (!todo.length) return;
-    for (const e of todo) {
-      this.pending.delete(e.name);
-      this.needOurs(e.cmds[0]!);
-    }
-    for (let k = 0; k < todo.length; k += REPLAY_BATCH) {
-      const part = todo.slice(k, k + REPLAY_BATCH);
-      this.runBatch(part.map((e) => e.cmds[0]!), part.map((e) => e.name));
-    }
-    // The stored table learns the loaded names as Giac prints them, so the input's state part does not count them as
-    // its stores (G65's changesOf would log them as vars with the input's facts).
-    // G104: their entries only
-    const node = parsePrinted(this.giac.eval(namesPart(this.modeDigits, todo.map((e) => e.name))));
-    const table = node ? tableOf(node) : null;
-    if (table) for (const e of todo) { const t = table.get(e.name); if (t) this.stored.set(e.name, t); }
-    // the `// Success` notes and any error of the load are not the input's
-    this.giac.clearMessages();
-  }
-
-  /**
-   * G29: plain commands (`a:=1;b:=2;`) in one Giac call. One that printed an error or returned one is run again one
-   * command at a time (values and functions can be set twice), so one bad entry never takes the others down (G19).
-   */
-  private runBatch(batch: readonly string[], names: readonly string[]): void {
-    if (!batch.length) return;
-    this.giac.clearMessages();
-    const out = this.giac.eval(batch.join(";") + ";");
-    // Any message or error result: a syntax error, or a reserved name that aborts the rest of the batch (`pi:=3`).
-    if (batch.length > 1 && (/error|reserved word|not allowed/i.test(this.giac.messages()) || /^GIAC_ERROR/.test(out))) {
-      // Errors only: a warning (`declared as global`) is no reason to run twice. The names are purged first, so a
-      // rerun sees them as free again, as in the first run (G3: S:=(K*x+1) must not meet a K set by the aborted run).
-      for (const n of names) this.giac.eval(`purge(${n})`);
-      for (const c of batch) this.giac.eval(c);
-    }
+    this.defs.need(text);
   }
 
   constructor(raw: GiacApi, rawBridge: GiacBridge) {
@@ -295,6 +233,7 @@ export class EngineHost implements FactsHost {
     });
     this.giac = giac;
     this.bridge = bridge;
+    this.defs = new DefsReplay({ giac, loaded: this.loaded, pending: this.pending, byName: () => this.byName, stored: () => this.stored, word: () => this.word, modeDigits: () => this.modeDigits });
     // R64, G46: Giac in radians, and pasdeg (our parser's degree factor) set before any input: the units, raw eval and
     // replay paths have no mode setup of their own
     giac.eval(angleCommand("rad"));
@@ -332,45 +271,12 @@ export class EngineHost implements FactsHost {
     this.watched = { eval: read, value, ambiguousPower: () => ambiguous, roundedPivot: () => rounded, digits: giac.digits };
   }
 
-  /** Replays definitions (a fresh engine: at init, or the stored log on first launch) and adds them to the log.
-   *  Symbolic values first, while every name in them is still free (defs.ts). Returns the time it took. */
+  /** Replays definitions (a fresh engine: at init, or the stored log on first launch; defsReplay.ts) and adds them to
+   *  the log. Returns the time it took. */
   restore(stored: readonly DefEntry[]): number {
     const t0 = performance.now();
     const entries = this.withoutFlags(this.migrated(stored));
-    // G83: a function (one balanced command) waits in `pending` until an input names it (need). One whose name Giac
-    // already holds is replayed now: a loaded body that calls it would otherwise meet the old definition.
-    const plain = (e: DefEntry): boolean => (e.kind === "var" || e.kind === "fn") && e.cmds.length === 1 && balanced(e.cmds[0]!, "typed");
-    for (const e of entries) {
-      if (e.kind !== "other") this.pending.delete(e.name);
-      if (e.kind === "fn" && plain(e) && !this.byName.has(e.name)) this.pending.set(e.name, e);
-    }
-    // G29: values go to Giac REPLAY_BATCH at a time (`a:=1;b:=2;`), which halves the per-call cost. Assumptions and
-    // inputs kept as typed go alone.
-    let batch: string[] = [];
-    let names: string[] = [];
-    const flush = (): void => {
-      this.runBatch(batch, names);
-      batch = [];
-      names = [];
-    };
-    for (const e of replayOrder(entries)) {
-      if (this.pending.get(e.name) === e) continue;
-      // A replayed command may use one of ours, or a pending function (G83). A symbolic value is set while every
-      // name in it is still free (G3), so it loads only ours.
-      for (const c of e.cmds) {
-        if (e.early) this.needOurs(c);
-        else this.need(c);
-      }
-      if (plain(e)) {
-        batch.push(e.cmds[0]!);
-        names.push(e.name);
-        if (batch.length >= REPLAY_BATCH) flush();
-      } else {
-        flush();
-        for (const c of e.cmds) this.giac.eval(c);
-      }
-    }
-    flush();
+    this.defs.replay(entries);
     this.record(entries.map((e) => ({ set: e })));
     // G67: a replayed body or command may have changed a Giac setting; G65: the table of stored names, in the same call
     const post = this.after("", false, "full");
@@ -1396,12 +1302,6 @@ export class EngineHost implements FactsHost {
     this.modeDigits = Math.trunc(digits);
   }
 }
-
-/** Commands per Giac call in a replay (G29; tools/probes/replay-cost.mjs: 10–50 are as fast, 200 in one call is not). */
-export const REPLAY_BATCH = 25;
-
-/** G83: inputs that list or clear the user's names: every pending function is loaded first. */
-const LOAD_ALL: ReadonlySet<string> = new Set(["VARS", "expr", "rm_all_vars", "restart", "restart_vars", "rm_a_z"]);
 
 /** G83f1: the expression strings of a request, for need(): one per line, the absent ones left out. */
 function expressionsOf(...lists: (readonly (string | undefined)[] | undefined)[]): string {
