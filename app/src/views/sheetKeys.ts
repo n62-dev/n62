@@ -115,7 +115,7 @@ export function findKey(key: Key, layer: Layer | undefined, shift: boolean, empt
   if (memory && key.id === "bksp" && (layer === "shift" || (layer === undefined && shift))) return { kind: "delete" };
   const fixed = BY_ID[key.id];
   if (fixed) return fixed;
-  const typed = layer === "primary" ? HW_OPERATOR[key.id] : undefined; // R946: a hardware / * ^ types itself, never the key's Alpha letter (a tap has no layer)
+  const typed = layer === "primary" && !memory ? HW_OPERATOR[key.id] : undefined; // R946: a hardware / * ^ types itself, never the key's Alpha letter (a tap has no layer); Memory's filter keeps its keys as before
   if (typed) return { kind: "letter", ch: typed };
   const letter = letterOf(key)?.toLowerCase();
   const byAlpha = layer === "alpha" || (layer === undefined && alpha && letter !== undefined); // a flick down, or Alpha armed on a key with a letter

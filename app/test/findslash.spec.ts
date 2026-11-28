@@ -8,7 +8,8 @@ type Tok = { prefix?: string; unit: string; power?: string };
 const find = (page: Page) => page.getByTestId("find");
 const rows = (page: Page) => find(page).getByRole("menuitem");
 const query = (page: Page): Promise<string | undefined> => page.evaluate(() => window.n62.shell.sheet?.level.filter);
-const tokens = async (page: Page): Promise<Tok[]> => (await page.evaluate(() => window.n62.unitView?.view.model("u1")?.slot))?.tokens ?? [];
+const slot = (page: Page): Promise<{ tokens: Tok[]; per?: number } | undefined> => page.evaluate(() => window.n62.unitView?.view.model("u1")?.slot);
+const tokens = async (page: Page): Promise<Tok[]> => (await slot(page))?.tokens ?? [];
 const named = (t: Tok[]): string => t.map((x) => `${x.prefix ?? ""}${x.unit}${x.power ? `^${x.power}` : ""}`).join(" ");
 const unitsUp = async (page: Page): Promise<void> => {
   await flick(page, "tmpl", "up");
@@ -34,10 +35,13 @@ test.describe("in the unit view's slot", () => {
     await page.keyboard.type("kj/kg");
     expect(await query(page)).toBe("kj/kg");
     await expect(rows(page).first()).toContainText("kilojoule per kilogram");
+    const id = await rows(page).first().getAttribute("data-id");
     await page.keyboard.press("Enter");
     await expect(find(page)).toBeHidden();
-    expect(named(await tokens(page))).toContain("kJ");
-    expect(named(await tokens(page))).toContain("kg");
+    expect(id).toBe("uprod:kJ/kg");
+    const got = await slot(page); // the ÷: kJ above the bar, kg below (per = where the denominator starts)
+    expect(named(got?.tokens ?? [])).toBe("kJ kg");
+    expect(got?.per).toBe(1);
   });
 
   test("n*m and m^2 type themselves", async ({ page }) => {
@@ -80,4 +84,11 @@ test("control: Vars keeps typing a name's letters", async ({ page }) => {
   await expect(page.getByTestId("sheet-title")).toBeVisible();
   await page.keyboard.type("ab");
   expect(await query(page)).toBe("ab");
+});
+
+test("control: Memory keeps its keys as before (a hardware / * ^ is no typed character there)", async ({ page }) => {
+  await flick(page, "math", "up");
+  await expect(page.getByTestId("sheet-title")).toHaveText("Memory");
+  await page.keyboard.type("a/b");
+  expect(await query(page)).toBe("atb");
 });
