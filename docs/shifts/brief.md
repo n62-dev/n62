@@ -69,7 +69,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 887f | [R945](packages/R945.md) ⌫ after a structure deletes inside it (x², x⁻¹ in one ⌫) | ron, Sonnet | `p1/ron-afternode` | R944 |
 | 887g | R946 a hardware `/`, `*`, `^` type themselves in Find (pass 259, G402's question) | ron, Sonnet | `p1/ron-findslash` | G402 |
 | 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Sonnet | `p1/ron-keepline` | – |
-| 914 | [R816](packages/R816.md) Memory: Paste asks, then replaces a value (C6) | ron, Sonnet | `p1/ron-mempaste` | R815 |
+| 914 | R816 Memory: Paste asks, then replaces a value (C6) | ron, Sonnet | `p1/ron-mempaste` | R815 |
 | 915 | [R818](packages/R818.md) Vars and Memory rows say what a name holds (C7) | ron, Sonnet | `p1/ron-namekinds` | – |
 | 916 | [R819](packages/R819.md) filter chips in Vars and Memory (C7) | ron, Sonnet | `p1/ron-namechips` | R818 |
 | 916a | [R875](packages/R875.md) a sheet title's earlier crumbs are buttons back | ron, Sonnet | `p1/ron-crumbs` | R856, R819, R927 |
