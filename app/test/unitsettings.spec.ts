@@ -46,7 +46,9 @@ async function sameView(page: Page): Promise<void> {
   expect(await slotText(page, "u1")).toBe("k:m");
   expect(await slotText(page, "u2")).toBe("h");
   expect(await active(page)).toBe(1);
-  await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("ArrowLeft"); // R808: h is one factor: the first ← moves the caret before it,
+  expect(await active(page)).toBe(1);
+  await page.keyboard.press("ArrowLeft"); // the second crosses to u1
   await expect.poll(() => active(page)).toBe(0);
 }
 
@@ -72,8 +74,9 @@ for (const width of [412, 360]) {
       expect(await viewOpen(page)).toBe(true);
       await tap(page, ["esc", "esc"]);
       await sameView(page);
-      await page.keyboard.press("ArrowRight"); // u2 active again
+      await page.keyboard.press("ArrowRight"); // u2 active again, its caret at the start (R808)
       await expect.poll(() => active(page)).toBe(1);
+      await page.keyboard.press("ArrowRight"); // past h: the caret at the end, as kmPerH left it
       await tap(page, ["@mode"]);
       await expect(page.getByTestId("menu")).toBeVisible();
       await tap(page, ["esc", "esc"]);
