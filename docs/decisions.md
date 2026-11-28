@@ -7,6 +7,7 @@ Phase 0 (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md). This fil
 
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
+- **R808, ⌫ in a unit slot:** the package says ⌫ takes the whole factor left of the caret, its prefix and power with it, so the old re-arm of the prefix and the power peel are gone (r9 2.6; slot.test, unitfind and unitpad rewritten); its example "J ÷ kg K, ◀ ◀ ⌫" lands at the denominator's start, where ⌫ is the refusal, so the tests use one ◀. Recommended: as built; say if ⌫ should still arm the prefix.
 - **R781, Hand = Left:** every key column mirrors, so the digits read 9 8 7 and Redo stands left of Undo (the pad's ◀ ▶ kept); the bar turns, its track and modes read as before; Appearance has 8 rows. Recommended (pass 254): keep the mirror but keep the reading order inside a run (the digits 7 8 9, Undo then Redo, ⇤ then ⇥), a follow-up R781f1 of about half a day, and confirm the lock and docs/06 3b line.
 - **G784, Paste of a copied name:** Copy writes letters (`2*i`, `β*2`); Paste reads one number, so `2*i` copied from the name i came back as the constant i (principle 3); G784f1 refuses a text copied from a row with a stand-in. Recommended: keep Paste a number reader; reading expressions is its own package (the letter i against the constant i needs a rule first).
 - **G622f2, a singular float inv:** Recommended: refuse, as exact inv does. `inv(approx(10^-9*[[2.5,2E8,e],[2.5,π,2E-3],[5,2E8+π,e+2E-3]]))` is 1E14–1E22 noise, row 3 ≈.

@@ -97,8 +97,7 @@ test.describe("Find in a slot", () => {
     await expect(find(page)).toBeHidden();
     expect(await tokens(page)).toEqual([{ prefix: "M", unit: "Pa" }]);
     await expect(page.getByTestId("unit-reading")).toHaveText("megapascal");
-    await tap(page, ["bksp"]); // the unit goes, the prefix is armed again, as for two presses
-    await tap(page, ["bksp"]);
+    await tap(page, ["bksp"]); // the pair goes whole, its prefix with it (R808); the slot is empty
     expect(await tokens(page)).toEqual([]);
     await openFind(page, "d1", "d7"); // Prefixes, 7: M
     expect(await page.evaluate(() => window.n62.unitView?.view.model("u1")?.armed)).toEqual({ prefix: "M", sqrt: false });
