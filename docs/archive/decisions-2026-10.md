@@ -1465,3 +1465,9 @@ Reset all your keys, Reset the unit pad cells and the three Reset the counter ro
 
 - **F29 (2026-10-18, G2 item 54): `exp` ignores the angle mode,** as on the G2 (`e^(i·90)` is −0.4481+0.8940·i in both modes); built by G21. Would change if: a Giac patch (G21b) replaces the rewrite.
 - **Stored definitions** (G3): rule: docs/04 6.2 `defs` and 2.4 "Built in G3"; k ≥ 15 in `evalf(<exact>,k)`; the defs load times out after 3 s and a timed-out store is never saved over.
+
+## Moved 2026-11-28 (Opus pass 260: decisions.md over 39 kB; the rules in docs/rules-core.md, scripts/pipeline.sh and docs/04 8.3)
+
+- **How research reaches the docs (owner, 2026-10-20):** rules sections 9 and 10; KhiCAS only after a per-file licence check (E5). Archived. Would change if: the line baseline blocks a fix two nights running.
+- **The pipeline merges what it audited, the night ends on time, the audit sees a behaviour diff (owner, 2026-10-19):** A17, G55, A18. Would change if: the diff stage adds over ten minutes to a run. Archived.
+- **Start chunk: 180 kB raw, 63 kB gzip (owner, 2026-10-27; raised 2026-11-09), pinned** (size-check.ts). Rule: docs/04 8.3. Archived. Would change if: the Tab One's keyboard-usable time passes 738 ms.

@@ -67,9 +67,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 887d | [R943](packages/R943.md) one box description, no behaviour change | ron, Sonnet | `p1/ron-boxnodes` | R941 |
 | 887e | [R944](packages/R944.md) ⌫ at a box start: a bare node goes, else select | ron, Sonnet | `p1/ron-boxstart` | R943 |
 | 887f | [R945](packages/R945.md) ⌫ after a structure deletes inside it (x², x⁻¹ in one ⌫) | ron, Sonnet | `p1/ron-afternode` | R944 |
-| 887g | R946 a hardware `/`, `*`, `^` type themselves in Find (pass 259, G402's question) | ron, Sonnet | `p1/ron-findslash` | G402 |
 | 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Sonnet | `p1/ron-keepline` | – |
-| 914 | R816 Memory: Paste asks, then replaces a value (C6) | ron, Sonnet | `p1/ron-mempaste` | R815 |
 | 915 | [R818](packages/R818.md) Vars and Memory rows say what a name holds (C7) | ron, Sonnet | `p1/ron-namekinds` | – |
 | 916 | [R819](packages/R819.md) filter chips in Vars and Memory (C7) | ron, Sonnet | `p1/ron-namechips` | R818 |
 | 916a | [R875](packages/R875.md) a sheet title's earlier crumbs are buttons back | ron, Sonnet | `p1/ron-crumbs` | R856, R819, R927 |
@@ -81,8 +79,6 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 916f | [R880](packages/R880.md) the gear in ☰'s title row becomes "Settings ›" | ron, Sonnet | `p1/ron-settingsword` | R879 |
 | 916g | [R939](packages/R939.md) ☰ 5 "Copy as ›" (owner, 2026-11-28) | ron, Sonnet | `p1/ron-copyasmenu` | R879, R880 |
 | 916h | [R940](packages/R940.md) a picked row shows no Store ▶ · Copy › bar | ron, Sonnet | `p1/ron-nobar` | R939 |
-| 919 | R821 user keys: two layers, a switch for Alpha | ron, Sonnet | `p1/ron-userkeyalpha` | R729 |
-| 920 | R822 Store: a tap types Alpha's case | ron, Sonnet | `p1/ron-storecase` | R820 |
 | 921 | [R834](packages/R834.md) a faint ✕ on each history row deletes it (H1b) | ron, Sonnet | `p1/ron-rowx` | R832, R742 |
 | 921a | [R859](packages/R859.md) rows take a tap across the line | ron, Sonnet | `p1/ron-rowbands` | R858, R742, R834 |
 | 924 | [R836](packages/R836.md) a row shows the value Ans had | ron, Sonnet | `p1/ron-ansvalue` | G642 |
