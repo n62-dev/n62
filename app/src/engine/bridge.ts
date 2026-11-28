@@ -105,6 +105,14 @@ export interface GiacValue {
   tree?: ParseNode | null;
 }
 
+/** G365: the kinds of a value with no number. */
+export type NoValueKind = Extract<GiacKind, "undef" | "infinity">;
+/** `{ kind }` for the bridge's undef or infinity of a value that is not a vector, else `{}`: kindOf calls a vector whose
+ *  first element is undef undef too (Giac's is_undef: [undef,1], set[undef]), which its shape or its tree ([2, …]) tells
+ *  apart (probed). */
+export const noValueOf = (v: GiacValue): { kind?: NoValueKind } =>
+  (v.kind === "undef" || v.kind === "infinity") && v.shape === undefined && !(Array.isArray(v.tree) && v.tree[0] === 2) ? { kind: v.kind } : {};
+
 export interface GiacBridge {
   ctxGet(): GiacContext;
   /** Sets the given fields; the context after, or an error (nothing set after the bad key). */

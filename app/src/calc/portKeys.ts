@@ -34,6 +34,7 @@ export const HOME_KEYS = {
   exact: "held", // given only when `rational` says it is a plain integer or p/q: the Format key's fraction modes read it
   rational: "held", // read for `exact`
   path: "held", // the engine's route, for its tests and probes; no view reads it
+  kind: "held", // G365: the Function app reads it on its table cells (Calc.table), which this port does not map; Home shows `display`
   exactMs: "held", // a timing (measurement builds read the engine's own)
   totalMs: "held", // a timing (measurement builds read the engine's own)
 } as const satisfies PortKeys<HomeResult>;

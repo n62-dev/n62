@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // G88: the ratchet on text matches (P20). Lines that read text with a pattern or a hand-written bracket loop are counted per
-// file under src/engine and src/units against scripts/text-baseline.json; a rising count fails the gate's `rules` stage.
+// file under src/engine, src/units and (G365) src/apps against scripts/text-baseline.json; a rising count fails the gate's
+// `rules` stage. The apps run on the main thread, where a read of Giac's print would sit beside our own text's.
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 
@@ -56,7 +57,9 @@ function walk(dir: string, out: string[] = []): string[] {
   return out;
 }
 
-export const TEXT_DIRS = ["src/engine", "src/units"];
+export const TEXT_DIRS = ["src/engine", "src/units", "src/apps"];
+/** Where the Giac API's `.eval(` may be called (G365 left this rule's scope as it was: src/apps counts text, never evaluates). */
+export const EVAL_DIRS = ["src/engine", "src/units"];
 export type Baseline = Record<string, number>;
 
 /** Counts per file (relative to app/) of the text lines under the counted directories. */
@@ -82,7 +85,7 @@ export function evalOutside(app: string): string[] {
   const bad: string[] = [];
   for (const f of walk(join(app, "src"))) {
     const rel = relative(app, f);
-    if (TEXT_DIRS.some((d) => rel.startsWith(`${d}/`)) || EVAL_EXEMPT.has(rel)) continue;
+    if (EVAL_DIRS.some((d) => rel.startsWith(`${d}/`)) || EVAL_EXEMPT.has(rel)) continue;
     for (const h of evalLines(readFileSync(f, "utf8"))) bad.push(`${rel}:${h.line}: ${h.text}`);
   }
   return bad;
