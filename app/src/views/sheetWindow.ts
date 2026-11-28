@@ -35,9 +35,10 @@ export function sameRows(made: WeakMap<MenuItem, Row>, rows: readonly Row[]): Ro
   });
 }
 
-/** The rows are drawn keyed by their item's id (a search whose ids are unique), else by their place. */
+/** The rows are drawn keyed by their item's id (a search whose ids are unique, or rows that slide out by a swipe, R813: the
+ *  next row must not take over the element that slid), else by their place. */
 export function keyedById(rows: readonly Row[], searching: boolean): boolean {
-  return searching && new Set(rows.map((r) => r.item.id)).size === rows.length;
+  return (searching || rows.some((r) => r.item.swipe !== undefined)) && new Set(rows.map((r) => r.item.id)).size === rows.length;
 }
 
 /** A row's key in the sheet's list (see keyedById). */
@@ -46,4 +47,4 @@ export const rowKey = (r: Row, byId: boolean): string | number => (byId ? r.item
 /** A row with a label and at most a note and a value (Find's hits): the sheet draws it with the light row, the same
  *  markup without the blocks for what it does not have (a row is built for less, R132). */
 export const plainRow = (it: MenuItem): boolean =>
-  !it.disabled && it.reason === undefined && it.hint === undefined && it.selected === undefined && it.options === undefined && it.submenu === undefined && it.glyph === undefined && it.dots === undefined && it.adjust === undefined && it.latex === undefined;
+  !it.disabled && it.reason === undefined && it.hint === undefined && it.selected === undefined && it.options === undefined && it.submenu === undefined && it.glyph === undefined && it.dots === undefined && it.adjust === undefined && it.latex === undefined && it.swipe === undefined;

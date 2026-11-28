@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* R743: the strip a swipe left uncovers at the history row's right (rowSwipe.ts draws it in the row, just past its right edge, so it moves with the row and fills the space it
+/* R743: the strip a swipe left uncovers at the history row's (R813: a sheet row's) right (rowSwipe.ts draws it in the row, just past its right edge, so it moves with the row and fills the space it
    leaves; with this file, the gesture's own chunk: the start chunk does not carry it): as wide as the offset (`--swipe-x` on the row); the label dims
    until armed (past 40 %, data-armed). */
-.item > .swipe-del {
+:is(.item, .row) > .swipe-del {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -20,26 +20,26 @@
   font-size: var(--fs-body);
   pointer-events: none;
 }
-.item > .swipe-del > *,
-.item > .swipe-del::before {
+:is(.item, .row) > .swipe-del > *,
+:is(.item, .row) > .swipe-del::before {
   flex: none;
   opacity: 0.75;
 }
 /* the bin glyph: a mask in the label's colour (CSS, so it does not weigh on the start chunk's script) */
-.item > .swipe-del::before {
+:is(.item, .row) > .swipe-del::before {
   content: "";
   width: 16px;
   height: 16px;
   background: currentColor;
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 4h11M6 4V2.5h4V4M4 4l.7 9.5h6.6L12 4M6.5 6.5v5M9.5 6.5v5'/%3E%3C/svg%3E") center / contain no-repeat;
 }
-.item > .swipe-del > span {
+:is(.item, .row) > .swipe-del > span {
   margin-inline-end: var(--sp-3); /* (not a padding: a strip of no width must be no box) */
 }
-.item > .swipe-del[data-armed="true"] > *,
-.item > .swipe-del[data-armed="true"]::before {
+:is(.item, .row) > .swipe-del[data-armed="true"] > *,
+:is(.item, .row) > .swipe-del[data-armed="true"]::before {
   opacity: 1;
 }
-.item > .swipe-del[data-armed="true"] > span {
+:is(.item, .row) > .swipe-del[data-armed="true"] > span {
   font-weight: 700;
 }

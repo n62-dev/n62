@@ -279,7 +279,7 @@ Positions use our rows and columns (`spec/keyboard.yaml`); the reference's id is
 | Key | Decided | Source and why |
 |---|---|---|
 | Math (row 3, col 1) [r4c2] | Find, everything (R4a) | P8 |
-| Shift + Math | Memory: Find on variables and user functions, with delete and "clear all" | reference: Mem |
+| Shift + Math | Memory: Find on variables and user functions; a swipe left on a name deletes it (R813, with Undo), and "clear all" | reference: Mem |
 | Vars (row 3, col 0) [r4c1] | Find, filtered to variables; Shift = Chars (R725; Paste there from R329 until R723) | P8 |
 | Tmpl (row 3, col 2) [r4c3] | the 6 × 3 template palette, picked by arrows, Enter or a tap (r8 rule M1) | P8, P11 |
 | Shift + Tmpl | the unit view (unit slots) | P11; reference: Units |

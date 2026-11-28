@@ -79,6 +79,9 @@ export interface MenuItem {
    *  draw. A tap on a button sets that value and closes the sheet; the row keeps `adjust` for ◀ ▶ (the mark moves, the
    *  sheet stays) and for its digit and a tap on its name. It has no `value`: the buttons show it. */
   readonly options?: readonly ValueOption[];
+  /** R813: a swipe left on the row (past 40 % of its width, views/rowSwipe.ts) runs this; the row then slides out behind the
+   *  red strip. Memory's name rows delete the name (with R314's Undo row). A right swipe and a short one do nothing. */
+  swipe?(): void;
   /** Picking the item runs it and the sheet stays open (a switch in a list of switches). */
   readonly keep?: boolean;
   /** A row that acts on the selected slot or the entry line alone (R261: Symb's Clear; R278f1: Paste): a view whose rows are all such rows still gets the
