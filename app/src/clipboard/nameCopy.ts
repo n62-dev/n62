@@ -4,18 +4,20 @@
 // complex as `a+b*i`; its facts are the stored ones, so a float keeps only the digits that were confirmed) and written by the history's
 // own copyFull; a name stored from the unit view keeps its σ and unit after the number (`v ± σ unit`, as that row copies). A function is
 // its definition (`f(x)=x^2+1`). Loaded on the first copy (the clipboard code's chunk), never at start.
-import { commaResult, drawnFormat } from "../state/displayMode.ts";
+import { commaResult, drawnFormat, noDigit } from "../state/displayMode.ts";
 import { homeItem } from "../state/resultItem.ts";
-import type { Session } from "../state/session.svelte.ts";
+import type { HistoryItem, Session } from "../state/session.svelte.ts";
 import { loadTidy } from "../state/tidyLoad.ts";
 import { copyFull, copyNames, type CopySource, type NameSeen, type TextOptions } from "./text.ts";
 
 /** A copy: the text, what the notice shows of the value as drawn (`shown`: the digits the sheet draws) and whether the text holds a
- *  name written as its letter (Paste refuses it, G784f1). */
+ *  name written as its letter (Paste refuses it, G784f1). `noDigit`: the item has no confirmed digit (mark ⚠ n 0, as the session gives
+ *  it), so no number is shown and none is copied (principle 3: the copy refuses it as the history's does). */
 export interface NameCopy {
   text: string;
   shown: string;
   named: boolean;
+  noDigit?: true;
 }
 
 /** `f(x):=x^2+1` as `f(x)=x^2+1`: the definition as it reads, the stand-ins as their letters. A command without `:=` is copied as it is. */
@@ -46,5 +48,7 @@ export async function nameCopy(session: Session, name: string, o: TextOptions): 
   const src: CopySource = { latex: name, status: "done", text: r.display, ...homeItem(r, false), ...(units ? { units } : {}) };
   const seen: NameSeen = { name: false };
   const text = copyFull(src, o, seen);
-  return text === undefined || text === "" ? undefined : { text, shown: r.display, named: seen.name };
+  if (text === undefined || text === "") return undefined;
+  const none = noDigit(session.mark(src as HistoryItem)); // the mark the session gives the item, as the history's rows are checked
+  return { text, shown: r.display, named: seen.name, ...(none ? { noDigit: true as const } : {}) };
 }

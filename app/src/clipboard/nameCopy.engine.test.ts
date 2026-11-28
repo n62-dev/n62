@@ -41,7 +41,7 @@ describe.skipIf(!giacAvailable())("R815: nameCopy (real Giac)", () => {
   it("copies 1/3 in 40 digits, a complex, a list, a function, and says nothing for a name that is not stored", { timeout: 60_000 }, async () => {
     const calc = new EngineCalc(new WorkerEngine({ createWorker: () => new InProcessWorker() }));
     for (const s of ["A:=1/3", "Z:=1/3+i*2/7", "L:=list[1,2]", "f(x):=x^2+1"]) expect((await calc.home(s, settings)).ok).toBe(true);
-    const session = { calc, settings } as unknown as Session;
+    const session = { calc, settings, mark: () => null } as unknown as Session;
     const third = "0." + "3".repeat(40);
     expect((await nameCopy(session, "A", {}))?.text).toBe(third);
     expect((await nameCopy(session, "A", { decimalComma: true }))?.text).toBe(third.replace(".", ","));
@@ -54,6 +54,12 @@ describe.skipIf(!giacAvailable())("R815: nameCopy (real Giac)", () => {
     const g = log.find((e) => e.name === "A") as DefEntry;
     const withUnit: DefEntry = { ...g, unit: { text: "m/s²", dim: "L1T-2", slot: {} }, facts: { exact: false, reliableDigits: 12, uncDigits: 3, uncSigma: "0.01" } };
     const spied = { ...calc, engine: { definitions: async () => [withUnit] }, home: calc.home.bind(calc) } as unknown as typeof calc;
-    expect((await nameCopy({ calc: spied, settings } as unknown as Session, "A", {}))?.text).toBe(`${third} ± 0.010 m/s²`);
+    // principle 3: the mark the session gives the item decides: ⚠ n 0 (no digit confirmed) says so, any other mark does not
+    const mark = (m: object | null) => ({ calc, settings, mark: () => m }) as unknown as Session;
+    expect((await nameCopy(mark({ mark: "⚠", n: 0, warn: false }), "A", {}))?.noDigit).toBe(true);
+    expect((await nameCopy(mark({ mark: "⚠", n: 0, warn: "unaudited" }), "A", {}))?.noDigit).toBeUndefined();
+    expect((await nameCopy(mark({ mark: "⚠", n: 5, warn: false }), "A", {}))?.noDigit).toBeUndefined();
+    expect((await nameCopy(mark(null), "A", {}))?.noDigit).toBeUndefined();
+    expect((await nameCopy({ calc: spied, settings, mark: () => null } as unknown as Session, "A", {}))?.text).toBe(`${third} ± 0.010 m/s²`);
   });
 });
