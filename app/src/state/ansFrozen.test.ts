@@ -35,10 +35,7 @@ const SNAPSHOT = {
 };
 
 // ---- cases that fail today, each with the package that makes it pass (that package deletes its line) ------------------
-const KNOWN_FAIL = new Map<string, string>([
-  ["roundtrip-whole", "G642"],
-  ["size-counts-snapshot", "G642"],
-]);
+const KNOWN_FAIL = new Map<string, string>([]);
 const known = (id: string, what: string, fn: () => void): void => {
   const pkg = KNOWN_FAIL.get(id);
   (pkg ? it.fails : it)(`${pkg ? `${pkg} (known-fail) ` : ""}${what}`, fn);
@@ -65,7 +62,7 @@ describe("G640: a row's Ans through the store", () => {
     expect(sessionText([row], {}, CTX).split(" ")[0]).toBe("Ans^2");
   });
 
-  // ---- known-fail until G642 ----
+  // ---- G642: green since the snapshot ----
   known("roundtrip-whole", "the stored snapshot survives a round trip whole: σ (`unc`, `uncFacts`), `unit`, `reliableDigits`, `shown`, `from`", () => {
     expect(back(SNAPSHOT)).toEqual(SNAPSHOT);
   });
@@ -74,5 +71,23 @@ describe("G640: a row's Ans through the store", () => {
     const value = "1".repeat(FULL_LIMIT);
     expect(back({ value, exact: true, shown: "1", from: FROM })).toEqual({ value, exact: true, shown: "1", from: FROM });
     expect(back({ value: "5", exact: true, shown: "5".repeat(FULL_LIMIT + 1), from: FROM })).toEqual({ value: "5", exact: true, from: FROM });
+  });
+
+  it("G642: a row stored with only `ans: {value, exact}` (before G642) keeps it as it is and has no `shown`", () => {
+    const a = back({ value: "5", exact: false });
+    expect(a).toEqual({ value: "5", exact: false });
+    expect(a).not.toHaveProperty("shown");
+  });
+
+  it("G642: a malformed `unit` is dropped and the rest of the snapshot kept", () => {
+    const { unit: _, ...rest } = SNAPSHOT;
+    expect(back({ ...SNAPSHOT, unit: "km/h" })).toEqual(rest);
+    expect(back({ ...SNAPSHOT, unit: null })).toEqual(rest);
+  });
+
+  it("G642: a `from` that is not a uid and a `shown` that is not a string are dropped alone", () => {
+    const { shown: _s, from: _f, ...rest } = SNAPSHOT;
+    expect(back({ ...SNAPSHOT, shown: 5, from: "a b" })).toEqual(rest);
+    expect(back({ ...SNAPSHOT, from: "" })).toEqual({ ...rest, shown: SNAPSHOT.shown });
   });
 });

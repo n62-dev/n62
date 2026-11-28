@@ -103,6 +103,15 @@ export const defaultSettings: Settings = {
 
 /** "note" is a line the app says itself (G19's safe start): text only, no entry and no result, and never stored. */
 export type ItemStatus = "pending" | "done" | "error" | "cancelled" | "note";
+/** G642: what Ans was when a row read it, frozen with the row (owner, 2026-11-20, H3): the chip Ans resolved to at Enter,
+ *  the source row's result LaTeX as the screen drew it then (`shown`, in its format and digits) and that row's uid
+ *  (`from`, G211). Never in the chip table: a recall resolves Ans again. A row stored before G642 has only `value` and
+ *  `exact` (drawn with the word Ans, R836); the store drops a `shown` over FULL_LIMIT (storedItem.ts). */
+export interface AnsSnapshot extends Chip {
+  shown?: string;
+  from?: string;
+}
+
 export interface HistoryItem {
   id: number;
   view: View;
@@ -126,7 +135,8 @@ export interface HistoryItem {
   fmt?: FmtMode;
   /** The form the a b/c key chose for this result only (R10); drawn instead of `fmt` until the Format key is pressed. */
   form?: FormStep;
-  /** The values of the chips in `latex` (docs/04 3.6), so a recalled entry needs no engine or index. Ans is not kept. */
+  /** The values of the chips in `latex` (docs/04 3.6), so a recalled entry needs no engine or index. Ans is not kept here
+   *  (a recall resolves it again); `ans` keeps what it was. */
   chips?: ChipTable;
   /** The value a \res chip of this result carries (docs/04 2.8): the exact text, or its confirmed decimal (R65). */
   full?: string;
@@ -142,8 +152,8 @@ export interface HistoryItem {
   defsUsed?: UsedValue[];
   /** G274, Home: each uncertain input's share of σ² (HomeResult.uncTerms); never drawn yet, read back unchecked. */
   uncTerms?: UncTerm[];
-  /** G213f1, Copy as Python only (never drawn): Ans's value at Enter when read; each stored name read with its value ([] none). */
-  ans?: Pick<Chip, "value" | "exact">;
+  /** G213f1, G642: Ans as it was at Enter, when the input read it (AnsSnapshot); each stored name read with its value ([] none). */
+  ans?: AnsSnapshot;
   reads?: StoredRead[];
   /** G67: the input changed one of the engine's settings, which was put back (a line under the result says so). */
   settingReset?: true;
@@ -446,7 +456,8 @@ export class Session {
     }
     const list = view === "home" ? this.home : this.cas;
     // Ans is the view's last result now, at Enter (as on the reference), not when the key was pressed.
-    const ans = this.lastChip(view);
+    const src = targetRow(list);
+    const ans = src && this.chipFor(src);
     const usesAns = /\\ans(?![a-zA-Z])/.test(latex);
     const kept = pruneChips(chips, latex);
     const table: ChipTable = ans ? { ...kept, [ANS_KEY]: ans } : kept;
@@ -463,7 +474,9 @@ export class Session {
       approximate: false,
       ...(Object.keys(kept).length ? { chips: kept } : {}),
       ...(typedIn ? { typedIn } : {}), // R265 (the caller passes it only when it differs from the mode on show)
-      ...(usesAns && ans ? { ans } : {}), // G213f1: not in `chips` (a recall resolves Ans again); the line and the store keep value and exact
+      // G213f1, G642: not in `chips` (a recall resolves Ans again); the source row's result as the screen draws it now (the
+      // store drops a `shown` over FULL_LIMIT, storedItem.ts) and its uid
+      ...(usesAns && ans && src ? { ans: { ...ans, shown: this.display(src, true).latex, from: src.uid } } : {}),
       ...(dropped ? { unitDropped: true as const } : {}), // R902
       startedAt: performance.now(),
     });
