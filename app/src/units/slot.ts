@@ -308,6 +308,17 @@ export class SlotModel {
     this.#at = i;
   }
 
+  /** R896: the slot as it stands (both lists, the caret, what is armed, an open letter run), plain data for `restore` (Undo, Redo). */
+  snapshot(): unknown[] {
+    return [this.#num, this.#den, this.#side, this.#at, this.#pending, this.#run];
+  }
+
+  /** R896: the slot as `snapshot` (or its JSON) gave it. */
+  restore(state: unknown[]): void {
+    const [num, den, side, at, pending, run] = JSON.parse(JSON.stringify(state)) as [Factor[], Factor[] | null, "num" | "den", number, Pending[], Run | null];
+    [this.#num, this.#den, this.#side, this.#at, this.#pending, this.#run] = [num, den ?? undefined, side, at, pending, run ?? undefined];
+  }
+
   #list(): Factor[] {
     return this.#side === "num" ? this.#num : (this.#den as Factor[]);
   }

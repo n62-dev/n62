@@ -61,6 +61,10 @@ export const SLOT_MARKS =
  *  `SlotModel.latex`, which the history row, Copy and Share read. */
 const CARET = "\\class{pas-caret}{\\vphantom{m}}";
 
+/** R896: Undo and Redo keep this many edits. */
+const UNDO_DEPTH = 50;
+
+
 /** The slots a line keeps (docs/04 4.3 "The way back": the units key shows them again), by the line's LaTeX. */
 const kept = new Map<string, Readonly<Record<string, UnitSlot>>>();
 
@@ -93,6 +97,9 @@ export class UnitView {
   /** R62: the chip last tapped: while the end slot is still its slot, the result reads the unit as the chip did ("ton", "cal"). */
   #picked: Alternative | undefined;
   #fit: number | undefined;
+  /** R896: the slots before each edit (Undo takes the last), and what Undo took (Redo); an edit drops the Redo. */
+  #undo: string[] = [];
+  #redo: string[] = [];
   /** R838: what the result shown was drawn from (the engine's answer, its row and the format as JSON), for a redraw with no request. */
   #result: [Quantity | UnitError, readonly Alternative[], string] | undefined;
 
@@ -211,6 +218,8 @@ export class UnitView {
       this.shown = { kind: "none" };
     }
     this.#more = false;
+    this.#undo = [];
+    this.#redo = []; // (the slots the snapshots hold are no longer these)
     this.#models.set(END, new SlotModel(this.#cat));
     this.#checking = on;
     this.#host.reset?.(this.fieldLatex, this.ids);
@@ -253,6 +262,7 @@ export class UnitView {
         // so its result is dropped (R24cf1).
         if (this.#more === "asked") this.#more = false; // (Find of More… closed without a pick: an ordinary press)
         const m = this.#models.get(this.activeId) as SlotModel;
+        const before = this.#snap();
         const r = m.apply(e);
         if (r.ok && r.back) return this.#back(); // (nothing changed: a running evaluation still answers)
         this.#run++;
@@ -261,6 +271,7 @@ export class UnitView {
           this.shown = { kind: "message", text: r.message };
           return this.#host.dead();
         }
+        this.#note(before);
         this.shown = { kind: "none" };
         this.#draw(this.activeId);
         this.#read();
@@ -307,9 +318,56 @@ export class UnitView {
   #retype(f: (m: SlotModel) => void): void {
     this.#run++;
     this.#picked = undefined;
+    const before = this.#snap();
     f(this.#models.get(this.activeId) as SlotModel);
+    this.#note(before);
     this.shown = { kind: "none" };
     this.#draw(this.activeId);
+    this.#read();
+  }
+
+  /** R896: the active slot and every slot's state as one string, so two equal states are equal strings. */
+  #snap(): string {
+    return JSON.stringify([this.#active, this.ids.map((id) => (this.#models.get(id) as SlotModel).snapshot())]);
+  }
+
+  /** R896: an edit was made: when it changed a slot, the state before it is what Undo brings back (the Redo is dropped). */
+  #note(before: string): void {
+    if (this.#snap() === before) return;
+    this.#undo.push(before);
+    if (this.#undo.length > UNDO_DEPTH) this.#undo.shift();
+    this.#redo = [];
+  }
+
+  /** R896: Clear (Shift + Esc) empties the active slot; with the active slot empty already, every slot. A press that changes
+   *  nothing is a dead one. It is an edit: Undo brings the slots back. */
+  clear(): void {
+    const before = this.#snap();
+    const empty = new SlotModel(this.#cat).snapshot();
+    for (const id of (this.#models.get(this.activeId) as SlotModel).empty ? this.ids : [this.activeId]) (this.#models.get(id) as SlotModel).restore(empty);
+    if (this.#snap() === before) return this.#host.dead();
+    this.#note(before);
+    this.#drawAll();
+  }
+
+  /** R896: Undo (-1) and Redo (+1): the slots as before the last edit, or as that edit left them; none left is a dead press. */
+  undoBy(by: -1 | 1): void {
+    const [from, to] = by < 0 ? [this.#undo, this.#redo] : [this.#redo, this.#undo];
+    const s = from.pop();
+    if (!s) return this.#host.dead();
+    to.push(this.#snap());
+    const [active, slots] = JSON.parse(s) as [number, unknown[][]];
+    this.active = active; // (before the slots, so the caret is the snapshot's)
+    this.ids.forEach((id, i) => (this.#models.get(id) as SlotModel).restore(slots[i] as unknown[]));
+    this.#drawAll();
+  }
+
+  /** R896: the slots were changed whole (Clear, Undo, Redo): what was shown and asked for no longer stands. */
+  #drawAll(): void {
+    this.#run++;
+    this.#picked = undefined;
+    this.shown = { kind: "none" };
+    for (const id of this.ids) this.#draw(id);
     this.#read();
   }
 
@@ -409,10 +467,12 @@ export class UnitView {
     } catch {
       return this.#host.dead(); // (a unit the catalogue does not read)
     }
+    const before = this.#checking ? this.#snap() : undefined; // (the end slot coming clears Undo)
     if (!this.#checking) this.#setEnd(true); // R349: a chip writes the end slot, which comes with it
     this.#more = false;
     this.#picked = alt;
     this.#models.set(END, m);
+    if (before) this.#note(before);
     this.active = this.ids.length - 1;
     this.#draw(was);
     this.#draw(END);

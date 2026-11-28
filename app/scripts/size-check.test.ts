@@ -157,25 +157,25 @@ describe("size-check", () => {
         "src/units/calc.ts": { file: "assets/units.js", src: "src/units/calc.ts", isDynamicEntry: true },
         "src/units/open.ts": { file: "assets/open.js", src: "src/units/open.ts", isDynamicEntry: true },
       },
-      { ...files, "assets/find.js": 30_001, "assets/units.js": 10_000, "assets/open.js": 35_290, "find/index.json": { random: 400_001 }, "qalc/qalc.wasm": { random: 1_000_001 }, "qalc/qalc.mjs": 1000, "index.html": 100 },
+      { ...files, "assets/find.js": 30_001, "assets/units.js": 10_000, "assets/open.js": 36_210, "find/index.json": { random: 400_001 }, "qalc/qalc.wasm": { random: 1_000_001 }, "qalc/qalc.mjs": 1000, "index.html": 100 },
     );
     const r = checkSizes(dist);
     expect(r.notBuilt).toEqual([]);
     const failed = r.failures.map((f) => f.split(":")[0]);
     expect(failed).toContain("Find UI chunk");
-    expect(failed).not.toContain("Unit view chunk"); // the UI chunk and the builder together, exactly at 45.29 kB, are allowed
+    expect(failed).not.toContain("Unit view chunk"); // the UI chunk and the builder together, exactly at 46.21 kB, are allowed
     expect(failed).toContain("Find index asset");
     expect(failed).toContain("qalc wasm + glue");
   });
 
-  it("budgets the unit view's UI chunk and builder as one, at 45.29 kB raw (R24c; Opus pass 24, G81; R313; G233; R918; R885; R797; R807; R808; R808f1; G402)", () => {
+  it("budgets the unit view's UI chunk and builder as one, at 46.21 kB raw (R24c; Opus pass 24, G81; R313; G233; R918; R885; R797; R807; R808; R808f1; R896; G402)", () => {
     const { manifest, files } = base(1000);
     const units = {
       ...manifest,
       "src/units/calc.ts": { file: "assets/units.js", src: "src/units/calc.ts", isDynamicEntry: true },
       "src/units/open.ts": { file: "assets/open.js", src: "src/units/open.ts", isDynamicEntry: true },
     };
-    const r = checkSizes(fakeDist(units, { ...files, "assets/units.js": 10_000, "assets/open.js": 35_291 }));
+    const r = checkSizes(fakeDist(units, { ...files, "assets/units.js": 10_000, "assets/open.js": 36_211 }));
     expect(r.failures.map((f) => f.split(":")[0])).toEqual(["Unit view chunk"]);
     expect(r.rows.find((x) => x.rule === "Unit view chunk")?.files.sort()).toEqual(["assets/open.js", "assets/units.js"]);
   });
