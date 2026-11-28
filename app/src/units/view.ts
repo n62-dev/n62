@@ -50,6 +50,17 @@ export interface ViewHost {
 /** The active slot's look: drawn inline, since a class does not reach into the field's shadow root. */
 const ACTIVE = "background:var(--pick);border-radius:4px";
 
+/** R807: the slot model's marks (slot.ts `latex`: \class) drawn in the field's shadow root, which no stylesheet of the page reaches
+ *  (units/open.ts appends this one): an armed prefix or √ as the armed keys are (--key-on), a pair outside Find's list in the warning
+ *  colour as the reading marks it, an empty denominator's □ muted. Theme tokens only. */
+export const SLOT_MARKS =
+  ".pas-armed{background:var(--key-on);color:var(--on-key-on)}.pas-rare{color:var(--warn)}.pas-empty{color:var(--muted)}" +
+  ".pas-caret{border-left:1.5px solid var(--text)}";
+
+/** R807: the active slot's caret, a thin bar the height of a letter (`pas-caret`, in SLOT_MARKS). It is drawn only here, never in
+ *  `SlotModel.latex`, which the history row, Copy and Share read. */
+const CARET = "\\class{pas-caret}{\\vphantom{m}}";
+
 /** The slots a line keeps (docs/04 4.3 "The way back": the units key shows them again), by the line's LaTeX. */
 const kept = new Map<string, Readonly<Record<string, UnitSlot>>>();
 
@@ -556,8 +567,8 @@ export class UnitView {
 
   #draw(id: string): void {
     const m = this.#models.get(id) as SlotModel;
-    const body = m.empty ? "" : m.latex;
-    this.#host.write(id, id === this.activeId ? `\\htmlStyle{${ACTIVE}}{${body || "\\square"}}` : body);
+    // R807: the active slot draws its caret, an empty one the caret before its □
+    this.#host.write(id, id === this.activeId ? `\\htmlStyle{${ACTIVE}}{${m.latexWith(CARET)}}` : m.empty ? "" : m.latex);
   }
 
   #read(): void {
