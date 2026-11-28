@@ -1453,3 +1453,10 @@ Reset all your keys, Reset the unit pad cells and the three Reset the counter ro
 - **P15 (2026-10-14): the unit view computes on Giac** with the Find index's exact SI factors; libqalculate never runs in the app (P22). Archived. Would change if: a unit need has no clean exact form; the unit view feels slow on the Tab One.
 - **P14 (2026-10-14) and the P14 arrangement (2026-10-18, S5): the unit pad.** Rule: [archive/r9-unit-pad.md](r9-unit-pad.md), `spec/unit-pad.yaml`; a hardware keyboard types a unit symbol in a slot (R313). Archived. Would change if: the owner's units take ≥ 3 presses; R24b's reach costs.
 - **Angles in the unit view (owner, 2026-10-19; built by G40):** an angle is a quantity both ways; the rad drop and the 2π·r·n note as built. Archived. Would change if: G2 item 68 shows the G2 refusing both.
+
+## Moved 2026-11-28 (Opus pass 258: decisions.md over 39 kB; rules in docs/03 rules 5–13, docs/05, P5 and tests/tasks/benchmark.yaml)
+- **Engine defaults, not G2 copies (owner, 2026-10-19):** a G2 special case stays only for a silent wrong number or a saved keystroke. Archived.
+- **P11 (2026-10-13): back to the G2's flow; milestone 4a before the rest of milestone 4.** Departures sit on top of the G2 way, never instead of it (docs/03 rules 5–13). Archived.
+- **P7 (2026-10-12, revised by P11): keypad gestures.** The arrow keys are one trackpad; flicks on every key. Archived.
+- **R15c1 menus (owner, 2026-10-20): a long menu scrolls** in the viewport (docs/05 3.1); the ⚙ in its title opens Settings (R145). Would change if: the scroll feels slow on the APK.
+- **M4-2 (owner, 2026-10-20):** the task budgets (t02 9 presses, t04 12, t10 25, t05 4), t09's two deviations, ± on Shift + `,` (R71), the unit result as its mockup (R62). Archived. Your hand timing stays the gate.

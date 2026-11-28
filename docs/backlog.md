@@ -28,6 +28,7 @@ Where we are and what is left, one or two lines per open item. Architecture: [04
 15. **A278** (decisions.md): e2e on a built app, after the tag?
 16. **K22** (decisions.md): keep refusing `80 °C − 5 K` after G385?
 17. **R781** (decisions.md): Hand = Left mirrors the digits (9 8 7) too?
+18. **G315's cycle** (decisions.md): a ron package?
 
 ### Upstream reports (owner; drafts in `../outreach/upstream-reports.md`)
 - **MathLive**, filed 2026-10-19: [#3122](https://github.com/arnog/mathlive/issues/3122) (⌫ at `\left…\right`), [#3123](https://github.com/arnog/mathlive/issues/3123) (touch caret), [#3124](https://github.com/arnog/mathlive/issues/3124) (focus restore); [#3125](https://github.com/arnog/mathlive/issues/3125) (Redo after ⌫, 2026-10-20); M5, M7 (`isImplicitArg` takes no matrix, F68, nor i or e, F184) drafted by R75, R334; M6 (no public sideways scroll; text in `../outreach/upstream-reports.md`) drafted by R277.
@@ -36,7 +37,7 @@ Where we are and what is left, one or two lines per open item. Architecture: [04
 ## Tasks
 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
-- **F378, F379 (owner's bug list 4, 2026-11-23; `../drafts/2026-11-23-owner-bugs4/`).** F378, F379 and points 3–5 ✓; A271's double back next. Hardware Esc and arrows reach nothing in Plot (its entry line is hidden; before R928 too), so Esc cannot unfold it: no package yet (pass 247).
+- **F378, F379 (owner's bug list 4, 2026-11-23; `../drafts/2026-11-23-owner-bugs4/`).** A271's double back next (the rest ✓). Hardware Esc and arrows reach nothing in Plot (its entry line is hidden; before R928 too), so Esc cannot unfold it: no package yet (pass 247).
 - **F366–F377 (layers study 2026-11-23, sandra + sofia; `../drafts/2026-11-23-layers-study/`).** Input leaks through a layer over Home: all but F369 ✓. F369 (⌄ folds the keys under the view): no package, nothing is lost. The net: `layers.spec.ts`, its known list per F id (R916 R921 ✓).
 - **Owner-style hunt 2026-11-23 (h1, h2; sofia CONFIRMED).** Open in packages R896, R899, R909–R911; the rest ✓.
 - **F236 (ron, R338).** history-first.spec.ts "engine not ready: the newest five rows" counts 20 renders against 15 under load: 4 failures on 11-12/13, none before. Find the extra re-format; a looser bound is no fix. G224f1 raised it to 20 (da18fc18): the fix sets 15 again.
@@ -60,7 +61,7 @@ Where we are and what is left, one or two lines per open item. Architecture: [04
 - **F252, no package (S20).** Home `floor((1+10^-100)^(10^100))` shows **= 1**, right 2 (source: derived: the power lies in (2, 3)); G156's and G403's raised starts miss the loss. An MPFI interval decides 2 ([r22](research/r22-mpfi.md) 4). Family 3.
 - **nr1116-vg (G403–G405 done).** Left: a tiny value in a name, or one the double cannot size (S20).
 - **Night review 2026-11-16:** [the rest](research/night-review-2026-11-16.md).
-- **F300–F321 (T2's hunt, 2026-11-16; evidence `../drafts/2026-11-16-ultra/t2-bughunt/findings.md`).** F301 ✓ G550 (before the freeze); F306 G555; F307, F308 G556; F318 G558; F321 G560; F313 R551 (before the tag); F312 G559; F314, F315 R552; F300 R550 (after the tag).
+- **F300–F321 (T2's hunt, 2026-11-16; evidence `../drafts/2026-11-16-ultra/t2-bughunt/findings.md`).** F306 G555; F307, F308 G556; F318 G558; F321 G560; F313 R551 (before the tag); F312 G559; F314, F315 R552; F300 R550 (after the tag).
 - **F460 (G557's report).** `normal((i*sqrt(-2))^(1/3))` is a rootof worth 1.12246204831·i, stock too (right 0.561231024155+0.972080648620·i). Family 5.
 - **F461 (pass 213, code read).** A CAS row that reads a name stored with a unit (G371) has no unit-dropped note; G392's is Home's. Family 12.
 - **F462 (G576's report).** Home `sin(3^(1e6))` ≈ -0.920699462879 (4.3 s), `sin(2^(1e6))` ≈ -0.9 (right -0.0887753640826, 0.650909333380; mpmath): a huge float argument confirms digits it cannot hold. Family 4.
@@ -89,7 +90,7 @@ Its lines: [research/background-stream.md](research/background-stream.md) (moved
 - **R183f1's gaps (pass 211):** a name typed with no folder chosen is kept; a folder chosen later that holds another device of that name is written over (sync/device.ts deviceName returns a kept name unchecked): the first write in a folder needs to tell this device's own files from another's (a record of what it wrote, sync/record.ts). A refused rename to a prefix of this device's own name says "Another device" (syncRows.svelte.ts rename1).
 - **R201's leftovers (pass 211):** Delete does not say which pad cells or slots hold the unit; Made of and the list show Find's ids (ownUnitsText.ts ofText), only kg, m, s tested back.
 - **G223f1's find (pass 146):** a stored catch(e) prints as catch(exp(1)).
-- **Flaky persist.spec.ts (R255f2, R339):** a kept-line kill lost its line at 16 workers: the read outlasts `EntryController.load`'s 1 s cap (`entry/controller.ts:107`; the line stays stored for the next start). Since A281f1 they, entrydash's 50 ms and unittap's R801 run in the quiet project; no package unless a device shows it (pass 251).
+- **Flaky persist.spec.ts (R255f2, R339; R302's kills, 3, pass 258):** a kept-line kill lost its line at 16 workers: the read outlasts `EntryController.load`'s 1 s cap (`entry/controller.ts:107`; the line stays stored for the next start). Since A281f1 they, entrydash's 50 ms and unittap's R801 run in the quiet project; no package unless a device shows it (pass 251).
 - **The pipeline (A201 takes red-first's ids and the audit model):** the size test skips CSS; red-first runs vitest on the branch's engine and counts a vitest file by its added test or assertion lines (A67).
 - **Load in the gates (pass 231; G782f1, G783):** the golden steps stage's ×8 clock rows `g331-simplify-f214-12`, `g325f1-acos-…`, `g618-sum-…` went into `SPEED_KNOWN` (golden-speed.ts) because other runs' checks loaded the host, so a real slowdown there is no longer seen; numeric.ts's other lone fallbacks (agreed's `once`, doubleFallback) still show a clock-stopped read's partner alone (G783 fix round 1 only retried floatFactsOf's). Family 4.
 - **A digit on a disabled sheet row (R862; pass 232, decisions.md):** runs nothing with no feedback (`Sheet.activate`); docs/05 rule 4 wants the dead press's short haptic "no", in every sheet (the unit view's ☰ Number into Home and Store in with no result; Tools, Store, Settings rows). Family 7.
