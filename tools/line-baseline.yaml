@@ -11,5 +11,5 @@ scripts/pipeline.test.sh: 2495   # last raised by A256f1
 app/src/input/parse.ts: 925   # last raised by R376f1
 tools/giac-regress/export.mjs: 1204   # last raised by G791f1
 engine/giac/wasm/api.cc: 823   # last raised by G328
-app/gallery/gallery.spec.ts: 846   # last raised by R728
+app/gallery/gallery.spec.ts: 879   # last raised by R821
 app/src/keyboard/Keypad.svelte: 925   # last raised by R781

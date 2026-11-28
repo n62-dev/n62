@@ -402,8 +402,7 @@ export class Sheet {
   /** The open level's row of a free key's slot in a layer; R821: with the Alpha switch off there is no Alpha row, and Alpha + the key is its tap. */
   private slotRow(keyId: string, layer: string): number {
     const at = (l: string): number => this.level.items.findIndex((x) => x.slot?.key === keyId && x.slot.layer === l);
-    const i = at(layer);
-    return i < 0 && layer === "alpha" ? at("primary") : i;
+    return at(layer) < 0 && layer === "alpha" ? at("primary") : at(layer);
   }
 
   /** A free key pressed while its slots are listed (Settings › Your keys, R4b): the highlight goes to that key's row in

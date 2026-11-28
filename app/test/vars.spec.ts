@@ -261,14 +261,14 @@ test.describe("Your keys", () => {
     await open(page);
     await tap(page, ["help", "d5"]);
     await expect(title(page)).toHaveText("Settings › Your keys");
-    await expect(menu(page).getByRole("menuitem")).toHaveCount(21); // 18 slots, Reset all, Unit pad cells (R24d) and Your units (R201)
+    await expect(menu(page).getByRole("menuitem")).toHaveCount(16); // 12 slots (R821: tap and Shift), Unit pad cells (R24d), Your units (R201), the Alpha switch and Reset all
     await expect(mrow(page, "u1:primary")).toContainText("Empty");
     await tap(page, ["u3"]);
     await expect(mactive(page)).toHaveAttribute("data-id", "u3:primary");
     await flick(page, "u3", "up");
     await expect(mactive(page)).toHaveAttribute("data-id", "u3:shift");
     await flick(page, "u5", "down");
-    await expect(mactive(page)).toHaveAttribute("data-id", "u5:alpha");
+    await expect(mactive(page)).toHaveAttribute("data-id", "u5:primary"); // R821: the Alpha switch is off, a flick down is the tap
     await expect(menu(page)).toBeVisible(); // no key went through to its job
     expect(await entryValue(page)).toBe("");
   });
@@ -295,7 +295,7 @@ test.describe("Your keys", () => {
 
   test("by keys: a place sits on a tap slot and opens; a function sits on a Shift slot and fires with Shift", async ({ page }) => {
     await start(page);
-    await tap(page, ["help", "d5", "d4", "d3", "d3"]); // Your keys, U2, CAS (Find…, Home, CAS)
+    await tap(page, ["help", "d5", "d3", "d3", "d3"]); // Your keys, U2 (R821: row 3, two layers a key), CAS (Find…, Home, CAS)
     await expect(mrow(page, "cas")).toHaveAttribute("data-selected", "true");
     await tap(page, ["esc"]);
     await expect(mrow(page, "u2:primary")).toContainText("CAS");
@@ -304,7 +304,7 @@ test.describe("Your keys", () => {
     await tap(page, ["u2"]);
     await expect(page.getByTestId("place")).toHaveAttribute("data-view", "cas");
     // U2's Shift slot: abs by Find (a and b are the Vars and Math keys, s a flick down on 9)
-    await tap(page, ["help", "d5", "d5", "d1"]); // U2 ⇧, Find…
+    await tap(page, ["help", "d5", "d4", "d1"]); // U2 ⇧ (row 4), Find…
     await expect(find(page)).toBeVisible();
     await tap(page, ["vars", "math"]);
     await flick(page, "d9", "down");

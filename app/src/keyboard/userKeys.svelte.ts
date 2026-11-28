@@ -60,7 +60,7 @@ export class UserKeys {
     // R821: the switch as stored; none stored: on, once and written, when an Alpha slot holds a binding (so what worked keeps working)
     const on = await this.kv.get<unknown>(USER_KEYS_ALPHA);
     if (typeof on === "boolean") this.alphaLayer = on;
-    else if (USER_KEY_IDS.some((id) => typeof valid(this.slots(id).alpha) === "object" && valid(this.slots(id).alpha) !== null)) this.setAlphaLayer(true);
+    else if (USER_KEY_IDS.some((id) => this.slots(id).alpha)) this.setAlphaLayer(true);
   }
 
   /** R821: turn the third layer on or off (stored). */
@@ -71,7 +71,7 @@ export class UserKeys {
 
   /** The layers a free key has now: tap and Shift, and Alpha while the switch is on (Your keys' rows, the slot sheet, TalkBack). */
   layers(): readonly UserLayer[] {
-    return this.alphaLayer ? USER_LAYERS : USER_LAYERS.filter((l) => l !== "alpha");
+    return USER_LAYERS.slice(0, this.alphaLayer ? 3 : 2); // (Alpha is the last)
   }
 
   /** The key as it is drawn and fires: a free key with the user's slots over its defaults; the `.` and `,` keys with the

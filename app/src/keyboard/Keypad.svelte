@@ -138,10 +138,8 @@
   $effect(() => {
     // R729: the texts no longer change with Shift or Alpha: re-fit per view (the letters' case) and when the pad's width changes
     void cas;
-    // R820: and when a sheet opens or closes, its code comes in, its query empties or fills, or (a sheet open) the layer changes (Find's `sin`: g, Shift sin)
-    void [sheet?.kind, sheet?.empty, sheet?.filter, sheetChunk.keys, sheet && shift, sheet && alpha];
-    // R821: and when a free key's slot is set or the Alpha switch turns (its letter line comes or goes, its legends change)
-    void [userKeys.alphaLayer, keys.filter((k) => k.user).map((k) => [k.label.primary, k.label.shift, k.label.alpha])];
+    // R820: and when a sheet opens or closes, its code comes in, its query empties or fills, or (a sheet open) the layer changes (Find's `sin`: g, Shift sin); R821: when a free key's slot is set or the Alpha switch turns (its letter line comes or goes)
+    void [sheet?.kind, sheet?.empty, sheet?.filter, sheetChunk.keys, sheet && shift, sheet && alpha, keys];
     if (!padEl) return;
     const pad = padEl;
     fitLegends(pad);
