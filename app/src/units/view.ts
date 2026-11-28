@@ -109,7 +109,9 @@ export class UnitView {
   get active(): number {
     return this.#active;
   }
+  /** R808f1: a slot that becomes active has its caret at its end (a ◀ ▶ walk, `#go`, sets its place after this). */
   set active(n: number) {
+    if (n !== this.#active) this.#models.get(this.ids[n] as string)?.caretTo("end");
     this.#active = n;
     this.#host.changed();
   }
@@ -212,7 +214,7 @@ export class UnitView {
     this.#models.set(END, new SlotModel(this.#cat));
     this.#checking = on;
     this.#host.reset?.(this.fieldLatex, this.ids);
-    this.#active = on ? this.ids.length - 1 : Math.min(this.#active, this.ids.length - 1);
+    this.active = on ? this.ids.length - 1 : Math.min(this.#active, this.ids.length - 1);
     for (const id of this.ids) this.#draw(id);
     this.#host.changed();
   }

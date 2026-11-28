@@ -771,3 +771,28 @@ describe("R808: ◀ ▶ ▲ ▼ walk a slot's factors before they cross to anoth
     expect(view.model("u1")?.empty).toBe(true);
   });
 });
+
+describe("R808f1: a slot that becomes active without ◀ ▶ has its caret at its end", () => {
+  const caret = (view: UnitView) => (view.model(view.activeId) as NonNullable<ReturnType<UnitView["model"]>>).caret;
+  const units = (view: UnitView, id: string) => view.model(id)?.slot.tokens.map((t) => t.unit);
+  const made = (): UnitView => { const v = new UnitView(CAT, "1", {}, host().host); v.start(); return v; };
+
+  it("⌫ on the empty end slot (✕ Check) leaves u1 active with the caret at its end: the next ⌫ removes h, not km", () => {
+    const view = made();
+    view.apply(U("km")); view.apply(U("h")); view.move(-1); // the caret between km and h
+    view.setChecking(true); view.apply({ do: "delete" }); // (a tap on the end slot with Check on; ⌫ on it: ✕ Check)
+    expect([view.checking, view.activeId, caret(view)]).toEqual([false, "u1", { side: "num", i: 2 }]);
+    view.apply({ do: "delete" });
+    expect(units(view, "u1")).toEqual(["km"]);
+  });
+
+  it("Tools › the end slot puts the caret at the end of a filled end slot that ◀ had moved into", () => {
+    const view = made();
+    view.setChecking(true);
+    view.apply(U("m")); view.apply(U("s")); view.move(-1); // inside the end slot
+    view.step(-1); view.toEnd(); // the ← button: u1; Tools › the end slot
+    expect([view.activeId, caret(view)]).toEqual(["end", { side: "num", i: 2 }]);
+    view.apply({ do: "delete" });
+    expect(units(view, "end")).toEqual(["m"]);
+  });
+});
