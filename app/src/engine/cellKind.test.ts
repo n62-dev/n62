@@ -23,7 +23,10 @@ describe.skipIf(!giacAvailable())("G365: a table cell carries the bridge's kind"
   it("a number, a list or a refused cell carries none", () => {
     expect(cell("1/x", "2").kind).toBeUndefined();
     expect(cell("sqrt(x)", "-1").kind).toBeUndefined();
+    // the bridge calls a vector whose first element is undef undef (Giac's is_undef): a list stays a list
+    expect(cell("[sin(x)/x,1]", "0")).toMatchObject({ ok: true, display: "[undef,1]" });
     expect(cell("[sin(x)/x,1]", "0").kind).toBeUndefined();
+    expect(cell("[1,sin(x)/x]", "0").kind).toBeUndefined();
     expect(cell("1/0-1/0", "0")).toMatchObject({ ok: false });
     expect(cell("1/0-1/0", "0").kind).toBeUndefined();
   });
