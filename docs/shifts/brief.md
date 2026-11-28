@@ -66,7 +66,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 909a | [R896](packages/R896.md) Clear and Undo in the unit view | ron, Sonnet | `p1/ron-unitundo` | R808 |
 | 911 | R813 Memory: a swipe left deletes, with Undo (C6) | ron, Sonnet | `p1/ron-memswipe` | R314 |
 | 912 | R814 Memory: Shift + ⌫ deletes (C6) | ron, Sonnet | `p1/ron-memdelkey` | R813 |
-| 913 | [R815](packages/R815.md) Memory copies the full value (C6) | ron, Sonnet | `p1/ron-memcopy` | R814 |
+| 913 | R815 Memory copies the full value (C6) | ron, Sonnet | `p1/ron-memcopy` | R814 |
 | 914 | [R816](packages/R816.md) Memory: Paste asks, then replaces a value (C6) | ron, Sonnet | `p1/ron-mempaste` | R815 |
 | 915 | [R818](packages/R818.md) Vars and Memory rows say what a name holds (C7) | ron, Sonnet | `p1/ron-namekinds` | – |
 | 916 | [R819](packages/R819.md) filter chips in Vars and Memory (C7) | ron, Sonnet | `p1/ron-namechips` | R818 |
