@@ -9,7 +9,7 @@
 // file directly.
 import type { PrecisionWarn } from "./format.ts";
 import { arithmeticOf, type Arith, callsOf, closing, topLevelArgs, integerLiteral, isNameChar, UNCLOSED, walk as bracketWalk, namesIn, negated, numbers, powersIn, withoutStrings, type Quoting } from "./giacPrint.ts";
-import { PERIODIC } from "./converge.ts";
+import { PERIODIC } from "./names.ts";
 import { constantLog10, flatErfc, type Sizes } from "./constDouble.ts";
 
 /** A literal with more digits than P minus this raises where the agreement check starts (G141): at P it would leave
@@ -68,7 +68,7 @@ function constantPower(text: string, at: number, end: number, mant: string, powe
 }
 
 /** G348 (Opus pass 175): the places of `text` whose value is read modulo a period, each [from, to): the brackets of a
- *  periodic call (converge.ts PERIODIC, G307f2), of an exp call whose argument names the imaginary unit `i`, and the
+ *  periodic call (names.ts PERIODIC, G307f2), of an exp call whose argument names the imaginary unit `i`, and the
  *  exponent of a power whose base is negative or names `i` (its principal value exp(b·ln a), ln a not real) or whose
  *  exponent names `i` (`e^(i*x)` is exp(i*x)). Such a value needs its argument to an absolute precision: at P0 + 40
  *  pi^2200 is off by about 10^1054, so sin(pi^2200) showed ≈ 0.9 (it is 0.844846014387) and exp(i*pi^2207) ≈ -0.4-0.9*i

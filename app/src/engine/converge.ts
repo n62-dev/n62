@@ -20,6 +20,7 @@ import { callsOf, functionsIn, isError, isName, isTimeout, splitList, topLevelAr
 import { statsRefusal, type StatsRefusal } from "./stats.ts";
 import { wordRefusal, type WordRefusal } from "./wordOps.ts";
 import { decisionName } from "./decisionAlias.ts";
+import { PERIODIC } from "./names.ts";
 import { sumRefuted } from "./sumcheck.ts";
 
 /** Why a result is refused; the UI shows `error.<code>` from the i18n table (enEngine.ts). */
@@ -143,8 +144,6 @@ function limitNonZero(giac: Giac, l: string): boolean {
   return /^[\d.]+(e[+-]?\d+)?$/.test(v) && Number(v) !== 0;
 }
 
-/** The periodic functions: the trig names, the one list of them (degrees.ts and literalPrec.ts read it too, G307f2). */
-export const PERIODIC: ReadonlySet<string> = new Set(["sin", "cos", "tan", "sec", "csc", "cot"]);
 /** Periods tried for a trig integrand: 2π/n (in radians; a DEG integrand is rewritten first), largest n first, so the
  *  smallest period is found. */
 const PERIOD_DIVISORS = [12, 10, 8, 6, 5, 4, 3, 2, 1];
