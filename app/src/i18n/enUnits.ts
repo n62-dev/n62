@@ -59,6 +59,9 @@ export const enUnits = {
   "units.slot.perEmpty": "÷ needs a unit after it",
   "units.slot.secondPer": "One ÷ per unit: the rest is already below it",
   "units.slot.powerAlone": "A power needs a unit before it",
+  // R808: ⌫ where the caret has nothing before it in its part
+  "units.slot.denHasUnits": "The denominator still has units",
+  "units.slot.nothingBefore": "Nothing before the caret to remove",
   "units.slot.unknown": "{unit} is not in Find's unit list",
   // R313: letters typed on a hardware keyboard that read as no unit (units/slot.ts readSymbol); {letters} as typed
   "units.slot.notUnit": "{letters} is not a unit",

@@ -9,8 +9,8 @@
 #
 # In a unit slot the maths rows (3-9) show the pad: each cell lies exactly on the key under it (the R21 rule for
 # anything drawn over the keypad), so no key moves and a press on a key is a press on its cell. In the top cluster the
-# six user keys U1-U6 show the user unit cells (`user:` below); the rest of the cluster stays as it is: ◀ ▶ go to the
-# previous and next slot, Esc leaves the unit view, Cancel as always.
+# six user keys U1-U6 show the user unit cells (`user:` below); the rest of the cluster stays as it is: ◀ ▶ walk a slot's
+# factors and then go to the previous and next slot (R808), ▲ ▼ go between its numerator and denominator, Esc leaves the unit view, Cancel as always.
 #
 #   row 3   mi ↑yd ↓mil | Find      | knot ↑mph | Hz ↑rpm   | ° ↑rad    | ⌫
 #   row 4   x³ ↑x⁴      | A         | V         | Ω ↑S      | F         | T
@@ -38,7 +38,7 @@
 # one again disarms it; units in a row multiply (no × needed: m then s is m·s, the prefix m then s is ms); ÷ makes the
 # rest of the slot the denominator (one ÷ per slot, the SI's one-solidus rule); the keys x², x³, x⁴ and x⁻¹ act on the unit
 # before, √x on the unit after (R803: drawn as on the main keypad, the x is the unit's place);
-# ⌫ removes the last token. The slot fills as you press and its reading in words shows
+# ⌫ removes the factor left of the caret (R808: ◀ ▶ ▲ ▼ move the caret, units and powers act at it; a power key again takes the power off). The slot fills as you press and its reading in words shows
 # under the formula (S1 guard 2: it still catches a slip from M to m). Enter goes to the next slot (an empty slot
 # means no unit); after the last unit slot comes the end slot "→ should be", where Enter evaluates; a flick up on
 # Enter (Shift + Enter) evaluates from any slot. Math opens Find on units, for everything not on the pad; with an
@@ -53,7 +53,7 @@ source: derived   # S5 (2026-10-17): tools/probes/pad-arrange.mjs on tools/probe
 
 keep:
   - { key: math, does: find }        # Find on units; an empty query shows the units menu
-  - { key: bksp, does: delete }      # the last token
+  - { key: bksp, does: delete }      # the factor left of the caret
   - { key: enter, does: next, up: evaluate }
   - { key: shift, does: shift }      # next cell: its up item
   - { key: alpha, does: alpha }      # next cell: its down item

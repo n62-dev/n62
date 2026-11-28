@@ -169,18 +169,19 @@ describe("r9 2.5: powers act on the unit before, √ on the unit after", () => {
   });
 });
 
-describe("r9 2.6: ⌫ removes the last token", () => {
-  it("a power", () => {
-    expect(typed([U("m"), POW(2), DEL]).slot).toEqual({ tokens: [{ unit: "m" }] });
-    expect(typed([SQRT, U("Hz"), POW(3), DEL]).slot).toEqual({ tokens: [{ unit: "Hz", power: "1/2" }] });
+describe("r9 2.6, R808: ⌫ removes the factor left of the caret", () => {
+  it("whole: a power goes with its unit (the same power key again takes the power off)", () => {
+    expect(typed([U("m"), POW(2), DEL]).slot).toEqual({ tokens: [] });
+    expect(typed([SQRT, U("Hz"), POW(3), DEL]).slot).toEqual({ tokens: [] });
+    expect(typed([U("m"), POW(2), POW(2)]).slot).toEqual({ tokens: [{ unit: "m" }] });
   });
-  it("a unit, leaving its prefix armed as it was typed", () => {
+  it("whole: a unit goes with its prefix, and nothing is armed again", () => {
     const s = typed([U("N"), P("k"), U("m"), DEL]);
     expect(s.slot).toEqual({ tokens: [{ unit: "N" }] });
-    expect(s.armed).toEqual({ prefix: "k", sqrt: false });
+    expect(s.armed).toEqual({ sqrt: false });
   });
-  it("a prefix, then √, in the reverse order of the presses", () => {
-    const s = typed([SQRT, P("k"), U("Hz"), DEL]);
+  it("a prefix, then √, are taken back in the reverse order of the presses", () => {
+    const s = typed([SQRT, P("k")]);
     expect(s.armed).toEqual({ prefix: "k", sqrt: true });
     s.apply(DEL);
     expect(s.armed).toEqual({ sqrt: true });
@@ -197,7 +198,7 @@ describe("r9 2.6: ⌫ removes the last token", () => {
   });
   it("down to an empty slot; on an empty slot it asks to step back (R118: the view goes to the slot before, as ⌫ at the start of a box on the entry line)", () => {
     const s = typed([U("J"), PER, P("k"), U("g"), POW(2)]);
-    for (let i = 0; i < 5; i++) expect(s.apply(DEL)).toEqual({ ok: true });
+    for (let i = 0; i < 3; i++) expect(s.apply(DEL)).toEqual({ ok: true }); // k g², the ÷, J
     expect(s.empty).toBe(true);
     expect(s.apply(DEL)).toEqual({ ok: true, back: true });
     expect(s.slot).toEqual({ tokens: [] });
@@ -316,8 +317,8 @@ describe("restoring a slot (the line keeps its slots)", () => {
     expect(s.slot).toEqual(slot);
     s.apply(DEL);
     expect(s.slot).toEqual({ tokens: [{ prefix: "n", unit: "V" }] });
-    expect(s.armed).toEqual({ sqrt: true });
-    expect(s.latex).toBe("\\frac{\\class{pas-rare}{\\mathrm{n}\\mathrm{V}}}{\\class{pas-armed}{\\sqrt{\\square}}}");
+    expect(s.armed).toEqual({ sqrt: false });
+    expect(s.latex).toBe("\\frac{\\class{pas-rare}{\\mathrm{n}\\mathrm{V}}}{\\class{pas-empty}{\\square}}");
   });
   it("a power the pad cannot make is refused", () => {
     expect(() => new SlotModel(CAT, { tokens: [{ unit: "m", power: "1/3" }] })).toThrow();
@@ -431,10 +432,10 @@ describe("R24d: a Find unit that is a prefix and a unit goes in as both", () => 
     expect(typed([{ do: "pair", prefix: "M", id: "Pa" }]).reading.text).toBe("megapascal");
   });
 
-  it("⌫ takes the unit and arms its prefix again, as for the pad's two presses", () => {
+  it("⌫ takes the pair whole, its prefix with it (R808)", () => {
     const s = typed([{ do: "pair", prefix: "M", id: "Pa" }, DEL]);
     expect(s.slot).toEqual({ tokens: [] });
-    expect(s.armed).toEqual({ prefix: "M", sqrt: false });
+    expect(s.armed).toEqual({ sqrt: false });
   });
 
   it("an unknown prefix or unit is refused and leaves the slot as it was", () => {

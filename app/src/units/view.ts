@@ -320,7 +320,8 @@ export class UnitView {
     return Promise.resolve();
   }
 
-  /** ◀ (-1) and ▶ (+1): the slot before or after; none there is a dead key. */
+  /** ◀ (-1) and ▶ (+1) (R808): the caret one factor (the slot model's `move`); at the slot's edge the slot before or after,
+   *  ◀ landing at its end and ▶ at its start; none there is a dead key. A prefix or √ armed refuses the move. */
   move(by: -1 | 1): void {
     if (this.#row >= 0) {
       const to = this.#row + by;
@@ -328,8 +329,36 @@ export class UnitView {
       this.#row = to;
       return this.#host.changed();
     }
+    const w = (this.#models.get(this.activeId) as SlotModel).move(by);
+    if (!w.ok) return this.#refuse(w.message);
+    if (w.moved) return this.#draw(this.activeId);
     if (this.active + by < 0 || this.active + by >= this.ids.length) return this.#host.dead();
-    this.#move(by);
+    this.#move(by, by < 0 ? "end" : "start");
+  }
+
+  /** ▲ (R808): from the chip row out of it; in a denominator the caret goes to the numerator's end; else a dead key. */
+  arrowUp(): void {
+    if (this.#row < 0 && this.#walk("up")) return;
+    this.up();
+  }
+
+  /** ▼ (R808): in a numerator with a ÷ the caret goes to the denominator's end; anywhere else `down`'s job (the chips). */
+  arrowDown(): void {
+    if (this.#row < 0 && this.#walk("down")) return;
+    this.down();
+  }
+
+  /** The active slot's caret goes up or down; false: it does not (the key's other job), a refusal is shown (true). */
+  #walk(to: "up" | "down"): boolean {
+    const w = (this.#models.get(this.activeId) as SlotModel).vertical(to);
+    if (!w.ok) this.#refuse(w.message);
+    else if (w.moved) this.#draw(this.activeId);
+    return !w.ok || w.moved;
+  }
+
+  #refuse(message: string): void {
+    this.shown = { kind: "message", text: message };
+    this.#host.dead();
   }
 
   /** ▼: from a result with a row into it (the first chip); anywhere else a dead key. */
@@ -452,15 +481,17 @@ export class UnitView {
     this.goTo(to);
   }
 
-  #move(by: -1 | 1): void {
-    this.#go(this.active + by);
+  #move(by: -1 | 1, place: "start" | "end" = "end"): void {
+    this.#go(this.active + by, place);
   }
 
-  /** The active slot becomes slot `to` (an index into `ids`), both slots drawn and the reading follows. */
-  #go(to: number): void {
+  /** The active slot becomes slot `to` (an index into `ids`) with its caret at `place` (R808), both slots drawn and the
+   *  reading follows. */
+  #go(to: number, place: "start" | "end" = "end"): void {
     if (!this.#leavable()) return;
     const was = this.activeId;
     this.active = to;
+    (this.#models.get(this.activeId) as SlotModel).caretTo(place);
     this.#draw(was);
     this.#draw(this.activeId);
     this.#read();
@@ -471,8 +502,7 @@ export class UnitView {
     const m = this.#models.get(this.activeId) as SlotModel;
     const r = m.check();
     if (r.ok) return m.endRun().ok; // (R313: a run that reads as a unit ends with its slot)
-    this.shown = { kind: "message", text: r.message };
-    this.#host.dead();
+    this.#refuse(r.message);
     return false;
   }
 

@@ -24,6 +24,10 @@ export type PadAction =
  *  the entry line), or the key is dead on the first slot. */
 export type SlotResult = { ok: true; back?: true } | { ok: false; key: UnitMessageKey; message: string };
 
+/** R808: a caret move: `moved` false is an edge of the slot (the view crosses to the slot before or after, or has the
+ *  key's other job), a refusal is the armed one (as leaving the slot) or letters that are no unit. */
+export type SlotWalk = { ok: true; moved: boolean } | { ok: false; key: UnitMessageKey; message: string };
+
 /** What the model needs of one Find unit or prefix: its symbol as LaTeX, its name in words, and from the Find index
  *  its exact factor to SI base units (`si`, "1/1000", "16129*pi/10^14") and a unit's dimension key (`dim`). */
 export interface SlotName {
@@ -199,12 +203,10 @@ interface Factor {
   /** The integer power the keys gave (², ³, ⁴, ⁻¹); with `root` the power is exp/2. */
   exp: number;
   root: boolean;
-  /** The armed presses this unit took, in their order: ⌫ on the unit arms them again. */
-  took: Pending[];
 }
 
 /** R313: the letters typed into the slot since the last other key (`text`), with the slot's armed presses when it began
- *  (`took`) and the factor it reads as, the slot's last (none: the run is no unit, and stays as typed, marked). */
+ *  (`took`; ⌫ in the run gives them back) and the factor it reads as, the slot's last (none: the run is no unit, and stays as typed, marked). */
 interface Run { text: string; took: Pending[]; factor?: Factor }
 
 const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : Math.abs(a));
@@ -228,8 +230,7 @@ export interface SlotCaret { readonly side: "num" | "den"; readonly i: number }
 /** The slot is two lists and a caret (R806; docs/04 4.3): the numerator, the denominator once a ÷ is pressed (absent:
  *  no ÷; empty: a ÷ with nothing after it yet), and the caret between two factors of one of them. A unit, a prefix and
  *  unit pair, a prefix, √, a power and ⌫ act at the caret; the ÷ opens the denominator and the caret goes into it.
- *  Nothing moves the caret yet, so it stays at the end (the end of the denominator, else of the numerator) and every
- *  press does what it did when the slot was one list with a ÷ index. */
+ *  R808: ◀ ▶ ▲ ▼ move the caret (`move`, `vertical`, `caretTo`); a slot the view enters has it at its end. */
 export class SlotModel {
   readonly #cat: SlotCatalogue;
   #num: Factor[] = [];
@@ -251,8 +252,7 @@ export class SlotModel {
       const num = Number(m?.[1]), den = Number(m?.[2] ?? "1");
       if (!m || (den !== 1 && den !== 2) || num === 0) throw new Error(`a power the pad cannot make: ${t.power ?? ""}`);
       const root = den === 2;
-      const took: Pending[] = [...(root ? [{ kind: "sqrt" } as const] : []), ...(t.prefix !== undefined ? [{ kind: "prefix", id: t.prefix } as const] : [])];
-      factors.push({ ...(t.prefix !== undefined ? { prefix: t.prefix } : {}), unit: t.unit, exp: num, root, took });
+      factors.push({ ...(t.prefix !== undefined ? { prefix: t.prefix } : {}), unit: t.unit, exp: num, root });
     }
     if (from.per === undefined) this.#num = factors;
     else {
@@ -268,7 +268,7 @@ export class SlotModel {
     return { side: this.#side, i: this.#at };
   }
 
-  /** R806, for tests until R808 moves the caret by key: put the caret at `i` of the numerator or denominator. Throws on
+  /** R806, for tests (a key moves it since R808, `move`): put the caret at `i` of the numerator or denominator. Throws on
    *  a place the slot does not have, and while a letter run is open. */
   caretAtForTest(side: "num" | "den", i: number): void {
     const list = side === "num" ? this.#num : this.#den;
@@ -311,7 +311,7 @@ export class SlotModel {
       case "unit": {
         if (!this.#cat.units.has(a.id)) return refuse("units.slot.unknown", { unit: a.id });
         const prefix = this.#armedPrefix();
-        this.#list().splice(this.#at++, 0, { ...(prefix !== undefined ? { prefix } : {}), unit: a.id, exp: 1, root: this.#pending.some((p) => p.kind === "sqrt"), took: this.#pending });
+        this.#list().splice(this.#at++, 0, { ...(prefix !== undefined ? { prefix } : {}), unit: a.id, exp: 1, root: this.#pending.some((p) => p.kind === "sqrt") });
         this.#pending = [];
         return OK;
       }
@@ -336,27 +336,68 @@ export class SlotModel {
         if (pending) return pending;
         const last = this.#list()[this.#at - 1];
         if (!last) return refuse("units.slot.powerAlone");
-        last.exp = a.n === -1 ? -last.exp : Math.sign(last.exp) * a.n;
+        // (R808: the same power again takes it off: m², ² gives m)
+        last.exp = a.n === -1 ? -last.exp : Math.sign(last.exp) * (Math.abs(last.exp) === a.n ? 1 : a.n);
         return OK;
       }
       case "delete": {
         if (this.empty) return BACK;
         if (this.#pending.length) this.#pending.pop();
-        else if (this.#at > 0) {
-          const last = this.#list()[this.#at - 1] as Factor;
-          if (last.exp !== 1) last.exp = 1;
-          else {
-            this.#list().splice(--this.#at, 1);
-            this.#pending = [...last.took];
-          }
-        } else if (this.#den && !this.#den.length) { // (the caret in an empty denominator: the ÷ goes)
-          this.#den = undefined;
+        else if (this.#at > 0) this.#list().splice(--this.#at, 1); // (R808: the whole factor, its prefix and power with it; nothing is armed again)
+        else if (this.#side === "den") {
+          if (this.#den?.length) return refuse("units.slot.denHasUnits"); // (J/(kg·K) never becomes J·kg·K)
+          this.#den = undefined; // (the caret in an empty denominator: the ÷ goes)
           this.#side = "num";
           this.#at = this.#num.length;
-        }
+        } else if (this.#num.length || this.#den?.length) return refuse("units.slot.nothingBefore");
+        else this.#den = undefined; // (a bare ÷ with the caret before it)
         return OK;
       }
     }
+  }
+
+  /** R808: ◀ (-1) and ▶ (+1) move the caret one factor. At the numerator's end ▶ goes to the denominator's start and ◀
+   *  comes back; at the slot's start or end nothing moves (`moved` false: the view crosses to the slot before or after).
+   *  Refused while a prefix or √ is armed or letters are no unit, as leaving the slot is; a letter run that reads as a unit ends. */
+  move(by: -1 | 1): SlotWalk {
+    const r = this.#moveRefusal();
+    if (r) return r;
+    if (by > 0) {
+      if (this.#at < this.#list().length) this.#at++;
+      else if (this.#side === "num" && this.#den) {
+        this.#side = "den";
+        this.#at = 0;
+      } else return { ok: true, moved: false };
+    } else if (this.#at > 0) this.#at--;
+    else if (this.#side === "den") {
+      this.#side = "num";
+      this.#at = this.#num.length;
+    } else return { ok: true, moved: false };
+    return { ok: true, moved: true };
+  }
+
+  /** R808: ▲ in the denominator goes to the numerator's end, ▼ in the numerator to the denominator's end; anywhere else
+   *  nothing moves (the view gives the key its other job). */
+  vertical(to: "up" | "down"): SlotWalk {
+    if (to === "up" ? this.#side !== "den" : this.#side !== "num" || !this.#den) return { ok: true, moved: false };
+    const r = this.#moveRefusal();
+    if (r) return r;
+    this.#side = to === "up" ? "num" : "den";
+    this.#at = this.#list().length;
+    return { ok: true, moved: true };
+  }
+
+  /** R808: the caret at the slot's start (a ▶ that crossed in) or end (a ◀ that crossed in, a tap, Enter). */
+  caretTo(place: "start" | "end"): void {
+    this.#side = place === "start" || !this.#den ? "num" : "den";
+    this.#at = place === "start" ? 0 : this.#list().length;
+  }
+
+  #moveRefusal(): Extract<SlotResult, { ok: false }> | undefined {
+    const ended = this.endRun();
+    if (!ended.ok) return ended;
+    const pending = this.#pendingRefusal();
+    return pending?.ok === false ? pending : undefined;
   }
 
   /** R313: a letter typed on a hardware keyboard: it starts or extends the slot's letter run, read again as a unit at
@@ -413,7 +454,7 @@ export class SlotModel {
     const s = readSymbol(this.#cat, run.text);
     if (!s) return;
     const prefix = s.prefix ?? this.#armedPrefix();
-    run.factor = { ...(prefix !== undefined ? { prefix } : {}), unit: s.unit, exp: 1, root: run.took.some((p) => p.kind === "sqrt"), took: run.took };
+    run.factor = { ...(prefix !== undefined ? { prefix } : {}), unit: s.unit, exp: 1, root: run.took.some((p) => p.kind === "sqrt") };
     this.#list().splice(this.#at++, 0, run.factor);
     this.#pending = [];
   }

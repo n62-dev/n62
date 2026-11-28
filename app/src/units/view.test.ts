@@ -117,7 +117,7 @@ describe("UnitView: ⌫ on an empty slot steps back, as ⌫ at the start of a bo
     return { view, h };
   }
 
-  it("on an empty slot that is not the first: to the slot before, which keeps its tokens; the next ⌫ removes its last", () => {
+  it("on an empty slot that is not the first: to the slot before, which keeps its tokens; the next ⌫ removes its last (R808: the whole factor, nothing armed again)", () => {
     const { view, h } = second();
     view.apply(DEL);
     expect(view.activeId).toBe("u1");
@@ -125,7 +125,7 @@ describe("UnitView: ⌫ on an empty slot steps back, as ⌫ at the start of a bo
     expect(h.dead()).toBe(0);
     view.apply(DEL);
     expect(view.model("u1")?.slot).toEqual({ tokens: [] });
-    expect(view.model("u1")?.armed).toEqual({ prefix: "k", sqrt: false });
+    expect(view.model("u1")?.armed).toEqual({ sqrt: false });
     expect(view.reading.text).toBe("");
   });
 
@@ -144,7 +144,6 @@ describe("UnitView: ⌫ on an empty slot steps back, as ⌫ at the start of a bo
     const { view, h } = second();
     view.apply(DEL);
     view.apply(DEL);
-    view.apply(DEL); // the armed k
     expect(view.model("u1")?.empty).toBe(true);
     expect(h.dead()).toBe(0);
     const shown = view.shown;

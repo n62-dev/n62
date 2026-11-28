@@ -112,14 +112,15 @@ describe("SlotModel: the letter run", () => {
     expect(slot(s)).toBe("m s^2↓");
     expect(s.reading.text).toBe("meter per second squared");
   });
-  it("an armed prefix and √ go to the run's unit as to a unit cell; ⌫ on the ended unit arms them again", () => {
+  it("an armed prefix and √ go to the run's unit as to a unit cell; ⌫ on the ended unit takes it whole, R808", () => {
     const s = new SlotModel(CAT);
     s.apply({ do: "prefix", id: "k" });
     s.type("m");
     expect(slot(s)).toBe("k:m");
     expect(s.endRun()).toEqual({ ok: true });
     s.apply({ do: "delete" });
-    expect(s.armed).toEqual({ prefix: "k", sqrt: false });
+    expect(s.armed).toEqual({ sqrt: false });
+    expect(s.empty).toBe(true);
     const r = new SlotModel(CAT);
     r.apply({ do: "sqrt" });
     for (const ch of "Hz") r.type(ch); // (no Hz in this catalogue: the armed √ stays armed under the letters)

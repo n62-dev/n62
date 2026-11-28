@@ -366,8 +366,8 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem, unit?: FindItem)
       const sp = a?.kind === "special" ? a.name : undefined;
       if (cmd === "moveToPreviousChar") view.move(-1);
       else if (cmd === "moveToNextChar") view.move(1);
-      else if (cmd === "moveDown") view.down();
-      else if (cmd === "moveUp") view.up();
+      else if (cmd === "moveDown") view.arrowDown();
+      else if (cmd === "moveUp") view.arrowUp();
       else if (sp === "esc") {
         if (!view.escape()) close();
       }

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R806: a slot is two lists (numerator, denominator) and a caret. (1) With the caret at the end, the only place a key can
 // put it, 20 000 random press sequences give the slot, LaTeX and reading of a reference model (the walk's probe, ../drafts/
-// 2026-11-20-owner-bugs2/W/unit-caret.ts, with today's ⌫ and the LaTeX and reading added); the first 2 000 also equal a
-// fixture recorded from phase-1's SlotModel (slot.caret.fixture.txt: the results of the presses and a digest of what the
+// 2026-11-20-owner-bugs2/W/unit-caret.ts, with R808's ⌫ and powers and the LaTeX and reading added); the first 2 000 also equal a
+// fixture of the model as R808 left it (slot.caret.fixture.txt: the results of the presses and a digest of what the
 // model showed). (2) With the caret placed inside (a test-only setter) a unit goes in after the factor left of the caret,
 // a power acts on that factor, ⌫ removes it, a letter run starts at the caret.
 import { readFileSync } from "node:fs";
@@ -231,18 +231,16 @@ describe("R806: the caret inside", () => {
     expect(at(ms, "num", 0).apply({ do: "power", n: 2 })).toMatchObject({ ok: false, key: "units.slot.powerAlone" });
     expect(at(ms, "den", 0).apply({ do: "power", n: 2 })).toMatchObject({ ok: false, key: "units.slot.powerAlone" });
   });
-  it("⌫ removes the factor left of the caret (a power first, as at the end), and crosses no ÷", () => {
+  it("⌫ removes the factor left of the caret (whole, R808), and crosses no ÷", () => {
     const s = at(ms, "num", 1);
     s.apply({ do: "delete" });
     expect(s.slot).toEqual({ tokens: [{ unit: "K" }, { unit: "m" }, { unit: "s" }], per: 1 });
     expect(s.caret).toEqual({ side: "num", i: 0 });
     const p = at([U("m"), { do: "power", n: 2 }, U("s")], "num", 1);
-    p.apply({ do: "delete" });
-    expect(p.slot).toEqual({ tokens: [{ unit: "m" }, { unit: "s" }] });
-    p.apply({ do: "delete" });
+    p.apply({ do: "delete" }); // m² goes whole
     expect(p.slot).toEqual({ tokens: [{ unit: "s" }] });
-    const d = at(ms, "den", 0); // (the start of a denominator that has units: nothing left of the caret in it)
-    expect(d.apply({ do: "delete" })).toEqual({ ok: true });
+    const d = at(ms, "den", 0); // (the start of a denominator that has units: nothing left of the caret in it; R808 refuses it)
+    expect(d.apply({ do: "delete" })).toMatchObject({ ok: false, key: "units.slot.denHasUnits" });
     expect(d.slot).toEqual({ tokens: [{ unit: "J" }, { unit: "K" }, { unit: "m" }, { unit: "s" }], per: 2 });
   });
   it("a prefix and a unit are one factor inserted at the caret; the armed prefix shows in the list the caret is in", () => {
@@ -418,11 +416,12 @@ describe("R808: the caret moves, ⌫ and the powers act at it", () => {
     expect(s.slot).toEqual({ tokens: [{ unit: "J" }, { unit: "K" }, { unit: "s" }, { unit: "m" }], per: 3 });
   });
   it("a move while a prefix or √ is armed is refused, as leaving the slot is; the caret stays", () => {
-    const s = new SlotModel(CAT, { tokens: [{ unit: "m" }, { unit: "s" }] });
+    const s = new SlotModel(CAT, { tokens: [{ unit: "m" }, { unit: "s" }], per: 1 });
+    s.caretAtForTest("num", 1);
     s.apply(K);
     expect(s.move(-1)).toMatchObject({ ok: false, key: "units.slot.prefixAlone" });
     expect(s.vertical("down")).toMatchObject({ ok: false, key: "units.slot.prefixAlone" });
-    expect(s.caret).toEqual({ side: "num", i: 2 });
+    expect(s.caret).toEqual({ side: "num", i: 1 });
     s.apply(K);
     s.apply({ do: "sqrt" });
     expect(s.move(1)).toMatchObject({ ok: false, key: "units.slot.rootAlone" });
