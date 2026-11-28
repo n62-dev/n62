@@ -101,6 +101,11 @@ describe.skipIf(!full)("the units menu on the generated index", () => {
     const pa = first("pa/m"); // a whole name case-folded (Pa) before a prefix and a unit as typed (pico, are)
     expect([pa.row?.value, pa.acts]).toEqual(["Pa/m", [{ do: "unit", id: "Pa" }, { do: "per" }, { do: "unit", id: "m" }]]);
     expect(first("pa/s").row?.value).toBe("Pa/s");
+    // a symbol with a capital is read as typed only (R313: Ms is no ms): M·m/s and M·s/m, never mm/s or ms/m
+    const mm = first("Mm/s");
+    expect([mm.row?.value, mm.acts]).toEqual(["Mm/s", [{ do: "pair", prefix: "M", id: "m" }, { do: "per" }, { do: "unit", id: "s" }]]);
+    const ms = first("Ms/m");
+    expect([ms.row?.value, ms.acts]).toEqual(["Ms/m", [{ do: "pair", prefix: "M", id: "s" }, { do: "per" }, { do: "unit", id: "m" }]]);
     expect(first("1/pa").acts).toEqual([{ do: "unit", id: "Pa" }, { do: "power", n: -1 }]); // Pa⁻¹, not (pico·are)⁻¹
     expect(first("wh/kg").row?.value).toBe("Wh/kg");
     expect(first("kg/m^3").row?.id).toBe("unit:kg/m^3"); // Find's own unit, no reading row

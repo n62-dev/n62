@@ -191,12 +191,14 @@ export function readSymbol(cat: SlotCatalogue, text: string, split = true): { pr
   return undefined;
 }
 
-/** G402: a symbol of Find's query in a unit slot: a whole unit's name as cased, then in lower case, and only then a
- *  prefix and a unit, as cased, then in lower case (readSymbol's `split` false: the whole name only). `kj` is kJ, `btu`
- *  Btu, `kn` kN, `h` stays the hour; `pa` is Pa, never pico and are. */
+/** G402: a symbol of Find's query in a unit slot. A symbol with a capital letter is read as typed only (readSymbol: `Ms`
+ *  is M and s, never ms; `Mm` is M and m, never mm). One in lower case: a whole unit's name as cased, then case-folded,
+ *  and only then a prefix and a unit, as cased, then case-folded (readSymbol's `split` false: the whole name only).
+ *  `kj` is kJ, `btu` Btu, `kn` kN, `h` stays the hour; `pa` is Pa, never pico and are. */
 export function readSymbolFolded(cat: SlotCatalogue, text: string): { prefix?: string; unit: string } | undefined {
-  const folded = foldedCatalogue(cat);
   const lower = text.toLowerCase();
+  if (lower !== text) return readSymbol(cat, text);
+  const folded = foldedCatalogue(cat);
   return readSymbol(cat, text, false) ?? readSymbol(folded, lower, false) ?? readSymbol(cat, text) ?? readSymbol(folded, lower);
 }
 
