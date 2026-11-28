@@ -8,7 +8,8 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { EngineHost } from "./host.ts";
 import { defaultHomeSettings, toExactLiterals } from "./homeEval.ts";
 import { argumentsAsFloats, contradictedCall, contradictedFloats, decidedAtDouble, floatsBesideName, decideTwice, decisionArgs, evenPowerRoot, logOfPower, nonRealArg, restsOnDecision, type Decision } from "./decisions.ts";
-import { notBuiltin, valuePrecision, withDigits } from "./numeric.ts";
+import { valuePrecision, withDigits } from "./numeric.ts";
+import { notBuiltin } from "./names.ts";
 import { formatComplex } from "./format.ts";
 import { engineGiac, giacAvailable, loadNodeGiac, type EngineGiac } from "./nodeGiac.ts";
 

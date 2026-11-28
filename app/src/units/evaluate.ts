@@ -7,7 +7,8 @@
 import { ENGINE_DEFINITIONS, FULL_EXACT_MAX, HOME_DEADLINE_MS, resultFromFacts, toExactLiterals, WORKER_DEFINITION_NAMES, type HomeResult, type HomeSettings } from "../engine/homeEval.ts";
 import { callsIn, refusalOf } from "../engine/converge.ts";
 import { lostNumber, throughInfinity } from "../engine/novalue.ts";
-import { exactFacts, floatFacts, hasFloat, notBuiltin, rationalValue, valuePrecision, type ElementFacts, type Giac } from "../engine/numeric.ts";
+import { exactFacts, floatFacts, hasFloat, rationalValue, valuePrecision, type ElementFacts, type Giac } from "../engine/numeric.ts";
+import { notBuiltin } from "../engine/names.ts";
 import { callsOf, isError, isNameChar, mapNames, names, splitList, topLevelArgs } from "../engine/giacPrint.ts";
 import { PASDEG } from "../engine/angles.ts";
 import { decimalToString, roundSignificant } from "../engine/format.ts";

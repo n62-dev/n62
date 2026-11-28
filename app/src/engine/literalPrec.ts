@@ -9,7 +9,7 @@
 // file directly.
 import type { PrecisionWarn } from "./format.ts";
 import { arithmeticOf, type Arith, callsOf, closing, topLevelArgs, integerLiteral, isNameChar, UNCLOSED, walk as bracketWalk, namesIn, negated, numbers, powersIn, withoutStrings, type Quoting } from "./giacPrint.ts";
-import { PERIODIC } from "./converge.ts";
+import { PERIODIC } from "./names.ts";
 import { constantLog10, flatErfc, type Sizes } from "./constDouble.ts";
 
 /** A literal with more digits than P minus this raises where the agreement check starts (G141): at P it would leave
