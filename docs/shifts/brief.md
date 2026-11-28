@@ -96,7 +96,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 |---|---|---|---|---|
 | B17 | G365 Function reads a cell's kind | gorge, Opus | `p1/gorge-cellkind` | – |
 | B18 | G315 the one import cycle goes | gorge, Opus | `p1/gorge-namesmodule` | – |
-| B19 | [G314](packages/G314.md) EngineHost split in modules | gorge, Opus | `p1/gorge-hostsplit` | – |
+| B19 | G314 EngineHost split in modules | gorge, Opus | `p1/gorge-hostsplit` | – |
 | B20 | [G401](packages/G401.md) Find knows engineers' words | gorge, Opus | `p1/gorge-findwords` | – |
 | B21 | [G402](packages/G402.md) Find reads a compound unit | gorge, Opus | `p1/gorge-findcompound` | G401 |
 
